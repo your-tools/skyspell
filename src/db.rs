@@ -5,6 +5,7 @@ use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 
 use crate::models::*;
+use crate::repo::{AddFor, Query, Repo};
 use crate::schema::extensions::dsl::{extension, extensions};
 use crate::schema::files::dsl::*;
 use crate::schema::ignored::dsl::*;
@@ -27,21 +28,6 @@ impl Debug for Db {
     }
 }
 
-#[derive(Debug)]
-pub enum AddFor {
-    NaturaLanguage,
-    ProgrammingLanguage(i32),
-    File(i32),
-}
-
-#[derive(Debug)]
-pub enum Query<'a> {
-    Simple(&'a str),
-    ForProgrammingLanguage(&'a str, i32),
-    ForFile(&'a str, i32),
-    ForFileOrProgrammingLanguage(&'a str, i32, i32),
-}
-
 impl Db {
     pub fn new(url: &str) -> Result<Self> {
         let connection = SqliteConnection::establish(&url)
@@ -51,87 +37,6 @@ impl Db {
             connection,
             url: url.to_owned(),
         })
-    }
-
-    pub fn add_word(&self, new_word: &str, add_for: &AddFor) -> Result<()> {
-        let (file, programming_language) = match &add_for {
-            AddFor::NaturaLanguage => (None, None),
-            AddFor::ProgrammingLanguage(p) => (None, Some(*p)),
-            AddFor::File(f) => (Some(*f), None),
-        };
-        let new_ignored = NewIgnored {
-            word: new_word,
-            file_id: file,
-            programming_language_id: programming_language,
-        };
-        diesel::insert_into(ignored)
-            .values(new_ignored)
-            .execute(&self.connection)?;
-        Ok(())
-    }
-
-    pub fn add_programming_language(
-        &self,
-        new_language: &str,
-        new_extensions: &[&str],
-    ) -> Result<i32> {
-        let new_programming_language = NewProgrammingLanguage { name: new_language };
-        // Need to do it in two queries ...
-        diesel::insert_into(programming_languages)
-            .values(new_programming_language)
-            .execute(&self.connection)?;
-
-        let new_id = programming_languages
-            .filter(name.eq(new_language))
-            .first::<ProgrammingLanguage>(&self.connection)?
-            .id;
-
-        let new_extensions: Vec<_> = new_extensions
-            .iter()
-            .map(|x| NewExtension {
-                extension: x,
-                programming_language_id: new_id,
-            })
-            .collect();
-
-        diesel::insert_into(extensions)
-            .values(new_extensions)
-            .execute(&self.connection)?;
-
-        Ok(new_id)
-    }
-
-    pub fn add_file(&self, new_path: &str) -> Result<i32> {
-        let new_file = NewFile {
-            full_path: new_path,
-        };
-        diesel::insert_into(files)
-            .values(new_file)
-            .execute(&self.connection)?;
-
-        let res = files
-            .filter(full_path.eq(new_path))
-            .first::<File>(&self.connection)?;
-        Ok(res.id)
-    }
-
-    pub fn lookup_extension(&self, ext: &str) -> Result<Option<i32>> {
-        let res = extensions
-            .filter(extension.eq(ext))
-            .first::<Extension>(&self.connection)
-            .optional()?;
-        Ok(res.map(|x| x.programming_language_id))
-    }
-
-    pub fn lookup_word(&self, query: &Query) -> Result<bool> {
-        match query {
-            Query::Simple(s) => self.search_word(s),
-            Query::ForFile(s, f) => self.search_word_for_file(s, *f),
-            Query::ForProgrammingLanguage(s, p) => self.search_word_for_programming_language(s, *p),
-            Query::ForFileOrProgrammingLanguage(s, f, p) => {
-                self.search_word_for_file_or_programming_language(s, *f, *p)
-            }
-        }
     }
 
     fn search_word(&self, query: &str) -> Result<bool> {
@@ -180,6 +85,85 @@ impl Db {
             .first::<Ignored>(&self.connection)
             .optional()?;
         Ok(results.is_some())
+    }
+}
+
+impl Repo for Db {
+    fn add_word(&self, new_word: &str, add_for: &AddFor) -> Result<()> {
+        let (file, programming_language) = match &add_for {
+            AddFor::NaturaLanguage => (None, None),
+            AddFor::ProgrammingLanguage(p) => (None, Some(*p)),
+            AddFor::File(f) => (Some(*f), None),
+        };
+        let new_ignored = NewIgnored {
+            word: new_word,
+            file_id: file,
+            programming_language_id: programming_language,
+        };
+        diesel::insert_into(ignored)
+            .values(new_ignored)
+            .execute(&self.connection)?;
+        Ok(())
+    }
+
+    fn add_programming_language(&self, new_language: &str, new_extensions: &[&str]) -> Result<i32> {
+        let new_programming_language = NewProgrammingLanguage { name: new_language };
+        // Need to do it in two queries ...
+        diesel::insert_into(programming_languages)
+            .values(new_programming_language)
+            .execute(&self.connection)?;
+
+        let new_id = programming_languages
+            .filter(name.eq(new_language))
+            .first::<ProgrammingLanguage>(&self.connection)?
+            .id;
+
+        let new_extensions: Vec<_> = new_extensions
+            .iter()
+            .map(|x| NewExtension {
+                extension: x,
+                programming_language_id: new_id,
+            })
+            .collect();
+
+        diesel::insert_into(extensions)
+            .values(new_extensions)
+            .execute(&self.connection)?;
+
+        Ok(new_id)
+    }
+
+    fn add_file(&self, new_path: &str) -> Result<i32> {
+        let new_file = NewFile {
+            full_path: new_path,
+        };
+        diesel::insert_into(files)
+            .values(new_file)
+            .execute(&self.connection)?;
+
+        let res = files
+            .filter(full_path.eq(new_path))
+            .first::<File>(&self.connection)?;
+        Ok(res.id)
+    }
+
+    fn lookup_extension(&self, ext: &str) -> Result<Option<i32>> {
+        let res = extensions
+            .filter(extension.eq(ext))
+            .first::<Extension>(&self.connection)
+            .optional()?;
+        Ok(res.map(|x| x.programming_language_id))
+    }
+
+    fn lookup_word(&self, query: &Query) -> Result<bool> {
+        match query {
+            Query::Simple(s) => self.search_word(s),
+            Query::ForFile(s, f) => self.search_word_for_file(s, *f),
+            Query::ForProgrammingLanguage(s, p) => self.search_word_for_programming_language(s, *p),
+            Query::ForFileOrProgrammingLanguage(s, f, p) => {
+                self.search_word_for_file_or_programming_language(s, *f, *p)
+            }
+        }
     }
 }
 

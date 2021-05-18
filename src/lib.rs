@@ -5,4 +5,5 @@ extern crate diesel_migrations;
 
 pub mod db;
 pub mod models;
+pub mod repo;
 pub mod schema;
