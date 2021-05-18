@@ -91,7 +91,7 @@ impl Db {
 impl Repo for Db {
     fn add_word(&self, new_word: &str, add_for: &AddFor) -> Result<()> {
         let (file, programming_language) = match &add_for {
-            AddFor::NaturaLanguage => (None, None),
+            AddFor::NaturalLanguage => (None, None),
             AddFor::ProgrammingLanguage(p) => (None, Some(*p)),
             AddFor::File(f) => (Some(*f), None),
         };
@@ -106,7 +106,7 @@ impl Repo for Db {
         Ok(())
     }
 
-    fn add_programming_language(&self, new_language: &str, new_extensions: &[&str]) -> Result<i32> {
+    fn add_programming_language(&self, new_language: &str) -> Result<i32> {
         let new_programming_language = NewProgrammingLanguage { name: new_language };
         // Need to do it in two queries ...
         diesel::insert_into(programming_languages)
@@ -118,19 +118,19 @@ impl Repo for Db {
             .first::<ProgrammingLanguage>(&self.connection)?
             .id;
 
-        let new_extensions: Vec<_> = new_extensions
-            .iter()
-            .map(|x| NewExtension {
-                extension: x,
-                programming_language_id: new_id,
-            })
-            .collect();
+        Ok(new_id)
+    }
+
+    fn add_extension(&self, new_extension: &str, programming_language: i32) -> Result<()> {
+        let new_extension = NewExtension {
+            extension: new_extension,
+            programming_language_id: programming_language,
+        };
 
         diesel::insert_into(extensions)
-            .values(new_extensions)
+            .values(new_extension)
             .execute(&self.connection)?;
-
-        Ok(new_id)
+        Ok(())
     }
 
     fn add_file(&self, new_path: &str) -> Result<i32> {
@@ -174,12 +174,13 @@ mod tests {
     #[test]
     fn test_add_programming_language() {
         let db = Db::new(":memory:").unwrap();
-        let python = db.add_programming_language("Python", &["py"]).unwrap();
-        let c_family = db
-            .add_programming_language("C/C++", &["c", "cpp", "cc", "h", "hpp", "hxx"])
-            .unwrap();
+        let python = db.add_programming_language("Python").unwrap();
+        db.add_extension("py", python).unwrap();
+        let c_family = db.add_programming_language("C/C++").unwrap();
+        db.add_extension("c", c_family).unwrap();
+        db.add_extension("cpp", c_family).unwrap();
 
-        assert_eq!(db.lookup_extension("c").unwrap().unwrap(), c_family);
+        assert_eq!(db.lookup_extension("cpp").unwrap().unwrap(), c_family);
         assert_eq!(db.lookup_extension("py").unwrap().unwrap(), python);
         assert!(db.lookup_extension("txt").unwrap().is_none())
     }
@@ -187,7 +188,7 @@ mod tests {
     #[test]
     fn test_lookup_ignored_word_for_natural_language() {
         let db = Db::new(":memory:").unwrap();
-        db.add_word("foobar", &AddFor::NaturaLanguage).unwrap();
+        db.add_word("foobar", &AddFor::NaturalLanguage).unwrap();
 
         let query = Query::Simple("foobar");
         assert!(db.lookup_word(&query).unwrap(), "foobar should be ignored");
@@ -197,9 +198,9 @@ mod tests {
     fn test_lookup_ignored_word_for_programming_language() {
         let db = Db::new(":memory:").unwrap();
 
-        let python = db.add_programming_language("Python", &["py"]).unwrap();
+        let python = db.add_programming_language("Python").unwrap();
 
-        db.add_word("foobar", &AddFor::NaturaLanguage).unwrap();
+        db.add_word("foobar", &AddFor::NaturalLanguage).unwrap();
         db.add_word("defaultdict", &AddFor::ProgrammingLanguage(python))
             .unwrap();
 
@@ -244,12 +245,12 @@ mod tests {
         let db = Db::new(":memory:").unwrap();
 
         let test_py = db.add_file("test.py").unwrap();
-        let python = db.add_programming_language("python", &["py"]).unwrap();
+        let python = db.add_programming_language("Python").unwrap();
 
         db.add_word("toto", &AddFor::File(test_py)).unwrap();
         db.add_word("defaultdict", &AddFor::ProgrammingLanguage(python))
             .unwrap();
-        db.add_word("foobar", &AddFor::NaturaLanguage).unwrap();
+        db.add_word("foobar", &AddFor::NaturalLanguage).unwrap();
 
         let query = Query::ForFileOrProgrammingLanguage("defaultdict", test_py, python);
         assert!(
