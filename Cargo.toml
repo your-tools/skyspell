@@ -8,3 +8,4 @@ edition = "2018"
 anyhow = "1.0.40"
 diesel = { version = "1.4.6", features = ["sqlite"] }
 diesel_migrations = "1.4.0"
+platform-dirs = "0.3.0"
