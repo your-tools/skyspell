@@ -6,14 +6,14 @@ use crate::repo::AddFor;
 use crate::Interactor;
 use crate::Repo;
 
-pub struct Handler<'repo, I: Interactor> {
-    repo: &'repo dyn Repo,
+pub struct Handler<I: Interactor, R: Repo> {
     interactor: I,
+    repo: R,
 }
 
-impl<'repo, I: Interactor> Handler<'repo, I> {
-    pub fn new(repo: &'repo dyn Repo, interactor: I) -> Self {
-        Self { repo, interactor }
+impl<I: Interactor, R: Repo> Handler<I, R> {
+    pub fn new(interactor: I, repo: R) -> Self {
+        Self { interactor, repo }
     }
 
     fn get_ext<'a>(&self, path: &'a Path) -> Option<&'a str> {
@@ -54,17 +54,16 @@ impl<'repo, I: Interactor> Handler<'repo, I> {
     }
 
     pub fn handle(&mut self, path: &Path, pos: (usize, usize), error: &str) -> Result<()> {
+        // language
+        // file
         let (line, column) = pos;
         self.interactor
             .info(&format!("{}:{}:{} {}", path.display(), line, column, error));
-        let prompt = r#"
-        Add to (n)atural language ignore list
-        Add to (p)rogramming language ignore list
-        Ignore just for this (f)ile
-        (q)uit
-
-        What to do?
-        "#;
+        let prompt = r#"Add to (n)atural language ignore list
+Add to (p)rogramming language ignore list
+Ignore just for this (f)ile
+(q)uit
+> "#;
 
         let answer = self.interactor.input_letter(prompt, "npfq");
         let add_for = match answer.as_ref() {

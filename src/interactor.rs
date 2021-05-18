@@ -26,7 +26,7 @@ impl Interactor for ConsoleInteractor {
                 if choices.contains(input) {
                     Ok(())
                 } else {
-                    Err("This is not a mail address")
+                    Err("invalid choice")
                 }
             })
             .interact()

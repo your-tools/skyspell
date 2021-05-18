@@ -23,7 +23,7 @@ fn main() -> Result<()> {
     let db = rcspell::db::new(db_path)?;
 
     let interactor = rcspell::ConsoleInteractor;
-    let mut handler = rcspell::Handler::new(&db, interactor);
+    let mut handler = rcspell::Handler::new(interactor, db);
 
     let args: Vec<_> = std::env::args().collect();
     let source_path = PathBuf::from(&args[1]);
