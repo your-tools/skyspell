@@ -5,8 +5,14 @@ pub trait Interactor {
     fn input_letter(&self, prompt: &str, choices: &str) -> String;
     fn select(&self, prompt: &str, choices: &[&str]) -> Option<usize>;
     fn confirm(&self, prompt: &str) -> bool;
-    fn info(&self, message: &str);
-    fn error(&self, message: &str);
+
+    fn info(&self, message: &str) {
+        println!("{}", message);
+    }
+
+    fn error(&self, message: &str) {
+        eprintln!("{}", message);
+    }
 }
 
 pub struct ConsoleInteractor;

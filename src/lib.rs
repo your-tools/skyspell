@@ -13,5 +13,8 @@ pub(crate) mod token;
 
 pub use handler::Handler;
 pub use interactor::{ConsoleInteractor, Interactor};
-pub(crate) use repo::Repo;
+pub use repo::Repo;
 pub use token::Tokenizer;
+
+#[cfg(test)]
+mod tests;

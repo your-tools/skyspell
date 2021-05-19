@@ -1,8 +1,8 @@
 use std::path::Path;
 
 use anyhow::{bail, Result};
+use colored::*;
 
-use crate::repo::AddFor;
 use crate::Interactor;
 use crate::Repo;
 
@@ -16,74 +16,241 @@ impl<I: Interactor, R: Repo> Handler<I, R> {
         Self { interactor, repo }
     }
 
-    fn get_ext<'a>(&self, path: &'a Path) -> Option<&'a str> {
-        let res = path.extension().or_else(|| {
-            self.interactor.error("path has no extension");
-            None
-        })?;
-
-        let res = res.to_str().or_else(|| {
-            self.interactor.error("path extension is not utf-8");
-            None
-        })?;
-
-        Some(res)
+    #[cfg(test)]
+    fn interactor(&self) -> &I {
+        &self.interactor
     }
 
-    fn get_language_from_path(&self, path: &Path) -> Result<Option<i32>> {
-        let ext = &self.get_ext(path);
-        match ext {
-            None => return Ok(None),
-            Some(e) => match self.repo.lookup_extension(e)? {
-                None => self.handle_new_extension(e),
-                Some(r) => Ok(Some(r)),
-            },
-        }
+    #[cfg(test)]
+    fn repo(&self) -> &R {
+        &self.repo
     }
 
-    fn handle_new_extension(&self, ext: &str) -> Result<Option<i32>> {
-        let should_add = self
-            .interactor
-            .confirm(&format!("Add extension {} to the db (y/n)?", ext));
-        if should_add {
-            // Ask user to select between known languages
-            todo!()
-        }
-
-        Ok(None)
+    pub fn handle_token(&mut self, path: &Path, token: &str) -> Result<bool> {
+        let ext = path.extension().and_then(|e| e.to_str());
+        let file = path.to_str();
+        self.repo.lookup_word(&token.to_lowercase(), file, ext)
     }
 
-    pub fn handle(&mut self, path: &Path, pos: (usize, usize), error: &str) -> Result<()> {
-        // language
-        // file
-        let (line, column) = pos;
-        self.interactor
-            .info(&format!("{}:{}:{} {}", path.display(), line, column, error));
-        let prompt = r#"Add to (n)atural language ignore list
-Add to (p)rogramming language ignore list
-Ignore just for this (f)ile
-(q)uit
-> "#;
+    pub fn handle_error(&mut self, path: &Path, pos: (usize, usize), error: &str) -> Result<()> {
+        let error = error.to_lowercase();
+        let (lineno, column) = pos;
+        let prefix = format!("{}:{}:{}", path.display(), lineno, column);
+        println!("{} {}", prefix.bold(), error.blue());
+        let prompt = r#"What to do?
 
-        let answer = self.interactor.input_letter(prompt, "npfq");
-        let add_for = match answer.as_ref() {
-            "n" => AddFor::NaturalLanguage,
-            "p" => {
-                let id = self.get_language_from_path(&path)?;
-                match id {
-                    None => todo!(),
-                    Some(i) => AddFor::ProgrammingLanguage(i),
+Add to (g)lobal ignore list
+Add to ignore list for this (e)xtension
+Add to ignore list for this (f)ile
+(q)uit"#;
+
+        let letter = self.interactor.input_letter(prompt, "gefq");
+        loop {
+            match letter.as_ref() {
+                "g" => return self.add_to_global_ignore(&error),
+                "e" => {
+                    let success = self.handle_ext(path, &error)?;
+                    if success {
+                        break;
+                    }
+                }
+                "f" => {
+                    let success = self.handle_file(path, &error)?;
+                    if success {
+                        break;
+                    }
+                }
+                "q" => {
+                    bail!("Interrputed by user")
+                }
+                _ => {
+                    unreachable!()
                 }
             }
-            "f" => AddFor::File(2),
-            "q" => {
-                bail!("Interrupted by user");
-            }
-            _ => {
-                unreachable!()
-            }
+        }
+        Ok(())
+    }
+
+    fn add_to_global_ignore(&mut self, error: &str) -> Result<()> {
+        self.repo.add_ignored(error)?;
+        println!(
+            "\n{}Added {} to the global ignode list\n",
+            "=>".blue(),
+            error.blue()
+        );
+        Ok(())
+    }
+
+    fn handle_ext(&mut self, path: &Path, error: &str) -> Result<bool> {
+        let os_ext = if let Some(os_ext) = path.extension() {
+            os_ext
+        } else {
+            eprintln!("{} has no extension", path.display());
+            return Ok(false);
         };
 
-        self.repo.add_word(error, &add_for)
+        let ext = if let Some(s) = os_ext.to_str() {
+            s
+        } else {
+            eprintln!("{} has a non-UTF-8 extension", path.display());
+            return Ok(false);
+        };
+
+        if !self.repo.known_extension(ext)? {
+            let should_add = self
+                .interactor
+                .confirm(&format!("Add {} to the list of known extensions?", ext));
+            if !should_add {
+                return Ok(false);
+            }
+            self.repo.add_extension(ext)?;
+        }
+
+        self.repo.add_ignored_for_extension(error, ext)?;
+        println!(
+            "\n{} Added {} for extension {}\n",
+            "=>".blue(),
+            error.blue(),
+            ext.bold()
+        );
+        Ok(true)
+    }
+
+    fn handle_file(&mut self, path: &Path, error: &str) -> Result<bool> {
+        let file_path = if let Some(s) = path.to_str() {
+            s
+        } else {
+            eprintln!("{} has a non-UTF-8 extension", path.display());
+            return Ok(false);
+        };
+
+        if !self.repo.known_file(file_path)? {
+            let should_add = self
+                .interactor
+                .confirm(&format!("Add {} to the list of known paths?", file_path));
+            if !should_add {
+                return Ok(false);
+            }
+            self.repo.add_file(file_path)?;
+        }
+
+        self.repo.add_ignored_for_file(error, file_path)?;
+        println!(
+            "\n{} Added {} for path {}\n",
+            "=>".blue(),
+            error.blue(),
+            file_path.bold()
+        );
+        Ok(true)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use crate::tests::{FakeInteractor, FakeRepo};
+
+    #[test]
+    /// Scenario:
+    /// * call handle_error with 'foo'
+    /// * add 'foo' to the global ignore list (aka: press 'g')
+    ///
+    /// Check that 'foo' is in the globally ignore list
+    fn test_adding_to_ignore() {
+        let mut fake_repo = FakeRepo::new();
+        fake_repo.add_good_words(&["hello", "world"]).unwrap();
+        let fake_interactor = FakeInteractor::new();
+        fake_interactor.push_text("g");
+
+        let mut handler = Handler::new(fake_interactor, fake_repo);
+        handler
+            .handle_error(&Path::new("foo.txt"), (3, 2), "foo")
+            .unwrap();
+
+        handler.interactor().assert_empty();
+        assert!(handler.repo().lookup_word("foo", None, None).unwrap());
+    }
+
+    #[test]
+    /// Scenario:
+    /// * no extensions kwnon yet
+    /// * call handle_error with 'defaultdict' error and a `.py` extension
+    /// * press 'e'
+    /// * confirm
+    ///
+    /// Check that 'foo' is ignored for the `py` extenson
+    fn test_adding_to_new_ext() {
+        let mut fake_repo = FakeRepo::new();
+        fake_repo.add_good_words(&["hello", "world"]).unwrap();
+        let fake_interactor = FakeInteractor::new();
+        fake_interactor.push_text("e");
+        fake_interactor.push_bool(true);
+
+        let mut handler = Handler::new(fake_interactor, fake_repo);
+        handler
+            .handle_error(&Path::new("hello.py"), (3, 2), "defaultdict")
+            .unwrap();
+
+        handler.interactor().assert_empty();
+        assert!(handler
+            .repo()
+            .lookup_word("defaultdict", None, Some("py"))
+            .unwrap());
+    }
+
+    #[test]
+    /// Scenario:
+    /// * py extension is known
+    /// * call handle_error with 'defaultdict' error and a `.py` extension
+    /// * press 'e'
+    ///
+    /// Check that 'foo' is ignored for the `py` extenson
+    fn test_adding_to_existing_ext() {
+        let mut fake_repo = FakeRepo::new();
+        fake_repo.add_good_words(&["hello", "world"]).unwrap();
+        fake_repo.add_extension("py").unwrap();
+
+        let fake_interactor = FakeInteractor::new();
+        fake_interactor.push_text("e");
+
+        let mut handler = Handler::new(fake_interactor, fake_repo);
+        handler
+            .handle_error(&Path::new("hello.py"), (3, 2), "defaultdict")
+            .unwrap();
+
+        handler.interactor().assert_empty();
+        assert!(handler
+            .repo()
+            .lookup_word("defaultdict", None, Some("py"))
+            .unwrap());
+    }
+
+    #[test]
+    /// Scenario:
+    /// * poetry.lock file is known
+    /// * call handle_error with 'abcdef' error ,  `lock` extension and a `poetry.lock` file
+    /// * press 'f'
+    ///
+    /// Check that 'adbced' is ignored for the `poetry.lock` file
+    fn test_adding_to_existing_file() {
+        let mut fake_repo = FakeRepo::new();
+        fake_repo.add_good_words(&["hello", "world"]).unwrap();
+        fake_repo.add_extension("py").unwrap();
+        fake_repo.add_file("poetry.lock").unwrap();
+
+        let fake_interactor = FakeInteractor::new();
+        fake_interactor.push_text("f");
+
+        let mut handler = Handler::new(fake_interactor, fake_repo);
+        handler
+            .handle_error(&Path::new("poetry.lock"), (3, 2), "adbcdef")
+            .unwrap();
+
+        handler.interactor().assert_empty();
+        assert!(handler
+            .repo()
+            .lookup_word("adbcdef", Some("poetry.lock"), Some("lock"))
+            .unwrap());
     }
 }

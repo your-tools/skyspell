@@ -1,25 +1,18 @@
 use anyhow::Result;
 
-#[derive(Debug)]
-pub enum AddFor {
-    NaturalLanguage,
-    ProgrammingLanguage(i32),
-    File(i32),
-}
-
-#[derive(Debug)]
-pub enum Query<'a> {
-    Simple(&'a str),
-    ForProgrammingLanguage(&'a str, i32),
-    ForFile(&'a str, i32),
-    ForFileOrProgrammingLanguage(&'a str, i32, i32),
-}
-
 pub trait Repo {
-    fn add_word(&self, word: &str, add_for: &AddFor) -> Result<()>;
-    fn add_extension(&self, extension: &str, language: i32) -> Result<()>;
-    fn add_programming_language(&self, name: &str) -> Result<i32>;
-    fn add_file(&self, path: &str) -> Result<i32>;
-    fn lookup_extension(&self, ext: &str) -> Result<Option<i32>>;
-    fn lookup_word(&self, query: &Query) -> Result<bool>;
+    fn add_good_words(&mut self, words: &[&str]) -> Result<()>;
+    fn has_good_words(&self) -> Result<bool>;
+
+    fn known_extension(&self, ext: &str) -> Result<bool>;
+    fn known_file(&self, path: &str) -> Result<bool>;
+
+    fn add_extension(&mut self, ext: &str) -> Result<()>;
+    fn add_file(&mut self, full_path: &str) -> Result<()>;
+
+    fn add_ignored(&mut self, word: &str) -> Result<i32>;
+    fn add_ignored_for_extension(&mut self, word: &str, ext: &str) -> Result<()>;
+    fn add_ignored_for_file(&mut self, word: &str, file: &str) -> Result<()>;
+
+    fn lookup_word(&self, word: &str, file: Option<&str>, ext: Option<&str>) -> Result<bool>;
 }

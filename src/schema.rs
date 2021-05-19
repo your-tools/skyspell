@@ -1,7 +1,7 @@
 table! {
-    extensions (extension) {
+    extensions (id) {
+        id -> Integer,
         extension -> Text,
-        programming_language_id -> Integer,
     }
 }
 
@@ -13,27 +13,43 @@ table! {
 }
 
 table! {
-    ignored (id) {
+    good_words (id) {
         id -> Integer,
         word -> Text,
-        file_id -> Nullable<Integer>,
-        programming_language_id -> Nullable<Integer>,
     }
 }
 
 table! {
-    programming_languages (id) {
+    ignored (id) {
         id -> Integer,
-        name -> Text,
+        word -> Text,
     }
 }
 
-joinable!(extensions -> programming_languages (programming_language_id));
-joinable!(ignored -> files (file_id));
+table! {
+    ignored_for_ext (id) {
+        id -> Integer,
+        word -> Text,
+        extension_id -> Integer,
+    }
+}
+
+table! {
+    ignored_for_file (id) {
+        id -> Integer,
+        word -> Text,
+        file_id -> Integer,
+    }
+}
+
+joinable!(ignored_for_ext -> extensions (extension_id));
+joinable!(ignored_for_file -> files (file_id));
 
 allow_tables_to_appear_in_same_query!(
     extensions,
     files,
+    good_words,
     ignored,
-    programming_languages,
+    ignored_for_ext,
+    ignored_for_file,
 );
