@@ -12,7 +12,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn should_keep(_s: &str) -> bool {
-        // TODO: Ignore hexadecimial strings (appearing in hashs, uuid and the like)
+        // TODO: Ignore hexadecimal strings (appearing in hashs, uuid and the like)
         true
     }
 
@@ -38,7 +38,7 @@ impl<'a> Tokenizer<'a> {
             }
         }
 
-        // If end_pos is None, we've reached the end of the input
+        // If end_pos is None, we have reached the end of the input
         let res = match end_pos {
             None => &self.input[start_pos..],
             Some(index) => &self.input[start_pos..index],
@@ -56,8 +56,8 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn read_uppercase(&mut self, start_pos: usize) -> Option<(&'a str, usize)> {
-        // Two upperases: assume SCREAMING_CASE
-        // One uppercase followed by a lower cas: assume CamelCase
+        // Two uppercase: assume SCREAMING_CASE
+        // One uppercase followed by a lower case: assume CamelCase
         let (_, next_c) = self.iter.peek()?;
         match next_c {
             c if c.is_uppercase() => self.read_screaming_case(start_pos),

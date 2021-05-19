@@ -12,6 +12,7 @@ pub(crate) mod schema;
 pub(crate) mod token;
 
 pub use checker::Checker;
+pub use db::Db;
 pub use interactor::{ConsoleInteractor, Interactor};
 pub use repo::Repo;
 pub use token::Tokenizer;

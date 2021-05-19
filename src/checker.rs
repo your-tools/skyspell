@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::Path;
 
 use anyhow::{bail, Result};
@@ -9,11 +10,16 @@ use crate::Repo;
 pub struct Checker<I: Interactor, R: Repo> {
     interactor: I,
     repo: R,
+    skipped: HashSet<String>,
 }
 
 impl<I: Interactor, R: Repo> Checker<I, R> {
     pub fn new(interactor: I, repo: R) -> Self {
-        Self { interactor, repo }
+        Self {
+            interactor,
+            repo,
+            skipped: HashSet::new(),
+        }
     }
 
     #[cfg(test)]
@@ -34,14 +40,23 @@ impl<I: Interactor, R: Repo> Checker<I, R> {
         eprintln!("{} {}", "Error:".red(), details);
     }
 
-    pub fn handle_token(&mut self, path: &Path, token: &str) -> Result<bool> {
+    pub fn handle_token(&mut self, path: &Path, pos: (usize, usize), token: &str) -> Result<()> {
+        let token = token.to_lowercase();
         let ext = path.extension().and_then(|e| e.to_str());
         let file = path.to_str();
-        self.repo.lookup_word(&token.to_lowercase(), file, ext)
+        if self.skipped.contains(&token) {
+            // already skipped
+            return Ok(());
+        }
+        let found = self.repo.lookup_word(&token.to_lowercase(), file, ext)?;
+        if !found {
+            self.handle_error(path, pos, &token)?;
+        }
+        Ok(())
     }
 
-    pub fn handle_error(&mut self, path: &Path, pos: (usize, usize), error: &str) -> Result<()> {
-        let error = error.to_lowercase();
+    // return false if error was *not* handled - will cause checker to exit with (1)
+    fn handle_error(&mut self, path: &Path, pos: (usize, usize), error: &str) -> Result<()> {
         let (lineno, column) = pos;
         let prefix = format!("{}:{}:{}", path.display(), lineno, column);
         println!("{} {}", prefix.bold(), error.blue());
@@ -50,10 +65,11 @@ impl<I: Interactor, R: Repo> Checker<I, R> {
 Add to (g)lobal ignore list
 Add to ignore list for this (e)xtension
 Add to ignore list for this (f)ile
+(s)kip
 (q)uit"#;
 
-        let letter = self.interactor.input_letter(prompt, "gefq");
         loop {
+            let letter = self.interactor.input_letter(prompt, "gefqs");
             match letter.as_ref() {
                 "g" => return self.add_to_global_ignore(&error),
                 "e" => {
@@ -70,6 +86,10 @@ Add to ignore list for this (f)ile
                 }
                 "q" => {
                     bail!("Interrupted by user")
+                }
+                "s" => {
+                    self.skipped.insert(error.to_string());
+                    break;
                 }
                 _ => {
                     unreachable!()
@@ -101,12 +121,6 @@ Add to ignore list for this (f)ile
         };
 
         if !self.repo.known_extension(ext)? {
-            let should_add = self
-                .interactor
-                .confirm(&format!("Add {} to the list of known extensions?", ext));
-            if !should_add {
-                return Ok(false);
-            }
             self.repo.add_extension(ext)?;
         }
 
@@ -127,12 +141,6 @@ Add to ignore list for this (f)ile
         };
 
         if !self.repo.known_file(file_path)? {
-            let should_add = self
-                .interactor
-                .confirm(&format!("Add {} to the list of known paths?", file_path));
-            if !should_add {
-                return Ok(false);
-            }
             self.repo.add_file(file_path)?;
         }
 
@@ -142,6 +150,10 @@ Add to ignore list for this (f)ile
             &format!("the ignore list for path {}", file_path.bold()),
         );
         Ok(true)
+    }
+
+    pub fn skipped(&self) -> bool {
+        !self.skipped.is_empty()
     }
 }
 
@@ -159,41 +171,40 @@ mod tests {
     /// Check that 'foo' is in the globally ignore list
     fn test_adding_to_ignore() {
         let mut fake_repo = FakeRepo::new();
-        fake_repo.add_good_words(&["hello", "world"]).unwrap();
+        fake_repo.insert_good_words(&["hello", "world"]).unwrap();
         let fake_interactor = FakeInteractor::new();
         fake_interactor.push_text("g");
 
-        let mut handler = Checker::new(fake_interactor, fake_repo);
-        handler
-            .handle_error(&Path::new("foo.txt"), (3, 2), "foo")
+        let mut checker = Checker::new(fake_interactor, fake_repo);
+        checker
+            .handle_token(&Path::new("foo.txt"), (3, 2), "foo")
             .unwrap();
 
-        handler.interactor().assert_empty();
-        assert!(handler.repo().lookup_word("foo", None, None).unwrap());
+        checker.interactor().assert_empty();
+        assert!(checker.repo().lookup_word("foo", None, None).unwrap());
     }
 
     #[test]
     /// Scenario:
-    /// * no extensions kwnon yet
-    /// * call handle_error with 'defaultdict' error and a `.py` extension
+    /// * no extensions known yet
+    /// * call handle_token with 'defaultdict' error and a `.py` extension
     /// * press 'e'
     /// * confirm
     ///
-    /// Check that 'foo' is ignored for the `py` extenson
+    /// Check that 'foo' is ignored for the `py` extension
     fn test_adding_to_new_ext() {
         let mut fake_repo = FakeRepo::new();
-        fake_repo.add_good_words(&["hello", "world"]).unwrap();
+        fake_repo.insert_good_words(&["hello", "world"]).unwrap();
         let fake_interactor = FakeInteractor::new();
         fake_interactor.push_text("e");
-        fake_interactor.push_bool(true);
 
-        let mut handler = Checker::new(fake_interactor, fake_repo);
-        handler
-            .handle_error(&Path::new("hello.py"), (3, 2), "defaultdict")
+        let mut checker = Checker::new(fake_interactor, fake_repo);
+        checker
+            .handle_token(&Path::new("hello.py"), (3, 2), "defaultdict")
             .unwrap();
 
-        handler.interactor().assert_empty();
-        assert!(handler
+        checker.interactor().assert_empty();
+        assert!(checker
             .repo()
             .lookup_word("defaultdict", None, Some("py"))
             .unwrap());
@@ -202,25 +213,25 @@ mod tests {
     #[test]
     /// Scenario:
     /// * py extension is known
-    /// * call handle_error with 'defaultdict' error and a `.py` extension
+    /// * call handle_token with 'defaultdict' error and a `.py` extension
     /// * press 'e'
     ///
-    /// Check that 'foo' is ignored for the `py` extenson
+    /// Check that 'foo' is ignored for the `py` extension
     fn test_adding_to_existing_ext() {
         let mut fake_repo = FakeRepo::new();
-        fake_repo.add_good_words(&["hello", "world"]).unwrap();
+        fake_repo.insert_good_words(&["hello", "world"]).unwrap();
         fake_repo.add_extension("py").unwrap();
 
         let fake_interactor = FakeInteractor::new();
         fake_interactor.push_text("e");
 
-        let mut handler = Checker::new(fake_interactor, fake_repo);
-        handler
-            .handle_error(&Path::new("hello.py"), (3, 2), "defaultdict")
+        let mut checker = Checker::new(fake_interactor, fake_repo);
+        checker
+            .handle_token(&Path::new("hello.py"), (3, 2), "defaultdict")
             .unwrap();
 
-        handler.interactor().assert_empty();
-        assert!(handler
+        checker.interactor().assert_empty();
+        assert!(checker
             .repo()
             .lookup_word("defaultdict", None, Some("py"))
             .unwrap());
@@ -229,28 +240,47 @@ mod tests {
     #[test]
     /// Scenario:
     /// * poetry.lock file is known
-    /// * call handle_error with 'abcdef' error ,  `lock` extension and a `poetry.lock` file
+    /// * call handle_token with 'abcdef' error ,  `lock` extension and a `poetry.lock` file
     /// * press 'f'
     ///
     /// Check that 'adbced' is ignored for the `poetry.lock` file
     fn test_adding_to_existing_file() {
         let mut fake_repo = FakeRepo::new();
-        fake_repo.add_good_words(&["hello", "world"]).unwrap();
+        fake_repo.insert_good_words(&["hello", "world"]).unwrap();
         fake_repo.add_extension("py").unwrap();
         fake_repo.add_file("poetry.lock").unwrap();
 
         let fake_interactor = FakeInteractor::new();
         fake_interactor.push_text("f");
 
-        let mut handler = Checker::new(fake_interactor, fake_repo);
-        handler
-            .handle_error(&Path::new("poetry.lock"), (3, 2), "adbcdef")
+        let mut checker = Checker::new(fake_interactor, fake_repo);
+        checker
+            .handle_token(&Path::new("poetry.lock"), (3, 2), "adbcdef")
             .unwrap();
 
-        handler.interactor().assert_empty();
-        assert!(handler
+        checker.interactor().assert_empty();
+        assert!(checker
             .repo()
             .lookup_word("adbcdef", Some("poetry.lock"), Some("lock"))
             .unwrap());
+    }
+
+    #[test]
+    /// Scenario:
+    fn test_remember_skipped_tokens() {
+        let mut fake_repo = FakeRepo::new();
+        fake_repo.insert_good_words(&["hello", "world"]).unwrap();
+
+        let fake_interactor = FakeInteractor::new();
+        fake_interactor.push_text("s");
+
+        let mut checker = Checker::new(fake_interactor, fake_repo);
+        checker
+            .handle_token(&Path::new("foo.py"), (3, 2), "foo")
+            .unwrap();
+
+        checker
+            .handle_token(&Path::new("foo.py"), (5, 2), "foo")
+            .unwrap();
     }
 }

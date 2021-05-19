@@ -1,8 +1,8 @@
 use anyhow::Result;
 
 pub trait Repo {
-    fn add_good_words(&mut self, words: &[&str]) -> Result<()>;
-    fn has_good_words(&self) -> Result<bool>;
+    fn insert_good_words(&mut self, words: &[&str]) -> Result<()>;
+    fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()>;
 
     fn known_extension(&self, ext: &str) -> Result<bool>;
     fn known_file(&self, path: &str) -> Result<bool>;

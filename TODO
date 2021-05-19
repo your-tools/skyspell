@@ -1,6 +1,1 @@
-filter hexadecimial strings and urls more early, probably with regex
-
-Add subcommands like `load_words`, `load_pdict`
-(so that it can work with kak-spell)
-
-Add an option in prompt to replace the word (using ruplacer as a lib ?)
+Filter hexadecimal strings, urls and emails more early, probably with regex

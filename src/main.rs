@@ -17,23 +17,39 @@ struct Opts {
 
 #[derive(Clap)]
 enum Action {
+    ImportWordList(ImportWordList),
+    ImportPersonalDict(ImportPersonalDict),
     Check(Check),
 }
 
 #[derive(Clap)]
 struct Check {
-    source_path: PathBuf,
+    sources: Vec<PathBuf>,
+}
+
+#[derive(Clap)]
+struct ImportWordList {
+    #[clap(long)]
+    list_path: Option<PathBuf>,
+}
+
+#[derive(Clap)]
+struct ImportPersonalDict {
+    #[clap(long)]
+    personal_dict_path: PathBuf,
 }
 
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
     match opts.action {
-        Action::Check(check_opts) => check(check_opts),
+        Action::Check(opts) => check(opts),
+        Action::ImportWordList(opts) => import_word_list(opts),
+        Action::ImportPersonalDict(opts) => import_personal_dict(opts),
     }
 }
 
-fn check(opts: Check) -> Result<()> {
+fn open_db() -> Result<rcspell::Db> {
     let app_dirs = AppDirs::new(Some("rcspell"), false).unwrap();
     let data_dir = app_dirs.data_dir;
     std::fs::create_dir_all(&data_dir)
@@ -43,31 +59,59 @@ fn check(opts: Check) -> Result<()> {
     let db_path = db_path
         .to_str()
         .ok_or_else(|| anyhow!("{} contains non-UTF-8 chars", db_path.display()))?;
-    let mut db = rcspell::db::new(db_path)?;
-    if !db.has_good_words()? {
-        let known_words: Vec<_> = include_str!("words_en.txt")
-            .split_ascii_whitespace()
-            .collect();
-        db.add_good_words(&known_words)?;
+    rcspell::db::new(db_path)
+}
+
+fn check(opts: Check) -> Result<()> {
+    let interactor = rcspell::ConsoleInteractor;
+    let db = open_db()?;
+    let mut checker = rcspell::Checker::new(interactor, db);
+
+    if opts.sources.is_empty() {
+        println!("No path given - nothing to do");
     }
 
-    let interactor = rcspell::ConsoleInteractor;
-    let mut handler = rcspell::Checker::new(interactor, db);
-    let source_path = std::fs::canonicalize(&opts.source_path)?;
+    for path in &opts.sources {
+        let source_path = std::fs::canonicalize(path)?;
 
-    let source = File::open(&source_path)?;
-    let reader = BufReader::new(source);
+        let source = File::open(&source_path)?;
+        let reader = BufReader::new(source);
 
-    for (i, line) in reader.lines().enumerate() {
-        let line = line?;
-        let tokenizer = rcspell::Tokenizer::new(&line);
-        for (word, pos) in tokenizer {
-            let is_known = handler.handle_token(&source_path, word)?;
-            if !is_known {
-                handler.handle_error(&source_path, (i + 1, pos), word)?;
+        for (i, line) in reader.lines().enumerate() {
+            let line = line?;
+            let tokenizer = rcspell::Tokenizer::new(&line);
+            for (word, pos) in tokenizer {
+                checker.handle_token(&source_path, (i + 1, pos), word)?;
             }
         }
     }
+
+    if checker.skipped() {
+        std::process::exit(1);
+    }
+
+    Ok(())
+}
+
+fn import_word_list(opts: ImportWordList) -> Result<()> {
+    let mut db = open_db()?;
+    if opts.list_path.is_none() {
+        let words: Vec<&str> = include_str!("words_en.txt")
+            .split_ascii_whitespace()
+            .collect();
+        db.insert_good_words(&words)?;
+    } else {
+        unimplemented!();
+    }
+
+    Ok(())
+}
+
+fn import_personal_dict(opts: ImportPersonalDict) -> Result<()> {
+    let mut db = open_db()?;
+    let dict = std::fs::read_to_string(&opts.personal_dict_path)?;
+    let words: Vec<&str> = dict.split_ascii_whitespace().collect();
+    db.insert_ignored_words(&words)?;
 
     Ok(())
 }

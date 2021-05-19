@@ -52,13 +52,13 @@ impl Interactor for FakeInteractor {
             .answers
             .borrow_mut()
             .pop_back()
-            .expect("should have got a recoreded answer");
+            .expect("should have got a recorded answer");
         match answer {
             Answer::Text(t) => {
                 print!("> {}", t);
                 t
             }
-            a => panic!("Should have got a text anwser, got {:?}", a),
+            a => panic!("Should have got a text answer, got {:?}", a),
         }
     }
 
@@ -68,16 +68,16 @@ impl Interactor for FakeInteractor {
             .answers
             .borrow_mut()
             .pop_back()
-            .expect("should have got a recoreded answer");
+            .expect("should have got a recorded answer");
         match answer {
             Answer::Text(s) => {
                 println!("> {}", s);
                 if !choices.contains(&s) {
-                    panic!("should have got an answer maching the possible choices");
+                    panic!("should have got an answer matching the possible choices");
                 }
                 s
             }
-            a => panic!("Should have got a text anwser, got {:?}", a),
+            a => panic!("Should have got a text answer, got {:?}", a),
         }
     }
 
@@ -90,13 +90,13 @@ impl Interactor for FakeInteractor {
             .answers
             .borrow_mut()
             .pop_back()
-            .expect("should have got a recoreded answer");
+            .expect("should have got a recorded answer");
         match answer {
             Answer::Int(i) => {
                 println!("> {:?}", i);
                 i
             }
-            a => panic!("Should have got a int anwser, got {:?}", a),
+            a => panic!("Should have got a int answer, got {:?}", a),
         }
     }
 
@@ -106,13 +106,13 @@ impl Interactor for FakeInteractor {
             .answers
             .borrow_mut()
             .pop_back()
-            .expect("should have got a recoreded answer");
+            .expect("should have got a recorded answer");
         match answer {
             Answer::Bool(b) => {
                 println!("> {}", b);
                 b
             }
-            a => panic!("Should have got a boolean anwser, got {:?}", a),
+            a => panic!("Should have got a boolean answer, got {:?}", a),
         }
     }
 }
@@ -136,9 +136,16 @@ impl FakeRepo {
 }
 
 impl Repo for FakeRepo {
-    fn add_good_words(&mut self, words: &[&str]) -> Result<()> {
+    fn insert_good_words(&mut self, words: &[&str]) -> Result<()> {
         for word in words {
             self.good.insert(word.to_string());
+        }
+        Ok(())
+    }
+
+    fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()> {
+        for word in words {
+            self.ignored.insert(word.to_string());
         }
         Ok(())
     }
@@ -211,10 +218,6 @@ impl Repo for FakeRepo {
     fn known_file(&self, file: &str) -> Result<bool> {
         Ok(self.ignored_for_file.contains_key(file))
     }
-
-    fn has_good_words(&self) -> Result<bool> {
-        Ok(!self.good.is_empty())
-    }
 }
 
 #[cfg(test)]
@@ -225,7 +228,7 @@ mod tests {
     #[test]
     fn test_fake_repo_lookup_in_good_words() {
         let mut fake = FakeRepo::new();
-        fake.add_good_words(&["hello", "hi"]).unwrap();
+        fake.insert_good_words(&["hello", "hi"]).unwrap();
 
         assert!(fake.lookup_word("hello", None, None).unwrap());
         assert!(!fake.lookup_word("missstake", None, None).unwrap());
@@ -234,7 +237,7 @@ mod tests {
     #[test]
     fn test_fake_repo_lookup_ignored() {
         let mut fake = FakeRepo::new();
-        fake.add_good_words(&["hello", "hi"]).unwrap();
+        fake.insert_good_words(&["hello", "hi"]).unwrap();
         fake.add_ignored("foobar").unwrap();
 
         assert!(fake.lookup_word("foobar", None, None).unwrap())
@@ -243,7 +246,7 @@ mod tests {
     #[test]
     fn test_fake_repo_lookup_for_extension() {
         let mut fake = FakeRepo::new();
-        fake.add_good_words(&["hello", "hi"]).unwrap();
+        fake.insert_good_words(&["hello", "hi"]).unwrap();
         fake.add_extension("py").unwrap();
         fake.add_ignored_for_extension("defaultdict", "py").unwrap();
 
@@ -256,7 +259,7 @@ mod tests {
     #[test]
     fn test_fake_repo_lookup_for_file() {
         let mut fake = FakeRepo::new();
-        fake.add_good_words(&["hello", "hi"]).unwrap();
+        fake.insert_good_words(&["hello", "hi"]).unwrap();
         fake.add_file("poetry.lock").unwrap();
         fake.add_ignored_for_file("abcdef", "poetry.lock").unwrap();
 
@@ -267,7 +270,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fake_interactor_replay_recorderd_answers() {
+    fn test_fake_interactor_replay_recorded_answers() {
         let fake_interactor = FakeInteractor::new();
         fake_interactor.push_text("Alice");
         fake_interactor.push_text("blue");
@@ -277,7 +280,7 @@ mod tests {
 
         let name = fake_interactor.input("What is your name");
         let color = fake_interactor.input("What is your favorite color");
-        let index = fake_interactor.select("Cofee or tea?", &["coffee", "tea"]);
+        let index = fake_interactor.select("Coffee or tea?", &["coffee", "tea"]);
         let sugar = fake_interactor.confirm("With sugar?");
         let quit = fake_interactor.input_letter("What now?", "qyn");
 

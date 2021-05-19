@@ -43,11 +43,18 @@ impl Db {
 }
 
 impl Repo for Db {
-    fn add_good_words(&mut self, words: &[&str]) -> Result<()> {
-        let new_words: Vec<NewGoodWord> =
-            words.into_iter().map(|x| NewGoodWord { word: x }).collect();
-        diesel::insert_into(good_words)
+    fn insert_good_words(&mut self, words: &[&str]) -> Result<()> {
+        let new_words: Vec<_> = words.into_iter().map(|x| NewGoodWord { word: x }).collect();
+        diesel::insert_or_ignore_into(good_words)
             .values(new_words)
+            .execute(&self.connection)?;
+        Ok(())
+    }
+
+    fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()> {
+        let new_ignored_words: Vec<_> = words.into_iter().map(|x| NewIgnored { word: x }).collect();
+        diesel::insert_or_ignore_into(ignored)
+            .values(new_ignored_words)
             .execute(&self.connection)?;
         Ok(())
     }
@@ -192,11 +199,6 @@ impl Repo for Db {
 
         Ok(file_in_db.is_some())
     }
-
-    fn has_good_words(&self) -> Result<bool> {
-        let first = good_words.first::<GoodWord>(&self.connection).optional()?;
-        Ok(first.is_some())
-    }
 }
 
 #[cfg(test)]
@@ -206,7 +208,7 @@ mod tests {
     #[test]
     fn test_db_lookup_in_good_words() {
         let mut db = Db::new(":memory:").unwrap();
-        db.add_good_words(&["hello", "hi"]).unwrap();
+        db.insert_good_words(&["hello", "hi"]).unwrap();
 
         assert!(db.lookup_word("hello", None, None).unwrap());
     }
@@ -214,7 +216,7 @@ mod tests {
     #[test]
     fn test_db_lookup_in_ignored_words() {
         let mut db = Db::new(":memory:").unwrap();
-        db.add_good_words(&["hello", "hi"]).unwrap();
+        db.insert_good_words(&["hello", "hi"]).unwrap();
         db.add_ignored("foobar").unwrap();
 
         assert!(db.lookup_word("foobar", None, None).unwrap());
@@ -223,7 +225,7 @@ mod tests {
     #[test]
     fn test_db_lookup_in_ignored_extensions() {
         let mut db = Db::new(":memory:").unwrap();
-        db.add_good_words(&["hello", "hi"]).unwrap();
+        db.insert_good_words(&["hello", "hi"]).unwrap();
         db.add_ignored("foobar").unwrap();
         db.add_extension("py").unwrap();
         db.add_ignored_for_extension("defaultdict", "py").unwrap();
@@ -234,7 +236,7 @@ mod tests {
     #[test]
     fn test_db_lookup_in_files() {
         let mut db = Db::new(":memory:").unwrap();
-        db.add_good_words(&["hello", "hi"]).unwrap();
+        db.insert_good_words(&["hello", "hi"]).unwrap();
         db.add_ignored("foobar").unwrap();
         db.add_extension("py").unwrap();
         db.add_file("poetry.lock").unwrap();

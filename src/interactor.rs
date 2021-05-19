@@ -1,4 +1,4 @@
-use dialoguer::{theme::ColorfulTheme, Confirm, Input, Select};
+use dialoguer::{Confirm, Input, Select};
 
 pub trait Interactor {
     fn input(&self, prompt: &str) -> String;
@@ -40,7 +40,7 @@ impl Interactor for ConsoleInteractor {
     }
 
     fn select(&self, prompt: &str, choices: &[&str]) -> Option<usize> {
-        Select::with_theme(&ColorfulTheme::default())
+        Select::new()
             .with_prompt(prompt)
             .items(choices)
             .interact_opt()
@@ -52,10 +52,7 @@ impl Interactor for ConsoleInteractor {
     }
 
     fn confirm(&self, prompt: &str) -> bool {
-        Confirm::with_theme(&ColorfulTheme::default())
-            .with_prompt(prompt)
-            .interact()
-            .unwrap()
+        Confirm::new().with_prompt(prompt).interact().unwrap()
     }
 
     fn error(&self, message: &str) {
