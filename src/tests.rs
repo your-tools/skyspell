@@ -220,84 +220,78 @@ impl Repo for FakeRepo {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[test]
+fn test_fake_repo_lookup_in_good_words() {
+    let mut fake = FakeRepo::new();
+    fake.insert_good_words(&["hello", "hi"]).unwrap();
 
-    use super::*;
+    assert!(fake.lookup_word("hello", None, None).unwrap());
+    assert!(!fake.lookup_word("missstake", None, None).unwrap());
+}
 
-    #[test]
-    fn test_fake_repo_lookup_in_good_words() {
-        let mut fake = FakeRepo::new();
-        fake.insert_good_words(&["hello", "hi"]).unwrap();
+#[test]
+fn test_fake_repo_lookup_ignored() {
+    let mut fake = FakeRepo::new();
+    fake.insert_good_words(&["hello", "hi"]).unwrap();
+    fake.add_ignored("foobar").unwrap();
 
-        assert!(fake.lookup_word("hello", None, None).unwrap());
-        assert!(!fake.lookup_word("missstake", None, None).unwrap());
-    }
+    assert!(fake.lookup_word("foobar", None, None).unwrap())
+}
 
-    #[test]
-    fn test_fake_repo_lookup_ignored() {
-        let mut fake = FakeRepo::new();
-        fake.insert_good_words(&["hello", "hi"]).unwrap();
-        fake.add_ignored("foobar").unwrap();
+#[test]
+fn test_fake_repo_lookup_for_extension() {
+    let mut fake = FakeRepo::new();
+    fake.insert_good_words(&["hello", "hi"]).unwrap();
+    fake.add_extension("py").unwrap();
+    fake.add_ignored_for_extension("defaultdict", "py").unwrap();
 
-        assert!(fake.lookup_word("foobar", None, None).unwrap())
-    }
+    assert!(!fake.lookup_word("defaultdict", None, None).unwrap());
+    assert!(fake
+        .lookup_word("defaultdict", Some("hello.py"), Some("py"))
+        .unwrap());
+}
 
-    #[test]
-    fn test_fake_repo_lookup_for_extension() {
-        let mut fake = FakeRepo::new();
-        fake.insert_good_words(&["hello", "hi"]).unwrap();
-        fake.add_extension("py").unwrap();
-        fake.add_ignored_for_extension("defaultdict", "py").unwrap();
+#[test]
+fn test_fake_repo_lookup_for_file() {
+    let mut fake = FakeRepo::new();
+    fake.insert_good_words(&["hello", "hi"]).unwrap();
+    fake.add_file("poetry.lock").unwrap();
+    fake.add_ignored_for_file("abcdef", "poetry.lock").unwrap();
 
-        assert!(!fake.lookup_word("defaultdict", None, None).unwrap());
-        assert!(fake
-            .lookup_word("defaultdict", Some("hello.py"), Some("py"))
-            .unwrap());
-    }
+    assert!(!fake.lookup_word("abcdef", None, None).unwrap());
+    assert!(fake
+        .lookup_word("abcdef", Some("poetry.lock"), Some("lock"))
+        .unwrap());
+}
 
-    #[test]
-    fn test_fake_repo_lookup_for_file() {
-        let mut fake = FakeRepo::new();
-        fake.insert_good_words(&["hello", "hi"]).unwrap();
-        fake.add_file("poetry.lock").unwrap();
-        fake.add_ignored_for_file("abcdef", "poetry.lock").unwrap();
+#[test]
+fn test_fake_interactor_replay_recorded_answers() {
+    let fake_interactor = FakeInteractor::new();
+    fake_interactor.push_text("Alice");
+    fake_interactor.push_text("blue");
+    fake_interactor.push_int(1);
+    fake_interactor.push_bool(true);
+    fake_interactor.push_text("q");
 
-        assert!(!fake.lookup_word("abcdef", None, None).unwrap());
-        assert!(fake
-            .lookup_word("abcdef", Some("poetry.lock"), Some("lock"))
-            .unwrap());
-    }
+    let name = fake_interactor.input("What is your name");
+    let color = fake_interactor.input("What is your favorite color");
+    let index = fake_interactor.select("Coffee or tea?", &["coffee", "tea"]);
+    let sugar = fake_interactor.confirm("With sugar?");
+    let quit = fake_interactor.input_letter("What now?", "qyn");
 
-    #[test]
-    fn test_fake_interactor_replay_recorded_answers() {
-        let fake_interactor = FakeInteractor::new();
-        fake_interactor.push_text("Alice");
-        fake_interactor.push_text("blue");
-        fake_interactor.push_int(1);
-        fake_interactor.push_bool(true);
-        fake_interactor.push_text("q");
+    assert_eq!(name, "Alice");
+    assert_eq!(color, "blue");
+    assert_eq!(index, Some(1));
+    assert!(sugar);
+    assert_eq!(quit, "q");
+}
 
-        let name = fake_interactor.input("What is your name");
-        let color = fake_interactor.input("What is your favorite color");
-        let index = fake_interactor.select("Coffee or tea?", &["coffee", "tea"]);
-        let sugar = fake_interactor.confirm("With sugar?");
-        let quit = fake_interactor.input_letter("What now?", "qyn");
+#[test]
+#[should_panic]
+fn test_fake_interactor_on_missing_answer() {
+    let fake_interactor = FakeInteractor::new();
+    fake_interactor.push_text("Alice");
 
-        assert_eq!(name, "Alice");
-        assert_eq!(color, "blue");
-        assert_eq!(index, Some(1));
-        assert!(sugar);
-        assert_eq!(quit, "q");
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_fake_interactor_on_missing_answer() {
-        let fake_interactor = FakeInteractor::new();
-        fake_interactor.push_text("Alice");
-
-        fake_interactor.input("What is your name");
-        fake_interactor.input("What is your favorite color");
-    }
+    fake_interactor.input("What is your name");
+    fake_interactor.input("What is your favorite color");
 }

@@ -44,7 +44,7 @@ impl Db {
 
 impl Repo for Db {
     fn insert_good_words(&mut self, words: &[&str]) -> Result<()> {
-        let new_words: Vec<_> = words.into_iter().map(|x| NewGoodWord { word: x }).collect();
+        let new_words: Vec<_> = words.iter().map(|x| NewGoodWord { word: x }).collect();
         diesel::insert_or_ignore_into(good_words)
             .values(new_words)
             .execute(&self.connection)?;
@@ -52,7 +52,7 @@ impl Repo for Db {
     }
 
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()> {
-        let new_ignored_words: Vec<_> = words.into_iter().map(|x| NewIgnored { word: x }).collect();
+        let new_ignored_words: Vec<_> = words.iter().map(|x| NewIgnored { word: x }).collect();
         diesel::insert_or_ignore_into(ignored)
             .values(new_ignored_words)
             .execute(&self.connection)?;
