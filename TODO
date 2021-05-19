@@ -1,1 +1,7 @@
 Filter hexadecimal strings, urls and emails more early, probably with regex
+Allow to add ignore (like oserror in python for instance)
+
+OSError is parsed as (ose, rror) which is wrong obviously
+ditto for YAMLError -> (yamle, rror)
+
+Allow to ignore files globally
