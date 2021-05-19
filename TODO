@@ -7,3 +7,5 @@ ditto for YAMLError -> (yamle, rror)
 Allow to ignore files globally
 
 Non-interactive mode (so you can use it as a linter)
+
+Make it usable from kakoune (a bit like kak-spell, but not exactly)
