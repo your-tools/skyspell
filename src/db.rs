@@ -241,7 +241,7 @@ mod tests {
         db.add_ignored_for_file("abcdef", "poetry.lock").unwrap();
 
         assert!(db
-            .lookup_word("abcdef", Some("poetry.lock"), Some("lok"))
+            .lookup_word("abcdef", Some("poetry.lock"), Some("lock"))
             .unwrap());
     }
 }

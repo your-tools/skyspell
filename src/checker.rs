@@ -6,12 +6,12 @@ use colored::*;
 use crate::Interactor;
 use crate::Repo;
 
-pub struct Handler<I: Interactor, R: Repo> {
+pub struct Checker<I: Interactor, R: Repo> {
     interactor: I,
     repo: R,
 }
 
-impl<I: Interactor, R: Repo> Handler<I, R> {
+impl<I: Interactor, R: Repo> Checker<I, R> {
     pub fn new(interactor: I, repo: R) -> Self {
         Self { interactor, repo }
     }
@@ -24,6 +24,14 @@ impl<I: Interactor, R: Repo> Handler<I, R> {
     #[cfg(test)]
     fn repo(&self) -> &R {
         &self.repo
+    }
+
+    fn print_addition(&self, token: &str, location: &str) {
+        println!("\n{}Added {} to {}\n", "=> ".blue(), token.blue(), location);
+    }
+
+    fn print_error(&self, details: &str) {
+        eprintln!("{} {}", "Error:".red(), details);
     }
 
     pub fn handle_token(&mut self, path: &Path, token: &str) -> Result<bool> {
@@ -61,7 +69,7 @@ Add to ignore list for this (f)ile
                     }
                 }
                 "q" => {
-                    bail!("Interrputed by user")
+                    bail!("Interrupted by user")
                 }
                 _ => {
                     unreachable!()
@@ -73,11 +81,7 @@ Add to ignore list for this (f)ile
 
     fn add_to_global_ignore(&mut self, error: &str) -> Result<()> {
         self.repo.add_ignored(error)?;
-        println!(
-            "\n{}Added {} to the global ignode list\n",
-            "=>".blue(),
-            error.blue()
-        );
+        self.print_addition(error, "the global ignore list");
         Ok(())
     }
 
@@ -85,14 +89,14 @@ Add to ignore list for this (f)ile
         let os_ext = if let Some(os_ext) = path.extension() {
             os_ext
         } else {
-            eprintln!("{} has no extension", path.display());
+            self.print_error(&format!("{} has no extension", path.display()));
             return Ok(false);
         };
 
         let ext = if let Some(s) = os_ext.to_str() {
             s
         } else {
-            eprintln!("{} has a non-UTF-8 extension", path.display());
+            self.print_error(&format!("{} has a non-UTF-8 extension", path.display()));
             return Ok(false);
         };
 
@@ -107,11 +111,9 @@ Add to ignore list for this (f)ile
         }
 
         self.repo.add_ignored_for_extension(error, ext)?;
-        println!(
-            "\n{} Added {} for extension {}\n",
-            "=>".blue(),
-            error.blue(),
-            ext.bold()
+        self.print_addition(
+            error,
+            &format!("the ignore list for extension {}", ext.bold()),
         );
         Ok(true)
     }
@@ -120,7 +122,7 @@ Add to ignore list for this (f)ile
         let file_path = if let Some(s) = path.to_str() {
             s
         } else {
-            eprintln!("{} has a non-UTF-8 extension", path.display());
+            self.print_error(&format!("{} has a non-UTF-8 extension", path.display()));
             return Ok(false);
         };
 
@@ -135,11 +137,9 @@ Add to ignore list for this (f)ile
         }
 
         self.repo.add_ignored_for_file(error, file_path)?;
-        println!(
-            "\n{} Added {} for path {}\n",
-            "=>".blue(),
-            error.blue(),
-            file_path.bold()
+        self.print_addition(
+            error,
+            &format!("the ignore list for path {}", file_path.bold()),
         );
         Ok(true)
     }
@@ -163,7 +163,7 @@ mod tests {
         let fake_interactor = FakeInteractor::new();
         fake_interactor.push_text("g");
 
-        let mut handler = Handler::new(fake_interactor, fake_repo);
+        let mut handler = Checker::new(fake_interactor, fake_repo);
         handler
             .handle_error(&Path::new("foo.txt"), (3, 2), "foo")
             .unwrap();
@@ -187,7 +187,7 @@ mod tests {
         fake_interactor.push_text("e");
         fake_interactor.push_bool(true);
 
-        let mut handler = Handler::new(fake_interactor, fake_repo);
+        let mut handler = Checker::new(fake_interactor, fake_repo);
         handler
             .handle_error(&Path::new("hello.py"), (3, 2), "defaultdict")
             .unwrap();
@@ -214,7 +214,7 @@ mod tests {
         let fake_interactor = FakeInteractor::new();
         fake_interactor.push_text("e");
 
-        let mut handler = Handler::new(fake_interactor, fake_repo);
+        let mut handler = Checker::new(fake_interactor, fake_repo);
         handler
             .handle_error(&Path::new("hello.py"), (3, 2), "defaultdict")
             .unwrap();
@@ -242,7 +242,7 @@ mod tests {
         let fake_interactor = FakeInteractor::new();
         fake_interactor.push_text("f");
 
-        let mut handler = Handler::new(fake_interactor, fake_repo);
+        let mut handler = Checker::new(fake_interactor, fake_repo);
         handler
             .handle_error(&Path::new("poetry.lock"), (3, 2), "adbcdef")
             .unwrap();

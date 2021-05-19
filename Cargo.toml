@@ -1,11 +1,12 @@
 [package]
 name = "rcspell"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["Dimitri Merejkowsky <dimitri@dmerej.info>"]
 edition = "2018"
 
 [dependencies]
 anyhow = "1.0.40"
+clap = "3.0.0-beta.2"
 colored = "2.0.0"
 dialoguer = "0.8.0"
 diesel = { version = "1.4.6", features = ["sqlite"] }

@@ -3,11 +3,37 @@ use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 
 use anyhow::{anyhow, Context, Result};
+use clap::Clap;
 use platform_dirs::AppDirs;
 
 use rcspell::Repo;
 
+#[derive(Clap)]
+#[clap(version = env!("CARGO_PKG_VERSION"))]
+struct Opts {
+    #[clap(subcommand)]
+    action: Action,
+}
+
+#[derive(Clap)]
+enum Action {
+    Check(Check),
+}
+
+#[derive(Clap)]
+struct Check {
+    source_path: PathBuf,
+}
+
 fn main() -> Result<()> {
+    let opts: Opts = Opts::parse();
+
+    match opts.action {
+        Action::Check(check_opts) => check(check_opts),
+    }
+}
+
+fn check(opts: Check) -> Result<()> {
     let app_dirs = AppDirs::new(Some("rcspell"), false).unwrap();
     let data_dir = app_dirs.data_dir;
     std::fs::create_dir_all(&data_dir)
@@ -26,10 +52,9 @@ fn main() -> Result<()> {
     }
 
     let interactor = rcspell::ConsoleInteractor;
-    let mut handler = rcspell::Handler::new(interactor, db);
+    let mut handler = rcspell::Checker::new(interactor, db);
+    let source_path = std::fs::canonicalize(&opts.source_path)?;
 
-    let args: Vec<_> = std::env::args().collect();
-    let source_path = PathBuf::from(&args[1]);
     let source = File::open(&source_path)?;
     let reader = BufReader::new(source);
 
