@@ -1,1 +1,4 @@
 filter hexadecimial strings and urls more early, probably with regex
+
+Add subcommands like `load_words`, `load_pdict`
+(so that it can work with kak-spell)
