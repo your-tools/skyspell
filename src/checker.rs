@@ -7,13 +7,13 @@ use colored::*;
 use crate::Interactor;
 use crate::Repo;
 
-pub struct Checker<I: Interactor, R: Repo> {
+pub struct InteractiveChecker<I: Interactor, R: Repo> {
     interactor: I,
     repo: R,
     skipped: HashSet<String>,
 }
 
-impl<I: Interactor, R: Repo> Checker<I, R> {
+impl<I: Interactor, R: Repo> InteractiveChecker<I, R> {
     pub fn new(interactor: I, repo: R) -> Self {
         Self {
             interactor,
@@ -175,7 +175,7 @@ mod tests {
         let fake_interactor = FakeInteractor::new();
         fake_interactor.push_text("g");
 
-        let mut checker = Checker::new(fake_interactor, fake_repo);
+        let mut checker = InteractiveChecker::new(fake_interactor, fake_repo);
         checker
             .handle_token(&Path::new("foo.txt"), (3, 2), "foo")
             .unwrap();
@@ -198,7 +198,7 @@ mod tests {
         let fake_interactor = FakeInteractor::new();
         fake_interactor.push_text("e");
 
-        let mut checker = Checker::new(fake_interactor, fake_repo);
+        let mut checker = InteractiveChecker::new(fake_interactor, fake_repo);
         checker
             .handle_token(&Path::new("hello.py"), (3, 2), "defaultdict")
             .unwrap();
@@ -225,7 +225,7 @@ mod tests {
         let fake_interactor = FakeInteractor::new();
         fake_interactor.push_text("e");
 
-        let mut checker = Checker::new(fake_interactor, fake_repo);
+        let mut checker = InteractiveChecker::new(fake_interactor, fake_repo);
         checker
             .handle_token(&Path::new("hello.py"), (3, 2), "defaultdict")
             .unwrap();
@@ -253,7 +253,7 @@ mod tests {
         let fake_interactor = FakeInteractor::new();
         fake_interactor.push_text("f");
 
-        let mut checker = Checker::new(fake_interactor, fake_repo);
+        let mut checker = InteractiveChecker::new(fake_interactor, fake_repo);
         checker
             .handle_token(&Path::new("poetry.lock"), (3, 2), "adbcdef")
             .unwrap();
@@ -274,7 +274,7 @@ mod tests {
         let fake_interactor = FakeInteractor::new();
         fake_interactor.push_text("s");
 
-        let mut checker = Checker::new(fake_interactor, fake_repo);
+        let mut checker = InteractiveChecker::new(fake_interactor, fake_repo);
         checker
             .handle_token(&Path::new("foo.py"), (3, 2), "foo")
             .unwrap();
