@@ -11,7 +11,7 @@ pub mod repo;
 pub(crate) mod schema;
 pub(crate) mod token;
 
-pub use checker::Checker;
+pub use checker::{Checker, InteractiveChecker, NonInteractiveChecker};
 pub use db::Db;
 pub use interactor::{ConsoleInteractor, Interactor};
 pub use repo::Repo;

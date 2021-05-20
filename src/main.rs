@@ -6,7 +6,8 @@ use anyhow::{anyhow, Context, Result};
 use clap::Clap;
 use platform_dirs::AppDirs;
 
-use rcspell::Repo;
+use rcspell::ConsoleInteractor;
+use rcspell::{Checker, InteractiveChecker, NonInteractiveChecker, Repo};
 
 #[derive(Clap)]
 #[clap(version = env!("CARGO_PKG_VERSION"))]
@@ -17,14 +18,14 @@ struct Opts {
 
 #[derive(Clap)]
 enum Action {
-    Add(Add),
-    ImportWordList(ImportWordList),
-    ImportPersonalDict(ImportPersonalDict),
-    Check(Check),
+    Add(AddOpts),
+    ImportWordList(ImportWordListOpts),
+    ImportPersonalDict(ImportPersonalDictOpts),
+    Check(CheckOpts),
 }
 
 #[derive(Clap)]
-struct Add {
+struct AddOpts {
     word: String,
     #[clap(long)]
     ext: Option<String>,
@@ -33,18 +34,21 @@ struct Add {
 }
 
 #[derive(Clap)]
-struct Check {
+struct CheckOpts {
+    #[clap(long)]
+    non_interactive: bool,
+
     sources: Vec<PathBuf>,
 }
 
 #[derive(Clap)]
-struct ImportWordList {
+struct ImportWordListOpts {
     #[clap(long)]
     list_path: Option<PathBuf>,
 }
 
 #[derive(Clap)]
-struct ImportPersonalDict {
+struct ImportPersonalDictOpts {
     #[clap(long)]
     personal_dict_path: PathBuf,
 }
@@ -73,7 +77,7 @@ fn open_db() -> Result<rcspell::Db> {
     rcspell::db::new(db_path)
 }
 
-fn add(opts: Add) -> Result<()> {
+fn add(opts: AddOpts) -> Result<()> {
     let word = &opts.word;
     let mut db = open_db()?;
 
@@ -92,11 +96,22 @@ fn add(opts: Add) -> Result<()> {
     Ok(())
 }
 
-fn check(opts: Check) -> Result<()> {
-    let interactor = rcspell::ConsoleInteractor;
+fn check(opts: CheckOpts) -> Result<()> {
     let db = open_db()?;
-    let mut checker = rcspell::Checker::new(interactor, db);
+    match opts.non_interactive {
+        true => {
+            let mut checker = NonInteractiveChecker::new(db);
+            check_with(&mut checker, opts)
+        }
+        false => {
+            let interactor = ConsoleInteractor;
+            let mut checker = InteractiveChecker::new(interactor, db);
+            check_with(&mut checker, opts)
+        }
+    }
+}
 
+fn check_with<C: Checker>(checker: &mut C, opts: CheckOpts) -> Result<()> {
     if opts.sources.is_empty() {
         println!("No path given - nothing to do");
     }
@@ -116,14 +131,14 @@ fn check(opts: Check) -> Result<()> {
         }
     }
 
-    if checker.skipped() {
+    if !checker.success() {
         std::process::exit(1);
     }
 
     Ok(())
 }
 
-fn import_word_list(opts: ImportWordList) -> Result<()> {
+fn import_word_list(opts: ImportWordListOpts) -> Result<()> {
     let mut db = open_db()?;
     if opts.list_path.is_none() {
         let words: Vec<&str> = include_str!("words_en.txt")
@@ -137,7 +152,7 @@ fn import_word_list(opts: ImportWordList) -> Result<()> {
     Ok(())
 }
 
-fn import_personal_dict(opts: ImportPersonalDict) -> Result<()> {
+fn import_personal_dict(opts: ImportPersonalDictOpts) -> Result<()> {
     let mut db = open_db()?;
     let dict = std::fs::read_to_string(&opts.personal_dict_path)?;
     let words: Vec<&str> = dict.split_ascii_whitespace().collect();
