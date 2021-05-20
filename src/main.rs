@@ -17,9 +17,19 @@ struct Opts {
 
 #[derive(Clap)]
 enum Action {
+    Add(Add),
     ImportWordList(ImportWordList),
     ImportPersonalDict(ImportPersonalDict),
     Check(Check),
+}
+
+#[derive(Clap)]
+struct Add {
+    word: String,
+    #[clap(long)]
+    ext: Option<String>,
+    #[clap(long)]
+    file: Option<PathBuf>,
 }
 
 #[derive(Clap)]
@@ -43,6 +53,7 @@ fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
     match opts.action {
+        Action::Add(opts) => add(opts),
         Action::Check(opts) => check(opts),
         Action::ImportWordList(opts) => import_word_list(opts),
         Action::ImportPersonalDict(opts) => import_personal_dict(opts),
@@ -60,6 +71,25 @@ fn open_db() -> Result<rcspell::Db> {
         .to_str()
         .ok_or_else(|| anyhow!("{} contains non-UTF-8 chars", db_path.display()))?;
     rcspell::db::new(db_path)
+}
+
+fn add(opts: Add) -> Result<()> {
+    let word = &opts.word;
+    let mut db = open_db()?;
+
+    if let Some(p) = opts.file {
+        let full_path = std::fs::canonicalize(p)?;
+        let file = full_path
+            .to_str()
+            .ok_or_else(|| anyhow!("{} contains non-UTF-8 chars", full_path.display()))?;
+        db.add_ignored_for_file(word, file)?;
+    } else if let Some(e) = opts.ext {
+        db.add_ignored_for_extension(word, &e)?;
+    } else {
+        db.add_ignored(word)?;
+    }
+
+    Ok(())
 }
 
 fn check(opts: Check) -> Result<()> {
