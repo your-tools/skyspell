@@ -1,11 +1,7 @@
-Filter hexadecimal strings, urls and emails more early, probably with regex
-Allow to add ignore (like oserror in python for instance)
-
-OSError is parsed as (ose, rror) which is wrong obviously
-ditto for YAMLError -> (yamle, rror)
-
 Allow to ignore files globally
 
-Non-interactive mode (so you can use it as a linter)
-
 Make it usable from kakoune (a bit like kak-spell, but not exactly)
+
+Move assert_empty check to FakeInteractor::drop()
+
+Check coverage with tarpaulin
