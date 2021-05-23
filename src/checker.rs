@@ -149,9 +149,7 @@ Add to ignore list for this (f)ile
             return Ok(false);
         };
 
-        if !self.repo.known_extension(ext)? {
-            self.repo.add_extension(ext)?;
-        }
+        self.repo.add_extension(ext)?;
 
         self.repo.add_ignored_for_extension(error, ext)?;
         print_addition(
@@ -169,9 +167,7 @@ Add to ignore list for this (f)ile
             return Ok(false);
         };
 
-        if !self.repo.known_file(file_path)? {
-            self.repo.add_file(file_path)?;
-        }
+        self.repo.add_file(file_path)?;
 
         self.repo.add_ignored_for_file(error, file_path)?;
         print_addition(

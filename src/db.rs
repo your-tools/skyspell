@@ -72,7 +72,7 @@ impl Repo for Db {
 
     fn add_extension(&mut self, new_ext: &str) -> Result<()> {
         let new_extension = NewExtension { extension: new_ext };
-        diesel::insert_into(extensions)
+        diesel::insert_or_ignore_into(extensions)
             .values(new_extension)
             .execute(&self.connection)?;
         Ok(())
@@ -82,7 +82,7 @@ impl Repo for Db {
         let new_file = NewFile {
             full_path: new_file,
         };
-        diesel::insert_into(files)
+        diesel::insert_or_ignore_into(files)
             .values(new_file)
             .execute(&self.connection)?;
         Ok(())
@@ -180,24 +180,6 @@ impl Repo for Db {
         }
 
         Ok(false)
-    }
-
-    fn known_extension(&self, ext: &str) -> Result<bool> {
-        let ext_in_db = extensions
-            .filter(extension.eq(ext))
-            .first::<Extension>(&self.connection)
-            .optional()?;
-
-        Ok(ext_in_db.is_some())
-    }
-
-    fn known_file(&self, path: &str) -> Result<bool> {
-        let file_in_db = files
-            .filter(full_path.eq(path))
-            .first::<File>(&self.connection)
-            .optional()?;
-
-        Ok(file_in_db.is_some())
     }
 }
 

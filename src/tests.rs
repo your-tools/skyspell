@@ -212,14 +212,6 @@ impl Repo for FakeRepo {
 
         Ok(false)
     }
-
-    fn known_extension(&self, extension: &str) -> Result<bool> {
-        Ok(self.ignored_for_ext.contains_key(extension))
-    }
-
-    fn known_file(&self, file: &str) -> Result<bool> {
-        Ok(self.ignored_for_file.contains_key(file))
-    }
 }
 
 #[test]
