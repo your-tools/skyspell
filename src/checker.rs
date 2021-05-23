@@ -171,7 +171,9 @@ Always skip this file (p)ath
             return Ok(false);
         };
 
-        self.repo.add_extension(ext)?;
+        if !self.repo.known_extension(ext)? {
+            self.repo.add_extension(ext)?;
+        }
 
         self.repo.add_ignored_for_extension(error, ext)?;
         print_addition(
@@ -189,7 +191,9 @@ Always skip this file (p)ath
             return Ok(false);
         };
 
-        self.repo.add_file(file_path)?;
+        if !self.repo.known_file(file_path)? {
+            self.repo.add_file(file_path)?;
+        }
 
         self.repo.add_ignored_for_file(error, file_path)?;
         print_addition(
@@ -262,7 +266,7 @@ fn print_unknown_token(token: &str, path: &Path, pos: (usize, usize)) {
 }
 
 fn lookup_token<R: Repo>(repo: &R, token: &str, path: &Path) -> Result<bool> {
-    repo.lookup_word(&token.to_lowercase(), path)
+    repo.lookup_word(&token, path)
 }
 
 #[cfg(test)]

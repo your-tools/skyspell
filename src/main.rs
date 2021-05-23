@@ -163,7 +163,7 @@ fn check_with<C: Checker>(checker: &mut C, opts: CheckOpts) -> Result<()> {
 fn import_word_list(opts: ImportWordListOpts) -> Result<()> {
     let mut db = open_db()?;
     if opts.list_path.is_none() {
-        let words: Vec<&str> = include_str!("words_en.txt")
+        let words: Vec<&str> = include_str!("../data/words_en.txt")
             .split_ascii_whitespace()
             .collect();
         db.insert_good_words(&words)?;

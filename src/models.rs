@@ -1,5 +1,6 @@
 use crate::schema::{
-    extensions, files, good_words, ignored, ignored_for_ext, ignored_for_file, skipped_files,
+    extensions, files, good_words, ignored, ignored_for_ext, ignored_for_file, skipped_file_names,
+    skipped_paths,
 };
 
 #[derive(Insertable)]
@@ -41,10 +42,15 @@ pub(crate) struct NewIgnoredForFile<'a> {
 }
 
 #[derive(Insertable)]
-#[table_name = "skipped_files"]
-pub(crate) struct NewSkippedFile<'a> {
-    pub file_name: Option<&'a str>,
-    pub full_path: Option<&'a str>,
+#[table_name = "skipped_file_names"]
+pub(crate) struct NewSkippedFileName<'a> {
+    pub file_name: &'a str,
+}
+
+#[derive(Insertable)]
+#[table_name = "skipped_paths"]
+pub(crate) struct NewSkippedPath<'a> {
+    pub full_path: &'a str,
 }
 
 #[derive(Queryable)]

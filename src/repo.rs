@@ -12,6 +12,9 @@ pub trait Repo {
     // Add the file to the list of known full paths
     fn add_file(&mut self, full_path: &str) -> Result<()>;
 
+    fn known_extension(&self, ext: &str) -> Result<bool>;
+    fn known_file(&self, full_path: &str) -> Result<bool>;
+
     // Always skip this file name - to be used with Cargo.lock, yarn.lock
     // and the like
     fn skip_file_name(&mut self, filename: &str) -> Result<()>;

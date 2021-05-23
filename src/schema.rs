@@ -43,10 +43,16 @@ table! {
 }
 
 table! {
-    skipped_files (id) {
+    skipped_file_names (id) {
         id -> Integer,
-        file_name -> Nullable<Text>,
-        full_path -> Nullable<Text>,
+        file_name -> Text,
+    }
+}
+
+table! {
+    skipped_paths (id) {
+        id -> Integer,
+        full_path -> Text,
     }
 }
 
@@ -60,5 +66,6 @@ allow_tables_to_appear_in_same_query!(
     ignored,
     ignored_for_ext,
     ignored_for_file,
-    skipped_files,
+    skipped_file_names,
+    skipped_paths,
 );

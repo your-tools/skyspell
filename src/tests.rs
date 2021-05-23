@@ -238,6 +238,14 @@ impl Repo for FakeRepo {
         Ok(false)
     }
 
+    fn known_extension(&self, ext: &str) -> Result<bool> {
+        Ok(self.ignored_for_ext.contains_key(ext))
+    }
+
+    fn known_file(&self, full_path: &str) -> Result<bool> {
+        Ok(self.ignored_for_file.contains_key(full_path))
+    }
+
     fn skip_file_name(&mut self, filename: &str) -> Result<()> {
         self.skipped_file_names.insert(filename.to_string());
         Ok(())

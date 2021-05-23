@@ -7,13 +7,22 @@ use diesel::sqlite::SqliteConnection;
 
 use crate::models::*;
 use crate::repo::Repo;
-use crate::schema::extensions::dsl::{extension, extensions};
-use crate::schema::files::dsl::{files, full_path};
+use crate::schema::extensions::dsl::{extension, extensions, id as extension_pk};
+use crate::schema::files::dsl::{files, full_path, id as file_pk};
 use crate::schema::good_words::dsl::{good_words, word as good_word};
 use crate::schema::ignored::dsl::{ignored, word as ignored_word};
-use crate::schema::ignored_for_ext::dsl::{extension_id, ignored_for_ext, word as ext_word};
-use crate::schema::ignored_for_file::dsl::{file_id, ignored_for_file, word as file_word};
-use crate::schema::skipped_files::dsl::{file_name, full_path as skipped_full_path, skipped_files};
+use crate::schema::ignored_for_ext::dsl::{
+    extension_id as extension_fk, ignored_for_ext, word as ext_word,
+};
+use crate::schema::ignored_for_file::dsl::{
+    file_id as file_fk, ignored_for_file, word as file_word,
+};
+use crate::schema::skipped_file_names::dsl::{
+    file_name as skipped_file_name, id as skipped_file_name_id, skipped_file_names,
+};
+use crate::schema::skipped_paths::dsl::{
+    full_path as skipped_path, id as skipped_path_id, skipped_paths,
+};
 
 diesel_migrations::embed_migrations!("migrations");
 
@@ -61,7 +70,44 @@ impl Repo for Db {
         Ok(())
     }
 
+    fn add_extension(&mut self, new_ext: &str) -> Result<()> {
+        let new_extension = NewExtension { extension: new_ext };
+        diesel::insert_into(extensions)
+            .values(new_extension)
+            .execute(&self.connection)?;
+        Ok(())
+    }
+
+    fn add_file(&mut self, new_file: &str) -> Result<()> {
+        let new_file = NewFile {
+            full_path: new_file,
+        };
+        diesel::insert_into(files)
+            .values(new_file)
+            .execute(&self.connection)?;
+        Ok(())
+    }
+
+    fn known_extension(&self, ext: &str) -> Result<bool> {
+        Ok(extensions
+            .filter(extension.eq(ext))
+            .select(extension_pk)
+            .first::<i32>(&self.connection)
+            .optional()?
+            .is_some())
+    }
+
+    fn known_file(&self, path: &str) -> Result<bool> {
+        Ok(files
+            .filter(full_path.eq(path))
+            .select(file_pk)
+            .first::<i32>(&self.connection)
+            .optional()?
+            .is_some())
+    }
+
     fn add_ignored(&mut self, new_word: &str) -> Result<i32> {
+        let new_word = &new_word.to_lowercase();
         let new_ignored = NewIgnored { word: new_word };
         diesel::insert_into(ignored)
             .values(new_ignored)
@@ -72,25 +118,8 @@ impl Repo for Db {
             .id)
     }
 
-    fn add_extension(&mut self, new_ext: &str) -> Result<()> {
-        let new_extension = NewExtension { extension: new_ext };
-        diesel::insert_or_ignore_into(extensions)
-            .values(new_extension)
-            .execute(&self.connection)?;
-        Ok(())
-    }
-
-    fn add_file(&mut self, new_file: &str) -> Result<()> {
-        let new_file = NewFile {
-            full_path: new_file,
-        };
-        diesel::insert_or_ignore_into(files)
-            .values(new_file)
-            .execute(&self.connection)?;
-        Ok(())
-    }
-
     fn add_ignored_for_extension(&mut self, new_word: &str, existing_ext: &str) -> Result<()> {
+        let new_word = &new_word.to_lowercase();
         let ext_in_db = extensions
             .filter(extension.eq(existing_ext))
             .first::<Extension>(&self.connection)?;
@@ -108,6 +137,7 @@ impl Repo for Db {
     }
 
     fn add_ignored_for_file(&mut self, new_word: &str, existing_file: &str) -> Result<()> {
+        let new_word = &new_word.to_lowercase();
         let file_in_db = files
             .filter(full_path.eq(existing_file))
             .first::<File>(&self.connection)?;
@@ -125,40 +155,39 @@ impl Repo for Db {
     }
 
     fn skip_file_name(&mut self, new_file_name: &str) -> Result<()> {
-        let new_skipped = NewSkippedFile {
-            file_name: Some(new_file_name),
-            full_path: None,
+        let new_skipped = NewSkippedFileName {
+            file_name: new_file_name,
         };
-        diesel::insert_into(skipped_files)
+        diesel::insert_into(skipped_file_names)
             .values(new_skipped)
             .execute(&self.connection)?;
         Ok(())
     }
 
     fn skip_full_path(&mut self, new_full_path: &str) -> Result<()> {
-        let new_skipped = NewSkippedFile {
-            full_path: Some(new_full_path),
-            file_name: None,
+        let new_skipped = NewSkippedPath {
+            full_path: new_full_path,
         };
-        diesel::insert_into(skipped_files)
+        diesel::insert_into(skipped_paths)
             .values(new_skipped)
             .execute(&self.connection)?;
         Ok(())
     }
 
     fn is_skipped(&self, path: &Path) -> Result<bool> {
-        let full_path_ = std::fs::canonicalize(path)?;
-        let full_path_ = match full_path_.to_str() {
+        let full_path_ = match path.to_str() {
             None => return Ok(false),
             Some(f) => f,
         };
 
         // Look for the list of skipped paths
-        let filename_in_db = skipped_files
-            .filter(skipped_full_path.eq(full_path_))
-            .first::<SkippedFile>(&self.connection)
-            .optional()?;
-        if filename_in_db.is_some() {
+        if skipped_paths
+            .filter(skipped_path.eq(full_path_))
+            .select(skipped_path_id)
+            .first::<i32>(&self.connection)
+            .optional()?
+            .is_some()
+        {
             return Ok(true);
         }
 
@@ -168,11 +197,13 @@ impl Repo for Db {
         };
 
         // Look for the list of skipped file names
-        let filename_in_db = skipped_files
-            .filter(file_name.eq(file_name_))
-            .first::<SkippedFile>(&self.connection)
-            .optional()?;
-        if filename_in_db.is_some() {
+        if skipped_file_names
+            .filter(skipped_file_name.eq(file_name_))
+            .select(skipped_file_name_id)
+            .first::<i32>(&self.connection)
+            .optional()?
+            .is_some()
+        {
             return Ok(true);
         }
 
@@ -180,6 +211,7 @@ impl Repo for Db {
     }
 
     fn lookup_word(&self, query: &str, path: &Path) -> Result<bool> {
+        let query = &query.to_lowercase();
         let full_path_ = path.to_str();
         let ext = path.extension().and_then(|x| x.to_str());
 
@@ -211,7 +243,7 @@ impl Repo for Db {
             if let Some(know_ext) = ext_in_db {
                 let res = ignored_for_ext
                     .filter(ext_word.eq(query))
-                    .filter(extension_id.eq(know_ext.id))
+                    .filter(extension_fk.eq(know_ext.id))
                     .first::<IgnoredForExt>(&self.connection)
                     .optional()?;
                 if res.is_some() {
@@ -229,7 +261,7 @@ impl Repo for Db {
             if let Some(known_file) = file_in_db {
                 let res = ignored_for_file
                     .filter(file_word.eq(query))
-                    .filter(file_id.eq(known_file.id))
+                    .filter(file_fk.eq(known_file.id))
                     .first::<IgnoredForFile>(&self.connection)
                     .optional()?;
                 if res.is_some() {
@@ -289,22 +321,16 @@ mod tests {
     #[test]
     fn test_db_lookup_in_skipped_file_names() {
         let mut db = Db::new(":memory:").unwrap();
-        db.insert_good_words(&["hello", "hi"]).unwrap();
         db.skip_file_name("poetry.lock").unwrap();
 
-        assert!(db
-            .lookup_word("abcdef", &Path::new("path/to/poetry.lock"))
-            .unwrap());
+        assert!(db.is_skipped(&Path::new("path/to/poetry.lock")).unwrap());
     }
 
     #[test]
     fn test_db_lookup_in_skipped_paths() {
         let mut db = Db::new(":memory:").unwrap();
-        db.insert_good_words(&["hello", "hi"]).unwrap();
-        db.skip_full_path("/some/path/to/poetry.lock").unwrap();
+        db.skip_full_path("path/to/poetry.lock").unwrap();
 
-        assert!(db
-            .lookup_word("abcdef", &Path::new("/some/path/to/poetry.lock"))
-            .unwrap());
+        assert!(db.is_skipped(&Path::new("path/to/poetry.lock")).unwrap());
     }
 }
