@@ -124,7 +124,7 @@ impl Repo for Db {
         Ok(())
     }
 
-    fn skip_file(&mut self, new_file_name: &str) -> Result<()> {
+    fn skip_file_name(&mut self, new_file_name: &str) -> Result<()> {
         let new_skipped = NewSkippedFile {
             file_name: new_file_name,
         };
@@ -158,7 +158,7 @@ impl Repo for Db {
             return Ok(true);
         }
 
-        // Look for the list of skipped filen names
+        // Look for the list of skipped file names
         if let Some(file_name_) = file_name_ {
             let filename_in_db = skipped_files
                 .filter(file_name.eq(file_name_))
@@ -257,7 +257,7 @@ mod tests {
     fn test_db_lookup_in_skipped() {
         let mut db = Db::new(":memory:").unwrap();
         db.insert_good_words(&["hello", "hi"]).unwrap();
-        db.skip_file("poetry.lock").unwrap();
+        db.skip_file_name("poetry.lock").unwrap();
 
         assert!(db
             .lookup_word("abcdef", &Path::new("path/to/poetry.lock"))

@@ -88,4 +88,5 @@ pub(crate) struct File {
 pub(crate) struct SkippedFile {
     pub id: i32,
     pub file_name: String,
+    pub full_path: String,
 }

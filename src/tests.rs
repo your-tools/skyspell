@@ -223,7 +223,7 @@ impl Repo for FakeRepo {
         Ok(false)
     }
 
-    fn skip_file(&mut self, filename: &str) -> Result<()> {
+    fn skip_file_name(&mut self, filename: &str) -> Result<()> {
         self.skipped.insert(filename.to_string());
         Ok(())
     }
@@ -282,7 +282,7 @@ fn test_fake_repo_lookup_for_file() {
 fn test_fake_repo_skipping_filename() {
     let mut fake = FakeRepo::new();
     fake.insert_good_words(&["hello", "hi"]).unwrap();
-    fake.skip_file("poetry.lock").unwrap();
+    fake.skip_file_name("poetry.lock").unwrap();
 
     assert!(fake
         .lookup_word("abcdef", &Path::new("path/to/poetry.lock"))

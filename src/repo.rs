@@ -12,9 +12,9 @@ pub trait Repo {
     // Add the file to the list of known full paths
     fn add_file(&mut self, full_path: &str) -> Result<()>;
 
-    // Always skip this fille name - to be used with Cargo.lock, yarn.lock
+    // Always skip this file name - to be used with Cargo.lock, yarn.lock
     // and the like
-    fn skip_file(&mut self, filename: &str) -> Result<()>;
+    fn skip_file_name(&mut self, filename: &str) -> Result<()>;
 
     // Add word to the global ignore list
     fn add_ignored(&mut self, word: &str) -> Result<i32>;

@@ -22,6 +22,7 @@ enum Action {
     ImportWordList(ImportWordListOpts),
     ImportPersonalDict(ImportPersonalDictOpts),
     Check(CheckOpts),
+    Skip(SkipOpts),
 }
 
 #[derive(Clap)]
@@ -53,6 +54,11 @@ struct ImportPersonalDictOpts {
     personal_dict_path: PathBuf,
 }
 
+#[derive(Clap)]
+struct SkipOpts {
+    path: PathBuf,
+}
+
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
@@ -61,6 +67,7 @@ fn main() -> Result<()> {
         Action::Check(opts) => check(opts),
         Action::ImportWordList(opts) => import_word_list(opts),
         Action::ImportPersonalDict(opts) => import_personal_dict(opts),
+        Action::Skip(opts) => skip(opts),
     }
 }
 
@@ -159,4 +166,10 @@ fn import_personal_dict(opts: ImportPersonalDictOpts) -> Result<()> {
     db.insert_ignored_words(&words)?;
 
     Ok(())
+}
+
+fn skip(opts: SkipOpts) -> Result<()> {
+    let mut db = open_db()?;
+
+    db.skip_file_name(&opts.path.file_name().unwrap().to_str().unwrap())
 }

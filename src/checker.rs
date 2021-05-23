@@ -91,25 +91,29 @@ impl<I: Interactor, R: Repo> InteractiveChecker<I, R> {
         println!("{} {}", prefix.bold(), error.blue());
         let prompt = r#"What to do?
 
-Add to (g)lobal ignore list
-Add to ignore list for this (e)xtension
-Add to ignore list for this (f)ile
-(s)kip
+Add word to (g)lobal ignore list
+Add word to ignore list for this (e)xtension
+Add word to ignore list for this (f)ull path
+Always skip this file (n)ame
+(s)kip this error
 (q)uit"#;
 
         loop {
-            let letter = self.interactor.input_letter(prompt, "gefqs");
+            let letter = self.interactor.input_letter(prompt, "gefnqs");
             match letter.as_ref() {
                 "g" => return self.add_to_global_ignore(&error),
                 "e" => {
-                    let success = self.handle_ext(path, &error)?;
-                    if success {
+                    if self.handle_ext(path, &error)? {
                         break;
                     }
                 }
                 "f" => {
-                    let success = self.handle_file(path, &error)?;
-                    if success {
+                    if self.handle_full_path(path, &error)? {
+                        break;
+                    }
+                }
+                "n" => {
+                    if self.handle_file_name(path)? {
                         break;
                     }
                 }
@@ -159,7 +163,7 @@ Add to ignore list for this (f)ile
         Ok(true)
     }
 
-    fn handle_file(&mut self, path: &Path, error: &str) -> Result<bool> {
+    fn handle_full_path(&mut self, path: &Path, error: &str) -> Result<bool> {
         let file_path = if let Some(s) = path.to_str() {
             s
         } else {
@@ -173,6 +177,31 @@ Add to ignore list for this (f)ile
         print_addition(
             error,
             &format!("the ignore list for path {}", file_path.bold()),
+        );
+        Ok(true)
+    }
+
+    fn handle_file_name(&mut self, path: &Path) -> Result<bool> {
+        let file_name = if let Some(s) = path.file_name() {
+            s
+        } else {
+            print_error(&format!("{} has no file name", path.display()));
+            return Ok(false);
+        };
+
+        let file_name = if let Some(s) = file_name.to_str() {
+            s
+        } else {
+            print_error(&format!("{} has a non-UTF-8 file name", path.display()));
+            return Ok(false);
+        };
+
+        self.repo.skip_file_name(file_name)?;
+
+        println!(
+            "\n{}Added {} to the list of file names to skip\n",
+            "=> ".blue(),
+            file_name,
         );
         Ok(true)
     }
@@ -226,6 +255,29 @@ mod tests {
         assert!(checker
             .repo()
             .lookup_word("foo", &Path::new("other.txt"))
+            .unwrap());
+    }
+
+    #[test]
+    /// Scenario:
+    /// * call handle_error with 'foo' and path/to/yarn.lock
+    /// * add 'yarn.lock' to the global ignore list (aka: press 'n')
+    ///
+    /// Check that 'foo' is in also ignored for other/path/to/yarn.lock
+    fn test_adding_to_skipped() {
+        let mut fake_repo = FakeRepo::new();
+        fake_repo.insert_good_words(&["hello", "world"]).unwrap();
+        let fake_interactor = FakeInteractor::new();
+        fake_interactor.push_text("n");
+
+        let mut checker = InteractiveChecker::new(fake_interactor, fake_repo);
+        checker
+            .handle_token(&Path::new("path/to/yarn.lock"), (3, 2), "foo")
+            .unwrap();
+
+        assert!(checker
+            .repo()
+            .lookup_word("foo", &Path::new("path/to/other/yarn.lock"))
             .unwrap());
     }
 

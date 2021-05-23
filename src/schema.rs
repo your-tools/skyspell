@@ -46,6 +46,7 @@ table! {
     skipped_files (id) {
         id -> Integer,
         file_name -> Text,
+        full_path -> Text,
     }
 }
 
