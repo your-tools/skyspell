@@ -3,3 +3,5 @@ Allow to ignore files globally
 Make it usable from kakoune (a bit like kak-spell, but not exactly)
 
 Check coverage with tarpaulin
+
+Handle backslash
