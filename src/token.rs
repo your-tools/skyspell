@@ -170,7 +170,7 @@ mod tests {
 
     #[test]
     fn test_snake_case_3() {
-        assert_eq!(extract_word("foo_").unwrap(), ("foo", 2));
+        assert_eq!(extract_word("foo_").unwrap(), ("foo", 0));
     }
 
     #[test]

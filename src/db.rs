@@ -13,7 +13,7 @@ use crate::schema::good_words::dsl::{good_words, word as good_word};
 use crate::schema::ignored::dsl::{ignored, word as ignored_word};
 use crate::schema::ignored_for_ext::dsl::{extension_id, ignored_for_ext, word as ext_word};
 use crate::schema::ignored_for_file::dsl::{file_id, ignored_for_file, word as file_word};
-use crate::schema::skipped_files::dsl::{file_name, skipped_files};
+use crate::schema::skipped_files::dsl::{file_name, full_path as skipped_full_path, skipped_files};
 
 diesel_migrations::embed_migrations!("migrations");
 
@@ -126,7 +126,8 @@ impl Repo for Db {
 
     fn skip_file_name(&mut self, new_file_name: &str) -> Result<()> {
         let new_skipped = NewSkippedFile {
-            file_name: new_file_name,
+            file_name: Some(new_file_name),
+            full_path: None,
         };
         diesel::insert_into(skipped_files)
             .values(new_skipped)
@@ -134,10 +135,53 @@ impl Repo for Db {
         Ok(())
     }
 
+    fn skip_full_path(&mut self, new_full_path: &str) -> Result<()> {
+        let new_skipped = NewSkippedFile {
+            full_path: Some(new_full_path),
+            file_name: None,
+        };
+        diesel::insert_into(skipped_files)
+            .values(new_skipped)
+            .execute(&self.connection)?;
+        Ok(())
+    }
+
+    fn is_skipped(&self, path: &Path) -> Result<bool> {
+        let full_path_ = std::fs::canonicalize(path)?;
+        let full_path_ = match full_path_.to_str() {
+            None => return Ok(false),
+            Some(f) => f,
+        };
+
+        // Look for the list of skipped paths
+        let filename_in_db = skipped_files
+            .filter(skipped_full_path.eq(full_path_))
+            .first::<SkippedFile>(&self.connection)
+            .optional()?;
+        if filename_in_db.is_some() {
+            return Ok(true);
+        }
+
+        let file_name_ = match path.file_name().and_then(|x| x.to_str()) {
+            None => return Ok(false),
+            Some(n) => n,
+        };
+
+        // Look for the list of skipped file names
+        let filename_in_db = skipped_files
+            .filter(file_name.eq(file_name_))
+            .first::<SkippedFile>(&self.connection)
+            .optional()?;
+        if filename_in_db.is_some() {
+            return Ok(true);
+        }
+
+        Ok(false)
+    }
+
     fn lookup_word(&self, query: &str, path: &Path) -> Result<bool> {
         let full_path_ = path.to_str();
         let ext = path.extension().and_then(|x| x.to_str());
-        let file_name_ = path.file_name().and_then(|f| f.to_str());
 
         // In the good_words table -> true
         let res = good_words
@@ -156,17 +200,6 @@ impl Repo for Db {
 
         if res.is_some() {
             return Ok(true);
-        }
-
-        // Look for the list of skipped file names
-        if let Some(file_name_) = file_name_ {
-            let filename_in_db = skipped_files
-                .filter(file_name.eq(file_name_))
-                .first::<SkippedFile>(&self.connection)
-                .optional()?;
-            if filename_in_db.is_some() {
-                return Ok(true);
-            }
         }
 
         // Look for the table specific to the ext (if given)
@@ -254,13 +287,24 @@ mod tests {
     }
 
     #[test]
-    fn test_db_lookup_in_skipped() {
+    fn test_db_lookup_in_skipped_file_names() {
         let mut db = Db::new(":memory:").unwrap();
         db.insert_good_words(&["hello", "hi"]).unwrap();
         db.skip_file_name("poetry.lock").unwrap();
 
         assert!(db
             .lookup_word("abcdef", &Path::new("path/to/poetry.lock"))
+            .unwrap());
+    }
+
+    #[test]
+    fn test_db_lookup_in_skipped_paths() {
+        let mut db = Db::new(":memory:").unwrap();
+        db.insert_good_words(&["hello", "hi"]).unwrap();
+        db.skip_full_path("/some/path/to/poetry.lock").unwrap();
+
+        assert!(db
+            .lookup_word("abcdef", &Path::new("/some/path/to/poetry.lock"))
             .unwrap());
     }
 }

@@ -56,7 +56,11 @@ struct ImportPersonalDictOpts {
 
 #[derive(Clap)]
 struct SkipOpts {
-    path: PathBuf,
+    #[clap(long)]
+    full_path: Option<PathBuf>,
+
+    #[clap(long)]
+    file_name: Option<String>,
 }
 
 fn main() -> Result<()> {
@@ -119,12 +123,17 @@ fn check(opts: CheckOpts) -> Result<()> {
 }
 
 fn check_with<C: Checker>(checker: &mut C, opts: CheckOpts) -> Result<()> {
+    let mut skipped = 0;
     if opts.sources.is_empty() {
         println!("No path given - nothing to do");
     }
 
     for path in &opts.sources {
         let source_path = std::fs::canonicalize(path)?;
+        if checker.is_skipped(&source_path)? {
+            skipped += 1;
+            continue;
+        }
 
         let source = File::open(&source_path)?;
         let reader = BufReader::new(source);
@@ -140,6 +149,12 @@ fn check_with<C: Checker>(checker: &mut C, opts: CheckOpts) -> Result<()> {
 
     if !checker.success() {
         std::process::exit(1);
+    }
+
+    match skipped {
+        1 => println!("Skipped one file"),
+        x if x >= 2 => println!("Skipped {} files", x),
+        _ => (),
     }
 
     Ok(())
@@ -170,6 +185,14 @@ fn import_personal_dict(opts: ImportPersonalDictOpts) -> Result<()> {
 
 fn skip(opts: SkipOpts) -> Result<()> {
     let mut db = open_db()?;
+    if let Some(full_path) = opts.full_path {
+        let full_path = std::fs::canonicalize(full_path)?;
+        let full_path = full_path.to_str().with_context(|| "not valid utf-8")?;
+        db.skip_full_path(full_path)?;
+    }
 
-    db.skip_file_name(&opts.path.file_name().unwrap().to_str().unwrap())
+    if let Some(file_name) = opts.file_name {
+        db.skip_file_name(&file_name)?;
+    }
+    Ok(())
 }

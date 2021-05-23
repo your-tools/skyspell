@@ -43,7 +43,8 @@ pub(crate) struct NewIgnoredForFile<'a> {
 #[derive(Insertable)]
 #[table_name = "skipped_files"]
 pub(crate) struct NewSkippedFile<'a> {
-    pub file_name: &'a str,
+    pub file_name: Option<&'a str>,
+    pub full_path: Option<&'a str>,
 }
 
 #[derive(Queryable)]
@@ -87,6 +88,6 @@ pub(crate) struct File {
 #[derive(Queryable)]
 pub(crate) struct SkippedFile {
     pub id: i32,
-    pub file_name: String,
-    pub full_path: String,
+    pub file_name: Option<String>,
+    pub full_path: Option<String>,
 }

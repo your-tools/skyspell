@@ -8,6 +8,7 @@ use crate::Interactor;
 use crate::Repo;
 
 pub trait Checker {
+    fn is_skipped(&self, path: &Path) -> Result<bool>;
     fn handle_token(&mut self, path: &Path, pos: (usize, usize), token: &str) -> Result<()>;
     fn success(&self) -> bool;
 }
@@ -34,6 +35,10 @@ impl<R: Repo> Checker for NonInteractiveChecker<R> {
             print_unknown_token(token, path, pos);
         }
         Ok(())
+    }
+
+    fn is_skipped(&self, path: &Path) -> Result<bool> {
+        self.repo.is_skipped(path)
     }
 
     fn success(&self) -> bool {
@@ -63,6 +68,10 @@ impl<I: Interactor, R: Repo> Checker for InteractiveChecker<I, R> {
         }
         Ok(())
     }
+
+    fn is_skipped(&self, path: &Path) -> Result<bool> {
+        self.repo.is_skipped(path)
+    }
 }
 
 impl<I: Interactor, R: Repo> InteractiveChecker<I, R> {
@@ -84,8 +93,11 @@ impl<I: Interactor, R: Repo> InteractiveChecker<I, R> {
         &self.repo
     }
 
-    // return false if error was *not* handled - will cause checker to exit with (1)
     fn handle_error(&mut self, path: &Path, pos: (usize, usize), error: &str) -> Result<()> {
+        if self.is_skipped(path)? {
+            return Ok(());
+        }
+
         let (lineno, column) = pos;
         let prefix = format!("{}:{}:{}", path.display(), lineno, column);
         println!("{} {}", prefix.bold(), error.blue());
@@ -95,11 +107,12 @@ Add word to (g)lobal ignore list
 Add word to ignore list for this (e)xtension
 Add word to ignore list for this (f)ull path
 Always skip this file (n)ame
+Always skip this file (p)ath
 (s)kip this error
 (q)uit"#;
 
         loop {
-            let letter = self.interactor.input_letter(prompt, "gefnqs");
+            let letter = self.interactor.input_letter(prompt, "gefnqps");
             match letter.as_ref() {
                 "g" => return self.add_to_global_ignore(&error),
                 "e" => {
@@ -113,7 +126,12 @@ Always skip this file (n)ame
                     }
                 }
                 "n" => {
-                    if self.handle_file_name(path)? {
+                    if self.handle_file_name_skip(path)? {
+                        break;
+                    }
+                }
+                "p" => {
+                    if self.handle_full_path_skip(path)? {
                         break;
                     }
                 }
@@ -181,7 +199,7 @@ Always skip this file (n)ame
         Ok(true)
     }
 
-    fn handle_file_name(&mut self, path: &Path) -> Result<bool> {
+    fn handle_file_name_skip(&mut self, path: &Path) -> Result<bool> {
         let file_name = if let Some(s) = path.file_name() {
             s
         } else {
@@ -202,6 +220,24 @@ Always skip this file (n)ame
             "\n{}Added {} to the list of file names to skip\n",
             "=> ".blue(),
             file_name,
+        );
+        Ok(true)
+    }
+
+    fn handle_full_path_skip(&mut self, path: &Path) -> Result<bool> {
+        let full_path = if let Some(s) = path.to_str() {
+            s
+        } else {
+            print_error(&format!("{} is not valid UTF-8", path.display()));
+            return Ok(false);
+        };
+
+        self.repo.skip_full_path(full_path)?;
+
+        println!(
+            "\n{}Added {} to the list of file paths to skip\n",
+            "=> ".blue(),
+            full_path,
         );
         Ok(true)
     }
@@ -360,7 +396,6 @@ mod tests {
     }
 
     #[test]
-    /// Scenario:
     fn test_remember_skipped_tokens() {
         let mut fake_repo = FakeRepo::new();
         fake_repo.insert_good_words(&["hello", "world"]).unwrap();
@@ -379,7 +414,6 @@ mod tests {
     }
 
     #[test]
-    /// Scenario:
     fn test_remember_extensions() {
         let mut fake_repo = FakeRepo::new();
         fake_repo.insert_good_words(&["hello", "world"]).unwrap();
