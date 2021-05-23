@@ -74,12 +74,12 @@ impl<I: Interactor, R: Repo> InteractiveChecker<I, R> {
         }
     }
 
-    #[cfg(test)]
+    #[allow(dead_code)]
     fn interactor(&self) -> &I {
         &self.interactor
     }
 
-    #[cfg(test)]
+    #[allow(dead_code)]
     fn repo(&self) -> &R {
         &self.repo
     }
@@ -234,7 +234,6 @@ mod tests {
             .handle_token(&Path::new("foo.txt"), (3, 2), "foo")
             .unwrap();
 
-        checker.interactor().assert_empty();
         assert!(checker.repo().lookup_word("foo", None, None).unwrap());
     }
 
@@ -257,7 +256,6 @@ mod tests {
             .handle_token(&Path::new("hello.py"), (3, 2), "defaultdict")
             .unwrap();
 
-        checker.interactor().assert_empty();
         assert!(checker
             .repo()
             .lookup_word("defaultdict", None, Some("py"))
@@ -284,7 +282,6 @@ mod tests {
             .handle_token(&Path::new("hello.py"), (3, 2), "defaultdict")
             .unwrap();
 
-        checker.interactor().assert_empty();
         assert!(checker
             .repo()
             .lookup_word("defaultdict", None, Some("py"))
@@ -312,7 +309,6 @@ mod tests {
             .handle_token(&Path::new("poetry.lock"), (3, 2), "adbcdef")
             .unwrap();
 
-        checker.interactor().assert_empty();
         assert!(checker
             .repo()
             .lookup_word("adbcdef", Some("poetry.lock"), Some("lock"))

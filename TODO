@@ -2,6 +2,4 @@ Allow to ignore files globally
 
 Make it usable from kakoune (a bit like kak-spell, but not exactly)
 
-Move assert_empty check to FakeInteractor::drop()
-
 Check coverage with tarpaulin
