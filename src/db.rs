@@ -1,4 +1,5 @@
 use std::fmt::{Debug, Formatter};
+use std::path::Path;
 
 use anyhow::{Context, Result};
 use diesel::prelude::*;
@@ -122,7 +123,9 @@ impl Repo for Db {
         Ok(())
     }
 
-    fn lookup_word(&self, query: &str, file: Option<&str>, ext: Option<&str>) -> Result<bool> {
+    fn lookup_word(&self, query: &str, path: &Path) -> Result<bool> {
+        let full_path_ = path.to_str();
+        let ext = path.extension().and_then(|x| x.to_str());
         let res = good_words
             .filter(good_word.eq(query))
             .first::<GoodWord>(&self.connection)
@@ -162,9 +165,9 @@ impl Repo for Db {
         }
 
         // Look for the table specific to the file (if given)
-        if let Some(file) = file {
+        if let Some(f) = full_path_ {
             let file_in_db = files
-                .filter(full_path.eq(file))
+                .filter(full_path.eq(f))
                 .first::<File>(&self.connection)
                 .optional()?;
             if let Some(known_file) = file_in_db {
@@ -192,7 +195,7 @@ mod tests {
         let mut db = Db::new(":memory:").unwrap();
         db.insert_good_words(&["hello", "hi"]).unwrap();
 
-        assert!(db.lookup_word("hello", None, None).unwrap());
+        assert!(db.lookup_word("hello", &Path::new("-")).unwrap());
     }
 
     #[test]
@@ -201,7 +204,7 @@ mod tests {
         db.insert_good_words(&["hello", "hi"]).unwrap();
         db.add_ignored("foobar").unwrap();
 
-        assert!(db.lookup_word("foobar", None, None).unwrap());
+        assert!(db.lookup_word("foobar", &Path::new("-")).unwrap());
     }
 
     #[test]
@@ -212,7 +215,7 @@ mod tests {
         db.add_extension("py").unwrap();
         db.add_ignored_for_extension("defaultdict", "py").unwrap();
 
-        assert!(!db.lookup_word("defaultdict", None, None).unwrap());
+        assert!(db.lookup_word("defaultdict", &Path::new("foo.py")).unwrap());
     }
 
     #[test]
@@ -224,8 +227,6 @@ mod tests {
         db.add_file("poetry.lock").unwrap();
         db.add_ignored_for_file("abcdef", "poetry.lock").unwrap();
 
-        assert!(db
-            .lookup_word("abcdef", Some("poetry.lock"), Some("lock"))
-            .unwrap());
+        assert!(db.lookup_word("abcdef", &Path::new("poetry.lock")).unwrap());
     }
 }

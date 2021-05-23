@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Result};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::path::Path;
 
 use crate::Interactor;
 use crate::Repo;
@@ -119,6 +120,7 @@ impl Interactor for FakeInteractor {
     }
 }
 
+#[derive(Default)]
 pub(crate) struct FakeRepo {
     good: HashSet<String>,
     ignored: HashSet<String>,
@@ -129,10 +131,7 @@ pub(crate) struct FakeRepo {
 impl FakeRepo {
     pub(crate) fn new() -> Self {
         Self {
-            good: HashSet::new(),
-            ignored: HashSet::new(),
-            ignored_for_file: HashMap::new(),
-            ignored_for_ext: HashMap::new(),
+            ..Default::default()
         }
     }
 }
@@ -185,7 +184,11 @@ impl Repo for FakeRepo {
         Ok(())
     }
 
-    fn lookup_word(&self, word: &str, file: Option<&str>, ext: Option<&str>) -> Result<bool> {
+    fn lookup_word(&self, word: &str, path: &Path) -> Result<bool> {
+        let full_path = path.to_str();
+        let ext = path.extension().and_then(|x| x.to_str());
+        let file_name = path.file_name().and_then(|f| f.to_str());
+
         if self.good.contains(word) {
             return Ok(true);
         }
@@ -202,8 +205,8 @@ impl Repo for FakeRepo {
             }
         }
 
-        if let Some(file) = file {
-            if let Some(for_file) = self.ignored_for_file.get(file) {
+        if let Some(full_path) = full_path {
+            if let Some(for_file) = self.ignored_for_file.get(full_path) {
                 if for_file.contains(&word.to_string()) {
                     return Ok(true);
                 }
@@ -219,8 +222,8 @@ fn test_fake_repo_lookup_in_good_words() {
     let mut fake = FakeRepo::new();
     fake.insert_good_words(&["hello", "hi"]).unwrap();
 
-    assert!(fake.lookup_word("hello", None, None).unwrap());
-    assert!(!fake.lookup_word("missstake", None, None).unwrap());
+    assert!(fake.lookup_word("hello", &Path::new("-")).unwrap());
+    assert!(!fake.lookup_word("missstake", &Path::new("-")).unwrap());
 }
 
 #[test]
@@ -229,7 +232,7 @@ fn test_fake_repo_lookup_ignored() {
     fake.insert_good_words(&["hello", "hi"]).unwrap();
     fake.add_ignored("foobar").unwrap();
 
-    assert!(fake.lookup_word("foobar", None, None).unwrap())
+    assert!(fake.lookup_word("foobar", &Path::new("-")).unwrap())
 }
 
 #[test]
@@ -239,9 +242,11 @@ fn test_fake_repo_lookup_for_extension() {
     fake.add_extension("py").unwrap();
     fake.add_ignored_for_extension("defaultdict", "py").unwrap();
 
-    assert!(!fake.lookup_word("defaultdict", None, None).unwrap());
+    assert!(!fake
+        .lookup_word("defaultdict", &Path::new("hello.rs"))
+        .unwrap());
     assert!(fake
-        .lookup_word("defaultdict", Some("hello.py"), Some("py"))
+        .lookup_word("defaultdict", &Path::new("hello.py"))
         .unwrap());
 }
 
@@ -249,12 +254,26 @@ fn test_fake_repo_lookup_for_extension() {
 fn test_fake_repo_lookup_for_file() {
     let mut fake = FakeRepo::new();
     fake.insert_good_words(&["hello", "hi"]).unwrap();
-    fake.add_file("poetry.lock").unwrap();
-    fake.add_ignored_for_file("abcdef", "poetry.lock").unwrap();
+    fake.add_file("path/to/foo.txt").unwrap();
+    fake.add_ignored_for_file("abcdef", "path/to/foo.txt")
+        .unwrap();
 
-    assert!(!fake.lookup_word("abcdef", None, None).unwrap());
     assert!(fake
-        .lookup_word("abcdef", Some("poetry.lock"), Some("lock"))
+        .lookup_word("abcdef", &Path::new("path/to/foo.txt"))
+        .unwrap());
+    assert!(!fake
+        .lookup_word("abcdef", &Path::new("path/to/other.txt"))
+        .unwrap());
+}
+
+#[test]
+fn test_fake_repo_skipping_filename() {
+    let mut fake = FakeRepo::new();
+    fake.insert_good_words(&["hello", "hi"]).unwrap();
+    fake.skip_file("poetry.lock").unwrap();
+
+    assert!(fake
+        .lookup_word("abcdef", &Path::new("path/to/poetry.lock"))
         .unwrap());
 }
 

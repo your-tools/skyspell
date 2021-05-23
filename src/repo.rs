@@ -18,5 +18,5 @@ pub trait Repo {
     // Add word to the ignore list for the given file
     fn add_ignored_for_file(&mut self, word: &str, file: &str) -> Result<()>;
 
-    fn lookup_word(&self, word: &str, file: Option<&str>, ext: Option<&str>) -> Result<bool>;
+    fn lookup_word(&self, word: &str, file: &Path) -> Result<bool>;
 }

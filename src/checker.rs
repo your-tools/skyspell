@@ -182,12 +182,6 @@ Add to ignore list for this (f)ile
     }
 }
 
-fn file_and_ext(path: &Path) -> (Option<&str>, Option<&str>) {
-    let ext = path.extension().and_then(|e| e.to_str());
-    let file = path.to_str();
-    (file, ext)
-}
-
 fn print_addition(token: &str, location: &str) {
     println!("\n{}Added {} to {}\n", "=> ".blue(), token.blue(), location);
 }
@@ -203,8 +197,7 @@ fn print_unknown_token(token: &str, path: &Path, pos: (usize, usize)) {
 }
 
 fn lookup_token<R: Repo>(repo: &R, token: &str, path: &Path) -> Result<bool> {
-    let (file, ext) = file_and_ext(path);
-    repo.lookup_word(&token.to_lowercase(), file, ext)
+    repo.lookup_word(&token.to_lowercase(), path)
 }
 
 #[cfg(test)]
@@ -230,7 +223,10 @@ mod tests {
             .handle_token(&Path::new("foo.txt"), (3, 2), "foo")
             .unwrap();
 
-        assert!(checker.repo().lookup_word("foo", None, None).unwrap());
+        assert!(checker
+            .repo()
+            .lookup_word("foo", &Path::new("other.txt"))
+            .unwrap());
     }
 
     #[test]
@@ -254,7 +250,7 @@ mod tests {
 
         assert!(checker
             .repo()
-            .lookup_word("defaultdict", None, Some("py"))
+            .lookup_word("defaultdict", &Path::new("hello.py"))
             .unwrap());
     }
 
@@ -280,7 +276,7 @@ mod tests {
 
         assert!(checker
             .repo()
-            .lookup_word("defaultdict", None, Some("py"))
+            .lookup_word("defaultdict", Path::new("hello.py"))
             .unwrap());
     }
 
@@ -307,7 +303,7 @@ mod tests {
 
         assert!(checker
             .repo()
-            .lookup_word("adbcdef", Some("poetry.lock"), Some("lock"))
+            .lookup_word("adbcdef", &Path::new("poetry.lock"))
             .unwrap());
     }
 
