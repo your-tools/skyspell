@@ -1,4 +1,5 @@
 use anyhow::Result;
+use std::path::Path;
 
 pub trait Repo {
     // Add the list of words to the good words
@@ -10,6 +11,10 @@ pub trait Repo {
     fn add_extension(&mut self, ext: &str) -> Result<()>;
     // Add the file to the list of known full paths
     fn add_file(&mut self, full_path: &str) -> Result<()>;
+
+    // Always skip this fille name - to be used with Cargo.lock, yarn.lock
+    // and the like
+    fn skip_file(&mut self, filename: &str) -> Result<()>;
 
     // Add word to the global ignore list
     fn add_ignored(&mut self, word: &str) -> Result<i32>;

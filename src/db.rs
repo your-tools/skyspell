@@ -13,6 +13,7 @@ use crate::schema::good_words::dsl::{good_words, word as good_word};
 use crate::schema::ignored::dsl::{ignored, word as ignored_word};
 use crate::schema::ignored_for_ext::dsl::{extension_id, ignored_for_ext, word as ext_word};
 use crate::schema::ignored_for_file::dsl::{file_id, ignored_for_file, word as file_word};
+use crate::schema::skipped_files::dsl::{file_name, skipped_files};
 
 diesel_migrations::embed_migrations!("migrations");
 
@@ -123,15 +124,26 @@ impl Repo for Db {
         Ok(())
     }
 
+    fn skip_file(&mut self, new_file_name: &str) -> Result<()> {
+        let new_skipped = NewSkippedFile {
+            file_name: new_file_name,
+        };
+        diesel::insert_into(skipped_files)
+            .values(new_skipped)
+            .execute(&self.connection)?;
+        Ok(())
+    }
+
     fn lookup_word(&self, query: &str, path: &Path) -> Result<bool> {
         let full_path_ = path.to_str();
         let ext = path.extension().and_then(|x| x.to_str());
+        let file_name_ = path.file_name().and_then(|f| f.to_str());
+
+        // In the good_words table -> true
         let res = good_words
             .filter(good_word.eq(query))
             .first::<GoodWord>(&self.connection)
             .optional()?;
-
-        // In the good_words table -> true
         if res.is_some() {
             return Ok(true);
         }
@@ -144,6 +156,17 @@ impl Repo for Db {
 
         if res.is_some() {
             return Ok(true);
+        }
+
+        // Look for the list of skipped filen names
+        if let Some(file_name_) = file_name_ {
+            let filename_in_db = skipped_files
+                .filter(file_name.eq(file_name_))
+                .first::<SkippedFile>(&self.connection)
+                .optional()?;
+            if filename_in_db.is_some() {
+                return Ok(true);
+            }
         }
 
         // Look for the table specific to the ext (if given)
@@ -228,5 +251,16 @@ mod tests {
         db.add_ignored_for_file("abcdef", "poetry.lock").unwrap();
 
         assert!(db.lookup_word("abcdef", &Path::new("poetry.lock")).unwrap());
+    }
+
+    #[test]
+    fn test_db_lookup_in_skipped() {
+        let mut db = Db::new(":memory:").unwrap();
+        db.insert_good_words(&["hello", "hi"]).unwrap();
+        db.skip_file("poetry.lock").unwrap();
+
+        assert!(db
+            .lookup_word("abcdef", &Path::new("path/to/poetry.lock"))
+            .unwrap());
     }
 }

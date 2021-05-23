@@ -1,4 +1,6 @@
-use crate::schema::{extensions, files, good_words, ignored, ignored_for_ext, ignored_for_file};
+use crate::schema::{
+    extensions, files, good_words, ignored, ignored_for_ext, ignored_for_file, skipped_files,
+};
 
 #[derive(Insertable)]
 #[table_name = "extensions"]
@@ -38,6 +40,12 @@ pub(crate) struct NewIgnoredForFile<'a> {
     pub file_id: i32,
 }
 
+#[derive(Insertable)]
+#[table_name = "skipped_files"]
+pub(crate) struct NewSkippedFile<'a> {
+    pub file_name: &'a str,
+}
+
 #[derive(Queryable)]
 pub(crate) struct Ignored {
     pub id: i32,
@@ -74,4 +82,10 @@ pub(crate) struct Extension {
 pub(crate) struct File {
     pub id: i32,
     pub full_path: String,
+}
+
+#[derive(Queryable)]
+pub(crate) struct SkippedFile {
+    pub id: i32,
+    pub file_name: String,
 }

@@ -124,6 +124,7 @@ impl Interactor for FakeInteractor {
 pub(crate) struct FakeRepo {
     good: HashSet<String>,
     ignored: HashSet<String>,
+    skipped: HashSet<String>,
     ignored_for_file: HashMap<String, Vec<String>>,
     ignored_for_ext: HashMap<String, Vec<String>>,
 }
@@ -197,6 +198,12 @@ impl Repo for FakeRepo {
             return Ok(true);
         }
 
+        if let Some(f) = file_name {
+            if self.skipped.contains(f) {
+                return Ok(true);
+            }
+        }
+
         if let Some(ext) = ext {
             if let Some(for_ext) = self.ignored_for_ext.get(ext) {
                 if for_ext.contains(&word.to_string()) {
@@ -214,6 +221,11 @@ impl Repo for FakeRepo {
         }
 
         Ok(false)
+    }
+
+    fn skip_file(&mut self, filename: &str) -> Result<()> {
+        self.skipped.insert(filename.to_string());
+        Ok(())
     }
 }
 

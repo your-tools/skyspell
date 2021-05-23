@@ -42,6 +42,13 @@ table! {
     }
 }
 
+table! {
+    skipped_files (id) {
+        id -> Integer,
+        file_name -> Text,
+    }
+}
+
 joinable!(ignored_for_ext -> extensions (extension_id));
 joinable!(ignored_for_file -> files (file_id));
 
@@ -52,4 +59,5 @@ allow_tables_to_appear_in_same_query!(
     ignored,
     ignored_for_ext,
     ignored_for_file,
+    skipped_files,
 );
