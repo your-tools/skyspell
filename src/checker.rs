@@ -278,7 +278,7 @@ fn lookup_token<D: Dictionary, R: Repo>(
 ) -> Result<bool> {
     let is_ignored = repo.lookup_word(&token, path)?;
     if is_ignored {
-        return Ok(true);
+        Ok(true)
     } else {
         dictionary.check(token)
     }
