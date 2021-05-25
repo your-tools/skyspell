@@ -24,6 +24,7 @@ enum Action {
     Add(AddOpts),
     ImportPersonalDict(ImportPersonalDictOpts),
     Check(CheckOpts),
+    Suggest(SuggestOpts),
     Skip(SkipOpts),
 }
 
@@ -59,6 +60,10 @@ struct SkipOpts {
     file_name: Option<String>,
 }
 
+#[derive(Clap)]
+struct SuggestOpts {
+    word: String,
+}
 
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
@@ -68,6 +73,7 @@ fn main() -> Result<()> {
         Action::Add(opts) => add(&lang, opts),
         Action::Check(opts) => check(&lang, opts),
         Action::ImportPersonalDict(opts) => import_personal_dict(&lang, opts),
+        Action::Suggest(opts) => suggest(&lang, opts),
         Action::Skip(opts) => skip(&lang, opts),
     }
 }
@@ -179,6 +185,16 @@ fn skip(lang: &str, opts: SkipOpts) -> Result<()> {
 
     if let Some(file_name) = opts.file_name {
         db.skip_file_name(&file_name)?;
+    }
+    Ok(())
+}
+
+fn suggest(lang: &str, opts: SuggestOpts) -> Result<()> {
+    let word = opts.word;
+    let mut broker = enchant::Broker::new();
+    let dictionary = EnchantDictionary::new(&mut broker, lang)?;
+    for suggestion in dictionary.suggest(&word).iter() {
+        println!("{}", suggestion);
     }
     Ok(())
 }
