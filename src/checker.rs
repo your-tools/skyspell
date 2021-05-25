@@ -4,6 +4,7 @@ use std::path::Path;
 use anyhow::{bail, Result};
 use colored::*;
 
+use crate::Dictionary;
 use crate::Interactor;
 use crate::Repo;
 
@@ -13,23 +14,25 @@ pub trait Checker {
     fn success(&self) -> bool;
 }
 
-pub struct NonInteractiveChecker<R: Repo> {
+pub struct NonInteractiveChecker<D: Dictionary, R: Repo> {
+    dictionary: D,
     repo: R,
     errors_found: bool,
 }
 
-impl<R: Repo> NonInteractiveChecker<R> {
-    pub fn new(repo: R) -> Self {
+impl<D: Dictionary, R: Repo> NonInteractiveChecker<D, R> {
+    pub fn new(dictionary: D, repo: R) -> Self {
         Self {
+            dictionary,
             repo,
             errors_found: false,
         }
     }
 }
 
-impl<R: Repo> Checker for NonInteractiveChecker<R> {
+impl<D: Dictionary, R: Repo> Checker for NonInteractiveChecker<D, R> {
     fn handle_token(&mut self, path: &Path, pos: (usize, usize), token: &str) -> Result<()> {
-        let found = lookup_token(&self.repo, token, path)?;
+        let found = lookup_token(&self.dictionary, &self.repo, token, path)?;
         if !found {
             self.errors_found = true;
             print_unknown_token(token, path, pos);
@@ -46,19 +49,20 @@ impl<R: Repo> Checker for NonInteractiveChecker<R> {
     }
 }
 
-pub struct InteractiveChecker<I: Interactor, R: Repo> {
+pub struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repo> {
     interactor: I,
+    dictionary: D,
     repo: R,
     skipped: HashSet<String>,
 }
 
-impl<I: Interactor, R: Repo> Checker for InteractiveChecker<I, R> {
+impl<I: Interactor, D: Dictionary, R: Repo> Checker for InteractiveChecker<I, D, R> {
     fn success(&self) -> bool {
         self.skipped.is_empty()
     }
 
     fn handle_token(&mut self, path: &Path, pos: (usize, usize), token: &str) -> Result<()> {
-        let found = lookup_token(&self.repo, token, path)?;
+        let found = lookup_token(&self.dictionary, &self.repo, token, path)?;
         if self.skipped.contains(token) {
             // already skipped
             return Ok(());
@@ -74,9 +78,10 @@ impl<I: Interactor, R: Repo> Checker for InteractiveChecker<I, R> {
     }
 }
 
-impl<I: Interactor, R: Repo> InteractiveChecker<I, R> {
-    pub fn new(interactor: I, repo: R) -> Self {
+impl<I: Interactor, D: Dictionary, R: Repo> InteractiveChecker<I, D, R> {
+    pub fn new(interactor: I, dictionary: D, repo: R) -> Self {
         Self {
+            dictionary,
             interactor,
             repo,
             skipped: HashSet::new(),
@@ -265,15 +270,60 @@ fn print_unknown_token(token: &str, path: &Path, pos: (usize, usize)) {
     println!("{} {}", prefix.bold(), token.blue());
 }
 
-fn lookup_token<R: Repo>(repo: &R, token: &str, path: &Path) -> Result<bool> {
-    repo.lookup_word(&token, path)
+fn lookup_token<D: Dictionary, R: Repo>(
+    dictionary: &D,
+    repo: &R,
+    token: &str,
+    path: &Path,
+) -> Result<bool> {
+    let is_ignored = repo.lookup_word(&token, path)?;
+    if is_ignored {
+        return Ok(true);
+    } else {
+        dictionary.check(token)
+    }
 }
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
-    use crate::tests::{FakeInteractor, FakeRepo};
+    use crate::tests::{FakeDictionary, FakeInteractor, FakeRepo};
+
+    #[derive(Default)]
+    struct TestApp {
+        pub dictionary: FakeDictionary,
+        pub repo: FakeRepo,
+        pub interactor: FakeInteractor,
+    }
+
+    impl TestApp {
+        fn checker(self) -> InteractiveChecker<impl Interactor, impl Dictionary, impl Repo> {
+            InteractiveChecker::new(self.interactor, self.dictionary, self.repo)
+        }
+
+        fn new() -> Self {
+            Default::default()
+        }
+
+        fn add_known(&mut self, words: &[&str]) {
+            for word in words.iter() {
+                self.dictionary.add_known(word);
+            }
+        }
+
+        fn add_extension(&mut self, ext: &str) {
+            self.repo.add_extension(ext).unwrap();
+        }
+
+        fn add_file(&mut self, file: &str) {
+            self.repo.add_file(file).unwrap();
+        }
+
+        fn push_text(&mut self, answer: &str) {
+            self.interactor.push_text(answer)
+        }
+    }
 
     #[test]
     /// Scenario:
@@ -282,18 +332,17 @@ mod tests {
     ///
     /// Check that 'foo' is in the globally ignore list
     fn test_adding_to_ignore() {
-        let mut fake_repo = FakeRepo::new();
-        fake_repo.insert_good_words(&["hello", "world"]).unwrap();
-        let fake_interactor = FakeInteractor::new();
-        fake_interactor.push_text("g");
+        let mut app = TestApp::new();
+        app.add_known(&["hello", "world"]);
+        app.push_text("g");
+        let mut checker = app.checker();
 
-        let mut checker = InteractiveChecker::new(fake_interactor, fake_repo);
         checker
             .handle_token(&Path::new("foo.txt"), (3, 2), "foo")
             .unwrap();
 
         assert!(checker
-            .repo()
+            .repo
             .lookup_word("foo", &Path::new("other.txt"))
             .unwrap());
     }
@@ -305,12 +354,11 @@ mod tests {
     ///
     /// Check that 'foo' is in also ignored for other/path/to/yarn.lock
     fn test_adding_to_skipped() {
-        let mut fake_repo = FakeRepo::new();
-        fake_repo.insert_good_words(&["hello", "world"]).unwrap();
-        let fake_interactor = FakeInteractor::new();
-        fake_interactor.push_text("n");
+        let mut app = TestApp::new();
+        app.add_known(&["hello", "world"]);
+        app.push_text("n");
+        let mut checker = app.checker();
 
-        let mut checker = InteractiveChecker::new(fake_interactor, fake_repo);
         checker
             .handle_token(&Path::new("path/to/yarn.lock"), (3, 2), "foo")
             .unwrap();
@@ -330,12 +378,11 @@ mod tests {
     ///
     /// Check that 'foo' is ignored for the `py` extension
     fn test_adding_to_new_ext() {
-        let mut fake_repo = FakeRepo::new();
-        fake_repo.insert_good_words(&["hello", "world"]).unwrap();
-        let fake_interactor = FakeInteractor::new();
-        fake_interactor.push_text("e");
+        let mut app = TestApp::new();
+        app.add_known(&["hello", "world"]);
+        app.push_text("e");
+        let mut checker = app.checker();
 
-        let mut checker = InteractiveChecker::new(fake_interactor, fake_repo);
         checker
             .handle_token(&Path::new("hello.py"), (3, 2), "defaultdict")
             .unwrap();
@@ -354,14 +401,12 @@ mod tests {
     ///
     /// Check that 'foo' is ignored for the `py` extension
     fn test_adding_to_existing_ext() {
-        let mut fake_repo = FakeRepo::new();
-        fake_repo.insert_good_words(&["hello", "world"]).unwrap();
-        fake_repo.add_extension("py").unwrap();
+        let mut app = TestApp::new();
+        app.add_known(&["hello", "world"]);
+        app.add_extension("py");
+        app.push_text("e");
+        let mut checker = app.checker();
 
-        let fake_interactor = FakeInteractor::new();
-        fake_interactor.push_text("e");
-
-        let mut checker = InteractiveChecker::new(fake_interactor, fake_repo);
         checker
             .handle_token(&Path::new("hello.py"), (3, 2), "defaultdict")
             .unwrap();
@@ -380,15 +425,13 @@ mod tests {
     ///
     /// Check that 'adbced' is ignored for the `poetry.lock` file
     fn test_adding_to_existing_file() {
-        let mut fake_repo = FakeRepo::new();
-        fake_repo.insert_good_words(&["hello", "world"]).unwrap();
-        fake_repo.add_extension("py").unwrap();
-        fake_repo.add_file("poetry.lock").unwrap();
+        let mut app = TestApp::new();
+        app.add_known(&["hello", "world"]);
+        app.add_extension("py");
+        app.add_file("poetry.lock");
+        app.push_text("f");
+        let mut checker = app.checker();
 
-        let fake_interactor = FakeInteractor::new();
-        fake_interactor.push_text("f");
-
-        let mut checker = InteractiveChecker::new(fake_interactor, fake_repo);
         checker
             .handle_token(&Path::new("poetry.lock"), (3, 2), "adbcdef")
             .unwrap();
@@ -399,15 +442,19 @@ mod tests {
             .unwrap());
     }
 
+    /// Scenario:
+    /// * call handle_token with 'foo' error
+    /// * press 's' - 'foo' token is skipped
+    /// * call handle_token again
+    /// * check that no more interaction took place
+    ///   (this is done by FakeInteractor::drop, by the way)
     #[test]
     fn test_remember_skipped_tokens() {
-        let mut fake_repo = FakeRepo::new();
-        fake_repo.insert_good_words(&["hello", "world"]).unwrap();
+        let mut app = TestApp::new();
+        app.add_known(&["hello", "world"]);
+        app.push_text("s");
+        let mut checker = app.checker();
 
-        let fake_interactor = FakeInteractor::new();
-        fake_interactor.push_text("s");
-
-        let mut checker = InteractiveChecker::new(fake_interactor, fake_repo);
         checker
             .handle_token(&Path::new("foo.py"), (3, 2), "foo")
             .unwrap();
@@ -417,15 +464,19 @@ mod tests {
             .unwrap();
     }
 
+    /// Scenario:
+    /// * 'py' extension is not known
+    /// * call handle_token with 'foo' error
+    /// * press 'e' - 'foo' token is added to the ignore list for '.py' extensions
+    /// * call handle_token again
+    /// * check that no more interaction took place
     #[test]
     fn test_remember_extensions() {
-        let mut fake_repo = FakeRepo::new();
-        fake_repo.insert_good_words(&["hello", "world"]).unwrap();
+        let mut app = TestApp::new();
+        app.add_known(&["hello", "world"]);
+        app.push_text("e");
+        let mut checker = app.checker();
 
-        let fake_interactor = FakeInteractor::new();
-        fake_interactor.push_text("e");
-
-        let mut checker = InteractiveChecker::new(fake_interactor, fake_repo);
         checker
             .handle_token(&Path::new("foo.py"), (3, 2), "abstractmethod")
             .unwrap();

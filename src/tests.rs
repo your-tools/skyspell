@@ -3,6 +3,7 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::Path;
 
+use crate::Dictionary;
 use crate::Interactor;
 use crate::Repo;
 
@@ -17,12 +18,18 @@ pub(crate) struct FakeInteractor {
     answers: RefCell<VecDeque<Answer>>,
 }
 
-impl FakeInteractor {
-    pub(crate) fn new() -> Self {
+impl Default for FakeInteractor {
+    fn default() -> Self {
         let queue = VecDeque::new();
         Self {
             answers: RefCell::new(queue),
         }
+    }
+}
+
+impl FakeInteractor {
+    pub(crate) fn new() -> Self {
+        Default::default()
     }
 
     pub(crate) fn push_text(&self, text: &str) {
@@ -257,6 +264,37 @@ impl Repo for FakeRepo {
     }
 }
 
+#[derive(Default)]
+pub(crate) struct FakeDictionary {
+    known: Vec<String>,
+    suggestions: HashMap<String, Vec<String>>,
+}
+
+impl FakeDictionary {
+    fn new() -> Self {
+        Default::default()
+    }
+
+    pub(crate) fn add_known(&mut self, word: &str) {
+        self.known.push(word.to_string());
+    }
+
+    pub(crate) fn add_suggestions(&mut self, error: &str, suggestions: &[String]) {
+        self.suggestions
+            .insert(error.to_string(), suggestions.to_vec());
+    }
+}
+
+impl Dictionary for FakeDictionary {
+    fn check(&self, word: &str) -> Result<bool> {
+        Ok(self.known.contains(&word.to_string()))
+    }
+
+    fn suggest(&self, error: &str) -> Vec<String> {
+        self.suggestions.get(error).map_or(vec![], |v| v.to_vec())
+    }
+}
+
 #[test]
 fn test_fake_repo_lookup_in_good_words() {
     let mut fake = FakeRepo::new();
@@ -347,4 +385,23 @@ fn test_fake_interactor_on_missing_answer() {
 
     fake_interactor.input("What is your name");
     fake_interactor.input("What is your favorite color");
+}
+
+#[test]
+fn test_fake_dictionary_check() {
+    let mut fake_dictionary = FakeDictionary::new();
+    fake_dictionary.add_known("hello");
+
+    assert!(fake_dictionary.check("hello").unwrap());
+    assert!(!fake_dictionary.check("foo").unwrap());
+}
+
+#[test]
+fn test_fake_dictionary_suggest() {
+    let mut fake_dictionary = FakeDictionary::new();
+    fake_dictionary.add_known("hello");
+    fake_dictionary.add_suggestions("missstake", &["mistake".to_string()]);
+
+    assert_eq!(&fake_dictionary.suggest("missstake"), &["mistake"]);
+    assert!(&fake_dictionary.suggest("asntoehsauh").is_empty());
 }

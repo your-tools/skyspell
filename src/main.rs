@@ -7,6 +7,7 @@ use clap::Clap;
 use platform_dirs::AppDirs;
 
 use rcspell::ConsoleInteractor;
+use rcspell::EnchantDictionary;
 use rcspell::{Checker, InteractiveChecker, NonInteractiveChecker, Repo};
 
 #[derive(Clap)]
@@ -81,7 +82,7 @@ fn open_db() -> Result<rcspell::Db> {
     std::fs::create_dir_all(&data_dir)
         .with_context(|| format!("Could not create {}", data_dir.display()))?;
 
-    let db_path = &data_dir.join("en.db");
+    let db_path = &data_dir.join("en_US.db");
     let db_path = db_path
         .to_str()
         .ok_or_else(|| anyhow!("{} contains non-UTF-8 chars", db_path.display()))?;
@@ -108,15 +109,19 @@ fn add(opts: AddOpts) -> Result<()> {
 }
 
 fn check(opts: CheckOpts) -> Result<()> {
-    let db = open_db()?;
+    let mut broker = enchant::Broker::new();
+    let dictionary = EnchantDictionary::new(&mut broker, "en_US")?;
+
+    let repo = open_db()?;
+
     match opts.non_interactive {
         true => {
-            let mut checker = NonInteractiveChecker::new(db);
+            let mut checker = NonInteractiveChecker::new(dictionary, repo);
             check_with(&mut checker, opts)
         }
         false => {
             let interactor = ConsoleInteractor;
-            let mut checker = InteractiveChecker::new(interactor, db);
+            let mut checker = InteractiveChecker::new(interactor, dictionary, repo);
             check_with(&mut checker, opts)
         }
     }
