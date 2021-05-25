@@ -1,5 +1,5 @@
-Make it usable from kakoune (a bit like kak-spell, but not exactly)
+Make it usable from kakoune (exactly like kak-spell)
 
 Check coverage with tarpaulin
 
-Handle backslash
+Handle backslash (for latex, C, and the rest)
