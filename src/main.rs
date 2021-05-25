@@ -14,7 +14,7 @@ use rcspell::{ConsoleInteractor, Dictionary, Repo};
 #[clap(version = env!("CARGO_PKG_VERSION"))]
 struct Opts {
     #[clap(long)]
-    lang: String,
+    lang: Option<String>,
     #[clap(subcommand)]
     action: Action,
 }
@@ -59,9 +59,10 @@ struct SkipOpts {
     file_name: Option<String>,
 }
 
+
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
-    let lang = opts.lang;
+    let lang = opts.lang.unwrap_or_else(|| "en_US".to_string());
 
     match opts.action {
         Action::Add(opts) => add(&lang, opts),
@@ -106,7 +107,6 @@ fn add(lang: &str, opts: AddOpts) -> Result<()> {
 fn check(lang: &str, opts: CheckOpts) -> Result<()> {
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, lang)?;
-
     let repo = open_db(lang)?;
 
     match opts.non_interactive {
