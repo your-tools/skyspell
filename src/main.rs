@@ -6,9 +6,9 @@ use anyhow::{anyhow, Context, Result};
 use clap::Clap;
 use platform_dirs::AppDirs;
 
-use rcspell::ConsoleInteractor;
 use rcspell::EnchantDictionary;
-use rcspell::{Checker, InteractiveChecker, NonInteractiveChecker, Repo};
+use rcspell::{Checker, InteractiveChecker, NonInteractiveChecker};
+use rcspell::{ConsoleInteractor, Dictionary, Repo};
 
 #[derive(Clap)]
 #[clap(version = env!("CARGO_PKG_VERSION"))]
