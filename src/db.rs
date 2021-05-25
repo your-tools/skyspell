@@ -9,7 +9,6 @@ use crate::models::*;
 use crate::repo::Repo;
 use crate::schema::extensions::dsl::{extension, extensions, id as extension_pk};
 use crate::schema::files::dsl::{files, full_path, id as file_pk};
-use crate::schema::good_words::dsl::{good_words, word as good_word};
 use crate::schema::ignored::dsl::{ignored, word as ignored_word};
 use crate::schema::ignored_for_ext::dsl::{
     extension_id as extension_fk, ignored_for_ext, word as ext_word,
@@ -206,15 +205,6 @@ impl Repo for Db {
         let query = &query.to_lowercase();
         let full_path_ = path.to_str();
         let ext = path.extension().and_then(|x| x.to_str());
-
-        // In the good_words table -> true
-        let res = good_words
-            .filter(good_word.eq(query))
-            .first::<GoodWord>(&self.connection)
-            .optional()?;
-        if res.is_some() {
-            return Ok(true);
-        }
 
         // Is ignored globally -> true
         let res = ignored

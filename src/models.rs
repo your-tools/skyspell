@@ -1,5 +1,5 @@
 use crate::schema::{
-    extensions, files, good_words, ignored, ignored_for_ext, ignored_for_file, skipped_file_names,
+    extensions, files, ignored, ignored_for_ext, ignored_for_file, skipped_file_names,
     skipped_paths,
 };
 
@@ -13,12 +13,6 @@ pub(crate) struct NewExtension<'a> {
 #[table_name = "files"]
 pub(crate) struct NewFile<'a> {
     pub full_path: &'a str,
-}
-
-#[derive(Insertable)]
-#[table_name = "good_words"]
-pub(crate) struct NewGoodWord<'a> {
-    pub word: &'a str,
 }
 
 #[derive(Insertable)]

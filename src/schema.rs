@@ -13,13 +13,6 @@ table! {
 }
 
 table! {
-    good_words (id) {
-        id -> Integer,
-        word -> Text,
-    }
-}
-
-table! {
     ignored (id) {
         id -> Integer,
         word -> Text,
@@ -62,7 +55,6 @@ joinable!(ignored_for_file -> files (file_id));
 allow_tables_to_appear_in_same_query!(
     extensions,
     files,
-    good_words,
     ignored,
     ignored_for_ext,
     ignored_for_file,
