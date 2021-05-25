@@ -54,14 +54,6 @@ impl Db {
 }
 
 impl Repo for Db {
-    fn insert_good_words(&mut self, words: &[&str]) -> Result<()> {
-        let new_words: Vec<_> = words.iter().map(|x| NewGoodWord { word: x }).collect();
-        diesel::insert_or_ignore_into(good_words)
-            .values(new_words)
-            .execute(&self.connection)?;
-        Ok(())
-    }
-
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()> {
         let new_ignored_words: Vec<_> = words.iter().map(|x| NewIgnored { word: x }).collect();
         diesel::insert_or_ignore_into(ignored)
@@ -279,17 +271,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_db_lookup_in_good_words() {
-        let mut db = Db::new(":memory:").unwrap();
-        db.insert_good_words(&["hello", "hi"]).unwrap();
-
-        assert!(db.lookup_word("hello", &Path::new("-")).unwrap());
-    }
-
-    #[test]
     fn test_db_lookup_in_ignored_words() {
         let mut db = Db::new(":memory:").unwrap();
-        db.insert_good_words(&["hello", "hi"]).unwrap();
         db.add_ignored("foobar").unwrap();
 
         assert!(db.lookup_word("foobar", &Path::new("-")).unwrap());
@@ -298,7 +281,6 @@ mod tests {
     #[test]
     fn test_db_lookup_in_ignored_extensions() {
         let mut db = Db::new(":memory:").unwrap();
-        db.insert_good_words(&["hello", "hi"]).unwrap();
         db.add_ignored("foobar").unwrap();
         db.add_extension("py").unwrap();
         db.add_ignored_for_extension("defaultdict", "py").unwrap();
@@ -309,27 +291,19 @@ mod tests {
     #[test]
     fn test_db_lookup_in_files() {
         let mut db = Db::new(":memory:").unwrap();
-        db.insert_good_words(&["hello", "hi"]).unwrap();
-        db.add_ignored("foobar").unwrap();
-        db.add_extension("py").unwrap();
-        db.add_file("poetry.lock").unwrap();
-        db.add_ignored_for_file("abcdef", "poetry.lock").unwrap();
+        db.add_file("path/to/poetry.lock").unwrap();
+        db.add_ignored_for_file("abcdef", "path/to/poetry.lock")
+            .unwrap();
 
-        assert!(db.lookup_word("abcdef", &Path::new("poetry.lock")).unwrap());
+        assert!(db
+            .lookup_word("abcdef", &Path::new("path/to/poetry.lock"))
+            .unwrap());
     }
 
     #[test]
     fn test_db_lookup_in_skipped_file_names() {
         let mut db = Db::new(":memory:").unwrap();
         db.skip_file_name("poetry.lock").unwrap();
-
-        assert!(db.is_skipped(&Path::new("path/to/poetry.lock")).unwrap());
-    }
-
-    #[test]
-    fn test_db_lookup_in_skipped_paths() {
-        let mut db = Db::new(":memory:").unwrap();
-        db.skip_full_path("path/to/poetry.lock").unwrap();
 
         assert!(db.is_skipped(&Path::new("path/to/poetry.lock")).unwrap());
     }

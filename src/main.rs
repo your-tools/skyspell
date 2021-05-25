@@ -20,7 +20,6 @@ struct Opts {
 #[derive(Clap)]
 enum Action {
     Add(AddOpts),
-    ImportWordList(ImportWordListOpts),
     ImportPersonalDict(ImportPersonalDictOpts),
     Check(CheckOpts),
     Skip(SkipOpts),
@@ -44,12 +43,6 @@ struct CheckOpts {
 }
 
 #[derive(Clap)]
-struct ImportWordListOpts {
-    #[clap(long)]
-    list_path: Option<PathBuf>,
-}
-
-#[derive(Clap)]
 struct ImportPersonalDictOpts {
     #[clap(long)]
     personal_dict_path: PathBuf,
@@ -70,7 +63,6 @@ fn main() -> Result<()> {
     match opts.action {
         Action::Add(opts) => add(opts),
         Action::Check(opts) => check(opts),
-        Action::ImportWordList(opts) => import_word_list(opts),
         Action::ImportPersonalDict(opts) => import_personal_dict(opts),
         Action::Skip(opts) => skip(opts),
     }
@@ -160,20 +152,6 @@ fn check_with<C: Checker>(checker: &mut C, opts: CheckOpts) -> Result<()> {
         1 => println!("Skipped one file"),
         x if x >= 2 => println!("Skipped {} files", x),
         _ => (),
-    }
-
-    Ok(())
-}
-
-fn import_word_list(opts: ImportWordListOpts) -> Result<()> {
-    let mut db = open_db()?;
-    if opts.list_path.is_none() {
-        let words: Vec<&str> = include_str!("../data/words_en.txt")
-            .split_ascii_whitespace()
-            .collect();
-        db.insert_good_words(&words)?;
-    } else {
-        unimplemented!();
     }
 
     Ok(())

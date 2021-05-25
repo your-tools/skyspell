@@ -146,13 +146,6 @@ impl FakeRepo {
 }
 
 impl Repo for FakeRepo {
-    fn insert_good_words(&mut self, words: &[&str]) -> Result<()> {
-        for word in words {
-            self.good.insert(word.to_string());
-        }
-        Ok(())
-    }
-
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()> {
         for word in words {
             self.ignored.insert(word.to_string());
@@ -296,18 +289,8 @@ impl Dictionary for FakeDictionary {
 }
 
 #[test]
-fn test_fake_repo_lookup_in_good_words() {
-    let mut fake = FakeRepo::new();
-    fake.insert_good_words(&["hello", "hi"]).unwrap();
-
-    assert!(fake.lookup_word("hello", &Path::new("-")).unwrap());
-    assert!(!fake.lookup_word("missstake", &Path::new("-")).unwrap());
-}
-
-#[test]
 fn test_fake_repo_lookup_ignored() {
     let mut fake = FakeRepo::new();
-    fake.insert_good_words(&["hello", "hi"]).unwrap();
     fake.add_ignored("foobar").unwrap();
 
     assert!(fake.lookup_word("foobar", &Path::new("-")).unwrap())
@@ -316,7 +299,6 @@ fn test_fake_repo_lookup_ignored() {
 #[test]
 fn test_fake_repo_lookup_for_extension() {
     let mut fake = FakeRepo::new();
-    fake.insert_good_words(&["hello", "hi"]).unwrap();
     fake.add_extension("py").unwrap();
     fake.add_ignored_for_extension("defaultdict", "py").unwrap();
 
@@ -331,7 +313,6 @@ fn test_fake_repo_lookup_for_extension() {
 #[test]
 fn test_fake_repo_lookup_for_file() {
     let mut fake = FakeRepo::new();
-    fake.insert_good_words(&["hello", "hi"]).unwrap();
     fake.add_file("path/to/foo.txt").unwrap();
     fake.add_ignored_for_file("abcdef", "path/to/foo.txt")
         .unwrap();
@@ -347,7 +328,6 @@ fn test_fake_repo_lookup_for_file() {
 #[test]
 fn test_fake_repo_skipping_filename() {
     let mut fake = FakeRepo::new();
-    fake.insert_good_words(&["hello", "hi"]).unwrap();
     fake.skip_file_name("poetry.lock").unwrap();
 
     assert!(fake

@@ -2,8 +2,6 @@ use anyhow::Result;
 use std::path::Path;
 
 pub trait Repo {
-    // Add the list of words to the good words
-    fn insert_good_words(&mut self, words: &[&str]) -> Result<()>;
     // Add the list of words to the global ignore list
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()>;
 
