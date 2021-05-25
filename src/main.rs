@@ -190,10 +190,13 @@ fn skip(lang: &str, opts: SkipOpts) -> Result<()> {
 }
 
 fn suggest(lang: &str, opts: SuggestOpts) -> Result<()> {
-    let word = opts.word;
+    let word = &opts.word;
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, lang)?;
-    for suggestion in dictionary.suggest(&word).iter() {
+    if dictionary.check(word)? {
+        return Ok(());
+    }
+    for suggestion in dictionary.suggest(word).iter() {
         println!("{}", suggestion);
     }
     Ok(())
