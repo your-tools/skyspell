@@ -13,6 +13,8 @@ use rcspell::{Checker, InteractiveChecker, NonInteractiveChecker, Repo};
 #[derive(Clap)]
 #[clap(version = env!("CARGO_PKG_VERSION"))]
 struct Opts {
+    #[clap(long)]
+    lang: String,
     #[clap(subcommand)]
     action: Action,
 }
@@ -59,31 +61,32 @@ struct SkipOpts {
 
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
+    let lang = opts.lang;
 
     match opts.action {
-        Action::Add(opts) => add(opts),
-        Action::Check(opts) => check(opts),
-        Action::ImportPersonalDict(opts) => import_personal_dict(opts),
-        Action::Skip(opts) => skip(opts),
+        Action::Add(opts) => add(&lang, opts),
+        Action::Check(opts) => check(&lang, opts),
+        Action::ImportPersonalDict(opts) => import_personal_dict(&lang, opts),
+        Action::Skip(opts) => skip(&lang, opts),
     }
 }
 
-fn open_db() -> Result<rcspell::Db> {
+fn open_db(lang: &str) -> Result<rcspell::Db> {
     let app_dirs = AppDirs::new(Some("rcspell"), false).unwrap();
     let data_dir = app_dirs.data_dir;
     std::fs::create_dir_all(&data_dir)
         .with_context(|| format!("Could not create {}", data_dir.display()))?;
 
-    let db_path = &data_dir.join("en_US.db");
+    let db_path = &data_dir.join(format!("{}.db", lang));
     let db_path = db_path
         .to_str()
         .ok_or_else(|| anyhow!("{} contains non-UTF-8 chars", db_path.display()))?;
     rcspell::db::new(db_path)
 }
 
-fn add(opts: AddOpts) -> Result<()> {
+fn add(lang: &str, opts: AddOpts) -> Result<()> {
     let word = &opts.word;
-    let mut db = open_db()?;
+    let mut db = open_db(lang)?;
 
     if let Some(p) = opts.file {
         let full_path = std::fs::canonicalize(p)?;
@@ -100,11 +103,11 @@ fn add(opts: AddOpts) -> Result<()> {
     Ok(())
 }
 
-fn check(opts: CheckOpts) -> Result<()> {
+fn check(lang: &str, opts: CheckOpts) -> Result<()> {
     let mut broker = enchant::Broker::new();
-    let dictionary = EnchantDictionary::new(&mut broker, "en_US")?;
+    let dictionary = EnchantDictionary::new(&mut broker, lang)?;
 
-    let repo = open_db()?;
+    let repo = open_db(lang)?;
 
     match opts.non_interactive {
         true => {
@@ -157,8 +160,8 @@ fn check_with<C: Checker>(checker: &mut C, opts: CheckOpts) -> Result<()> {
     Ok(())
 }
 
-fn import_personal_dict(opts: ImportPersonalDictOpts) -> Result<()> {
-    let mut db = open_db()?;
+fn import_personal_dict(lang: &str, opts: ImportPersonalDictOpts) -> Result<()> {
+    let mut db = open_db(lang)?;
     let dict = std::fs::read_to_string(&opts.personal_dict_path)?;
     let words: Vec<&str> = dict.split_ascii_whitespace().collect();
     db.insert_ignored_words(&words)?;
@@ -166,8 +169,8 @@ fn import_personal_dict(opts: ImportPersonalDictOpts) -> Result<()> {
     Ok(())
 }
 
-fn skip(opts: SkipOpts) -> Result<()> {
-    let mut db = open_db()?;
+fn skip(lang: &str, opts: SkipOpts) -> Result<()> {
+    let mut db = open_db(lang)?;
     if let Some(full_path) = opts.full_path {
         let full_path = std::fs::canonicalize(full_path)?;
         let full_path = full_path.to_str().with_context(|| "not valid utf-8")?;
