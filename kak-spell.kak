@@ -38,7 +38,7 @@ define-command kak-spell-list -docstring "list spelling errors" %{
    }
    info -title "*spelling* Help" "h,j,k,l: Move
 <ret>: Jump to spelling error
-a    : Add the word to the personal dictionnary
+a    : Add the word to the personal dictionary
 "
 }
 
