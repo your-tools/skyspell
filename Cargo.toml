@@ -1,8 +1,14 @@
 [package]
 name = "kak_spell"
-version = "1.0.0"
+version = "0.2.0"
 authors = ["Dimitri Merejkowsky <dimitri@dmerej.info>"]
 edition = "2018"
+readme = "README.md"
+description = "Enchant wrapper for Kakoune"
+url = "https://git.sr.ht/~dmerej/kak-spell"
+repository = "https://git.sr.ht/~dmerej/kak-spell"
+license-file = "LICENSE"
+keywords = ["spell", "cli", "kakoune"]
 
 [dependencies]
 anyhow = "1.0.40"
