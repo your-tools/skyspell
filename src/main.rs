@@ -31,7 +31,7 @@ enum Action {
     Check(CheckOpts),
     #[clap(about = "Import a personal dictionary")]
     ImportPersonalDict(ImportPersonalDictOpts),
-    #[clap(about = "Suggest remplacements for the given error")]
+    #[clap(about = "Suggest replacements for the given error")]
     Suggest(SuggestOpts),
     #[clap(about = "Update the skipped lists")]
     Skip(SkipOpts),

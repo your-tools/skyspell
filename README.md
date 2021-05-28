@@ -6,7 +6,7 @@ A fast and handy spell checker for source code and other texts
 
 * Distributed as a single binary
 * Handy command line interface
-* Leverages the excellent [enchant](https://abiword.github.io/enchant/),
+* Leverages the excellent [enchant](https://abiword.github.io/enchant/) library,
   so compatible with existing providers and dictionaries
 * Hand-made tokenizer, which means
    * it can parse `camelCase` identifiers
