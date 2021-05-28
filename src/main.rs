@@ -13,7 +13,11 @@ use rcspell::{ConsoleInteractor, Dictionary, Repo};
 #[derive(Clap)]
 #[clap(version = env!("CARGO_PKG_VERSION"))]
 struct Opts {
-    #[clap(long)]
+    #[clap(
+        long,
+        about = "Language to use",
+        long_about = "Language to use - must match an installed dictionary for one of Enchant's provider"
+    )]
     lang: Option<String>,
     #[clap(subcommand)]
     action: Action,
@@ -21,19 +25,24 @@ struct Opts {
 
 #[derive(Clap)]
 enum Action {
+    #[clap(about = "Add word to one of the ignore lists")]
     Add(AddOpts),
-    ImportPersonalDict(ImportPersonalDictOpts),
+    #[clap(about = "Check files for spelling errors")]
     Check(CheckOpts),
+    #[clap(about = "Import a personal dictionary")]
+    ImportPersonalDict(ImportPersonalDictOpts),
+    #[clap(about = "Suggest remplacements for the given error")]
     Suggest(SuggestOpts),
+    #[clap(about = "Update the skipped lists")]
     Skip(SkipOpts),
 }
 
 #[derive(Clap)]
 struct AddOpts {
     word: String,
-    #[clap(long)]
+    #[clap(long, about = "Add word to the ignore list for the given extension")]
     ext: Option<String>,
-    #[clap(long)]
+    #[clap(long, about = "Add word to the ignore list for the given path")]
     file: Option<PathBuf>,
 }
 
@@ -42,6 +51,7 @@ struct CheckOpts {
     #[clap(long)]
     non_interactive: bool,
 
+    #[clap(about = "List of paths to check")]
     sources: Vec<PathBuf>,
 }
 
@@ -54,9 +64,11 @@ struct ImportPersonalDictOpts {
 #[derive(Clap)]
 struct SkipOpts {
     #[clap(long)]
+    #[clap(about = "File path to skip")]
     full_path: Option<PathBuf>,
 
     #[clap(long)]
+    #[clap(about = "Filename to skip")]
     file_name: Option<String>,
 }
 
