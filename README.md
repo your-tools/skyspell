@@ -1,13 +1,14 @@
-# rcspell
+# kak-spell
 
 A fast and handy spell checker for source code and other texts
+for Kakoune.
 
-# rcspell in action
+# kak-spell in action
 
-rcspell is meant to be used from the command line, like this:
+kak-spell is meant to be used from the command line, like this:
 
 ```
-$ rcspell check $(git ls-files)
+$ kak-spell check $(git ls-files)
 /path/to/LICENSE:9:2 Redistributions
 What to do?
 ...

@@ -6,9 +6,9 @@ use anyhow::{anyhow, Context, Result};
 use clap::Clap;
 use platform_dirs::AppDirs;
 
-use rcspell::EnchantDictionary;
-use rcspell::{Checker, InteractiveChecker, NonInteractiveChecker};
-use rcspell::{ConsoleInteractor, Dictionary, Repo};
+use kak_spell::EnchantDictionary;
+use kak_spell::{Checker, InteractiveChecker, NonInteractiveChecker};
+use kak_spell::{ConsoleInteractor, Dictionary, Repo};
 
 #[derive(Clap)]
 #[clap(version = env!("CARGO_PKG_VERSION"))]
@@ -90,8 +90,8 @@ fn main() -> Result<()> {
     }
 }
 
-fn open_db(lang: &str) -> Result<rcspell::Db> {
-    let app_dirs = AppDirs::new(Some("rcspell"), false).unwrap();
+fn open_db(lang: &str) -> Result<kak_spell::Db> {
+    let app_dirs = AppDirs::new(Some("kak_spell"), false).unwrap();
     let data_dir = app_dirs.data_dir;
     std::fs::create_dir_all(&data_dir)
         .with_context(|| format!("Could not create {}", data_dir.display()))?;
@@ -100,7 +100,7 @@ fn open_db(lang: &str) -> Result<rcspell::Db> {
     let db_path = db_path
         .to_str()
         .ok_or_else(|| anyhow!("{} contains non-UTF-8 chars", db_path.display()))?;
-    rcspell::db::new(db_path)
+    kak_spell::db::new(db_path)
 }
 
 fn add(lang: &str, opts: AddOpts) -> Result<()> {
@@ -158,7 +158,7 @@ fn check_with<C: Checker>(checker: &mut C, opts: CheckOpts) -> Result<()> {
 
         for (i, line) in reader.lines().enumerate() {
             let line = line?;
-            let tokenizer = rcspell::Tokenizer::new(&line);
+            let tokenizer = kak_spell::Tokenizer::new(&line);
             for (word, pos) in tokenizer {
                 checker.handle_token(&source_path, (i + 1, pos), word)?;
             }
