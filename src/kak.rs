@@ -1,5 +1,5 @@
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
 
@@ -8,6 +8,7 @@ use crate::{Checker, Dictionary, Repo};
 
 pub(crate) struct Error {
     pos: (usize, usize),
+    path: PathBuf,
     token: String,
 }
 
@@ -27,6 +28,7 @@ impl<D: Dictionary, R: Repo> Checker for KakouneChecker<D, R> {
         if !found {
             self.errors.push(Error {
                 pos,
+                path: path.to_owned(),
                 token: token.to_owned(),
             });
         }
@@ -51,12 +53,14 @@ impl<D: Dictionary, R: Repo> KakouneChecker<D, R> {
         let kak_timestamp =
             std::env::var("kak_timestamp").map_err(|_| anyhow!("kak_timestamp is not defined"))?;
 
-        let kak_timestamp: usize = kak_timestamp
-            .parse()
+        let kak_timestamp = kak_timestamp
+            .parse::<usize>()
             .map_err(|_| anyhow!("could not parse kak_timestamp has a positive integer"))?;
 
+        let lang = self.dictionary.lang();
+
         write_error_lines(f, &self.errors)?;
-        write_hooks(f)?;
+        write_hooks(f, lang)?;
         write_ranges(f, kak_timestamp, &self.errors)?;
         write_status(f, &self.errors)?;
 
@@ -80,12 +84,18 @@ fn write_status(f: &mut impl Write, errors: &[Error]) -> Result<()> {
     Ok(())
 }
 
-fn write_hooks(f: &mut impl Write) -> Result<()> {
+// TODO: can we do it without passing the lang back and forth?
+fn write_hooks(f: &mut impl Write, lang: &str) -> Result<()> {
     writeln!(
         f,
-        r#"map buffer normal '<ret>' ':<space>kak-spell-jump<ret>'
-map buffer normal 'a' ':<space>kak-spell-add-from-spelling-buffer en_US<ret>'
-execute-keys <esc> ga"#
+        r#"map buffer normal '<ret>' ':<space>kak-spell-buffer-action {lang} jump<ret>'
+map buffer normal 'g' ':<space>kak-spell-buffer-action {lang} add-global<ret>'
+map buffer normal 'e' ':<space>kak-spell-buffer-action {lang} add-extension<ret>'
+map buffer normal 'f' ':<space>kak-spell-buffer-action {lang} add-file<ret>'
+map buffer normal 'n' ':<space>kak-spell-buffer-action {lang} skip-name<ret>'
+map buffer normal 'p' ':<space>kak-spell-buffer-action {lang} skip-file<ret>'
+execute-keys <esc> ga"#,
+        lang = lang
     )?;
     Ok(())
 }
@@ -112,10 +122,19 @@ fn write_error_lines(f: &mut impl Write, errors: &[Error]) -> Result<()> {
 }
 
 fn write_error(f: &mut impl Write, error: &Error) -> Result<()> {
-    let Error { pos, token, .. } = error;
+    let Error { pos, token, path } = error;
     let (line, start) = pos;
     let end = start + token.len();
-    write!(f, "{}.{},{}.{} {}", line, start + 1, line, end, token)?;
+    write!(
+        f,
+        "{}: {}.{},{}.{} {}",
+        path.display(),
+        line,
+        start + 1,
+        line,
+        end,
+        token
+    )?;
     Ok(())
 }
 
@@ -145,6 +164,7 @@ mod tests {
     fn test_insert_errors() {
         let error = Error {
             pos: (2, 4),
+            path: PathBuf::from("hello.js"),
             token: "foo".to_string(),
         };
 
@@ -152,7 +172,7 @@ mod tests {
         write_error_lines(&mut buff, &[error]).unwrap();
         let actual = std::str::from_utf8(&buff).unwrap();
         let expected = r#"edit -scratch *spelling*
-execute-keys \% <ret> d i %{2.5,2.7 foo<ret>} <esc> gg
+execute-keys \% <ret> d i %{hello.js: 2.5,2.7 foo<ret>} <esc> gg
 "#;
         assert_eq!(actual, expected);
     }

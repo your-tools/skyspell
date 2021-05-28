@@ -9,7 +9,7 @@ use crate::models::*;
 use crate::repo::Repo;
 use crate::schema::extensions::dsl::{extension, extensions, id as extension_pk};
 use crate::schema::files::dsl::{files, full_path, id as file_pk};
-use crate::schema::ignored::dsl::{ignored, word as ignored_word};
+use crate::schema::ignored::dsl::{id as ignored_pk, ignored, word as ignored_word};
 use crate::schema::ignored_for_ext::dsl::{
     extension_id as extension_fk, ignored_for_ext, word as ext_word,
 };
@@ -109,6 +109,15 @@ impl Repo for Db {
             .id)
     }
 
+    fn is_ignored(&self, word: &str) -> Result<bool> {
+        Ok(ignored
+            .filter(ignored_word.eq(word))
+            .select(ignored_pk)
+            .first::<i32>(&self.connection)
+            .optional()?
+            .is_some())
+    }
+
     fn add_ignored_for_extension(&mut self, new_word: &str, existing_ext: &str) -> Result<()> {
         let new_word = &new_word.to_lowercase();
         let ext_in_db = extensions
@@ -142,6 +151,51 @@ impl Repo for Db {
             .values(new_ignored_for_file)
             .execute(&self.connection)?;
 
+        Ok(())
+    }
+
+    fn remove_ignored(&mut self, word: &str) -> Result<()> {
+        diesel::delete(ignored)
+            .filter(ignored_word.eq(word))
+            .execute(&self.connection)?;
+        Ok(())
+    }
+
+    fn remove_ignored_for_extension(&mut self, word: &str, ext: &str) -> Result<()> {
+        let id = extensions
+            .filter(extension.eq(ext))
+            .select(extension_pk)
+            .first::<i32>(&self.connection)
+            .optional()?;
+
+        let id = match id {
+            None => return Ok(()),
+            Some(i) => i,
+        };
+
+        diesel::delete(ignored_for_ext)
+            .filter(extension_fk.eq(id))
+            .filter(ext_word.eq(word))
+            .execute(&self.connection)?;
+        Ok(())
+    }
+
+    fn remove_ignored_for_file(&mut self, word: &str, file: &str) -> Result<()> {
+        let id = files
+            .filter(full_path.eq(file))
+            .select(file_pk)
+            .first::<i32>(&self.connection)
+            .optional()?;
+
+        let id = match id {
+            None => return Ok(()),
+            Some(i) => i,
+        };
+
+        diesel::delete(ignored_for_file)
+            .filter(file_fk.eq(id))
+            .filter(file_word.eq(word))
+            .execute(&self.connection)?;
         Ok(())
     }
 
@@ -296,5 +350,44 @@ mod tests {
         db.skip_file_name("poetry.lock").unwrap();
 
         assert!(db.is_skipped(&Path::new("path/to/poetry.lock")).unwrap());
+    }
+
+    #[test]
+    fn test_db_remove_ignored() -> Result<()> {
+        let mut db = Db::new(":memory:")?;
+        db.add_ignored("foo")?;
+        assert!(db.lookup_word("foo", Path::new("-'"))?);
+
+        db.remove_ignored("foo")?;
+        assert!(!db.lookup_word("foo", Path::new("-'"))?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_db_remove_ignored_for_ext() -> Result<()> {
+        let mut db = Db::new(":memory:")?;
+        db.add_extension("py")?;
+        db.add_extension("rs")?;
+        db.add_ignored_for_extension("foo", "py")?;
+        db.add_ignored_for_extension("foo", "rs")?;
+
+        db.remove_ignored_for_extension("foo", "py")?;
+        assert!(!db.lookup_word("foo", Path::new("foo.py"))?);
+        assert!(db.lookup_word("foo", Path::new("foo.rs"))?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_db_remove_ignored_for_file() -> Result<()> {
+        let mut db = Db::new(":memory:")?;
+        db.add_file("/path/to/one")?;
+        db.add_file("/path/to/two")?;
+        db.add_ignored_for_file("foo", "/path/to/one")?;
+        db.add_ignored_for_file("foo", "/path/to/two")?;
+
+        db.remove_ignored_for_file("foo", "/path/to/one")?;
+        assert!(!db.lookup_word("foo", Path::new("/path/to/one"))?);
+        assert!(db.lookup_word("foo", Path::new("/path/to/two"))?);
+        Ok(())
     }
 }

@@ -26,6 +26,15 @@ pub trait Repo {
     fn add_ignored_for_extension(&mut self, word: &str, ext: &str) -> Result<()>;
     // Add word to the ignore list for the given file
     fn add_ignored_for_file(&mut self, word: &str, file: &str) -> Result<()>;
+    // Is the word in the glabl ignore list?
+    fn is_ignored(&self, word: &str) -> Result<bool>;
+
+    // Remove word from the global ignore list
+    fn remove_ignored(&mut self, word: &str) -> Result<()>;
+    // Remove word from the ignore list for the given extension
+    fn remove_ignored_for_extension(&mut self, word: &str, ext: &str) -> Result<()>;
+    // Remove word from the ignore list for the given path
+    fn remove_ignored_for_file(&mut self, word: &str, path: &str) -> Result<()>;
 
     fn lookup_word(&self, word: &str, file: &Path) -> Result<bool>;
 }

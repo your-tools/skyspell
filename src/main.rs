@@ -1,3 +1,4 @@
+use std::convert::TryInto;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
@@ -27,6 +28,8 @@ struct Opts {
 enum Action {
     #[clap(about = "Add word to one of the ignore lists")]
     Add(AddOpts),
+    #[clap(about = "Remove word from one of the ignore lists")]
+    Remove(RemoveOpts),
     #[clap(about = "Check files for spelling errors")]
     Check(CheckOpts),
     #[clap(about = "Import a personal dictionary")]
@@ -35,6 +38,8 @@ enum Action {
     Suggest(SuggestOpts),
     #[clap(about = "Update the skipped lists")]
     Skip(SkipOpts),
+    #[clap(about = "Used for the kak integration")]
+    KakHook(KakHookOpts),
 }
 
 #[derive(Clap)]
@@ -64,6 +69,11 @@ struct ImportPersonalDictOpts {
     personal_dict_path: PathBuf,
 }
 
+#[derive(Clap, Debug)]
+struct KakHookOpts {
+    args: Vec<String>,
+}
+
 #[derive(Clap)]
 struct SkipOpts {
     #[clap(long)]
@@ -80,21 +90,35 @@ struct SuggestOpts {
     word: String,
 }
 
+#[derive(Clap)]
+struct RemoveOpts {
+    word: String,
+    #[clap(
+        long,
+        about = "Remove word from the ignore list for the given extension"
+    )]
+    ext: Option<String>,
+    #[clap(long, about = "Remove word from the ignore list for the given path")]
+    file: Option<PathBuf>,
+}
+
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
     let lang = opts.lang.unwrap_or_else(|| "en_US".to_string());
 
     match opts.action {
         Action::Add(opts) => add(&lang, opts),
+        Action::Remove(opts) => remove(&lang, opts),
         Action::Check(opts) => check(&lang, opts),
         Action::ImportPersonalDict(opts) => import_personal_dict(&lang, opts),
+        Action::KakHook(opts) => kak_hook(opts),
         Action::Suggest(opts) => suggest(&lang, opts),
         Action::Skip(opts) => skip(&lang, opts),
     }
 }
 
 fn open_db(lang: &str) -> Result<kak_spell::Db> {
-    let app_dirs = AppDirs::new(Some("kak_spell"), false).unwrap();
+    let app_dirs = AppDirs::new(Some("kak-spell"), false).unwrap();
     let data_dir = app_dirs.data_dir;
     std::fs::create_dir_all(&data_dir)
         .with_context(|| format!("Could not create {}", data_dir.display()))?;
@@ -120,6 +144,25 @@ fn add(lang: &str, opts: AddOpts) -> Result<()> {
         db.add_ignored_for_extension(word, &e)?;
     } else {
         db.add_ignored(word)?;
+    }
+
+    Ok(())
+}
+
+fn remove(lang: &str, opts: RemoveOpts) -> Result<()> {
+    let word = &opts.word;
+    let mut db = open_db(lang)?;
+
+    if let Some(p) = opts.file {
+        let full_path = std::fs::canonicalize(p)?;
+        let file = full_path
+            .to_str()
+            .ok_or_else(|| anyhow!("{} contains non-UTF-8 chars", full_path.display()))?;
+        db.remove_ignored_for_file(word, file)?;
+    } else if let Some(e) = opts.ext {
+        db.remove_ignored_for_extension(word, &e)?;
+    } else {
+        db.remove_ignored(word)?;
     }
 
     Ok(())
@@ -221,4 +264,55 @@ fn suggest(lang: &str, opts: SuggestOpts) -> Result<()> {
         println!("{}", suggestion);
     }
     Ok(())
+}
+
+// Note: *anything* written to stdout while this code
+// is called will be interpreted as a kakoune command
+// Handle with care.
+fn kak_hook(opts: KakHookOpts) -> Result<()> {
+    // *spelling* buffer looks like this
+    // path/to/foo.js: line.start,line.end word
+    let args: [String; 3] = opts
+        .args
+        .try_into()
+        .map_err(|_| anyhow!("Expected 2 arguments"))?;
+    let [lang, action, selection] = &args;
+    let mut db = open_db(lang)?;
+    let (path, rest) = selection.split_once(": ").unwrap();
+    let (selection, word) = rest.split_once(' ').unwrap();
+    match action.as_ref() {
+        "jump" => {
+            println!("edit -existing {}", path);
+            println!("select {}", selection);
+        }
+        "add-global" => {
+            if !db.is_ignored(word)? {
+                db.add_ignored(word)?;
+            }
+            kak_recheck(path);
+            println!("echo '\"{}\" added to global ignore list'", word);
+        }
+        "add-extension" => {
+            let (_, ext) = path
+                .rsplit_once(".")
+                .ok_or_else(|| anyhow!("File has no extension"))?;
+            if !db.known_extension(ext)? {
+                db.add_extension(ext)?;
+            }
+            db.add_ignored_for_extension(word, ext)?;
+            kak_recheck(path);
+            println!(
+                "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
+                word, ext
+            );
+        }
+        x => println!("echo -markup {{red}} unknow action: {}", x),
+    };
+    Ok(())
+}
+
+fn kak_recheck(path: &str) {
+    println!("edit -existing {}", path);
+    println!("write");
+    println!("edit *spelling*");
 }

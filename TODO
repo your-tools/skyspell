@@ -7,3 +7,5 @@ Handle backslash (for latex, C, and the rest)
 Filter mode (read stdin, write stdout)
 
 Skip bottom part when checking commit messages
+
+Generic Repo tests?

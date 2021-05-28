@@ -5,6 +5,7 @@ pub trait Dictionary {
     fn check(&self, word: &str) -> Result<bool>;
     // Suggest replacement for error string
     fn suggest(&self, error: &str) -> Vec<String>;
+    fn lang(&self) -> &str;
 }
 
 // We are careful not to own the enchant Broker in the Dict struct,
@@ -12,6 +13,7 @@ pub trait Dictionary {
 //
 pub struct EnchantDictionary {
     dict: enchant::Dict,
+    lang: String,
 }
 
 impl EnchantDictionary {
@@ -20,7 +22,10 @@ impl EnchantDictionary {
         let dict = broker
             .request_dict(lang)
             .map_err(|e| anyhow!("Could not request dict for lang {}: {}", lang, e))?;
-        Ok(Self { dict })
+        Ok(Self {
+            dict,
+            lang: lang.to_string(),
+        })
     }
 }
 
@@ -33,6 +38,10 @@ impl Dictionary for EnchantDictionary {
 
     fn suggest(&self, error: &str) -> Vec<String> {
         self.dict.suggest(error)
+    }
+
+    fn lang(&self) -> &str {
+        &self.lang
     }
 }
 

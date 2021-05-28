@@ -27,32 +27,22 @@ define-command kak-spell -docstring "check the current buffer for spelling error
   }
 }
 
+define-command -hidden -params 1.. kak-spell-buffer-action %{
+  execute-keys gi GL
+  evaluate-commands %sh{
+    kak-spell kak-hook $* "${kak_selection}"
+  }
+}
+
 define-command kak-spell-list -docstring "list spelling errors" %{
   edit -existing *spelling*
    info -title "*spelling* Help" "h,j,k,l: Move
 <ret>: Jump to spelling error
-a    : Add the word to the personal dictionary
+g : Add the word to the global ignore list
+e : Add the word to the ignore list for this extension
 "
 }
 
-define-command kak-spell-jump -hidden %{
-  edit -existing *spelling*
-  execute-keys  gi <a-E>
-  set-option global kak_spell_current_error %val{selection}
-  execute-keys ga
-  select %opt{kak_spell_current_error}
-}
-
-define-command kak-spell-add-from-spelling-buffer -params 1 -hidden %{
-  execute-keys gi <a-w> l Gl
-  evaluate-commands %sh{
-    word="$kak_selection"
-    kak-spell --quiet --lang $1 add $word
-  }
-  execute-keys ga
-  kak-spell
-  kak-spell-list
-}
 
 define-command kak-spell-next -docstring "go to the next spelling error" %{
    evaluate-commands %sh{
@@ -70,39 +60,6 @@ define-command kak-spell-previous -docstring "go to the previous spelling error"
    }
 }
 
-define-command kak-spell-add -params 0..1 -docstring "add the selection to the user dict" %{
-  evaluate-commands %sh{
-    if [ -z "${kak_opt_kak_spell_lang}" ]; then
-      printf %s\\n 'echo -markup {Error}The `kak_spell_lang` option is not set'
-      exit 1
-    fi
-  }
-  nop %sh{
-    if [ -z "$1" ]; then
-      kak-spell --lang $kak_opt_kak_spell_lang add $kak_selection
-    else
-      kak-spell --lang $kak_opt_kak_spell_lang add $1
-    fi
-  }
-  write
-}
-
-define-command kak-spell-remove -params 0..1 -docstring "remove the selection from the user dict" %{
-  evaluate-commands %sh{
-    if [ -z "${kak_opt_kak_spell_lang}" ]; then
-      printf %s\\n 'echo -markup {Error}The `kak_spell_lang` option is not set'
-      exit 1
-    fi
-  }
-  nop %sh{
-    if [ -z "$1" ]; then
-      kak-spell --lang $kak_opt_kak_spell_lang remove $kak_selection
-    else
-      kak-spell --lang $kak_opt_kak_spell_lang remove $1
-    fi
-  }
-  write
-}
 
 define-command kak-spell-replace -docstring "replace the selection with a suggestion " %{
   evaluate-commands %sh{

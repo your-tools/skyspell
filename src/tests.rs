@@ -158,6 +158,10 @@ impl Repo for FakeRepo {
         Ok(0)
     }
 
+    fn is_ignored(&self, word: &str) -> Result<bool> {
+        Ok(self.ignored.contains(word))
+    }
+
     fn add_extension(&mut self, ext: &str) -> Result<()> {
         self.ignored_for_ext.insert(ext.to_string(), vec![]);
         Ok(())
@@ -255,6 +259,28 @@ impl Repo for FakeRepo {
         self.skipped_paths.insert(full_path.to_string());
         Ok(())
     }
+
+    fn remove_ignored(&mut self, word: &str) -> Result<()> {
+        self.ignored.remove(word);
+        Ok(())
+    }
+
+    fn remove_ignored_for_extension(&mut self, word: &str, ext: &str) -> Result<()> {
+        let entry = &mut self.ignored_for_ext.get_mut(ext);
+        if let Some(e) = entry {
+            e.retain(|x| x != word);
+        }
+
+        Ok(())
+    }
+
+    fn remove_ignored_for_file(&mut self, word: &str, path: &str) -> Result<()> {
+        let entry = &mut self.ignored_for_file.get_mut(path);
+        if let Some(e) = entry {
+            e.retain(|x| x != word);
+        }
+        Ok(())
+    }
 }
 
 #[derive(Default)]
@@ -285,6 +311,10 @@ impl Dictionary for FakeDictionary {
 
     fn suggest(&self, error: &str) -> Vec<String> {
         self.suggestions.get(error).map_or(vec![], |v| v.to_vec())
+    }
+
+    fn lang(&self) -> &str {
+        return "en_US";
     }
 }
 
@@ -333,6 +363,44 @@ fn test_fake_repo_skipping_filename() {
     assert!(fake
         .lookup_word("abcdef", &Path::new("path/to/poetry.lock"))
         .unwrap());
+}
+
+#[test]
+fn test_fake_repo_remove_ignored() {
+    let mut fake_repo = FakeRepo::new();
+    fake_repo.add_ignored("foo").unwrap();
+    assert!(fake_repo.lookup_word("foo", Path::new("-'")).unwrap());
+
+    fake_repo.remove_ignored("foo").unwrap();
+    assert!(!fake_repo.lookup_word("foo", Path::new("-'")).unwrap());
+}
+
+#[test]
+fn test_fake_repo_remove_ignored_for_ext() -> Result<()> {
+    let mut fake_repo = FakeRepo::new();
+    fake_repo.add_extension("py")?;
+    fake_repo.add_extension("rs")?;
+    fake_repo.add_ignored_for_extension("foo", "py")?;
+    fake_repo.add_ignored_for_extension("foo", "rs")?;
+
+    fake_repo.remove_ignored_for_extension("foo", "py")?;
+    assert!(!fake_repo.lookup_word("foo", Path::new("foo.py"))?);
+    assert!(fake_repo.lookup_word("foo", Path::new("foo.rs"))?);
+    Ok(())
+}
+
+#[test]
+fn test_fake_repo_remove_ignored_for_file() -> Result<()> {
+    let mut fake_repo = FakeRepo::new();
+    fake_repo.add_file("/path/to/one")?;
+    fake_repo.add_file("/path/to/two")?;
+    fake_repo.add_ignored_for_file("foo", "/path/to/one")?;
+    fake_repo.add_ignored_for_file("foo", "/path/to/two")?;
+
+    fake_repo.remove_ignored_for_file("foo", "/path/to/one")?;
+    assert!(!fake_repo.lookup_word("foo", Path::new("/path/to/one"))?);
+    assert!(fake_repo.lookup_word("foo", Path::new("/path/to/two"))?);
+    Ok(())
 }
 
 #[test]
