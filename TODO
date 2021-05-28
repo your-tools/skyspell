@@ -1,5 +1,7 @@
 Check coverage with tarpaulin
 
+README: Add link to a nice asciinema demo (or a gif)
+
 Handle backslash (for latex, C, and the rest)
 
 Filter mode (read stdin, write stdout)
