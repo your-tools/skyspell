@@ -5,3 +5,5 @@ Check coverage with tarpaulin
 Handle backslash (for latex, C, and the rest)
 
 Filter mode (read stdin, write stdout)
+
+IDE: spell checking is cool
