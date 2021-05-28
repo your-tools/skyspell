@@ -72,5 +72,5 @@ define-command kak-spell-replace -docstring "replace the selection with a sugges
     fi
   }
 
-  evaluate-commands %sh{ kak-spell --lang $kak_opt_kak_spell_lang replace $kak_selection --kakoune }
+  evaluate-commands %sh{ kak-spell --lang $kak_opt_kak_spell_lang suggest $kak_selection --kakoune }
 }

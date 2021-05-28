@@ -88,6 +88,9 @@ struct SkipOpts {
 #[derive(Clap)]
 struct SuggestOpts {
     word: String,
+
+    #[clap(long, about = "Used by kakoune")]
+    kakoune: bool,
 }
 
 #[derive(Clap)]
@@ -264,9 +267,23 @@ fn suggest(lang: &str, opts: SuggestOpts) -> Result<()> {
     if dictionary.check(word)? {
         return Ok(());
     }
-    for suggestion in dictionary.suggest(word).iter() {
-        println!("{}", suggestion);
+
+    let suggestions = dictionary.suggest(word);
+
+    if opts.kakoune {
+        print!("menu ");
+        for suggestion in suggestions.iter() {
+            print!("%{{{}}} ", suggestion);
+            print!("%{{execute-keys -itersel %{{c{}<esc>be}} ", suggestion);
+            print!(":write <ret> :kak-spell <ret>}}");
+            print!(" ");
+        }
+    } else {
+        for suggestion in suggestions.iter() {
+            println!("{}", suggestion);
+        }
     }
+
     Ok(())
 }
 
