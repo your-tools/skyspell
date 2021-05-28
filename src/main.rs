@@ -304,7 +304,7 @@ fn kak_hook(opts: KakHookOpts) -> Result<()> {
     let (selection, word) = rest.split_once(' ').unwrap();
     match action.as_ref() {
         "jump" => {
-            println!("edit -existing {}", path_str);
+            println!("buffer {}", path_str);
             println!("select {}", selection);
         }
         "add-global" => {

@@ -1,5 +1,10 @@
 Check coverage with tarpaulin
 
+Put all the kak stuff in one place
+
+Probably have a `kak-spell init` ala `kak-lsp` and
+`kakoune.cr`
+
 README: Add link to a nice asciinema demo (or a gif)
 
 Handle backslash (for latex, C, and the rest)

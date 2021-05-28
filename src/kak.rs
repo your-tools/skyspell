@@ -89,7 +89,7 @@ fn write_hooks(f: &mut impl Write, lang: &str) -> Result<()> {
     writeln!(
         f,
         r#"map buffer normal '<ret>' ':<space>kak-spell-buffer-action {lang} jump<ret>'
-map buffer normal 'g' ':<space>kak-spell-buffer-action {lang} add-global<ret>'
+map buffer normal 'a' ':<space>kak-spell-buffer-action {lang} add-global<ret>'
 map buffer normal 'e' ':<space>kak-spell-buffer-action {lang} add-extension<ret>'
 map buffer normal 'f' ':<space>kak-spell-buffer-action {lang} add-file<ret>'
 map buffer normal 'n' ':<space>kak-spell-buffer-action {lang} skip-name<ret>'

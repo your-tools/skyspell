@@ -108,7 +108,7 @@ impl<I: Interactor, D: Dictionary, R: Repo> InteractiveChecker<I, D, R> {
         println!("{} {}", prefix.bold(), error.blue());
         let prompt = r#"What to do?
 
-g : Add word to global ignore list
+a : Add word to global ignore list
 e : Add word to ignore list for this extension
 f : Add word to ignore list for this full path
 n : Always skip this file name
@@ -117,9 +117,9 @@ x : Skip this error
 q : Quit"#;
 
         loop {
-            let letter = self.interactor.input_letter(prompt, "gefnsxq");
+            let letter = self.interactor.input_letter(prompt, "aefnsxq");
             match letter.as_ref() {
-                "g" => return self.add_to_global_ignore(&error),
+                "a" => return self.add_to_global_ignore(&error),
                 "e" => {
                     if self.handle_ext(path, &error)? {
                         break;
@@ -334,7 +334,7 @@ mod tests {
     fn test_adding_to_ignore() {
         let mut app = TestApp::new();
         app.add_known(&["hello", "world"]);
-        app.push_text("g");
+        app.push_text("a");
         let mut checker = app.checker();
 
         checker

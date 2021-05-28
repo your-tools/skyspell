@@ -35,10 +35,10 @@ define-command -hidden -params 1.. kak-spell-buffer-action %{
 }
 
 define-command kak-spell-list -docstring "list spelling errors" %{
-  edit -existing *spelling*
+   buffer *spelling*
    info -title "*spelling* Help" "h,j,k,l: Move
 <ret>: Jump to spelling error
-g : Add the word to the global ignore list
+a : Add the word to the global ignore list
 e : Add the word to the ignore list for this extension
 f : Add the word to the ignore list for this path
 n : Always skip this file name
