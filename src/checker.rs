@@ -183,7 +183,7 @@ Always skip this file (p)ath
         self.repo.add_ignored_for_extension(error, ext)?;
         print_addition(
             error,
-            &format!("the ignore list for extension {}", ext.bold()),
+            &format!("the ignore list for extension '.{}'", ext.bold()),
         );
         Ok(true)
     }
@@ -203,7 +203,7 @@ Always skip this file (p)ath
         self.repo.add_ignored_for_file(error, file_path)?;
         print_addition(
             error,
-            &format!("the ignore list for path {}", file_path.bold()),
+            &format!("the ignore list for the path: '{}'", file_path.bold()),
         );
         Ok(true)
     }
@@ -226,7 +226,7 @@ Always skip this file (p)ath
         self.repo.skip_file_name(file_name)?;
 
         println!(
-            "\n{}Added {} to the list of file names to skip\n",
+            "\n{}Added '{}' to the list of file names to skip\n",
             "=> ".blue(),
             file_name,
         );
@@ -244,7 +244,7 @@ Always skip this file (p)ath
         self.repo.skip_full_path(full_path)?;
 
         println!(
-            "\n{}Added {} to the list of file paths to skip\n",
+            "\n{}Added '{}' to the list of file paths to skip\n",
             "=> ".blue(),
             full_path,
         );
