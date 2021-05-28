@@ -314,7 +314,7 @@ impl Dictionary for FakeDictionary {
     }
 
     fn lang(&self) -> &str {
-        return "en_US";
+        "en_US"
     }
 }
 

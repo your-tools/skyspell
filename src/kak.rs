@@ -93,7 +93,7 @@ map buffer normal 'g' ':<space>kak-spell-buffer-action {lang} add-global<ret>'
 map buffer normal 'e' ':<space>kak-spell-buffer-action {lang} add-extension<ret>'
 map buffer normal 'f' ':<space>kak-spell-buffer-action {lang} add-file<ret>'
 map buffer normal 'n' ':<space>kak-spell-buffer-action {lang} skip-name<ret>'
-map buffer normal 'p' ':<space>kak-spell-buffer-action {lang} skip-file<ret>'
+map buffer normal 's' ':<space>kak-spell-buffer-action {lang} skip-file<ret>'
 execute-keys <esc> ga"#,
         lang = lang
     )?;

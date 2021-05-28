@@ -40,6 +40,9 @@ define-command kak-spell-list -docstring "list spelling errors" %{
 <ret>: Jump to spelling error
 g : Add the word to the global ignore list
 e : Add the word to the ignore list for this extension
+f : Add the word to the ignore list for this path
+n : Always skip this file name
+s : Always skip this file
 "
 }
 

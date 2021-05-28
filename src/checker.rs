@@ -108,16 +108,16 @@ impl<I: Interactor, D: Dictionary, R: Repo> InteractiveChecker<I, D, R> {
         println!("{} {}", prefix.bold(), error.blue());
         let prompt = r#"What to do?
 
-Add word to (g)lobal ignore list
-Add word to ignore list for this (e)xtension
-Add word to ignore list for this (f)ull path
-Always skip this file (n)ame
-Always skip this file (p)ath
-(s)kip this error
-(q)uit"#;
+g : Add word to global ignore list
+e : Add word to ignore list for this extension
+f : Add word to ignore list for this full path
+n : Always skip this file name
+s : Always skip this file path
+x : Skip this error
+q : Quit"#;
 
         loop {
-            let letter = self.interactor.input_letter(prompt, "gefnqps");
+            let letter = self.interactor.input_letter(prompt, "gefnsxq");
             match letter.as_ref() {
                 "g" => return self.add_to_global_ignore(&error),
                 "e" => {
@@ -135,17 +135,17 @@ Always skip this file (p)ath
                         break;
                     }
                 }
-                "p" => {
+                "s" => {
                     if self.handle_full_path_skip(path)? {
                         break;
                     }
                 }
-                "q" => {
-                    bail!("Interrupted by user")
-                }
-                "s" => {
+                "x" => {
                     self.skipped.insert(error.to_string());
                     break;
+                }
+                "q" => {
+                    bail!("Interrupted by user")
                 }
                 _ => {
                     unreachable!()
@@ -444,7 +444,7 @@ mod tests {
 
     /// Scenario:
     /// * call handle_token with 'foo' error
-    /// * press 's' - 'foo' token is skipped
+    /// * press 'x' - 'foo' token is skipped
     /// * call handle_token again
     /// * check that no more interaction took place
     ///   (this is done by FakeInteractor::drop, by the way)
@@ -452,7 +452,7 @@ mod tests {
     fn test_remember_skipped_tokens() {
         let mut app = TestApp::new();
         app.add_known(&["hello", "world"]);
-        app.push_text("s");
+        app.push_text("x");
         let mut checker = app.checker();
 
         checker

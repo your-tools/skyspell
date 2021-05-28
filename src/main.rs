@@ -221,6 +221,10 @@ fn check_with<C: Checker>(checker: &mut C, opts: CheckOpts) -> Result<()> {
         std::process::exit(1);
     }
 
+    if opts.kakoune {
+        return Ok(());
+    }
+
     match skipped {
         1 => println!("Skipped one file"),
         x if x >= 2 => println!("Skipped {} files", x),
@@ -278,35 +282,62 @@ fn kak_hook(opts: KakHookOpts) -> Result<()> {
         .map_err(|_| anyhow!("Expected 2 arguments"))?;
     let [lang, action, selection] = &args;
     let mut db = open_db(lang)?;
-    let (path, rest) = selection.split_once(": ").unwrap();
+    let (path_str, rest) = selection.split_once(": ").unwrap();
+    let path = PathBuf::from(path_str);
     let (selection, word) = rest.split_once(' ').unwrap();
     match action.as_ref() {
         "jump" => {
-            println!("edit -existing {}", path);
+            println!("edit -existing {}", path_str);
             println!("select {}", selection);
         }
         "add-global" => {
             if !db.is_ignored(word)? {
                 db.add_ignored(word)?;
             }
-            kak_recheck(path);
+            kak_recheck(path_str);
             println!("echo '\"{}\" added to global ignore list'", word);
         }
         "add-extension" => {
-            let (_, ext) = path
+            let (_, ext) = path_str
                 .rsplit_once(".")
                 .ok_or_else(|| anyhow!("File has no extension"))?;
             if !db.known_extension(ext)? {
                 db.add_extension(ext)?;
             }
             db.add_ignored_for_extension(word, ext)?;
-            kak_recheck(path);
+            kak_recheck(path_str);
             println!(
                 "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
                 word, ext
             );
         }
-        x => println!("echo -markup {{red}} unknow action: {}", x),
+        "add-file" => {
+            if !db.known_file(path_str)? {
+                db.add_file(path_str)?;
+            }
+            db.add_ignored_for_file(word, path_str)?;
+            kak_recheck(path_str);
+            println!(
+                "echo '\"{}\" added to the ignore list for file: \"{}\"'",
+                word, path_str
+            );
+        }
+        "skip-name" => {
+            let file_name = path
+                .file_name()
+                .with_context(|| "no file name")?
+                .to_str()
+                .with_context(|| "not an utf-8 file name")?;
+            db.skip_file_name(file_name)?;
+            kak_recheck(path_str);
+            println!("echo 'will now skip file named: \"{}\"'", file_name);
+        }
+        "skip-file" => {
+            db.skip_full_path(path_str)?;
+            kak_recheck(path_str);
+            println!("echo 'will now skip the file \"{}\"'", path_str);
+        }
+        x => println!("echo -markup {{red}} unknown action: {}", x),
     };
     Ok(())
 }
