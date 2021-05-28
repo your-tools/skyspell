@@ -2,6 +2,27 @@
 
 A fast and handy spell checker for source code and other texts
 
+# rcspell in action
+
+rcspell is meant to be used from the command line, like this:
+
+```
+$ rcspell check $(git ls-files)
+/path/to/LICENSE:9:2 Redistributions
+What to do?
+...
+> g
+
+=> Added Redistributions to the global ignore list
+
+/path/to/foo.rs:32:0 2fn
+What to do?
+...
+> e
+
+=> Added 'fn' to the ignore list for '.rs' files
+```
+
 ## Features
 
 * Distributed as a single binary
