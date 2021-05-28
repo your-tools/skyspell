@@ -5,7 +5,8 @@ for Kakoune.
 
 # kak-spell in action
 
-kak-spell is meant to be used from the command line, like this:
+kak-spell is meant to be used from kakoune, but also features
+an interactive mode and can be used from the command line, like this:
 
 ```
 $ kak-spell check $(git ls-files)
