@@ -1,5 +1,3 @@
-Make it usable from kakoune (exactly like kak-spell)
-
 Check coverage with tarpaulin
 
 Handle backslash (for latex, C, and the rest)
@@ -8,4 +6,6 @@ Filter mode (read stdin, write stdout)
 
 Skip bottom part when checking commit messages
 
-Generic Repo tests?
+Generic Repo tests to reduce duplication between FakeRepo and Db
+
+`kak-spell enable` should run kak-spell on all open buffers
