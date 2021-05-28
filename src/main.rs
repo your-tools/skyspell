@@ -1,10 +1,11 @@
 use std::convert::TryInto;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Context, Result};
 use clap::Clap;
+use dirs_next::home_dir;
 use platform_dirs::AppDirs;
 
 use kak_spell::EnchantDictionary;
@@ -32,13 +33,15 @@ enum Action {
     Remove(RemoveOpts),
     #[clap(about = "Check files for spelling errors")]
     Check(CheckOpts),
+    #[clap(about = "Invoked by Kakonue")]
+    KakCheck(KakCheckOpts),
     #[clap(about = "Import a personal dictionary")]
     ImportPersonalDict(ImportPersonalDictOpts),
     #[clap(about = "Suggest replacements for the given error")]
     Suggest(SuggestOpts),
     #[clap(about = "Update the skipped lists")]
     Skip(SkipOpts),
-    #[clap(about = "Used for the kak integration")]
+    #[clap(about = "Used for the Kakoune integration")]
     KakHook(KakHookOpts),
 }
 
@@ -56,9 +59,6 @@ struct CheckOpts {
     #[clap(long)]
     non_interactive: bool,
 
-    #[clap(long)]
-    kakoune: bool,
-
     #[clap(about = "List of paths to check")]
     sources: Vec<PathBuf>,
 }
@@ -67,6 +67,11 @@ struct CheckOpts {
 struct ImportPersonalDictOpts {
     #[clap(long)]
     personal_dict_path: PathBuf,
+}
+
+#[derive(Clap, Debug)]
+struct KakCheckOpts {
+    buflist: Vec<String>,
 }
 
 #[derive(Clap, Debug)]
@@ -113,6 +118,7 @@ fn main() -> Result<()> {
         Action::Add(opts) => add(&lang, opts),
         Action::Remove(opts) => remove(&lang, opts),
         Action::Check(opts) => check(&lang, opts),
+        Action::KakCheck(opts) => kak_check(&lang, opts),
         Action::ImportPersonalDict(opts) => import_personal_dict(&lang, opts),
         Action::KakHook(opts) => kak_hook(opts),
         Action::Suggest(opts) => suggest(&lang, opts),
@@ -177,22 +183,79 @@ fn check(lang: &str, opts: CheckOpts) -> Result<()> {
     let repo = open_db(lang)?;
     let interactive = !opts.non_interactive;
 
-    match (interactive, opts.kakoune) {
-        (false, false) => {
+    match interactive {
+        false => {
             let mut checker = NonInteractiveChecker::new(dictionary, repo);
             check_with(&mut checker, opts)
         }
-        (true, false) => {
+        true => {
             let interactor = ConsoleInteractor;
             let mut checker = InteractiveChecker::new(interactor, dictionary, repo);
             check_with(&mut checker, opts)
         }
-        (_, true) => {
-            let mut checker = KakouneChecker::new(dictionary, repo);
-            check_with(&mut checker, opts)?;
-            checker.emit_kak_code()
+    }
+}
+
+fn kak_check(lang: &str, opts: KakCheckOpts) -> Result<()> {
+    // Note:
+    // kak_buflist may:
+    //  * contain special buffers, like *debug*
+    //  * use ~ for home dir
+    //  * need to be canonicalize
+    let mut broker = enchant::Broker::new();
+    let dictionary = EnchantDictionary::new(&mut broker, lang)?;
+    let repo = open_db(lang)?;
+    let home_dir = home_dir().ok_or_else(|| anyhow!("Could not get home directory"))?;
+    let home_dir = home_dir
+        .to_str()
+        .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
+    let mut checker = KakouneChecker::new(dictionary, repo);
+    for bufname in &opts.buflist {
+        if bufname.starts_with('*') && bufname.ends_with('*') {
+            continue;
+        }
+
+        let full_path = bufname.replace("~", home_dir);
+
+        let source_path = Path::new(&full_path);
+
+        if !source_path.exists() {
+            continue;
+        }
+
+        let source_path = match std::fs::canonicalize(&source_path) {
+            Err(e) => {
+                // Should probably not happen, but the best we can do is write
+                // to stderr ...
+                // At least it will be visible in the *debug* buffer
+                eprintln!("Could not canonicalize {} : {}", source_path.display(), e);
+                continue;
+            }
+            Ok(p) => p,
+        };
+
+        if checker.is_skipped(&source_path)? {
+            continue;
+        }
+
+        let source = match File::open(&source_path) {
+            Ok(s) => s,
+            Err(_) => {
+                // Probably a buffer that has not been written to a file yet
+                continue;
+            }
+        };
+        let reader = BufReader::new(source);
+
+        for (i, line) in reader.lines().enumerate() {
+            let line = line?;
+            let tokenizer = kak_spell::Tokenizer::new(&line);
+            for (word, pos) in tokenizer {
+                checker.handle_token(&source_path, (i + 1, pos), word)?;
+            }
         }
     }
+    checker.emit_kak_code()
 }
 
 fn check_with<C: Checker>(checker: &mut C, opts: CheckOpts) -> Result<()> {
@@ -202,13 +265,15 @@ fn check_with<C: Checker>(checker: &mut C, opts: CheckOpts) -> Result<()> {
     }
 
     for path in &opts.sources {
-        let source_path = std::fs::canonicalize(path)?;
+        let source_path = std::fs::canonicalize(path)
+            .with_context(|| format!("Could not canonicalize {}", path.display()))?;
         if checker.is_skipped(&source_path)? {
             skipped += 1;
             continue;
         }
 
-        let source = File::open(&source_path)?;
+        let source = File::open(&source_path)
+            .with_context(|| format!("Could not open {} for reading", source_path.display()))?;
         let reader = BufReader::new(source);
 
         for (i, line) in reader.lines().enumerate() {
@@ -222,10 +287,6 @@ fn check_with<C: Checker>(checker: &mut C, opts: CheckOpts) -> Result<()> {
 
     if !checker.success() {
         std::process::exit(1);
-    }
-
-    if opts.kakoune {
-        return Ok(());
     }
 
     match skipped {
@@ -304,7 +365,7 @@ fn kak_hook(opts: KakHookOpts) -> Result<()> {
     let (selection, word) = rest.split_once(' ').unwrap();
     match action.as_ref() {
         "jump" => {
-            println!("buffer {}", path_str);
+            println!("edit {}", path_str);
             println!("select {}", selection);
         }
         "add-global" => {
@@ -362,5 +423,5 @@ fn kak_hook(opts: KakHookOpts) -> Result<()> {
 fn kak_recheck(path: &str) {
     println!("edit -existing {}", path);
     println!("write");
-    println!("edit *spelling*");
+    println!("buffer *spelling*");
 }

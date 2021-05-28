@@ -5,7 +5,7 @@ declare-option str kak_spell_word_to_add
 
 define-command -params 1 kak-spell-enable %{
   evaluate-commands %sh{
-    echo "set buffer kak_spell_lang $1"
+    echo "set global kak_spell_lang $1"
   }
   add-highlighter buffer/spell ranges spell_errors
   hook -group kak-spell buffer BufWritePost .* kak-spell
@@ -21,9 +21,8 @@ define-command kak-spell -docstring "check the current buffer for spelling error
     kak_timestamp=$kak_timestamp
     kak-spell \
       --lang "${kak_opt_kak_spell_lang}" \
-      check \
-      --kakoune \
-      "${kak_buffile}"
+      kak-check \
+      $kak_buflist
   }
 }
 
