@@ -10,6 +10,7 @@ pub mod checker;
 pub mod db;
 mod dictionary;
 pub(crate) mod interactor;
+pub mod kak;
 pub(crate) mod models;
 pub mod repo;
 pub(crate) mod schema;
@@ -20,6 +21,7 @@ pub use db::Db;
 pub use dictionary::Dictionary;
 pub use dictionary::EnchantDictionary;
 pub use interactor::{ConsoleInteractor, Interactor};
+pub use kak::KakouneChecker;
 pub use repo::Repo;
 pub use token::Tokenizer;
 

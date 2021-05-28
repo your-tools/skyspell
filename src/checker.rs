@@ -270,7 +270,7 @@ fn print_unknown_token(token: &str, path: &Path, pos: (usize, usize)) {
     println!("{} {}", prefix.bold(), token.blue());
 }
 
-fn lookup_token<D: Dictionary, R: Repo>(
+pub(crate) fn lookup_token<D: Dictionary, R: Repo>(
     dictionary: &D,
     repo: &R,
     token: &str,

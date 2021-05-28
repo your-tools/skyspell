@@ -18,24 +18,17 @@ define-command kak-spell-disable %{
 
 define-command kak-spell -docstring "check the current buffer for spelling errors" %{
   evaluate-commands %sh{
+    kak_timestamp=$kak_timestamp
     kak-spell \
       --lang "${kak_opt_kak_spell_lang}" \
       check \
-      --filetype "${kak_opt_filetype}" \
-      "${kak_buffile}" \
-      --kak-timestamp ${kak_timestamp} \
-      --kakoune
+      --kakoune \
+      "${kak_buffile}"
   }
 }
 
 define-command kak-spell-list -docstring "list spelling errors" %{
-   evaluate-commands %sh{
-    kak-spell \
-      --lang "${kak_opt_kak_spell_lang}" \
-      list \
-      --filetype "${kak_opt_filetype}" \
-      "${kak_buffile}" \
-   }
+  edit -existing *spelling*
    info -title "*spelling* Help" "h,j,k,l: Move
 <ret>: Jump to spelling error
 a    : Add the word to the personal dictionary

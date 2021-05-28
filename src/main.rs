@@ -7,7 +7,7 @@ use clap::Clap;
 use platform_dirs::AppDirs;
 
 use kak_spell::EnchantDictionary;
-use kak_spell::{Checker, InteractiveChecker, NonInteractiveChecker};
+use kak_spell::{Checker, InteractiveChecker, KakouneChecker, NonInteractiveChecker};
 use kak_spell::{ConsoleInteractor, Dictionary, Repo};
 
 #[derive(Clap)]
@@ -50,6 +50,9 @@ struct AddOpts {
 struct CheckOpts {
     #[clap(long)]
     non_interactive: bool,
+
+    #[clap(long)]
+    kakoune: bool,
 
     #[clap(about = "List of paths to check")]
     sources: Vec<PathBuf>,
@@ -126,16 +129,22 @@ fn check(lang: &str, opts: CheckOpts) -> Result<()> {
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, lang)?;
     let repo = open_db(lang)?;
+    let interactive = !opts.non_interactive;
 
-    match opts.non_interactive {
-        true => {
+    match (interactive, opts.kakoune) {
+        (false, false) => {
             let mut checker = NonInteractiveChecker::new(dictionary, repo);
             check_with(&mut checker, opts)
         }
-        false => {
+        (true, false) => {
             let interactor = ConsoleInteractor;
             let mut checker = InteractiveChecker::new(interactor, dictionary, repo);
             check_with(&mut checker, opts)
+        }
+        (_, true) => {
+            let mut checker = KakouneChecker::new(dictionary, repo);
+            check_with(&mut checker, opts)?;
+            checker.emit_kak_code()
         }
     }
 }
