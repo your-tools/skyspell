@@ -8,20 +8,20 @@ use crate::Dictionary;
 use crate::Interactor;
 use crate::Repo;
 
-pub trait Checker {
+pub(crate) trait Checker {
     fn is_skipped(&self, path: &Path) -> Result<bool>;
     fn handle_token(&mut self, path: &Path, pos: (usize, usize), token: &str) -> Result<()>;
     fn success(&self) -> bool;
 }
 
-pub struct NonInteractiveChecker<D: Dictionary, R: Repo> {
+pub(crate) struct NonInteractiveChecker<D: Dictionary, R: Repo> {
     dictionary: D,
     repo: R,
     errors_found: bool,
 }
 
 impl<D: Dictionary, R: Repo> NonInteractiveChecker<D, R> {
-    pub fn new(dictionary: D, repo: R) -> Self {
+    pub(crate) fn new(dictionary: D, repo: R) -> Self {
         Self {
             dictionary,
             repo,
@@ -49,7 +49,7 @@ impl<D: Dictionary, R: Repo> Checker for NonInteractiveChecker<D, R> {
     }
 }
 
-pub struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repo> {
+pub(crate) struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repo> {
     interactor: I,
     dictionary: D,
     repo: R,
@@ -79,7 +79,7 @@ impl<I: Interactor, D: Dictionary, R: Repo> Checker for InteractiveChecker<I, D,
 }
 
 impl<I: Interactor, D: Dictionary, R: Repo> InteractiveChecker<I, D, R> {
-    pub fn new(interactor: I, dictionary: D, repo: R) -> Self {
+    pub(crate) fn new(interactor: I, dictionary: D, repo: R) -> Self {
         Self {
             dictionary,
             interactor,
@@ -250,10 +250,6 @@ q : Quit"#;
         );
         Ok(true)
     }
-
-    pub fn skipped(&self) -> bool {
-        !self.skipped.is_empty()
-    }
 }
 
 fn print_addition(token: &str, location: &str) {
@@ -292,9 +288,9 @@ mod tests {
 
     #[derive(Default)]
     struct TestApp {
-        pub dictionary: FakeDictionary,
-        pub repo: FakeRepo,
-        pub interactor: FakeInteractor,
+        dictionary: FakeDictionary,
+        repo: FakeRepo,
+        interactor: FakeInteractor,
     }
 
     impl TestApp {
