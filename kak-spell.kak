@@ -8,12 +8,12 @@ define-command -params 1 kak-spell-enable %{
     echo "set global kak_spell_lang $1"
   }
   add-highlighter global/spell ranges spell_errors
-  hook -group kak-spell buffer BufWritePost .* kak-spell
+  hook -group kak-spell global BufWritePost .* kak-spell
 }
 
 define-command kak-spell-disable %{
   remove-highlighter buffer/spell
-  remove-hooks buffer kak-spell
+  remove-hooks global kak-spell
 }
 
 define-command kak-spell -docstring "check the current buffer for spelling errors" %{
