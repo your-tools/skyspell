@@ -123,7 +123,7 @@ fn add_file() -> Result<()> {
     if !db.known_file(path)? {
         db.add_file(path)?;
     }
-    db.skip_full_path(path)?;
+    db.add_ignored_for_file(word, path)?;
     kak_recheck();
     println!(
         "echo '\"{}\" added to the ignore list for file: \"{}\"'",
