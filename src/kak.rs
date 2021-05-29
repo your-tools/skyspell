@@ -27,7 +27,7 @@ pub fn run() -> Result<()> {
 }
 
 #[derive(Clap)]
-#[clap(version = env!("CARGO_PKG_VERSION"))]
+#[clap(name="kak-spell (kakoune helper)", version = env!("CARGO_PKG_VERSION"))]
 struct Opts {
     #[clap(subcommand)]
     action: Action,
@@ -35,17 +35,27 @@ struct Opts {
 
 #[derive(Clap)]
 enum Action {
+    #[clap(about = "Add selection to the global ignore list")]
     AddGlobal,
+    #[clap(about = "Add selection to the ignore list for the given extension")]
     AddExtension,
+    #[clap(about = "Add selection to the ignore list for the given file")]
     AddFile,
+    #[clap(about = "Spell check every buffer")]
     Check(CheckOpts),
-    Init,
-    Jump,
-    Suggest,
-    SkipName,
 
+    #[clap(about = "Display a menu containing suggestions")]
+    Suggest,
+    #[clap(about = "Skip the file name matching the selection")]
+    SkipName,
+    #[clap(about = "Skip the file path matching the selection")]
     SkipFile,
+
+    #[clap(about = "Jump to the selected error")]
+    Jump,
+    #[clap(about = "Jump to the previous error")]
     PreviousError(MoveOpts),
+    #[clap(about = "Jump to the next error")]
     NextError(MoveOpts),
 }
 
@@ -61,10 +71,6 @@ struct MoveOpts {
 
 fn dispatch(opts: Opts) -> Result<()> {
     match opts.action {
-        Action::Init => {
-            println!("{}", include_str!("init.kak"));
-            Ok(())
-        }
         Action::AddExtension => add_extension(),
         Action::AddFile => add_file(),
         Action::AddGlobal => add_global(),
