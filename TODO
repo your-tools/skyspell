@@ -4,15 +4,6 @@ Try to optimize for performance
 
 Display number of affected rows in Db methods ?
 
-BUG:
- does not properly skip this url:
- https://www.youtube.com/watch?v=9LfmrkyP81M
-
-Put all the kak stuff in one place
-
-Probably have a `kak-spell init` ala `kak-lsp` and
-`kakoune.cr`
-
 README: Add link to a nice asciinema demo (or a gif)
 
 Handle backslash (for latex, C, and the rest)
