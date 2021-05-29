@@ -1,8 +1,5 @@
 Check coverage with tarpaulin
 
-BUG:
-  options are always set for the first buffer
-
 Put all the kak stuff in one place
 
 Probably have a `kak-spell init` ala `kak-lsp` and
@@ -18,6 +15,3 @@ Skip bottom part when checking commit messages
 
 Generic Repo tests to reduce duplication between FakeRepo and Db
 
-`kak-spell enable` should run kak-spell on all open buffers
-
-Implement `kak-spell-next`, `kak-spell-previous`

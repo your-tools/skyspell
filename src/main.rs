@@ -231,10 +231,11 @@ fn kak_check(lang: &str, opts: KakCheckOpts) -> Result<()> {
             continue;
         }
 
+        // cleanup any errors that may have been set during last run
+        println!("unset-option buffer={} spell_errors", bufname);
+
         let full_path = bufname.replace("~", home_dir);
-
         let source_path = Path::new(&full_path);
-
         if !source_path.exists() {
             continue;
         }
@@ -352,7 +353,7 @@ fn suggest(lang: &str, opts: SuggestOpts) -> Result<()> {
         for suggestion in suggestions.iter() {
             print!("%{{{}}} ", suggestion);
             print!("%{{execute-keys -itersel %{{c{}<esc>be}} ", suggestion);
-            print!(":write-all <ret> :kak-spell <ret>}}");
+            print!(":write <ret> :kak-spell <ret>}}");
             print!(" ");
         }
     } else {
@@ -388,7 +389,7 @@ fn kak_hook(opts: KakHookOpts) -> Result<()> {
             if !db.is_ignored(word)? {
                 db.add_ignored(word)?;
             }
-            kak_recheck(path_str);
+            kak_recheck();
             println!("echo '\"{}\" added to global ignore list'", word);
         }
         "add-extension" => {
@@ -399,7 +400,7 @@ fn kak_hook(opts: KakHookOpts) -> Result<()> {
                 db.add_extension(ext)?;
             }
             db.add_ignored_for_extension(word, ext)?;
-            kak_recheck(path_str);
+            kak_recheck();
             println!(
                 "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
                 word, ext
@@ -410,7 +411,7 @@ fn kak_hook(opts: KakHookOpts) -> Result<()> {
                 db.add_file(path_str)?;
             }
             db.add_ignored_for_file(word, path_str)?;
-            kak_recheck(path_str);
+            kak_recheck();
             println!(
                 "echo '\"{}\" added to the ignore list for file: \"{}\"'",
                 word, path_str
@@ -423,12 +424,12 @@ fn kak_hook(opts: KakHookOpts) -> Result<()> {
                 .to_str()
                 .with_context(|| "not an utf-8 file name")?;
             db.skip_file_name(file_name)?;
-            kak_recheck(path_str);
+            kak_recheck();
             println!("echo 'will now skip file named: \"{}\"'", file_name);
         }
         "skip-file" => {
             db.skip_full_path(path_str)?;
-            kak_recheck(path_str);
+            kak_recheck();
             println!("echo 'will now skip the file \"{}\"'", path_str);
         }
         x => println!("echo -markup {{red}} unknown action: {}", x),
@@ -436,9 +437,9 @@ fn kak_hook(opts: KakHookOpts) -> Result<()> {
     Ok(())
 }
 
-fn kak_recheck(path: &str) {
-    println!("edit -existing {}", path);
-    println!("write");
+fn kak_recheck() {
+    println!("write-all");
+    println!("kak-spell");
     println!("buffer *spelling*");
 }
 
