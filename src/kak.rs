@@ -78,7 +78,6 @@ fn dispatch(opts: Opts) -> Result<()> {
     }
 }
 
-// TODO: lifetimes?
 struct LineSelection {
     path: String,
     word: String,
