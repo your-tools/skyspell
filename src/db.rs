@@ -1,9 +1,10 @@
 use std::fmt::{Debug, Formatter};
 use std::path::Path;
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
+use platform_dirs::AppDirs;
 
 use crate::models::*;
 use crate::repo::Repo;
@@ -25,10 +26,6 @@ use crate::schema::skipped_paths::dsl::{
 
 diesel_migrations::embed_migrations!("migrations");
 
-pub fn new(url: &str) -> Result<Db> {
-    Db::new(url)
-}
-
 pub struct Db {
     connection: SqliteConnection,
     url: String,
@@ -41,7 +38,7 @@ impl Debug for Db {
 }
 
 impl Db {
-    pub fn new(url: &str) -> Result<Self> {
+    fn connect(url: &str) -> Result<Self> {
         let connection = SqliteConnection::establish(&url)
             .with_context(|| format!("Could not connect to {}", url))?;
         embedded_migrations::run(&connection).with_context(|| "Could not migrate db")?;
@@ -49,6 +46,19 @@ impl Db {
             connection,
             url: url.to_owned(),
         })
+    }
+
+    pub(crate) fn open(lang: &str) -> Result<Self> {
+        let app_dirs = AppDirs::new(Some("kak-spell"), false).unwrap();
+        let data_dir = app_dirs.data_dir;
+        std::fs::create_dir_all(&data_dir)
+            .with_context(|| format!("Could not create {}", data_dir.display()))?;
+
+        let db_path = &data_dir.join(format!("{}.db", lang));
+        let db_path = db_path
+            .to_str()
+            .ok_or_else(|| anyhow!("{} contains non-UTF-8 chars", db_path.display()))?;
+        Self::connect(db_path)
     }
 }
 
@@ -330,7 +340,7 @@ mod tests {
 
     #[test]
     fn test_db_lookup_in_ignored_words() {
-        let mut db = Db::new(":memory:").unwrap();
+        let mut db = Db::connect(":memory:").unwrap();
         db.add_ignored("foobar").unwrap();
 
         assert!(db.lookup_word("foobar", &Path::new("-")).unwrap());
@@ -338,7 +348,7 @@ mod tests {
 
     #[test]
     fn test_db_lookup_in_ignored_extensions() {
-        let mut db = Db::new(":memory:").unwrap();
+        let mut db = Db::connect(":memory:").unwrap();
         db.add_ignored("foobar").unwrap();
         db.add_extension("py").unwrap();
         db.add_ignored_for_extension("defaultdict", "py").unwrap();
@@ -348,7 +358,7 @@ mod tests {
 
     #[test]
     fn test_db_lookup_in_files() {
-        let mut db = Db::new(":memory:").unwrap();
+        let mut db = Db::connect(":memory:").unwrap();
         db.add_file("path/to/poetry.lock").unwrap();
         db.add_ignored_for_file("abcdef", "path/to/poetry.lock")
             .unwrap();
@@ -360,7 +370,7 @@ mod tests {
 
     #[test]
     fn test_db_lookup_in_skipped_file_names() {
-        let mut db = Db::new(":memory:").unwrap();
+        let mut db = Db::connect(":memory:").unwrap();
         db.skip_file_name("poetry.lock").unwrap();
 
         assert!(db.is_skipped(&Path::new("path/to/poetry.lock")).unwrap());
@@ -368,7 +378,7 @@ mod tests {
 
     #[test]
     fn test_db_remove_ignored() -> Result<()> {
-        let mut db = Db::new(":memory:")?;
+        let mut db = Db::connect(":memory:")?;
         db.add_ignored("foo")?;
         assert!(db.lookup_word("foo", Path::new("-'"))?);
 
@@ -379,7 +389,7 @@ mod tests {
 
     #[test]
     fn test_db_remove_ignored_for_ext() -> Result<()> {
-        let mut db = Db::new(":memory:")?;
+        let mut db = Db::connect(":memory:")?;
         db.add_extension("py")?;
         db.add_extension("rs")?;
         db.add_ignored_for_extension("foo", "py")?;
@@ -393,7 +403,7 @@ mod tests {
 
     #[test]
     fn test_db_remove_ignored_for_file() -> Result<()> {
-        let mut db = Db::new(":memory:")?;
+        let mut db = Db::connect(":memory:")?;
         db.add_file("/path/to/one")?;
         db.add_file("/path/to/two")?;
         db.add_ignored_for_file("foo", "/path/to/one")?;

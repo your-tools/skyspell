@@ -1,11 +1,370 @@
+use std::fs::File;
 use std::io::Write;
+use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
+use clap::Clap;
+use dirs_next::home_dir;
 use itertools::Itertools;
 
 use crate::checker::lookup_token;
+use crate::Db;
+use crate::EnchantDictionary;
+use crate::Tokenizer;
 use crate::{Dictionary, Repo};
+
+const KAK_SPELL_LANG_OPT: &str = "kak_spell_lang";
+
+// Warning: most of the things written to stdout while this code
+// is called will be interpreted as aKkakoune command.
+
+// Use the debug() function for instead of dbg! or println!
+
+pub fn run() -> Result<()> {
+    let opts: Opts = Opts::parse();
+    dispatch(opts)
+}
+
+#[derive(Clap)]
+#[clap(version = env!("CARGO_PKG_VERSION"))]
+struct Opts {
+    #[clap(subcommand)]
+    action: Action,
+}
+
+#[derive(Clap)]
+enum Action {
+    AddGlobal,
+    AddExtension,
+    AddFile,
+    Check(CheckOpts),
+    Init,
+    Jump,
+    Suggest,
+    SkipName,
+
+    SkipFile,
+    PreviousError(MoveOpts),
+    NextError(MoveOpts),
+}
+
+#[derive(Clap)]
+struct CheckOpts {
+    buflist: Vec<String>,
+}
+
+#[derive(Clap)]
+struct MoveOpts {
+    range_spec: String,
+}
+
+fn dispatch(opts: Opts) -> Result<()> {
+    match opts.action {
+        Action::Init => {
+            println!("{}", include_str!("init.kak"));
+            Ok(())
+        }
+        Action::AddExtension => add_extension(),
+        Action::AddFile => add_file(),
+        Action::AddGlobal => add_global(),
+        Action::Check(opts) => check(opts),
+        Action::Jump => jump(),
+        Action::NextError(opts) => goto_next_error(opts),
+        Action::PreviousError(opts) => goto_previous_error(opts),
+        Action::SkipFile => skip_file(),
+        Action::SkipName => skip_name(),
+        Action::Suggest => suggest(),
+    }
+}
+
+// TODO: lifetimes?
+struct LineSelection {
+    path: String,
+    word: String,
+    selection: String,
+}
+
+fn parse_line_selection() -> Result<LineSelection> {
+    let line_selection = get_selection()?;
+    let (path, rest) = line_selection
+        .split_once(": ")
+        .with_context(|| "line selection should contain :")?;
+    let (selection, word) = rest
+        .split_once(' ')
+        .with_context(|| "expected at least two words afte the path name in line selection")?;
+    Ok(LineSelection {
+        path: path.to_string(),
+        word: word.to_string(),
+        selection: selection.to_string(),
+    })
+}
+
+fn add_extension() -> Result<()> {
+    let LineSelection { path, word, .. } = &parse_line_selection()?;
+    let (_, ext) = path
+        .rsplit_once(".")
+        .ok_or_else(|| anyhow!("File has no extension"))?;
+    let mut db = open_db()?;
+    if !db.known_extension(ext)? {
+        db.add_extension(ext)?;
+    }
+    db.add_ignored_for_extension(word, ext)?;
+    kak_recheck();
+    println!(
+        "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
+        word, ext
+    );
+    Ok(())
+}
+
+fn add_file() -> Result<()> {
+    let LineSelection { path, word, .. } = &parse_line_selection()?;
+    let mut db = open_db()?;
+    if !db.known_file(path)? {
+        db.add_file(path)?;
+    }
+    db.skip_full_path(path)?;
+    kak_recheck();
+    println!(
+        "echo '\"{}\" added to the ignore list for file: \"{}\"'",
+        word, path
+    );
+    Ok(())
+}
+
+fn add_global() -> Result<()> {
+    let LineSelection { word, .. } = &parse_line_selection()?;
+    let mut db = open_db()?;
+    if !db.is_ignored(word)? {
+        db.add_ignored(word)?;
+    }
+    kak_recheck();
+    println!("echo '\"{}\" added to global ignore list'", word);
+    Ok(())
+}
+
+fn jump() -> Result<()> {
+    let LineSelection {
+        path, selection, ..
+    } = &parse_line_selection()?;
+    println!("edit {}", path);
+    println!("select {}", selection);
+    Ok(())
+}
+
+#[allow(dead_code)]
+fn debug(message: &str) {
+    println!("echo -debug {}", message);
+}
+
+fn get_from_environ(key: &str) -> Result<String> {
+    std::env::var(key).map_err(|_| anyhow!("{} not found in environment", key))
+}
+
+fn get_option(name: &str) -> Result<String> {
+    std::env::var(format!("kak_opt_{}", name)).map_err(|_| anyhow!("{} option not defined", name))
+}
+
+fn parse_usize(v: &str) -> Result<usize> {
+    v.parse()
+        .map_err(|_| anyhow!("could not parse {} as a positive number"))
+}
+
+fn get_cursor() -> Result<(usize, usize)> {
+    let line = get_from_environ("kak_cursor_line")?;
+    let column = get_from_environ("kak_cursor_column")?;
+    Ok((parse_usize(&line)?, parse_usize(&column)?))
+}
+
+fn get_selection() -> Result<String> {
+    get_from_environ("kak_selection")
+}
+
+fn get_lang() -> Result<String> {
+    get_option(KAK_SPELL_LANG_OPT)
+}
+
+fn goto_previous_buffer() {
+    println!("execute-keys ga")
+}
+
+fn check(opts: CheckOpts) -> Result<()> {
+    let lang = get_lang()?;
+    let mut broker = enchant::Broker::new();
+    let dictionary = EnchantDictionary::new(&mut broker, &lang)?;
+
+    // Note:
+    // kak_buflist may:
+    //  * contain special buffers, like *debug*
+    //  * use ~ for home dir
+    //  * need to be canonicalize
+    let repo = open_db()?;
+    let home_dir = home_dir().ok_or_else(|| anyhow!("Could not get home directory"))?;
+    let home_dir = home_dir
+        .to_str()
+        .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
+    let mut checker = KakouneChecker::new(dictionary, repo);
+    for bufname in &opts.buflist {
+        if bufname.starts_with('*') && bufname.ends_with('*') {
+            continue;
+        }
+
+        // cleanup any errors that may have been set during last run
+        println!("unset-option buffer={} spell_errors", bufname);
+
+        let full_path = bufname.replace("~", home_dir);
+        let source_path = Path::new(&full_path);
+        if !source_path.exists() {
+            continue;
+        }
+
+        let source_path = match std::fs::canonicalize(&source_path) {
+            Err(e) => {
+                // Should probably not happen, but the best we can do is write
+                // to stderr ...
+                // At least it will be visible in the *debug* buffer
+                eprintln!("Could not canonicalize {} : {}", source_path.display(), e);
+                continue;
+            }
+            Ok(p) => p,
+        };
+
+        if checker.is_skipped(&source_path)? {
+            continue;
+        }
+
+        let source = match File::open(&source_path) {
+            Ok(s) => s,
+            Err(_) => {
+                // Probably a buffer that has not been written to a file yet
+                continue;
+            }
+        };
+        let reader = BufReader::new(source);
+
+        for (i, line) in reader.lines().enumerate() {
+            let line = line?;
+            let tokenizer = Tokenizer::new(&line);
+            for (word, pos) in tokenizer {
+                checker.handle_token(&source_path, &bufname, (i + 1, pos), word)?;
+            }
+        }
+    }
+    checker.emit_kak_code()
+}
+
+fn open_db() -> Result<crate::Db> {
+    let lang = get_lang()?;
+    Db::open(&lang)
+}
+
+enum Direction {
+    Forward,
+    Backward,
+}
+
+fn goto_error(opts: MoveOpts, direction: Direction) -> Result<()> {
+    let range_spec = opts.range_spec;
+    let cursor = get_cursor()?;
+    let ranges = parse_range_spec(&range_spec)?;
+    let new_range = match direction {
+        Direction::Forward => get_next_selection(cursor, &ranges),
+        Direction::Backward => get_previous_selection(cursor, &ranges),
+    };
+    let (line, start, end) = match new_range {
+        None => return Ok(()),
+        Some(x) => x,
+    };
+    println!(
+        "select {line}.{start},{line}.{end}",
+        line = line,
+        start = start,
+        end = end
+    );
+    Ok(())
+}
+
+fn goto_next_error(opts: MoveOpts) -> Result<()> {
+    goto_error(opts, Direction::Forward)
+}
+
+fn goto_previous_error(opts: MoveOpts) -> Result<()> {
+    goto_error(opts, Direction::Backward)
+}
+
+fn skip_file() -> Result<()> {
+    todo!()
+}
+fn skip_name() -> Result<()> {
+    todo!()
+}
+
+fn suggest() -> Result<()> {
+    let lang = &get_lang()?;
+    let word = &get_selection()?;
+    let mut broker = enchant::Broker::new();
+    let dictionary = EnchantDictionary::new(&mut broker, lang)?;
+    if dictionary.check(word)? {
+        return Ok(());
+    }
+
+    let suggestions = dictionary.suggest(word);
+
+    print!("menu ");
+    for suggestion in suggestions.iter() {
+        print!("%{{{}}} ", suggestion);
+        print!("%{{execute-keys -itersel %{{c{}<esc>be}} ", suggestion);
+        print!(":write <ret> :kak-spell <ret>}}");
+        print!(" ");
+    }
+
+    Ok(())
+}
+
+fn kak_recheck() {
+    println!("write-all");
+    println!("kak-spell-check");
+    println!("kak-spell-list");
+}
+
+fn parse_cursor(pos: &str) -> Result<(usize, usize)> {
+    let (start, end) = pos.split_once('.').context("cursor should contain '.'")?;
+    let start = start
+        .parse::<usize>()
+        .context("could not parse cursor start as an integer")?;
+    let end = end
+        .parse::<usize>()
+        .context("could not parse cursor end as an integer")?;
+    Ok((start, end))
+}
+
+fn parse_range_spec(range_spec: &str) -> Result<Vec<(usize, usize, usize)>> {
+    // range-spec is empty
+    if range_spec == "0" {
+        return Ok(vec![]);
+    }
+
+    // Skip the timestamp
+    let mut split = range_spec.split_whitespace();
+    split.next();
+
+    split.into_iter().map(|x| parse_range(x)).collect()
+}
+
+fn parse_range(range: &str) -> Result<(usize, usize, usize)> {
+    let (range, _face) = range
+        .split_once('|')
+        .context("range spec should contain a face")?;
+    let (start, end) = range
+        .split_once(',')
+        .context("range spec should contain ','")?;
+
+    let (start_line, start_col) = parse_cursor(start)?;
+    let (_end_line, end_col) = parse_cursor(end)?;
+
+    Ok((start_line, start_col, end_col))
+}
 
 pub(crate) struct Error {
     pos: (usize, usize),
@@ -60,10 +419,8 @@ impl<D: Dictionary, R: Repo> KakouneChecker<D, R> {
             .parse::<usize>()
             .map_err(|_| anyhow!("could not parse kak_timestamp has a positive integer"))?;
 
-        let lang = self.dictionary.lang();
-
         write_spelling_buffer(f, &self.errors)?;
-        write_hooks(f, lang)?;
+        goto_previous_buffer();
         write_ranges(f, kak_timestamp, &self.errors)?;
         write_status(f, &self.errors)?;
 
@@ -85,22 +442,6 @@ fn write_status(f: &mut impl Write, errors: &[Error]) -> Result<()> {
         1 => write!(f, "echo -markup {{red}} 1 spelling error"),
         n => write!(f, "echo -markup {{red}} {} spelling errors", n),
     }?;
-    Ok(())
-}
-
-// TODO: can we do it without passing the lang back and forth?
-fn write_hooks(f: &mut impl Write, lang: &str) -> Result<()> {
-    writeln!(
-        f,
-        r#"map buffer normal '<ret>' ':<space>kak-spell-buffer-action {lang} jump<ret>'
-map buffer normal 'a' ':<space>kak-spell-buffer-action {lang} add-global<ret>'
-map buffer normal 'e' ':<space>kak-spell-buffer-action {lang} add-extension<ret>'
-map buffer normal 'f' ':<space>kak-spell-buffer-action {lang} add-file<ret>'
-map buffer normal 'n' ':<space>kak-spell-buffer-action {lang} skip-name<ret>'
-map buffer normal 's' ':<space>kak-spell-buffer-action {lang} skip-file<ret>'
-execute-keys <esc> ga"#,
-        lang = lang
-    )?;
     Ok(())
 }
 
@@ -185,7 +526,7 @@ pub fn get_previous_selection(
         return Some(range);
     }
 
-    // If we reach there, return the first error (auto-wrap)
+    // If we reach there, return the last error (auto-wrap)
     ranges.iter().last()
 }
 
@@ -207,6 +548,7 @@ pub fn get_next_selection(
         return Some(range);
     }
 
+    // If we reach there, return the first error (auto-wrap)
     ranges.iter().next()
 }
 

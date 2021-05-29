@@ -6,8 +6,8 @@ use std::path::{Path, PathBuf};
 use anyhow::{anyhow, bail, Context, Result};
 use clap::{AppSettings, Clap};
 use dirs_next::home_dir;
-use platform_dirs::AppDirs;
 
+use crate::Db;
 use crate::EnchantDictionary;
 use crate::Tokenizer;
 use crate::{Checker, InteractiveChecker, KakouneChecker, NonInteractiveChecker};
@@ -41,6 +41,7 @@ struct Opts {
         long_about = "Language to use - must match an installed dictionary for one of Enchant's provider"
     )]
     lang: Option<String>,
+
     #[clap(subcommand)]
     action: Action,
 }
@@ -154,16 +155,7 @@ struct MoveOpts {
 }
 
 fn open_db(lang: &str) -> Result<crate::Db> {
-    let app_dirs = AppDirs::new(Some("kak-spell"), false).unwrap();
-    let data_dir = app_dirs.data_dir;
-    std::fs::create_dir_all(&data_dir)
-        .with_context(|| format!("Could not create {}", data_dir.display()))?;
-
-    let db_path = &data_dir.join(format!("{}.db", lang));
-    let db_path = db_path
-        .to_str()
-        .ok_or_else(|| anyhow!("{} contains non-UTF-8 chars", db_path.display()))?;
-    crate::db::new(db_path)
+    Db::open(lang)
 }
 
 fn add(lang: &str, opts: AddOpts) -> Result<()> {
