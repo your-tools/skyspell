@@ -23,11 +23,11 @@ define-command kak-spell-hooks %{
 }
 
 define-command kak-spell-disable %{
-  remove-highlighter buffer/spell
+  remove-highlighter global/spell
   remove-hooks global kak-spell
 }
 
-define-command kak-spell-check -docstring "check the current buffer for spelling errors" %{
+define-command kak-spell-check -docstring "check the open buffers for spelling errors" %{
   evaluate-commands %sh{
     : $kak_timestamp
     : $kak_opt_kak_spell_lang
@@ -66,7 +66,7 @@ define-command kak-spell-next -docstring "go to the next spelling error" %{
    evaluate-commands %sh{
      : $kak_cursor_line
      : $kak_cursor_column
-     kak-spell-action next-error "${kak_opt_spell_errors}"
+     kak-spell next-error "${kak_opt_spell_errors}"
    }
 }
 
@@ -74,7 +74,7 @@ define-command kak-spell-previous -docstring "go to the previous spelling error"
    evaluate-commands %sh{
      : $kak_cursor_line
      : $kak_cursor_column
-     kak-spell-action previous-error "${kak_opt_spell_errors}"
+     kak-spell previous-error "${kak_opt_spell_errors}"
    }
 }
 
