@@ -1,5 +1,5 @@
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
@@ -10,6 +10,7 @@ use crate::{Dictionary, Repo};
 pub(crate) struct Error {
     pos: (usize, usize),
     buffer: String,
+    path: PathBuf,
     token: String,
 }
 
@@ -42,9 +43,10 @@ impl<D: Dictionary, R: Repo> KakouneChecker<D, R> {
         let found = lookup_token(&self.dictionary, &self.repo, token, path)?;
         if !found {
             self.errors.push(Error {
+                path: path.to_path_buf(),
                 pos,
-                buffer: buffer.to_owned(),
-                token: token.to_owned(),
+                buffer: buffer.to_string(),
+                token: token.to_string(),
             });
         }
         Ok(())
@@ -73,11 +75,6 @@ impl<D: Dictionary, R: Repo> KakouneChecker<D, R> {
         let mut handle = stdout.lock();
         self.write_code(&mut handle)?;
 
-        /* debug start */
-        let stderr = std::io::stderr();
-        let mut handle = stderr.lock();
-        self.write_code(&mut handle)?;
-        /* debug end */
         Ok(())
     }
 }
@@ -130,14 +127,14 @@ fn write_spelling_buffer(f: &mut impl Write, errors: &[Error]) -> Result<()> {
 
 fn write_error(f: &mut impl Write, error: &Error) -> Result<()> {
     let Error {
-        pos, token, buffer, ..
+        pos, token, path, ..
     } = error;
     let (line, start) = pos;
     let end = start + token.len();
     write!(
         f,
         "{}: {}.{},{}.{} {}",
-        buffer,
+        path.display(),
         line,
         start + 1,
         line,
@@ -223,6 +220,7 @@ mod tests {
         let error = Error {
             pos: (2, 4),
             buffer: "hello.js".to_string(),
+            path: PathBuf::from("/path/to/hello.js"),
             token: "foo".to_string(),
         };
 
@@ -230,7 +228,7 @@ mod tests {
         write_spelling_buffer(&mut buff, &[error]).unwrap();
         let actual = std::str::from_utf8(&buff).unwrap();
         let expected = r#"edit -scratch *spelling*
-execute-keys \% <ret> d i %{hello.js: 2.5,2.7 foo<ret>} <esc> gg
+execute-keys \% <ret> d i %{/path/to/hello.js: 2.5,2.7 foo<ret>} <esc> gg
 "#;
         assert_eq!(actual, expected);
     }
@@ -240,17 +238,20 @@ execute-keys \% <ret> d i %{hello.js: 2.5,2.7 foo<ret>} <esc> gg
         let err1 = Error {
             pos: (2, 4),
             buffer: "foo.js".to_string(),
+            path: PathBuf::from("/path/to/foo.js"),
             token: "foo".to_string(),
         };
 
         let err2 = Error {
             pos: (3, 6),
             buffer: "foo.js".to_string(),
+            path: PathBuf::from("/path/to/foo.js"),
             token: "bar".to_string(),
         };
 
         let err3 = Error {
             pos: (1, 5),
+            path: PathBuf::from("/path/to/foo.js"),
             buffer: "spam.js".to_string(),
             token: "baz".to_string(),
         };
