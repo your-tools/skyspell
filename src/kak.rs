@@ -17,7 +17,7 @@ use crate::{Dictionary, Repo};
 const KAK_SPELL_LANG_OPT: &str = "kak_spell_lang";
 
 // Warning: most of the things written to stdout while this code
-// is called will be interpreted as aKkakoune command.
+// is called will be interpreted as a Kakoune command.
 
 // Use the debug() function for instead of dbg! or println!
 
@@ -92,7 +92,7 @@ fn parse_line_selection() -> Result<LineSelection> {
         .with_context(|| "line selection should contain :")?;
     let (selection, word) = rest
         .split_once(' ')
-        .with_context(|| "expected at least two words afte the path name in line selection")?;
+        .with_context(|| "expected at least two words after the path name in line selection")?;
     Ok(LineSelection {
         path: path.to_string(),
         word: word.to_string(),
@@ -294,10 +294,30 @@ fn goto_previous_error(opts: MoveOpts) -> Result<()> {
 }
 
 fn skip_file() -> Result<()> {
-    todo!()
+    let LineSelection { path, .. } = &parse_line_selection()?;
+    let path = PathBuf::from(path);
+    let file_name = path
+        .file_name()
+        .with_context(|| "no file name")?
+        .to_str()
+        .with_context(|| "not an utf-8 file name")?;
+
+    let mut db = open_db()?;
+    db.skip_file_name(file_name)?;
+
+    kak_recheck();
+    println!("echo 'will now skip files named: \"{}\"'", file_name);
+    Ok(())
 }
+
 fn skip_name() -> Result<()> {
-    todo!()
+    let LineSelection { path, .. } = &parse_line_selection()?;
+    let mut db = open_db()?;
+    db.skip_full_path(path)?;
+
+    kak_recheck();
+    println!("echo 'will now skip the file: \"{}\"'", path);
+    Ok(())
 }
 
 fn suggest() -> Result<()> {
