@@ -1,16 +1,14 @@
-use std::convert::TryInto;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-use anyhow::{anyhow, bail, Context, Result};
-use clap::{AppSettings, Clap};
-use dirs_next::home_dir;
+use anyhow::{anyhow, Context, Result};
+use clap::Clap;
 
 use crate::Db;
 use crate::EnchantDictionary;
 use crate::Tokenizer;
-use crate::{Checker, InteractiveChecker, KakouneChecker, NonInteractiveChecker};
+use crate::{Checker, InteractiveChecker, NonInteractiveChecker};
 use crate::{ConsoleInteractor, Dictionary, Repo};
 
 pub fn run() -> Result<()> {
@@ -25,10 +23,6 @@ pub fn run() -> Result<()> {
         Action::Suggest(opts) => suggest(&lang, opts),
         Action::Skip(opts) => skip(&lang, opts),
         Action::Unskip(opts) => unskip(&lang, opts),
-
-        Action::KakCheck(opts) => kak_check(&lang, opts),
-        Action::KakHook(opts) => kak_hook(opts),
-        Action::Move(opts) => kak_move(opts),
     }
 }
 
@@ -62,18 +56,6 @@ enum Action {
     Skip(SkipOpts),
     #[clap(about = "Remove path from the given skipped list")]
     Unskip(UnskipOpts),
-
-    // Invoked by :kak-spell Kakoune command
-    #[clap(setting=AppSettings::Hidden)]
-    KakCheck(KakCheckOpts),
-
-    #[clap(setting=AppSettings::Hidden)]
-    // Invoked by Kakonue *spelling* hooks
-    KakHook(KakHookOpts),
-
-    #[clap(setting=AppSettings::Hidden)]
-    // Invoked by :kak-spell-next, :kak-spell-previous
-    Move(MoveOpts),
 }
 
 #[derive(Clap)]
@@ -100,17 +82,6 @@ struct ImportPersonalDictOpts {
     personal_dict_path: PathBuf,
 }
 
-#[derive(Clap, Debug)]
-struct KakCheckOpts {
-    buflist: Vec<String>,
-}
-
-#[derive(Clap, Debug)]
-struct KakHookOpts {
-    #[clap(hidden = true)]
-    args: Vec<String>,
-}
-
 #[derive(Clap)]
 struct SkipOpts {
     #[clap(long, about = "File path to skip")]
@@ -132,9 +103,6 @@ struct UnskipOpts {
 #[derive(Clap)]
 struct SuggestOpts {
     word: String,
-
-    #[clap(long, hidden = true)]
-    kakoune: bool,
 }
 
 #[derive(Clap)]
@@ -147,11 +115,6 @@ struct RemoveOpts {
     ext: Option<String>,
     #[clap(long, about = "Remove word from the ignore list for the given path")]
     file: Option<PathBuf>,
-}
-
-#[derive(Clap)]
-struct MoveOpts {
-    args: Vec<String>,
 }
 
 fn open_db(lang: &str) -> Result<crate::Db> {
@@ -213,69 +176,6 @@ fn check(lang: &str, opts: CheckOpts) -> Result<()> {
             check_with(&mut checker, opts)
         }
     }
-}
-
-fn kak_check(lang: &str, opts: KakCheckOpts) -> Result<()> {
-    // Note:
-    // kak_buflist may:
-    //  * contain special buffers, like *debug*
-    //  * use ~ for home dir
-    //  * need to be canonicalize
-    let mut broker = enchant::Broker::new();
-    let dictionary = EnchantDictionary::new(&mut broker, lang)?;
-    let repo = open_db(lang)?;
-    let home_dir = home_dir().ok_or_else(|| anyhow!("Could not get home directory"))?;
-    let home_dir = home_dir
-        .to_str()
-        .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
-    let mut checker = KakouneChecker::new(dictionary, repo);
-    for bufname in &opts.buflist {
-        if bufname.starts_with('*') && bufname.ends_with('*') {
-            continue;
-        }
-
-        // cleanup any errors that may have been set during last run
-        println!("unset-option buffer={} spell_errors", bufname);
-
-        let full_path = bufname.replace("~", home_dir);
-        let source_path = Path::new(&full_path);
-        if !source_path.exists() {
-            continue;
-        }
-
-        let source_path = match std::fs::canonicalize(&source_path) {
-            Err(e) => {
-                // Should probably not happen, but the best we can do is write
-                // to stderr ...
-                // At least it will be visible in the *debug* buffer
-                eprintln!("Could not canonicalize {} : {}", source_path.display(), e);
-                continue;
-            }
-            Ok(p) => p,
-        };
-
-        if checker.is_skipped(&source_path)? {
-            continue;
-        }
-
-        let source = match File::open(&source_path) {
-            Ok(s) => s,
-            Err(_) => {
-                // Probably a buffer that has not been written to a file yet
-                continue;
-            }
-        };
-        let reader = BufReader::new(source);
-
-        for (i, line) in reader.lines().enumerate() {
-            let line = line?;
-            let tokenizer = Tokenizer::new(&line);
-            for (word, pos) in tokenizer {
-                checker.handle_token(&source_path, &bufname, (i + 1, pos), word)?;
-            }
-        }
-    }
-    checker.emit_kak_code()
 }
 
 fn check_with<C: Checker>(checker: &mut C, opts: CheckOpts) -> Result<()> {
@@ -365,165 +265,9 @@ fn suggest(lang: &str, opts: SuggestOpts) -> Result<()> {
 
     let suggestions = dictionary.suggest(word);
 
-    if opts.kakoune {
-        print!("menu ");
-        for suggestion in suggestions.iter() {
-            print!("%{{{}}} ", suggestion);
-            print!("%{{execute-keys -itersel %{{c{}<esc>be}} ", suggestion);
-            print!(":write <ret> :kak-spell <ret>}}");
-            print!(" ");
-        }
-    } else {
-        for suggestion in suggestions.iter() {
-            println!("{}", suggestion);
-        }
+    for suggestion in suggestions.iter() {
+        println!("{}", suggestion);
     }
 
-    Ok(())
-}
-
-// Note: *anything* written to stdout while this code
-// is called will be interpreted as a kakoune command
-// Handle with care.
-fn kak_hook(opts: KakHookOpts) -> Result<()> {
-    // *spelling* buffer looks like this
-    // path/to/foo.js: line.start,line.end word
-    let args: [String; 3] = opts
-        .args
-        .try_into()
-        .map_err(|_| anyhow!("Expected 2 arguments"))?;
-    let [lang, action, selection] = &args;
-    let mut db = open_db(lang)?;
-    let (path_str, rest) = selection.split_once(": ").unwrap();
-    let path = PathBuf::from(path_str);
-    let (selection, word) = rest.split_once(' ').unwrap();
-    match action.as_ref() {
-        "jump" => {
-            println!("edit {}", path_str);
-            println!("select {}", selection);
-        }
-        "add-global" => {
-            if !db.is_ignored(word)? {
-                db.add_ignored(word)?;
-            }
-            kak_recheck();
-            println!("echo '\"{}\" added to global ignore list'", word);
-        }
-        "add-extension" => {
-            let (_, ext) = path_str
-                .rsplit_once(".")
-                .ok_or_else(|| anyhow!("File has no extension"))?;
-            if !db.known_extension(ext)? {
-                db.add_extension(ext)?;
-            }
-            db.add_ignored_for_extension(word, ext)?;
-            kak_recheck();
-            println!(
-                "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
-                word, ext
-            );
-        }
-        "add-file" => {
-            if !db.known_file(path_str)? {
-                db.add_file(path_str)?;
-            }
-            db.add_ignored_for_file(word, path_str)?;
-            kak_recheck();
-            println!(
-                "echo '\"{}\" added to the ignore list for file: \"{}\"'",
-                word, path_str
-            );
-        }
-        "skip-name" => {
-            let file_name = path
-                .file_name()
-                .with_context(|| "no file name")?
-                .to_str()
-                .with_context(|| "not an utf-8 file name")?;
-            db.skip_file_name(file_name)?;
-            kak_recheck();
-            println!("echo 'will now skip file named: \"{}\"'", file_name);
-        }
-        "skip-file" => {
-            db.skip_full_path(path_str)?;
-            kak_recheck();
-            println!("echo 'will now skip the file \"{}\"'", path_str);
-        }
-        x => println!("echo -markup {{red}} unknown action: {}", x),
-    };
-    Ok(())
-}
-
-fn kak_recheck() {
-    println!("write-all");
-    println!("kak-spell");
-    println!("buffer *spelling*");
-}
-
-fn parse_cursor(pos: &str) -> Result<(usize, usize)> {
-    let (start, end) = pos.split_once('.').context("cursor should contain '.'")?;
-    let start = start
-        .parse::<usize>()
-        .context("could not parse cursor start as an integer")?;
-    let end = end
-        .parse::<usize>()
-        .context("could not parse cursor end as an integer")?;
-    Ok((start, end))
-}
-
-fn parse_range_spec(range_spec: &str) -> Result<Vec<(usize, usize, usize)>> {
-    // range-spec is empty
-    if range_spec == "0" {
-        return Ok(vec![]);
-    }
-
-    // Skip the timestamp
-    let mut split = range_spec.split_whitespace();
-    split.next();
-
-    split.into_iter().map(|x| parse_range(x)).collect()
-}
-
-fn parse_range(range: &str) -> Result<(usize, usize, usize)> {
-    let (range, _face) = range
-        .split_once('|')
-        .context("range spec should contain a face")?;
-    let (start, end) = range
-        .split_once(',')
-        .context("range spec should contain ','")?;
-
-    let (start_line, start_col) = parse_cursor(start)?;
-    let (_end_line, end_col) = parse_cursor(end)?;
-
-    Ok((start_line, start_col, end_col))
-}
-
-fn kak_move(opts: MoveOpts) -> Result<()> {
-    let args: [String; 3] = opts
-        .args
-        .try_into()
-        .map_err(|_| anyhow!("Expected 3 arguments"))?;
-    let [direction, cursor, range_spec] = args;
-
-    let cursor = parse_cursor(&cursor)?;
-    let ranges = parse_range_spec(&range_spec)?;
-
-    let new_range = match direction.as_ref() {
-        "next" => crate::kak::get_next_selection(cursor, &ranges),
-        "previous" => crate::kak::get_previous_selection(cursor, &ranges),
-        _ => bail!("Unknown direction: {}", direction),
-    };
-
-    let (line, start, end) = match new_range {
-        None => return Ok(()),
-        Some(x) => x,
-    };
-
-    println!(
-        "select {line}.{start},{line}.{end}",
-        line = line,
-        start = start,
-        end = end
-    );
     Ok(())
 }

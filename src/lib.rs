@@ -22,7 +22,6 @@ use db::Db;
 use dictionary::Dictionary;
 use dictionary::EnchantDictionary;
 use interactor::{ConsoleInteractor, Interactor};
-use kak::KakouneChecker;
 use repo::Repo;
 use token::Tokenizer;
 
