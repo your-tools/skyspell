@@ -6,6 +6,7 @@ extern crate diesel_migrations;
 #[macro_use]
 extern crate lazy_static;
 
+pub mod app;
 pub mod checker;
 pub mod db;
 mod dictionary;
