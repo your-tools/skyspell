@@ -7,7 +7,7 @@ define-command -params 1 kak-spell-enable %{
   evaluate-commands %sh{
     echo "set global kak_spell_lang $1"
   }
-  add-highlighter buffer/spell ranges spell_errors
+  add-highlighter global/spell ranges spell_errors
   hook -group kak-spell buffer BufWritePost .* kak-spell
 }
 
@@ -48,17 +48,13 @@ s : Always skip this file
 
 define-command kak-spell-next -docstring "go to the next spelling error" %{
    evaluate-commands %sh{
-     kak-spell next \
-      --ranges "${kak_opt_spell_errors}" \
-      --pos "${kak_cursor_line}.${kak_cursor_column}"
+     kak-spell move next  "${kak_cursor_line}.${kak_cursor_column}" "${kak_opt_spell_errors}"
    }
 }
 
 define-command kak-spell-previous -docstring "go to the previous spelling error" %{
    evaluate-commands %sh{
-     kak-spell previous \
-      --ranges "${kak_opt_spell_errors}" \
-      --pos "${kak_cursor_line}.${kak_cursor_column}"
+     kak-spell move previous "${kak_cursor_line}.${kak_cursor_column}" "${kak_opt_spell_errors}"
    }
 }
 

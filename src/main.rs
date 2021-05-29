@@ -3,8 +3,8 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, Context, Result};
-use clap::Clap;
+use anyhow::{anyhow, bail, Context, Result};
+use clap::{AppSettings, Clap};
 use dirs_next::home_dir;
 use platform_dirs::AppDirs;
 
@@ -33,16 +33,24 @@ enum Action {
     Remove(RemoveOpts),
     #[clap(about = "Check files for spelling errors")]
     Check(CheckOpts),
-    #[clap(about = "Invoked by Kakonue")]
-    KakCheck(KakCheckOpts),
     #[clap(about = "Import a personal dictionary")]
     ImportPersonalDict(ImportPersonalDictOpts),
     #[clap(about = "Suggest replacements for the given error")]
     Suggest(SuggestOpts),
     #[clap(about = "Update the skipped lists")]
     Skip(SkipOpts),
-    #[clap(about = "Used for the Kakoune integration")]
+
+    // Invoked by :kak-spell Kakoune command
+    #[clap(setting=AppSettings::Hidden)]
+    KakCheck(KakCheckOpts),
+
+    #[clap(setting=AppSettings::Hidden)]
+    // Invoked by Kakonue *spelling* hooks
     KakHook(KakHookOpts),
+
+    #[clap(setting=AppSettings::Hidden)]
+    // Invoked by :kak-spell-next, :kak-spell-previous
+    Move(MoveOpts),
 }
 
 #[derive(Clap)]
@@ -76,6 +84,7 @@ struct KakCheckOpts {
 
 #[derive(Clap, Debug)]
 struct KakHookOpts {
+    #[clap(hidden = true)]
     args: Vec<String>,
 }
 
@@ -94,7 +103,7 @@ struct SkipOpts {
 struct SuggestOpts {
     word: String,
 
-    #[clap(long, about = "Used by kakoune")]
+    #[clap(long, hidden = true)]
     kakoune: bool,
 }
 
@@ -110,6 +119,11 @@ struct RemoveOpts {
     file: Option<PathBuf>,
 }
 
+#[derive(Clap)]
+struct MoveOpts {
+    args: Vec<String>,
+}
+
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
     let lang = opts.lang.unwrap_or_else(|| "en_US".to_string());
@@ -118,11 +132,13 @@ fn main() -> Result<()> {
         Action::Add(opts) => add(&lang, opts),
         Action::Remove(opts) => remove(&lang, opts),
         Action::Check(opts) => check(&lang, opts),
-        Action::KakCheck(opts) => kak_check(&lang, opts),
         Action::ImportPersonalDict(opts) => import_personal_dict(&lang, opts),
-        Action::KakHook(opts) => kak_hook(opts),
         Action::Suggest(opts) => suggest(&lang, opts),
         Action::Skip(opts) => skip(&lang, opts),
+
+        Action::KakCheck(opts) => kak_check(&lang, opts),
+        Action::KakHook(opts) => kak_hook(opts),
+        Action::Move(opts) => kak_move(opts),
     }
 }
 
@@ -251,7 +267,7 @@ fn kak_check(lang: &str, opts: KakCheckOpts) -> Result<()> {
             let line = line?;
             let tokenizer = kak_spell::Tokenizer::new(&line);
             for (word, pos) in tokenizer {
-                checker.handle_token(&source_path, (i + 1, pos), word)?;
+                checker.handle_token(&source_path, &bufname, (i + 1, pos), word)?;
             }
         }
     }
@@ -336,7 +352,7 @@ fn suggest(lang: &str, opts: SuggestOpts) -> Result<()> {
         for suggestion in suggestions.iter() {
             print!("%{{{}}} ", suggestion);
             print!("%{{execute-keys -itersel %{{c{}<esc>be}} ", suggestion);
-            print!(":write <ret> :kak-spell <ret>}}");
+            print!(":write-all <ret> :kak-spell <ret>}}");
             print!(" ");
         }
     } else {
@@ -365,7 +381,7 @@ fn kak_hook(opts: KakHookOpts) -> Result<()> {
     let (selection, word) = rest.split_once(' ').unwrap();
     match action.as_ref() {
         "jump" => {
-            println!("edit {}", path_str);
+            println!("buffer {}", path_str);
             println!("select {}", selection);
         }
         "add-global" => {
@@ -424,4 +440,77 @@ fn kak_recheck(path: &str) {
     println!("edit -existing {}", path);
     println!("write");
     println!("buffer *spelling*");
+}
+
+fn parse_cursor(pos: &str) -> Result<(usize, usize)> {
+    let (start, end) = pos.split_once('.').context("cursor should contain '.'")?;
+    let start = start
+        .parse::<usize>()
+        .context("could not parse cursor start as an integer")?;
+    let end = end
+        .parse::<usize>()
+        .context("could not parse cursor end as an integer")?;
+    Ok((start, end))
+}
+
+fn parse_range_spec(range_spec: &str) -> Result<Vec<(usize, usize, usize)>> {
+    // range-spec is empty
+    if range_spec == "0" {
+        return Ok(vec![]);
+    }
+
+    // Skip the timestamp
+    let mut split = range_spec.split_whitespace();
+    split.next();
+
+    split.into_iter().map(|x| parse_range(x)).collect()
+}
+
+fn parse_range(range: &str) -> Result<(usize, usize, usize)> {
+    let (range, _face) = range
+        .split_once('|')
+        .context("range spec should contain a face")?;
+    let (start, end) = range
+        .split_once(',')
+        .context("range spec should contain ','")?;
+
+    let (start_line, start_col) = parse_cursor(start)?;
+    let (_end_line, end_col) = parse_cursor(end)?;
+
+    Ok((start_line, start_col, end_col))
+}
+
+fn kak_move(opts: MoveOpts) -> Result<()> {
+    let args: [String; 3] = opts
+        .args
+        .try_into()
+        .map_err(|_| anyhow!("Expected 3 arguments"))?;
+    let [direction, cursor, range_spec] = args;
+
+    let cursor = parse_cursor(&cursor)?;
+    let ranges = parse_range_spec(&range_spec)?;
+
+    let new_range = match direction.as_ref() {
+        "next" => kak_spell::kak::get_next_selection(cursor, &ranges),
+        "previous" => kak_spell::kak::get_previous_selection(cursor, &ranges),
+        _ => bail!("Unknown direction: {}", direction),
+    };
+
+    let (line, start, end) = match new_range {
+        None => return Ok(()),
+        Some(x) => x,
+    };
+
+    eprintln!(
+        "{:?} {} {} -> {:?}",
+        cursor, direction, range_spec, new_range
+    );
+
+    println!(
+        "select {line}.{start},{line}.{end}",
+        line = line,
+        start = start,
+        end = end
+    );
+    Ok(())
 }

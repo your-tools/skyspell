@@ -1,5 +1,8 @@
 Check coverage with tarpaulin
 
+BUG:
+  options are always set for the first buffer
+
 Put all the kak stuff in one place
 
 Probably have a `kak-spell init` ala `kak-lsp` and

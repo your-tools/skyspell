@@ -18,6 +18,7 @@ diesel = { version = "1.4.6", features = ["sqlite"] }
 diesel_migrations = "1.4.0"
 dirs-next = "2.0.0"
 enchant = "0.2.0"
+itertools = "0.10.0"
 lazy_static = "1.4.0"
 platform-dirs = "0.3.0"
 regex = "1.5.4"
