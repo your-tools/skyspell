@@ -1,11 +1,53 @@
-use regex::Regex;
+use regex::{Regex, RegexBuilder};
 
 lazy_static! {
-    static ref ABBREV_RE: Regex = Regex::new(r"(\p{Lu}+)\p{Lu}\p{Ll}").unwrap();
-    static ref CONSTANT_RE: Regex = Regex::new(r"^(\p{Lu}+)s?$").unwrap();
-    static ref HEXA_RE: Regex = Regex::new(r"[a-f0-9]{5,}").unwrap();
-    static ref IDENT_RE: Regex = Regex::new(r"\p{Alphabetic}+").unwrap();
-    static ref TOKEN_RE: Regex = Regex::new(r"(\w|-|_|:|/|\.|@)+").unwrap();
+    // We want to match unicode letters and everything that may be contain inside
+    // something we want to skip (like an URL)
+    static ref TOKEN_RE: Regex = RegexBuilder::new(
+        r"
+            (
+                \w |                   # letters
+                [ + . / : = ? @ _ ~ ]  # all possible chars found in an URL or email
+            )+
+        "
+    ).ignore_whitespace(true).build().unwrap();
+
+    // We want to match HTTP in HTTPError
+    static ref ABBREV_RE: Regex = RegexBuilder::new(
+        r"
+            (\p{Lu}+)    # Some upper case letters
+            \p{Lu}       # An uppercase letter
+            \p{Ll}      # A lower case letter
+         "
+    )
+    .ignore_whitespace(true).build().unwrap();
+
+    // We want to match URL and URLs
+    static ref CONSTANT_RE: Regex = RegexBuilder::new(
+        r"
+        # Only uppercase letters, except maybe a 's' at the end
+        ^(\p{Lu}+) s ?$
+        "
+    )
+    .ignore_whitespace(true).build().unwrap();
+
+    // We want to match 8a1007e (for git sha1)
+    static ref HEXA_RE: Regex = RegexBuilder::new(
+        r"
+        # Only letter a to f and numbers, at list 5 in size
+        [a-f0-9]{5,}
+        "
+    ).ignore_whitespace(true).build().unwrap();
+
+    // One we've skipped tokens, we want to match any word
+    // inside
+    static ref IDENT_RE: Regex = RegexBuilder::new(
+        r"
+        # A word is just a bunch of unicode characters matching
+        # the Alphabetic group :P
+        \p{Alphabetic}+
+        "
+    ).ignore_whitespace(true).build().unwrap();
 }
 
 pub struct Tokenizer<'a> {
@@ -197,6 +239,14 @@ mod tests {
             &actual,
             &["hello", "world", "foo", "bar", "x", "y", "spam", "dry", "run"]
         );
+    }
+
+    #[test]
+    fn test_skip_youtube_url() {
+        let text = "let url = https://www.youtube.com/watch?v=9LfmrkyP81M; let x = 42";
+        let tokenizer = Tokenizer::new(&text);
+        let actual: Vec<_> = tokenizer.map(|(x, _index)| x).collect();
+        assert_eq!(&actual, &["let", "url", "let", "x"],);
     }
 
     #[test]
