@@ -250,13 +250,23 @@ impl Repo for FakeRepo {
         Ok(self.ignored_for_file.contains_key(full_path))
     }
 
-    fn skip_file_name(&mut self, filename: &str) -> Result<()> {
-        self.skipped_file_names.insert(filename.to_string());
+    fn skip_file_name(&mut self, file_name: &str) -> Result<()> {
+        self.skipped_file_names.insert(file_name.to_string());
+        Ok(())
+    }
+
+    fn unskip_file_name(&mut self, file_name: &str) -> Result<()> {
+        self.skipped_file_names.remove(file_name);
         Ok(())
     }
 
     fn skip_full_path(&mut self, full_path: &str) -> Result<()> {
         self.skipped_paths.insert(full_path.to_string());
+        Ok(())
+    }
+
+    fn unskip_full_path(&mut self, full_path: &str) -> Result<()> {
+        self.skipped_paths.remove(full_path);
         Ok(())
     }
 
@@ -356,7 +366,7 @@ fn test_fake_repo_lookup_for_file() {
 }
 
 #[test]
-fn test_fake_repo_skipping_filename() {
+fn test_fake_repo_skipping_file_name() {
     let mut fake = FakeRepo::new();
     fake.skip_file_name("poetry.lock").unwrap();
 

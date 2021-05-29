@@ -37,8 +37,10 @@ enum Action {
     ImportPersonalDict(ImportPersonalDictOpts),
     #[clap(about = "Suggest replacements for the given error")]
     Suggest(SuggestOpts),
-    #[clap(about = "Update the skipped lists")]
+    #[clap(about = "Add path tho the given skipped list")]
     Skip(SkipOpts),
+    #[clap(about = "Remove path from the given skipped list")]
+    Unskip(UnskipOpts),
 
     // Invoked by :kak-spell Kakoune command
     #[clap(setting=AppSettings::Hidden)]
@@ -90,12 +92,19 @@ struct KakHookOpts {
 
 #[derive(Clap)]
 struct SkipOpts {
-    #[clap(long)]
-    #[clap(about = "File path to skip")]
+    #[clap(long, about = "File path to skip")]
     full_path: Option<PathBuf>,
 
-    #[clap(long)]
-    #[clap(about = "Filename to skip")]
+    #[clap(long, about = "Filename to skip")]
+    file_name: Option<String>,
+}
+
+#[derive(Clap)]
+struct UnskipOpts {
+    #[clap(long, about = "File path to unskip")]
+    full_path: Option<PathBuf>,
+
+    #[clap(long, about = "Filename to unskip")]
     file_name: Option<String>,
 }
 
@@ -135,6 +144,7 @@ fn main() -> Result<()> {
         Action::ImportPersonalDict(opts) => import_personal_dict(&lang, opts),
         Action::Suggest(opts) => suggest(&lang, opts),
         Action::Skip(opts) => skip(&lang, opts),
+        Action::Unskip(opts) => unskip(&lang, opts),
 
         Action::KakCheck(opts) => kak_check(&lang, opts),
         Action::KakHook(opts) => kak_hook(opts),
@@ -338,6 +348,20 @@ fn skip(lang: &str, opts: SkipOpts) -> Result<()> {
     Ok(())
 }
 
+fn unskip(lang: &str, opts: UnskipOpts) -> Result<()> {
+    let mut db = open_db(lang)?;
+    if let Some(full_path) = opts.full_path {
+        let full_path = std::fs::canonicalize(full_path)?;
+        let full_path = full_path.to_str().with_context(|| "not valid utf-8")?;
+        db.unskip_full_path(full_path)?;
+    }
+
+    if let Some(file_name) = opts.file_name {
+        db.unskip_file_name(&file_name)?;
+    }
+    Ok(())
+}
+
 fn suggest(lang: &str, opts: SuggestOpts) -> Result<()> {
     let word = &opts.word;
     let mut broker = enchant::Broker::new();
@@ -501,11 +525,6 @@ fn kak_move(opts: MoveOpts) -> Result<()> {
         None => return Ok(()),
         Some(x) => x,
     };
-
-    eprintln!(
-        "{:?} {} {} -> {:?}",
-        cursor, direction, range_spec, new_range
-    );
 
     println!(
         "select {line}.{start},{line}.{end}",

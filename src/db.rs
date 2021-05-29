@@ -209,12 +209,26 @@ impl Repo for Db {
         Ok(())
     }
 
+    fn unskip_file_name(&mut self, file_name: &str) -> Result<()> {
+        diesel::delete(skipped_file_names)
+            .filter(skipped_file_name.eq(file_name))
+            .execute(&self.connection)?;
+        Ok(())
+    }
+
     fn skip_full_path(&mut self, new_full_path: &str) -> Result<()> {
         let new_skipped = NewSkippedPath {
             full_path: new_full_path,
         };
         diesel::insert_into(skipped_paths)
             .values(new_skipped)
+            .execute(&self.connection)?;
+        Ok(())
+    }
+
+    fn unskip_full_path(&mut self, path: &str) -> Result<()> {
+        diesel::delete(skipped_paths)
+            .filter(skipped_path.eq(path))
             .execute(&self.connection)?;
         Ok(())
     }
