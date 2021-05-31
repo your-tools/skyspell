@@ -1,5 +1,7 @@
 Check coverage with tarpaulin
 
+Ignore list per project path
+
 Try to optimize for performance
 
 Display number of affected rows in Db methods ?
