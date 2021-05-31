@@ -21,3 +21,10 @@ Split kak.rs and test.rs in smaller modules
 Write more tests for kak.rs
 
 Undo?
+
+Project handling
+  add a kak-spell --project . option
+  ignore list per project
+  only check files belonging to the current project
+  remember lang per project
+  fix calling kak-spell add from kakoune
