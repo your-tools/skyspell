@@ -209,7 +209,8 @@ fn check_with<C: Checker>(checker: &mut C, opts: CheckOpts) -> Result<()> {
         let reader = BufReader::new(source);
 
         for (i, line) in reader.lines().enumerate() {
-            let line = line?;
+            let line =
+                line.with_context(|| format!("Error when reading {}", source_path.display()))?;
             let tokenizer = Tokenizer::new(&line);
             for (word, pos) in tokenizer {
                 checker.handle_token(&source_path, (i + 1, pos), word)?;
