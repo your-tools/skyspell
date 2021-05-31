@@ -6,8 +6,8 @@ lazy_static! {
     static ref TOKEN_RE: Regex = RegexBuilder::new(
         r"
             (
-                \w |                   # letters
-                [ + . / : = ? @ _ ~ ]  # all possible chars found in an URL or email
+                \w |                     # letters
+                [ + . / : = ? @ _ ~ - ]  # all possible chars found in an URL or email
             )+
         "
     ).ignore_whitespace(true).build().unwrap();
