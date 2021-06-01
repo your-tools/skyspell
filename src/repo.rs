@@ -41,6 +41,7 @@ pub trait Repo {
     // Remove word from the ignore list for the given path
     fn remove_ignored_for_file(&mut self, word: &str, path: &str) -> Result<()>;
 
+    // Lookup word in the repo. Return true if the word should be spell checked
     fn lookup_word(&self, word: &str, file: &Path) -> Result<bool>;
 }
 
