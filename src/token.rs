@@ -1,4 +1,11 @@
+use std::ffi::OsStr;
+use std::fs::File;
+use std::io::{BufRead, BufReader, Lines};
+
+use anyhow::Result;
 use regex::{Regex, RegexBuilder};
+
+const GIT_SCISSORS: &str = "# ------------------------ >8 ------------------------";
 
 lazy_static! {
     // We want to match unicode letters and everything that may be contain inside
@@ -50,13 +57,43 @@ lazy_static! {
     ).ignore_whitespace(true).build().unwrap();
 }
 
+pub struct RelevantLines {
+    lines: Lines<BufReader<File>>,
+    is_git_message: bool,
+}
+
+impl RelevantLines {
+    pub(crate) fn new(source: File, filename: Option<&OsStr>) -> Self {
+        let is_git_message = filename == Some(OsStr::new("COMMIT_EDITMSG"));
+        let reader = BufReader::new(source);
+        let lines = reader.lines();
+        Self {
+            lines,
+            is_git_message,
+        }
+    }
+}
+
+impl Iterator for RelevantLines {
+    type Item = Result<String, std::io::Error>;
+
+    fn next(&mut self) -> Option<<Self as Iterator>::Item> {
+        let line_result = self.lines.next()?;
+        match line_result {
+            e @ Err(_) => Some(e),
+            Ok(s) if self.is_git_message && s == GIT_SCISSORS => None,
+            x => Some(x),
+        }
+    }
+}
+
 pub struct Tokenizer<'a> {
     input: &'a str,
     pos: usize,
 }
 
 impl<'a> Tokenizer<'a> {
-    pub fn new(input: &'a str) -> Self {
+    pub(crate) fn new(input: &'a str) -> Self {
         Self { input, pos: 0 }
     }
 }

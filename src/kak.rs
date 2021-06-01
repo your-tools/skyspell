@@ -1,6 +1,5 @@
 use std::fs::File;
 use std::io::Write;
-use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Context, Result};
@@ -11,8 +10,8 @@ use itertools::Itertools;
 use crate::checker::lookup_token;
 use crate::Db;
 use crate::EnchantDictionary;
-use crate::Tokenizer;
 use crate::{Dictionary, Repo};
+use crate::{RelevantLines, Tokenizer};
 
 const KAK_SPELL_LANG_OPT: &str = "kak_spell_lang";
 
@@ -246,16 +245,17 @@ fn check(opts: CheckOpts) -> Result<()> {
                 continue;
             }
         };
-        let reader = BufReader::new(source);
-
-        for (i, line) in reader.lines().enumerate() {
-            let line = line?;
+        let lines = RelevantLines::new(source, source_path.file_name());
+        for (i, line) in lines.enumerate() {
+            let line =
+                line.with_context(|| format!("Error when reading {}", source_path.display()))?;
             let tokenizer = Tokenizer::new(&line);
             for (word, pos) in tokenizer {
                 checker.handle_token(&source_path, &bufname, (i + 1, pos), word)?;
             }
         }
     }
+
     checker.emit_kak_code()
 }
 
