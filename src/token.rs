@@ -1,8 +1,9 @@
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Lines};
+use std::path::{Path, PathBuf};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use regex::{Regex, RegexBuilder};
 
 const GIT_SCISSORS: &str = "# ------------------------ >8 ------------------------";
@@ -57,13 +58,42 @@ lazy_static! {
     ).ignore_whitespace(true).build().unwrap();
 }
 
-pub struct RelevantLines {
+pub(crate) struct TokenProcessor {
+    path: PathBuf,
+}
+
+impl TokenProcessor {
+    pub(crate) fn new(path: &Path) -> Result<Self> {
+        Ok(Self {
+            path: path.to_path_buf(),
+        })
+    }
+
+    pub(crate) fn each_token<F>(&self, mut f: F) -> Result<()>
+    where
+        F: FnMut(&str, usize, usize) -> Result<()>,
+    {
+        let source = File::open(&self.path)?;
+        let lines = RelevantLines::new(source, self.path.file_name());
+        for (i, line) in lines.enumerate() {
+            let line =
+                line.with_context(|| format!("Error when reading {}", self.path.display()))?;
+            let tokenizer = Tokenizer::new(&line);
+            for (word, pos) in tokenizer {
+                f(word, i + 1, pos)?
+            }
+        }
+        Ok(())
+    }
+}
+
+struct RelevantLines {
     lines: Lines<BufReader<File>>,
     is_git_message: bool,
 }
 
 impl RelevantLines {
-    pub(crate) fn new(source: File, filename: Option<&OsStr>) -> Self {
+    fn new(source: File, filename: Option<&OsStr>) -> Self {
         let is_git_message = filename == Some(OsStr::new("COMMIT_EDITMSG"));
         let reader = BufReader::new(source);
         let lines = reader.lines();
@@ -87,13 +117,13 @@ impl Iterator for RelevantLines {
     }
 }
 
-pub struct Tokenizer<'a> {
+struct Tokenizer<'a> {
     input: &'a str,
     pos: usize,
 }
 
 impl<'a> Tokenizer<'a> {
-    pub(crate) fn new(input: &'a str) -> Self {
+    fn new(input: &'a str) -> Self {
         Self { input, pos: 0 }
     }
 }

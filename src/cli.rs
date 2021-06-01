@@ -1,4 +1,3 @@
-use std::fs::File;
 use std::path::PathBuf;
 
 use anyhow::{anyhow, Context, Result};
@@ -6,9 +5,9 @@ use clap::Clap;
 
 use crate::Db;
 use crate::EnchantDictionary;
+use crate::TokenProcessor;
 use crate::{Checker, InteractiveChecker, NonInteractiveChecker};
 use crate::{ConsoleInteractor, Dictionary, Repo};
-use crate::{RelevantLines, Tokenizer};
 
 pub fn run() -> Result<()> {
     let opts: Opts = Opts::parse();
@@ -203,16 +202,10 @@ fn check_with<C: Checker>(checker: &mut C, opts: CheckOpts) -> Result<()> {
             continue;
         }
 
-        let source = File::open(&source_path)?;
-        let lines = RelevantLines::new(source, source_path.file_name());
-        for (i, line) in lines.enumerate() {
-            let line =
-                line.with_context(|| format!("Error when reading {}", source_path.display()))?;
-            let tokenizer = Tokenizer::new(&line);
-            for (word, pos) in tokenizer {
-                checker.handle_token(&source_path, (i + 1, pos), word)?;
-            }
-        }
+        let token_processor = TokenProcessor::new(&source_path)?;
+        token_processor.each_token(|word, line, column| {
+            checker.handle_token(&source_path, (line, column), word)
+        })?;
     }
 
     if !checker.success() {

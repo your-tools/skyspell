@@ -23,7 +23,7 @@ use dictionary::Dictionary;
 use dictionary::EnchantDictionary;
 use interactor::{ConsoleInteractor, Interactor};
 use repo::Repo;
-use token::{RelevantLines, Tokenizer};
+use token::TokenProcessor;
 
 #[cfg(test)]
 mod tests;

@@ -1,4 +1,3 @@
-use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
@@ -10,8 +9,8 @@ use itertools::Itertools;
 use crate::checker::lookup_token;
 use crate::Db;
 use crate::EnchantDictionary;
+use crate::TokenProcessor;
 use crate::{Dictionary, Repo};
-use crate::{RelevantLines, Tokenizer};
 
 const KAK_SPELL_LANG_OPT: &str = "kak_spell_lang";
 
@@ -223,37 +222,15 @@ fn check(opts: CheckOpts) -> Result<()> {
             continue;
         }
 
-        let source_path = match std::fs::canonicalize(&source_path) {
-            Err(e) => {
-                // Should probably not happen, but the best we can do is write
-                // to stderr ...
-                // At least it will be visible in the *debug* buffer
-                eprintln!("Could not canonicalize {} : {}", source_path.display(), e);
-                continue;
-            }
-            Ok(p) => p,
-        };
-
+        let source_path = std::fs::canonicalize(&source_path)?;
         if checker.is_skipped(&source_path)? {
             continue;
         }
 
-        let source = match File::open(&source_path) {
-            Ok(s) => s,
-            Err(_) => {
-                // Probably a buffer that has not been written to a file yet
-                continue;
-            }
-        };
-        let lines = RelevantLines::new(source, source_path.file_name());
-        for (i, line) in lines.enumerate() {
-            let line =
-                line.with_context(|| format!("Error when reading {}", source_path.display()))?;
-            let tokenizer = Tokenizer::new(&line);
-            for (word, pos) in tokenizer {
-                checker.handle_token(&source_path, &bufname, (i + 1, pos), word)?;
-            }
-        }
+        let token_processor = TokenProcessor::new(&source_path)?;
+        token_processor.each_token(|word, line, column| {
+            checker.handle_token(&source_path, &bufname, (line, column), word)
+        })?;
     }
 
     checker.emit_kak_code()
