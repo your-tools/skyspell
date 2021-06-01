@@ -38,7 +38,7 @@ impl Debug for Db {
 }
 
 impl Db {
-    fn connect(url: &str) -> Result<Self> {
+    pub(crate) fn connect(url: &str) -> Result<Self> {
         let connection = SqliteConnection::establish(&url)
             .with_context(|| format!("Could not connect to {}", url))?;
         embedded_migrations::run(&connection).with_context(|| "Could not migrate db")?;
@@ -331,87 +331,5 @@ impl Repo for Db {
         }
 
         Ok(false)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_db_lookup_in_ignored_words() {
-        let mut db = Db::connect(":memory:").unwrap();
-        db.add_ignored("foobar").unwrap();
-
-        assert!(db.lookup_word("foobar", &Path::new("-")).unwrap());
-    }
-
-    #[test]
-    fn test_db_lookup_in_ignored_extensions() {
-        let mut db = Db::connect(":memory:").unwrap();
-        db.add_ignored("foobar").unwrap();
-        db.add_extension("py").unwrap();
-        db.add_ignored_for_extension("defaultdict", "py").unwrap();
-
-        assert!(db.lookup_word("defaultdict", &Path::new("foo.py")).unwrap());
-    }
-
-    #[test]
-    fn test_db_lookup_in_files() {
-        let mut db = Db::connect(":memory:").unwrap();
-        db.add_file("path/to/poetry.lock").unwrap();
-        db.add_ignored_for_file("abcdef", "path/to/poetry.lock")
-            .unwrap();
-
-        assert!(db
-            .lookup_word("abcdef", &Path::new("path/to/poetry.lock"))
-            .unwrap());
-    }
-
-    #[test]
-    fn test_db_lookup_in_skipped_file_names() {
-        let mut db = Db::connect(":memory:").unwrap();
-        db.skip_file_name("poetry.lock").unwrap();
-
-        assert!(db.is_skipped(&Path::new("path/to/poetry.lock")).unwrap());
-    }
-
-    #[test]
-    fn test_db_remove_ignored() -> Result<()> {
-        let mut db = Db::connect(":memory:")?;
-        db.add_ignored("foo")?;
-        assert!(db.lookup_word("foo", Path::new("-'"))?);
-
-        db.remove_ignored("foo")?;
-        assert!(!db.lookup_word("foo", Path::new("-'"))?);
-        Ok(())
-    }
-
-    #[test]
-    fn test_db_remove_ignored_for_ext() -> Result<()> {
-        let mut db = Db::connect(":memory:")?;
-        db.add_extension("py")?;
-        db.add_extension("rs")?;
-        db.add_ignored_for_extension("foo", "py")?;
-        db.add_ignored_for_extension("foo", "rs")?;
-
-        db.remove_ignored_for_extension("foo", "py")?;
-        assert!(!db.lookup_word("foo", Path::new("foo.py"))?);
-        assert!(db.lookup_word("foo", Path::new("foo.rs"))?);
-        Ok(())
-    }
-
-    #[test]
-    fn test_db_remove_ignored_for_file() -> Result<()> {
-        let mut db = Db::connect(":memory:")?;
-        db.add_file("/path/to/one")?;
-        db.add_file("/path/to/two")?;
-        db.add_ignored_for_file("foo", "/path/to/one")?;
-        db.add_ignored_for_file("foo", "/path/to/two")?;
-
-        db.remove_ignored_for_file("foo", "/path/to/one")?;
-        assert!(!db.lookup_word("foo", Path::new("/path/to/one"))?);
-        assert!(db.lookup_word("foo", Path::new("/path/to/two"))?);
-        Ok(())
     }
 }

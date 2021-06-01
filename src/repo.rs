@@ -43,3 +43,133 @@ pub trait Repo {
 
     fn lookup_word(&self, word: &str, file: &Path) -> Result<bool>;
 }
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use paste::paste;
+
+    use crate::tests::FakeRepo;
+    use crate::Db;
+
+    use super::*;
+
+    // Given an identifier and a block, generate a test
+    // for each implementation of the Repo trait
+    // (Db and FakeRepo)
+    macro_rules! make_repo_tests {
+        ($name:ident, ($repo:ident) => $test:block) => {
+            paste! {
+            fn $name(mut $repo: impl Repo) {
+                $test
+            }
+
+            #[test]
+            fn [<test_db_ $name>]() {
+                let db = Db::connect(":memory:").unwrap();
+                $name(db)
+            }
+
+            #[test]
+            fn [<test_fake_repo_ $name>]() {
+                let repo = FakeRepo::new();
+                $name(repo)
+            }
+            }
+        };
+    }
+
+    make_repo_tests!(known_extension, (repo) => {
+        repo.add_extension("py").unwrap();
+        assert!(repo.known_extension("py").unwrap());
+        assert!(!repo.known_extension("rs").unwrap());
+    });
+
+    make_repo_tests!(known_file, (repo) => {
+        repo.add_file("/path/to/foo").unwrap();
+        assert!(repo.known_file("/path/to/foo").unwrap());
+        assert!(!repo.known_file("/path/to/bar").unwrap());
+    });
+
+    make_repo_tests!(is_skipped, (repo) => {
+        repo.skip_file_name("Cargo.lock").unwrap();
+        repo.skip_full_path("/path/to/bar").unwrap();
+
+        let path = PathBuf::from("/path/to/Cargo.lock");
+        assert!(repo.is_skipped(&path).unwrap());
+
+        let path = PathBuf::from("/path/to/bar");
+        assert!(repo.is_skipped(&path).unwrap());
+
+        let path = PathBuf::from("/path/to/baz");
+        assert!(!repo.is_skipped(&path).unwrap());
+    });
+
+    make_repo_tests!(is_ignored, (repo) => {
+        repo.add_ignored("foo").unwrap();
+
+        assert!(repo.is_ignored("foo").unwrap());
+        assert!(!repo.is_ignored("bar").unwrap());
+    });
+
+    make_repo_tests!(lookup_in_ignored_words, (repo) => {
+        repo.add_ignored("foobar").unwrap();
+
+        assert!(repo.lookup_word("foobar", &Path::new("-")).unwrap());
+    });
+
+    make_repo_tests!(lookup_in_ignored_extensions, (repo) => {
+        repo.add_ignored("foobar").unwrap();
+        repo.add_extension("py").unwrap();
+        repo.add_ignored_for_extension("defaultdict", "py").unwrap();
+
+        assert!(repo.lookup_word("defaultdict", &Path::new("foo.py")).unwrap());
+    });
+
+    make_repo_tests!(lookup_in_files, (repo) => {
+        repo.add_file("path/to/poetry.lock").unwrap();
+        repo.add_ignored_for_file("abcdef", "path/to/poetry.lock")
+            .unwrap();
+
+        assert!(repo
+            .lookup_word("abcdef", &Path::new("path/to/poetry.lock"))
+            .unwrap());
+    });
+
+    make_repo_tests!(lookup_in_skipped_file_names, (repo) => {
+        repo.skip_file_name("poetry.lock").unwrap();
+
+        assert!(repo.is_skipped(&Path::new("path/to/poetry.lock")).unwrap());
+    });
+
+    make_repo_tests!(remove_ignored, (repo) => {
+        repo.add_ignored("foo").unwrap();
+        assert!(repo.lookup_word("foo", Path::new("-'")).unwrap());
+
+        repo.remove_ignored("foo").unwrap();
+        assert!(!repo.lookup_word("foo", Path::new("-'")).unwrap());
+    });
+
+    make_repo_tests!(remove_ignored_for_ext, (repo) => {
+        repo.add_extension("py").unwrap();
+        repo.add_extension("rs").unwrap();
+        repo.add_ignored_for_extension("foo", "py").unwrap();
+        repo.add_ignored_for_extension("foo", "rs").unwrap();
+
+        repo.remove_ignored_for_extension("foo", "py").unwrap();
+        assert!(!repo.lookup_word("foo", Path::new("foo.py")).unwrap());
+        assert!(repo.lookup_word("foo", Path::new("foo.rs")).unwrap());
+    });
+
+    make_repo_tests!(remove_ignored_for_file, (repo) => {
+        repo.add_file("/path/to/one").unwrap();
+        repo.add_file("/path/to/two").unwrap();
+        repo.add_ignored_for_file("foo", "/path/to/one").unwrap();
+        repo.add_ignored_for_file("foo", "/path/to/two").unwrap();
+
+        repo.remove_ignored_for_file("foo", "/path/to/one").unwrap();
+        assert!(!repo.lookup_word("foo", Path::new("/path/to/one")).unwrap());
+        assert!(repo.lookup_word("foo", Path::new("/path/to/two")).unwrap());
+    });
+}
