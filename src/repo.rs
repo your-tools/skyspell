@@ -46,8 +46,6 @@ pub trait Repo {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
-
     use paste::paste;
 
     use crate::tests::FakeRepo;
@@ -96,14 +94,14 @@ mod tests {
         repo.skip_file_name("Cargo.lock").unwrap();
         repo.skip_full_path("/path/to/bar").unwrap();
 
-        let path = PathBuf::from("/path/to/Cargo.lock");
-        assert!(repo.is_skipped(&path).unwrap());
+        let path = Path::new("/path/to/Cargo.lock");
+        assert!(repo.is_skipped(path).unwrap());
 
-        let path = PathBuf::from("/path/to/bar");
-        assert!(repo.is_skipped(&path).unwrap());
+        let path = Path::new("/path/to/bar");
+        assert!(repo.is_skipped(path).unwrap());
 
-        let path = PathBuf::from("/path/to/baz");
-        assert!(!repo.is_skipped(&path).unwrap());
+        let path = Path::new("/path/to/baz");
+        assert!(!repo.is_skipped(path).unwrap());
     });
 
     make_repo_tests!(is_ignored, (repo) => {
@@ -171,5 +169,23 @@ mod tests {
         repo.remove_ignored_for_file("foo", "/path/to/one").unwrap();
         assert!(!repo.lookup_word("foo", Path::new("/path/to/one")).unwrap());
         assert!(repo.lookup_word("foo", Path::new("/path/to/two")).unwrap());
+    });
+
+    make_repo_tests!(unskip_file_name, (repo) => {
+        repo.skip_file_name("Cargo.lock").unwrap();
+        let path = Path::new("/path/to/Cargo.lock");
+        assert!(repo.is_skipped(path).unwrap());
+
+        repo.unskip_file_name("Cargo.lock").unwrap();
+        assert!(!repo.is_skipped(path).unwrap());
+    });
+
+    make_repo_tests!(unskip_file_path, (repo) => {
+        repo.skip_full_path("/path/to/foo").unwrap();
+        let path = Path::new("/path/to/foo");
+        assert!(repo.is_skipped(path).unwrap());
+
+        repo.unskip_full_path("/path/to/foo").unwrap();
+        assert!(!repo.is_skipped(path).unwrap());
     });
 }
