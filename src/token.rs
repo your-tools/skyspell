@@ -14,8 +14,8 @@ lazy_static! {
     static ref TOKEN_RE: Regex = RegexBuilder::new(
         r"
             (
-                \w |                     # letters
-                [ + . / : = ? @ _ ~ - ]  # all possible chars found in an URL or email
+                \w |                        # letters
+                [ \\ + . / : = ? @ _ ~ - ]  # all possible chars found in an URL or email
             )+
         "
     ).ignore_whitespace(true).build().unwrap();
@@ -52,8 +52,11 @@ lazy_static! {
     static ref IDENT_RE: Regex = RegexBuilder::new(
         r"
         # A word is just a bunch of unicode characters matching
-        # the Alphabetic group :P
-        \p{Alphabetic}+
+        # the Alphabetic group, possibly inside space escapes like
+        # \n or \t
+        (\\[nt])*
+        (\p{Alphabetic}+)
+        (\\[nt])*
         "
     ).ignore_whitespace(true).build().unwrap();
 }
@@ -173,9 +176,10 @@ fn extract_word(token: &str) -> Option<(&str, usize)> {
         return None;
     }
 
-    if let Some(ident_match) = IDENT_RE.find(token) {
-        let ident = ident_match.as_str();
+    if let Some(captures) = IDENT_RE.captures(token) {
+        let ident_match = captures.get(2).unwrap();
         let pos = ident_match.start();
+        let ident = ident_match.as_str();
         return word_from_ident(ident, pos);
     }
 
@@ -301,6 +305,35 @@ mod tests {
         let tokenizer = Tokenizer::new(&text);
         tokenizer.map(|(x, _index)| x).collect()
     }
+
+    #[test]
+    fn test_backslash_1() {
+        let text = r"one\ntwo";
+        let actual = get_tokens(text);
+        assert_eq!(&actual, &["one", "two"]);
+    }
+
+    #[test]
+    fn test_backslash_2() {
+        let text = r"\tone\ntwo";
+        let actual = get_tokens(text);
+        assert_eq!(&actual, &["one", "two"]);
+    }
+
+    #[test]
+    fn test_backslash_3() {
+        let text = r"hello\n\n\nworld";
+        let actual = get_tokens(text);
+        assert_eq!(&actual, &["hello", "world"]);
+    }
+
+    #[test]
+    fn test_latex() {
+        let text = r"\section{First chapter}";
+        let actual = get_tokens(text);
+        assert_eq!(&actual, &["section", "First", "chapter"]);
+    }
+
     #[test]
     fn test_split_identifiers() {
         let text = "hello world foo-bar x y https://toto.com  spam42 'dry-run', foo@acme.corp";
