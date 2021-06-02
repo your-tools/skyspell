@@ -1,20 +1,10 @@
 Check coverage with tarpaulin
 
-Ignore list per project path
-
 Try to optimize for performance
-
-Display number of affected rows in Db methods ?
 
 README: Add link to a nice asciinema demo (or a gif)
 
-Handle backslash (for latex, C, and the rest)
-
 Filter mode (read stdin, write stdout)
-
-Generic Repo tests to reduce duplication between FakeRepo and Db
-
-Split kak.rs and test.rs in smaller modules
 
 Write more tests for kak.rs
 
@@ -25,4 +15,3 @@ Project handling
   ignore list per project
   only check files belonging to the current project
   remember lang per project
-  fix calling kak-spell add from kakoune
