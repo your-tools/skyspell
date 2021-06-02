@@ -23,8 +23,8 @@ lazy_static! {
     // We want to match HTTP in HTTPError
     static ref ABBREV_RE: Regex = RegexBuilder::new(
         r"
-            (\p{Lu}+)    # Some upper case letters
-            \p{Lu}       # An uppercase letter
+            (\p{Lu}+)   # Some upper case letters
+            \p{Lu}      # An uppercase letter
             \p{Ll}      # A lower case letter
          "
     )
@@ -297,11 +297,14 @@ mod tests {
         assert_eq!(extract_word("FooBar").unwrap(), ("Foo", 0));
     }
 
+    fn get_tokens(text: &str) -> Vec<&str> {
+        let tokenizer = Tokenizer::new(&text);
+        tokenizer.map(|(x, _index)| x).collect()
+    }
     #[test]
     fn test_split_identifiers() {
         let text = "hello world foo-bar x y https://toto.com  spam42 'dry-run', foo@acme.corp";
-        let tokenizer = Tokenizer::new(&text);
-        let actual: Vec<_> = tokenizer.map(|(x, _index)| x).collect();
+        let actual = get_tokens(text);
         assert_eq!(
             &actual,
             &["hello", "world", "foo", "bar", "x", "y", "spam", "dry", "run"]
@@ -311,64 +314,56 @@ mod tests {
     #[test]
     fn test_skip_youtube_url() {
         let text = "let url = https://www.youtube.com/watch?v=9LfmrkyP81M; let x = 42";
-        let tokenizer = Tokenizer::new(&text);
-        let actual: Vec<_> = tokenizer.map(|(x, _index)| x).collect();
+        let actual = get_tokens(text);
         assert_eq!(&actual, &["let", "url", "let", "x"],);
     }
 
     #[test]
     fn test_split_camel() {
         let text = "fooBarBaz";
-        let tokenizer = Tokenizer::new(&text);
-        let actual: Vec<_> = tokenizer.map(|(x, _index)| x).collect();
+        let actual = get_tokens(text);
         assert_eq!(&actual, &["foo", "Bar", "Baz"]);
     }
 
     #[test]
     fn test_split_screaming() {
         let text = "SCREAMING_CONSTANT";
-        let tokenizer = Tokenizer::new(&text);
-        let actual: Vec<_> = tokenizer.map(|(x, _index)| x).collect();
+        let actual = get_tokens(text);
         assert_eq!(&actual, &["SCREAMING", "CONSTANT"]);
     }
 
     #[test]
     fn test_split_abbrev() {
         let text = "HttpError";
-        let tokenizer = Tokenizer::new(&text);
-        let actual: Vec<_> = tokenizer.map(|(x, _index)| x).collect();
+        let actual = get_tokens(text);
         assert_eq!(&actual, &["Http", "Error"]);
     }
 
     #[test]
     fn test_split_abbrev_2() {
         let text = "HTTPError";
-        let tokenizer = Tokenizer::new(&text);
-        let actual: Vec<_> = tokenizer.map(|(x, _index)| x).collect();
+        let actual = get_tokens(text);
         assert_eq!(&actual, &["HTTP", "Error"]);
     }
 
     #[test]
     fn test_split_abbrev_3() {
         let text = "URLs";
-        let tokenizer = Tokenizer::new(&text);
-        let actual: Vec<_> = tokenizer.map(|(x, _index)| x).collect();
+        let actual = get_tokens(text);
         assert_eq!(&actual, &["URL"]);
     }
 
     #[test]
     fn test_single_upper_case_letter() {
         let text = "I am";
-        let tokenizer = Tokenizer::new(&text);
-        let actual: Vec<_> = tokenizer.map(|(x, _index)| x).collect();
+        let actual = get_tokens(text);
         assert_eq!(&actual, &["I", "am"]);
     }
 
     #[test]
     fn test_use_sqlite() {
         let text = "use diesel::sqlite::SqliteConnection;";
-        let tokenizer = Tokenizer::new(&text);
-        let actual: Vec<_> = tokenizer.map(|(x, _index)| x).collect();
+        let actual = get_tokens(text);
         assert_eq!(
             &actual,
             &["use", "diesel", "sqlite", "Sqlite", "Connection"]
