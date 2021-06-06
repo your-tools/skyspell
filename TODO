@@ -1,5 +1,8 @@
 Check coverage with tarpaulin
 
+Fix processing \newpage for Latex
+(it finds that 'ewpage' is an error)
+
 Try to optimize for performance
 
 README: Add link to a nice asciinema demo (or a gif)
