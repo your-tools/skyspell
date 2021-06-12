@@ -49,7 +49,7 @@ impl Db {
     }
 
     pub(crate) fn open(lang: &str) -> Result<Self> {
-        let app_dirs = AppDirs::new(Some("kak-spell"), false).unwrap();
+        let app_dirs = AppDirs::new(Some("skyspell"), false).unwrap();
         let data_dir = app_dirs.data_dir;
         std::fs::create_dir_all(&data_dir)
             .with_context(|| format!("Could not create {}", data_dir.display()))?;

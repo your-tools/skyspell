@@ -1,11 +1,11 @@
 [package]
-name = "kak_spell"
+name = "skyspell"
 version = "0.2.1"
 authors = ["Dimitri Merejkowsky <dimitri@dmerej.info>"]
 edition = "2018"
 readme = "README.md"
-description = "Enchant wrapper for Kakoune"
-repository = "https://git.sr.ht/~dmerej/kak-spell"
+description = "Command line spell checker with Kakoune integration"
+repository = "https://git.sr.ht/~dmerej/skyspell"
 license = "BSD-3-Clause"
 keywords = ["spell", "cli", "kakoune"]
 
@@ -24,7 +24,7 @@ platform-dirs = "0.3.0"
 regex = "1.5.4"
 
 [[bin]]
-name = "kak-spell"
+name = "skyspell"
 path = "src/main.rs"
 
 [dev-dependencies]

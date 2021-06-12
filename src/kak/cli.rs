@@ -21,7 +21,7 @@ pub fn run() -> Result<()> {
 }
 
 #[derive(Clap)]
-#[clap(name="kak-spell (kakoune helper)", version = env!("CARGO_PKG_VERSION"))]
+#[clap(name="skyspell (kakoune helper)", version = env!("CARGO_PKG_VERSION"))]
 struct Opts {
     #[clap(subcommand)]
     action: Action,
@@ -272,7 +272,7 @@ fn suggest() -> Result<()> {
     for suggestion in suggestions.iter() {
         print!("%{{{}}} ", suggestion);
         print!("%{{execute-keys -itersel %{{c{}<esc>be}} ", suggestion);
-        print!(":write <ret> :kak-spell <ret>}}");
+        print!(":write <ret> :skyspell <ret>}}");
         print!(" ");
     }
 
@@ -281,6 +281,6 @@ fn suggest() -> Result<()> {
 
 fn kak_recheck() {
     println!("write-all");
-    println!("kak-spell-check");
-    println!("kak-spell-list");
+    println!("skyspell-check");
+    println!("skyspell-list");
 }

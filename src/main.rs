@@ -1,8 +1,8 @@
 use anyhow::Result;
-use kak_spell::cli;
-use kak_spell::kak;
+use skyspell::cli;
+use skyspell::kak;
 
-// The behavior of kak-spell is so different when invoked from
+// The behavior of skyspell is so different when invoked from
 // kakoune and from the command line than it's best to
 // have completely different main() functions
 fn main() -> Result<()> {

@@ -9,7 +9,7 @@ use crate::kak::helpers::*;
 use crate::Db;
 use crate::{Dictionary, Repo};
 
-pub(crate) const KAK_SPELL_LANG_OPT: &str = "kak_spell_lang";
+pub(crate) const KAK_SPELL_LANG_OPT: &str = "skyspell_lang";
 
 pub(crate) fn get_lang() -> Result<String> {
     get_option(KAK_SPELL_LANG_OPT)

@@ -3,7 +3,7 @@ Check coverage with tarpaulin
 Fix processing \newpage for Latex
 (it finds that 'ewpage' is an error)
 
-Add a `kak-spell kak` subcommand instead of using
+Add a `skyspell kak` subcommand instead of using
 the `from-kak` hack...
 
 Try to optimize for performance
@@ -17,7 +17,7 @@ Write more tests for kak.rs
 Undo?
 
 Project handling
-  add a kak-spell --project . option
+  add a skyspell --project . option
   ignore list per project
   only check files belonging to the current project
   remember lang per project

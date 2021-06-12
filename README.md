@@ -1,15 +1,15 @@
-# kak-spell
+# skyspell
 
 A fast and handy spell checker for source code and other texts
 for Kakoune.
 
-# kak-spell in action
+# skyspell in action
 
-kak-spell is meant to be used from kakoune, but also features
+skyspell is meant to be used from kakoune, but also features
 an interactive mode and can be used from the command line, like this:
 
 ```
-$ kak-spell check $(git ls-files)
+$ skyspell check $(git ls-files)
 /path/to/LICENSE:9:2 Redistributions
 What to do?
 ...
