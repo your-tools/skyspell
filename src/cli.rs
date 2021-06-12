@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use anyhow::{anyhow, Context, Result};
 use clap::Clap;
 
+use crate::kak;
 use crate::Db;
 use crate::EnchantDictionary;
 use crate::TokenProcessor;
@@ -21,7 +22,7 @@ pub fn run() -> Result<()> {
         Action::Suggest(opts) => suggest(&lang, opts),
         Action::Skip(opts) => skip(&lang, opts),
         Action::Unskip(opts) => unskip(&lang, opts),
-        Action::InitKakoune => init_kakoune(),
+        Action::Kak(opts) => kak::cli::run(opts),
     }
 }
 
@@ -56,11 +57,8 @@ enum Action {
     #[clap(about = "Remove path from the given skipped list")]
     Unskip(UnskipOpts),
 
-    #[clap(about = "Dump initial kakoune commands")]
-    // Note: the kak-init command is implemented here because:
-    //   1/ we don't need any kak variables for it to work
-    //   2/ we don't want to hide it
-    InitKakoune,
+    #[clap(about = "Kakoune actions")]
+    Kak(kak::cli::Opts),
 }
 
 #[derive(Clap)]
@@ -120,11 +118,6 @@ struct RemoveOpts {
     ext: Option<String>,
     #[clap(long, about = "Remove word from the ignore list for the given path")]
     file: Option<PathBuf>,
-}
-
-fn init_kakoune() -> Result<()> {
-    println!("{}", include_str!("init.kak"));
-    Ok(())
 }
 
 fn open_db(lang: &str) -> Result<crate::Db> {

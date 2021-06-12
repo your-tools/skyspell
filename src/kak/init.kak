@@ -31,7 +31,7 @@ define-command skyspell-check -docstring "check the open buffers for spelling er
   evaluate-commands %sh{
     : $kak_timestamp
     : $kak_opt_skyspell_lang
-    skyspell check $kak_buflist
+    skyspell kak check $kak_buflist
   }
 }
 
@@ -40,7 +40,7 @@ define-command -hidden -params 1.. skyspell-action %{
   evaluate-commands %sh{
     : $kak_selection
     : $kak_opt_skyspell_lang
-    skyspell $*
+    skyspell kak $*
   }
 }
 
@@ -66,7 +66,7 @@ define-command skyspell-next -docstring "go to the next spelling error" %{
    evaluate-commands %sh{
      : $kak_cursor_line
      : $kak_cursor_column
-     skyspell next-error "${kak_opt_spell_errors}"
+     skyspell kak next-error "${kak_opt_spell_errors}"
    }
 }
 
@@ -74,7 +74,7 @@ define-command skyspell-previous -docstring "go to the previous spelling error" 
    evaluate-commands %sh{
      : $kak_cursor_line
      : $kak_cursor_column
-     skyspell previous-error "${kak_opt_spell_errors}"
+     skyspell kak previous-error "${kak_opt_spell_errors}"
    }
 }
 
@@ -90,7 +90,7 @@ define-command skyspell-replace -docstring "replace the selection with a suggest
   evaluate-commands %sh{
     : $kak_opt_skyspell_lang
     : $kak_selection
-    skyspell suggest
+    skyspell kak suggest
   }
 
 }

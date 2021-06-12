@@ -15,14 +15,12 @@ use dirs_next::home_dir;
 
 // Use the debug() function in crate::kak::helpers for instead of dbg! or println!
 
-pub fn run() -> Result<()> {
-    let opts: Opts = Opts::parse();
+pub(crate) fn run(opts: Opts) -> Result<()> {
     dispatch(opts)
 }
 
 #[derive(Clap)]
-#[clap(name="skyspell (kakoune helper)", version = env!("CARGO_PKG_VERSION"))]
-struct Opts {
+pub(crate) struct Opts {
     #[clap(subcommand)]
     action: Action,
 }
@@ -44,6 +42,9 @@ enum Action {
     SkipName,
     #[clap(about = "Skip the file path matching the selection")]
     SkipFile,
+
+    #[clap(about = "Dump initial kakoune script")]
+    Init,
 
     #[clap(about = "Jump to the selected error")]
     Jump,
@@ -75,6 +76,7 @@ fn dispatch(opts: Opts) -> Result<()> {
         Action::SkipFile => skip_file(),
         Action::SkipName => skip_name(),
         Action::Suggest => suggest(),
+        Action::Init => init(),
     }
 }
 
@@ -230,6 +232,11 @@ fn goto_previous_error(opts: MoveOpts) -> Result<()> {
     goto_error(opts, Direction::Backward)
 }
 
+fn init() -> Result<()> {
+    println!("{}", include_str!("init.kak"));
+    Ok(())
+}
+
 fn skip_file() -> Result<()> {
     let LineSelection { path, .. } = &parse_line_selection()?;
     let path = PathBuf::from(path);
@@ -272,7 +279,7 @@ fn suggest() -> Result<()> {
     for suggestion in suggestions.iter() {
         print!("%{{{}}} ", suggestion);
         print!("%{{execute-keys -itersel %{{c{}<esc>be}} ", suggestion);
-        print!(":write <ret> :skyspell <ret>}}");
+        print!(":write <ret> :skyspell-check <ret>}}");
         print!(" ");
     }
 
