@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::path::Path;
 
-pub trait Repo {
+pub trait Repository {
     // Add the list of words to the global ignore list
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()>;
 
@@ -49,7 +49,7 @@ pub trait Repo {
 mod tests {
     use paste::paste;
 
-    use crate::tests::FakeRepo;
+    use crate::tests::FakeRepository;
     use crate::Db;
 
     use super::*;
@@ -60,7 +60,7 @@ mod tests {
     macro_rules! make_repo_tests {
         ($name:ident, ($repo:ident) => $test:block) => {
             paste! {
-            fn $name(mut $repo: impl Repo) {
+            fn $name(mut $repo: impl Repository) {
                 $test
             }
 
@@ -72,7 +72,7 @@ mod tests {
 
             #[test]
             fn [<test_fake_repo_ $name>]() {
-                let repo = FakeRepo::new();
+                let repo = FakeRepository::new();
                 $name(repo)
             }
             }

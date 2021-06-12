@@ -7,7 +7,7 @@ use itertools::Itertools;
 use crate::checker::lookup_token;
 use crate::kak::helpers::*;
 use crate::Db;
-use crate::{Dictionary, Repo};
+use crate::{Dictionary, Repository};
 
 pub(crate) const KAK_SPELL_LANG_OPT: &str = "skyspell_lang";
 
@@ -27,13 +27,13 @@ pub(crate) struct Error {
     token: String,
 }
 
-pub struct KakouneChecker<D: Dictionary, R: Repo> {
+pub struct KakouneChecker<D: Dictionary, R: Repository> {
     dictionary: D,
     repo: R,
     errors: Vec<Error>,
 }
 
-impl<D: Dictionary, R: Repo> KakouneChecker<D, R> {
+impl<D: Dictionary, R: Repository> KakouneChecker<D, R> {
     pub fn new(dictionary: D, repo: R) -> Self {
         Self {
             dictionary,

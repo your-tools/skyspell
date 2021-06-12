@@ -4,4 +4,4 @@ mod fake_repository;
 
 pub(crate) use fake_dictionary::FakeDictionary;
 pub(crate) use fake_interactor::FakeInteractor;
-pub(crate) use fake_repository::FakeRepo;
+pub(crate) use fake_repository::FakeRepository;

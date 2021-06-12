@@ -13,7 +13,7 @@ mod dictionary;
 pub(crate) mod interactor;
 pub mod kak;
 pub(crate) mod models;
-pub(crate) mod repo;
+pub(crate) mod repository;
 pub(crate) mod schema;
 pub(crate) mod token;
 
@@ -22,7 +22,7 @@ use db::Db;
 use dictionary::Dictionary;
 use dictionary::EnchantDictionary;
 use interactor::{ConsoleInteractor, Interactor};
-use repo::Repo;
+use repository::Repository;
 use token::TokenProcessor;
 
 #[cfg(test)]

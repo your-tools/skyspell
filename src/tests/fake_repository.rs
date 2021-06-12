@@ -3,10 +3,10 @@ use anyhow::{anyhow, Result};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
-use crate::Repo;
+use crate::Repository;
 
 #[derive(Default)]
-pub(crate) struct FakeRepo {
+pub(crate) struct FakeRepository {
     good: HashSet<String>,
     ignored: HashSet<String>,
     skipped_file_names: HashSet<String>,
@@ -15,7 +15,7 @@ pub(crate) struct FakeRepo {
     ignored_for_ext: HashMap<String, Vec<String>>,
 }
 
-impl FakeRepo {
+impl FakeRepository {
     pub(crate) fn new() -> Self {
         Self {
             ..Default::default()
@@ -23,7 +23,7 @@ impl FakeRepo {
     }
 }
 
-impl Repo for FakeRepo {
+impl Repository for FakeRepository {
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()> {
         for word in words {
             self.ignored.insert(word.to_string());

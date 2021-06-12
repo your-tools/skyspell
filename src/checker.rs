@@ -6,7 +6,7 @@ use colored::*;
 
 use crate::Dictionary;
 use crate::Interactor;
-use crate::Repo;
+use crate::Repository;
 
 pub(crate) trait Checker {
     fn is_skipped(&self, path: &Path) -> Result<bool>;
@@ -14,13 +14,13 @@ pub(crate) trait Checker {
     fn success(&self) -> bool;
 }
 
-pub(crate) struct NonInteractiveChecker<D: Dictionary, R: Repo> {
+pub(crate) struct NonInteractiveChecker<D: Dictionary, R: Repository> {
     dictionary: D,
     repo: R,
     errors_found: bool,
 }
 
-impl<D: Dictionary, R: Repo> NonInteractiveChecker<D, R> {
+impl<D: Dictionary, R: Repository> NonInteractiveChecker<D, R> {
     pub(crate) fn new(dictionary: D, repo: R) -> Self {
         Self {
             dictionary,
@@ -30,7 +30,7 @@ impl<D: Dictionary, R: Repo> NonInteractiveChecker<D, R> {
     }
 }
 
-impl<D: Dictionary, R: Repo> Checker for NonInteractiveChecker<D, R> {
+impl<D: Dictionary, R: Repository> Checker for NonInteractiveChecker<D, R> {
     fn handle_token(&mut self, path: &Path, pos: (usize, usize), token: &str) -> Result<()> {
         let found = lookup_token(&self.dictionary, &self.repo, token, path)?;
         if !found {
@@ -49,14 +49,14 @@ impl<D: Dictionary, R: Repo> Checker for NonInteractiveChecker<D, R> {
     }
 }
 
-pub(crate) struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repo> {
+pub(crate) struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository> {
     interactor: I,
     dictionary: D,
     repo: R,
     skipped: HashSet<String>,
 }
 
-impl<I: Interactor, D: Dictionary, R: Repo> Checker for InteractiveChecker<I, D, R> {
+impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker<I, D, R> {
     fn success(&self) -> bool {
         self.skipped.is_empty()
     }
@@ -78,7 +78,7 @@ impl<I: Interactor, D: Dictionary, R: Repo> Checker for InteractiveChecker<I, D,
     }
 }
 
-impl<I: Interactor, D: Dictionary, R: Repo> InteractiveChecker<I, D, R> {
+impl<I: Interactor, D: Dictionary, R: Repository> InteractiveChecker<I, D, R> {
     pub(crate) fn new(interactor: I, dictionary: D, repo: R) -> Self {
         Self {
             dictionary,
@@ -266,7 +266,7 @@ fn print_unknown_token(token: &str, path: &Path, pos: (usize, usize)) {
     println!("{} {}", prefix.bold(), token.blue());
 }
 
-pub(crate) fn lookup_token<D: Dictionary, R: Repo>(
+pub(crate) fn lookup_token<D: Dictionary, R: Repository>(
     dictionary: &D,
     repo: &R,
     token: &str,
@@ -284,17 +284,17 @@ pub(crate) fn lookup_token<D: Dictionary, R: Repo>(
 mod tests {
 
     use super::*;
-    use crate::tests::{FakeDictionary, FakeInteractor, FakeRepo};
+    use crate::tests::{FakeDictionary, FakeInteractor, FakeRepository};
 
     #[derive(Default)]
     struct TestApp {
         dictionary: FakeDictionary,
-        repo: FakeRepo,
+        repo: FakeRepository,
         interactor: FakeInteractor,
     }
 
     impl TestApp {
-        fn checker(self) -> InteractiveChecker<impl Interactor, impl Dictionary, impl Repo> {
+        fn checker(self) -> InteractiveChecker<impl Interactor, impl Dictionary, impl Repository> {
             InteractiveChecker::new(self.interactor, self.dictionary, self.repo)
         }
 

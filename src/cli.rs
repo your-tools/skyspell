@@ -8,7 +8,7 @@ use crate::Db;
 use crate::EnchantDictionary;
 use crate::TokenProcessor;
 use crate::{Checker, InteractiveChecker, NonInteractiveChecker};
-use crate::{ConsoleInteractor, Dictionary, Repo};
+use crate::{ConsoleInteractor, Dictionary, Repository};
 
 pub fn run() -> Result<()> {
     let opts: Opts = Opts::parse();

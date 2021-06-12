@@ -5,7 +5,7 @@ use crate::kak::helpers::*;
 use crate::kak::KakouneChecker;
 use crate::EnchantDictionary;
 use crate::TokenProcessor;
-use crate::{Dictionary, Repo};
+use crate::{Dictionary, Repository};
 use anyhow::{anyhow, Context, Result};
 use clap::Clap;
 use dirs_next::home_dir;

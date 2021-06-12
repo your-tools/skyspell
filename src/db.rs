@@ -7,7 +7,7 @@ use diesel::sqlite::SqliteConnection;
 use platform_dirs::AppDirs;
 
 use crate::models::*;
-use crate::repo::Repo;
+use crate::repository::Repository;
 use crate::schema::extensions::dsl::{extension, extensions, id as extension_pk};
 use crate::schema::files::dsl::{files, full_path, id as file_pk};
 use crate::schema::ignored::dsl::{id as ignored_pk, ignored, word as ignored_word};
@@ -62,7 +62,7 @@ impl Db {
     }
 }
 
-impl Repo for Db {
+impl Repository for Db {
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()> {
         let new_ignored_words: Vec<_> = words.iter().map(|x| NewIgnored { word: x }).collect();
         diesel::insert_or_ignore_into(ignored)
