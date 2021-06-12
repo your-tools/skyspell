@@ -15,10 +15,6 @@ use dirs_next::home_dir;
 
 // Use the debug() function in crate::kak::helpers for instead of dbg! or println!
 
-pub(crate) fn run(opts: Opts) -> Result<()> {
-    dispatch(opts)
-}
-
 #[derive(Clap)]
 pub(crate) struct Opts {
     #[clap(subcommand)]
@@ -64,7 +60,7 @@ struct MoveOpts {
     range_spec: String,
 }
 
-fn dispatch(opts: Opts) -> Result<()> {
+pub(crate) fn run(opts: Opts) -> Result<()> {
     match opts.action {
         Action::AddExtension => add_extension(),
         Action::AddFile => add_file(),
