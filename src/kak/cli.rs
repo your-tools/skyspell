@@ -1,8 +1,9 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use crate::kak::checker::open_db;
 use crate::kak::helpers::*;
 use crate::kak::KakouneChecker;
+use crate::Checker;
 use crate::EnchantDictionary;
 use crate::TokenProcessor;
 use crate::{Dictionary, Repository};
@@ -29,7 +30,7 @@ enum Action {
     AddExtension,
     #[clap(about = "Add selection to the ignore list for the given file")]
     AddFile,
-    #[clap(about = "Spell check every buffer")]
+    #[clap(about = "Spell check every open buffer that belongs to the current project")]
     Check(CheckOpts),
 
     #[clap(about = "Display a menu containing suggestions")]
@@ -103,10 +104,7 @@ fn add_extension() -> Result<()> {
         .rsplit_once(".")
         .ok_or_else(|| anyhow!("File has no extension"))?;
     let mut db = open_db()?;
-    if !db.known_extension(ext)? {
-        db.add_extension(ext)?;
-    }
-    db.add_ignored_for_extension(word, ext)?;
+    db.ignore_for_extension(word, ext)?;
     kak_recheck();
     println!(
         "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
@@ -118,10 +116,9 @@ fn add_extension() -> Result<()> {
 fn add_file() -> Result<()> {
     let LineSelection { path, word, .. } = &parse_line_selection()?;
     let mut db = open_db()?;
-    if !db.known_file(path)? {
-        db.add_file(path)?;
-    }
-    db.add_ignored_for_file(word, path)?;
+    let project_path = get_project_path()?;
+    let relative_path = Path::new(path);
+    db.ignore_for_path(word, &project_path, relative_path)?;
     kak_recheck();
     println!(
         "echo '\"{}\" added to the ignore list for file: \"{}\"'",
@@ -133,9 +130,7 @@ fn add_file() -> Result<()> {
 fn add_global() -> Result<()> {
     let LineSelection { word, .. } = &parse_line_selection()?;
     let mut db = open_db()?;
-    if !db.is_ignored(word)? {
-        db.add_ignored(word)?;
-    }
+    db.ignore(word)?;
     kak_recheck();
     println!("echo '\"{}\" added to global ignore list'", word);
     Ok(())
@@ -152,6 +147,7 @@ fn jump() -> Result<()> {
 
 fn check(opts: CheckOpts) -> Result<()> {
     let lang = get_lang()?;
+    let project_path = get_project_path()?;
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, &lang)?;
 
@@ -165,7 +161,7 @@ fn check(opts: CheckOpts) -> Result<()> {
     let home_dir = home_dir
         .to_str()
         .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
-    let mut checker = KakouneChecker::new(dictionary, repo);
+    let mut checker = KakouneChecker::new(dictionary, repo, &project_path);
     for bufname in &opts.buflist {
         if bufname.starts_with('*') && bufname.ends_with('*') {
             continue;
@@ -181,13 +177,18 @@ fn check(opts: CheckOpts) -> Result<()> {
         }
 
         let source_path = std::fs::canonicalize(&source_path)?;
-        if checker.is_skipped(&source_path)? {
+        if checker.should_skip(&source_path)? {
+            continue;
+        }
+
+        let relative_path = pathdiff::diff_paths(&source_path, &project_path).unwrap();
+        if relative_path.to_string_lossy().starts_with("..") {
             continue;
         }
 
         let token_processor = TokenProcessor::new(&source_path)?;
         token_processor.each_token(|word, line, column| {
-            checker.handle_token(&source_path, &bufname, (line, column), word)
+            checker.handle_token(&word, &source_path, &(bufname.to_string(), line, column))
         })?;
     }
 
@@ -235,28 +236,31 @@ fn init() -> Result<()> {
 
 fn skip_file() -> Result<()> {
     let LineSelection { path, .. } = &parse_line_selection()?;
-    let path = PathBuf::from(path);
-    let file_name = path
-        .file_name()
-        .with_context(|| "no file name")?
-        .to_str()
-        .with_context(|| "not an utf-8 file name")?;
+    // We know it's a relative path thanks to handle_error()
+    let relative_path = Path::new(path);
+    let project_path = get_project_path()?;
 
     let mut db = open_db()?;
-    db.skip_file_name(file_name)?;
+    db.skip_path(&project_path, relative_path)?;
 
     kak_recheck();
-    println!("echo 'will now skip files named: \"{}\"'", file_name);
+    println!("echo 'will now skip \"{}\"'", relative_path.display());
     Ok(())
 }
 
 fn skip_name() -> Result<()> {
     let LineSelection { path, .. } = &parse_line_selection()?;
+    let path = Path::new(path);
+    let file_name = path
+        .file_name()
+        .with_context(|| "no file name")?
+        .to_string_lossy();
+
     let mut db = open_db()?;
-    db.skip_full_path(path)?;
+    db.skip_file_name(&file_name)?;
 
     kak_recheck();
-    println!("echo 'will now skip the file: \"{}\"'", path);
+    println!("echo 'will now skip file named: \"{}\"'", file_name);
     Ok(())
 }
 

@@ -1,18 +1,4 @@
 table! {
-    extensions (id) {
-        id -> Integer,
-        extension -> Text,
-    }
-}
-
-table! {
-    files (id) {
-        id -> Integer,
-        full_path -> Text,
-    }
-}
-
-table! {
     ignored (id) {
         id -> Integer,
         word -> Text,
@@ -20,18 +6,34 @@ table! {
 }
 
 table! {
-    ignored_for_ext (id) {
+    ignored_for_extension (id) {
         id -> Integer,
         word -> Text,
-        extension_id -> Integer,
+        extension -> Text,
     }
 }
 
 table! {
-    ignored_for_file (id) {
+    ignored_for_path (id) {
         id -> Integer,
         word -> Text,
-        file_id -> Integer,
+        project_id -> Integer,
+        path -> Text,
+    }
+}
+
+table! {
+    ignored_for_project (id) {
+        id -> Integer,
+        word -> Text,
+        project_id -> Integer,
+    }
+}
+
+table! {
+    projects (id) {
+        id -> Integer,
+        path -> Text,
     }
 }
 
@@ -45,19 +47,17 @@ table! {
 table! {
     skipped_paths (id) {
         id -> Integer,
-        full_path -> Text,
+        project_id -> Integer,
+        path -> Text,
     }
 }
 
-joinable!(ignored_for_ext -> extensions (extension_id));
-joinable!(ignored_for_file -> files (file_id));
-
 allow_tables_to_appear_in_same_query!(
-    extensions,
-    files,
     ignored,
-    ignored_for_ext,
-    ignored_for_file,
+    ignored_for_extension,
+    ignored_for_path,
+    ignored_for_project,
+    projects,
     skipped_file_names,
     skipped_paths,
 );

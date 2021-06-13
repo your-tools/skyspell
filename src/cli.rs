@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use clap::Clap;
 
 use crate::kak;
@@ -65,9 +65,11 @@ enum Action {
 struct AddOpts {
     word: String,
     #[clap(long, about = "Add word to the ignore list for the given extension")]
-    ext: Option<String>,
+    extension: Option<String>,
     #[clap(long, about = "Add word to the ignore list for the given path")]
     file: Option<PathBuf>,
+    #[clap(long, about = "Project path")]
+    project_path: Option<PathBuf>,
 }
 
 #[derive(Clap)]
@@ -77,6 +79,9 @@ struct CheckOpts {
 
     #[clap(about = "List of paths to check")]
     sources: Vec<PathBuf>,
+
+    #[clap(long, about = "Project path")]
+    project_path: Option<PathBuf>,
 }
 
 #[derive(Clap)]
@@ -88,18 +93,24 @@ struct ImportPersonalDictOpts {
 #[derive(Clap)]
 struct SkipOpts {
     #[clap(long, about = "File path to skip")]
-    full_path: Option<PathBuf>,
+    relative_path: Option<PathBuf>,
 
-    #[clap(long, about = "Filename to skip")]
+    #[clap(long, about = "Project path")]
+    project_path: Option<PathBuf>,
+
+    #[clap(long, about = "File name to skip")]
     file_name: Option<String>,
 }
 
 #[derive(Clap)]
 struct UnskipOpts {
     #[clap(long, about = "File path to unskip")]
-    full_path: Option<PathBuf>,
+    relative_path: Option<PathBuf>,
 
-    #[clap(long, about = "Filename to unskip")]
+    #[clap(long, about = "Project path")]
+    project_path: Option<PathBuf>,
+
+    #[clap(long, about = "File name to unskip")]
     file_name: Option<String>,
 }
 
@@ -115,9 +126,12 @@ struct RemoveOpts {
         long,
         about = "Remove word from the ignore list for the given extension"
     )]
-    ext: Option<String>,
+    extension: Option<String>,
     #[clap(long, about = "Remove word from the ignore list for the given path")]
     file: Option<PathBuf>,
+
+    #[clap(long, about = "Project path")]
+    project_path: Option<PathBuf>,
 }
 
 fn open_db(lang: &str) -> Result<crate::Db> {
@@ -128,38 +142,59 @@ fn add(lang: &str, opts: AddOpts) -> Result<()> {
     let word = &opts.word;
     let mut db = open_db(lang)?;
 
-    if let Some(p) = opts.file {
-        let full_path = std::fs::canonicalize(p)?;
-        let file = full_path
-            .to_str()
-            .ok_or_else(|| anyhow!("{} contains non-UTF-8 chars", full_path.display()))?;
-        db.add_ignored_for_file(word, file)?;
-    } else if let Some(e) = opts.ext {
-        db.add_ignored_for_extension(word, &e)?;
-    } else {
-        db.add_ignored(word)?;
+    match (opts.project_path, opts.file, opts.extension) {
+        (None, None, None) => db.ignore(word),
+        (_, _, Some(e)) => db.ignore_for_extension(word, &e),
+        (Some(project_path), Some(relative_path), None) => {
+            let project_path = std::fs::canonicalize(project_path)?;
+            let relative_path = std::fs::canonicalize(relative_path)?;
+            let relative_path =
+                pathdiff::diff_paths(&relative_path, &project_path).ok_or_else(|| {
+                    anyhow!(
+                        "Could not build relative path from {} to {}",
+                        relative_path.display(),
+                        project_path.display()
+                    )
+                })?;
+            db.ignore_for_path(word, &project_path, &relative_path)
+        }
+        (Some(project_path), None, None) => {
+            let project_path = std::fs::canonicalize(project_path)?;
+            db.ignore_for_project(word, &project_path)
+        }
+        (None, Some(_), _) => {
+            bail!("Cannot use --file without --project-path")
+        }
     }
-
-    Ok(())
 }
 
 fn remove(lang: &str, opts: RemoveOpts) -> Result<()> {
     let word = &opts.word;
     let mut db = open_db(lang)?;
-
-    if let Some(p) = opts.file {
-        let full_path = std::fs::canonicalize(p)?;
-        let file = full_path
-            .to_str()
-            .ok_or_else(|| anyhow!("{} contains non-UTF-8 chars", full_path.display()))?;
-        db.remove_ignored_for_file(word, file)?;
-    } else if let Some(e) = opts.ext {
-        db.remove_ignored_for_extension(word, &e)?;
-    } else {
-        db.remove_ignored(word)?;
+    match (opts.project_path, opts.file, opts.extension) {
+        (None, None, None) => db.remove_ignored(word),
+        (_, _, Some(e)) => db.remove_ignored_for_extension(word, &e),
+        (Some(project_path), Some(relative_path), None) => {
+            let project_path = std::fs::canonicalize(project_path)?;
+            let relative_path = std::fs::canonicalize(relative_path)?;
+            let relative_path =
+                pathdiff::diff_paths(&relative_path, &project_path).ok_or_else(|| {
+                    anyhow!(
+                        "Could not build relative path from {} to {}",
+                        relative_path.display(),
+                        project_path.display()
+                    )
+                })?;
+            db.remove_ignored_for_path(word, &project_path, &relative_path)
+        }
+        (Some(project_path), None, None) => {
+            let project_path = std::fs::canonicalize(project_path)?;
+            db.remove_ignored_for_project(word, &project_path)
+        }
+        (None, Some(_), _) => {
+            bail!("Cannot use --file without --project-path")
+        }
     }
-
-    Ok(())
 }
 
 fn check(lang: &str, opts: CheckOpts) -> Result<()> {
@@ -181,23 +216,31 @@ fn check(lang: &str, opts: CheckOpts) -> Result<()> {
     }
 }
 
-fn check_with<C: Checker>(checker: &mut C, opts: CheckOpts) -> Result<()> {
+fn check_with<C>(checker: &mut C, opts: CheckOpts) -> Result<()>
+where
+    C: Checker<Context = (usize, usize)>,
+{
     let mut skipped = 0;
     if opts.sources.is_empty() {
         println!("No path given - nothing to do");
     }
 
+    if let Some(project_path) = opts.project_path {
+        let project_path = std::fs::canonicalize(project_path)?;
+        checker.ensure_project(&project_path)?;
+    }
+
     for path in &opts.sources {
         let source_path = std::fs::canonicalize(path)
             .with_context(|| format!("Could not canonicalize {}", path.display()))?;
-        if checker.is_skipped(&source_path)? {
+        if checker.should_skip(&source_path)? {
             skipped += 1;
             continue;
         }
 
         let token_processor = TokenProcessor::new(&source_path)?;
         token_processor.each_token(|word, line, column| {
-            checker.handle_token(&source_path, (line, column), word)
+            checker.handle_token(word, &source_path, &(line, column))
         })?;
     }
 
@@ -225,30 +268,48 @@ fn import_personal_dict(lang: &str, opts: ImportPersonalDictOpts) -> Result<()> 
 
 fn skip(lang: &str, opts: SkipOpts) -> Result<()> {
     let mut db = open_db(lang)?;
-    if let Some(full_path) = opts.full_path {
-        let full_path = std::fs::canonicalize(full_path)?;
-        let full_path = full_path.to_str().with_context(|| "not valid utf-8")?;
-        db.skip_full_path(full_path)?;
+    match (opts.project_path, opts.relative_path, opts.file_name) {
+        (Some(project_path), Some(relative_path), None) => {
+            let project_path = std::fs::canonicalize(project_path)?;
+            let relative_path = std::fs::canonicalize(relative_path)?;
+            let relative_path =
+                pathdiff::diff_paths(&relative_path, &project_path).ok_or_else(|| {
+                    anyhow!(
+                        "Could not build relative path from {} to {}",
+                        relative_path.display(),
+                        project_path.display()
+                    )
+                })?;
+            db.skip_path(&project_path, &relative_path)
+        }
+        (None, None, Some(file_name)) => db.skip_file_name(&file_name),
+        (_, _, _) => {
+            bail!("Either use --file-name OR --project-path and --relative-path")
+        }
     }
-
-    if let Some(file_name) = opts.file_name {
-        db.skip_file_name(&file_name)?;
-    }
-    Ok(())
 }
 
 fn unskip(lang: &str, opts: UnskipOpts) -> Result<()> {
     let mut db = open_db(lang)?;
-    if let Some(full_path) = opts.full_path {
-        let full_path = std::fs::canonicalize(full_path)?;
-        let full_path = full_path.to_str().with_context(|| "not valid utf-8")?;
-        db.unskip_full_path(full_path)?;
+    match (opts.project_path, opts.relative_path, opts.file_name) {
+        (Some(project_path), Some(relative_path), None) => {
+            let project_path = std::fs::canonicalize(project_path)?;
+            let relative_path = std::fs::canonicalize(relative_path)?;
+            let relative_path =
+                pathdiff::diff_paths(&relative_path, &project_path).ok_or_else(|| {
+                    anyhow!(
+                        "Could not build relative path from {} to {}",
+                        relative_path.display(),
+                        project_path.display()
+                    )
+                })?;
+            db.unskip_path(&project_path, &relative_path)
+        }
+        (None, None, Some(file_name)) => db.unskip_file_name(&file_name),
+        (_, _, _) => {
+            bail!("Either use --file-name OR --project-path and --relative-path")
+        }
     }
-
-    if let Some(file_name) = opts.file_name {
-        db.unskip_file_name(&file_name)?;
-    }
-    Ok(())
 }
 
 fn suggest(lang: &str, opts: SuggestOpts) -> Result<()> {

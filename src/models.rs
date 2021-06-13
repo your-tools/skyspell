@@ -1,19 +1,4 @@
-use crate::schema::{
-    extensions, files, ignored, ignored_for_ext, ignored_for_file, skipped_file_names,
-    skipped_paths,
-};
-
-#[derive(Insertable)]
-#[table_name = "extensions"]
-pub(crate) struct NewExtension<'a> {
-    pub extension: &'a str,
-}
-
-#[derive(Insertable)]
-#[table_name = "files"]
-pub(crate) struct NewFile<'a> {
-    pub full_path: &'a str,
-}
+use crate::schema::*;
 
 #[derive(Insertable)]
 #[table_name = "ignored"]
@@ -22,17 +7,25 @@ pub(crate) struct NewIgnored<'a> {
 }
 
 #[derive(Insertable)]
-#[table_name = "ignored_for_ext"]
-pub(crate) struct NewIgnoredForExt<'a> {
+#[table_name = "ignored_for_extension"]
+pub(crate) struct NewIgnoredForExtension<'a> {
     pub word: &'a str,
-    pub extension_id: i32,
+    pub extension: &'a str,
 }
 
 #[derive(Insertable)]
-#[table_name = "ignored_for_file"]
-pub(crate) struct NewIgnoredForFile<'a> {
+#[table_name = "ignored_for_project"]
+pub(crate) struct NewIgnoredForProject<'a> {
     pub word: &'a str,
-    pub file_id: i32,
+    pub project_id: i32,
+}
+
+#[derive(Insertable)]
+#[table_name = "ignored_for_path"]
+pub(crate) struct NewIgnoredForPath<'a> {
+    pub word: &'a str,
+    pub project_id: i32,
+    pub path: &'a str,
 }
 
 #[derive(Insertable)]
@@ -44,50 +37,24 @@ pub(crate) struct NewSkippedFileName<'a> {
 #[derive(Insertable)]
 #[table_name = "skipped_paths"]
 pub(crate) struct NewSkippedPath<'a> {
-    pub full_path: &'a str,
+    pub path: &'a str,
+    pub project_id: i32,
+}
+
+#[derive(Insertable)]
+#[table_name = "projects"]
+pub(crate) struct NewProject<'a> {
+    pub path: &'a str,
 }
 
 #[derive(Queryable)]
-pub(crate) struct Ignored {
-    pub id: i32,
+pub(crate) struct IgnoredForExtension {
     pub word: String,
-}
-
-#[derive(Queryable)]
-pub(crate) struct IgnoredForExt {
-    pub id: i32,
-    pub word: String,
-    pub extension_id: i32,
-}
-
-#[derive(Queryable)]
-pub(crate) struct IgnoredForFile {
-    pub id: i32,
-    pub word: String,
-    pub file_id: i32,
-}
-
-#[derive(Queryable)]
-pub(crate) struct GoodWord {
-    pub id: i32,
-    pub word: String,
-}
-
-#[derive(Queryable)]
-pub(crate) struct Extension {
-    pub id: i32,
     pub extension: String,
 }
 
 #[derive(Queryable)]
-pub(crate) struct File {
+pub(crate) struct Project {
     pub id: i32,
-    pub full_path: String,
-}
-
-#[derive(Queryable)]
-pub(crate) struct SkippedFile {
-    pub id: i32,
-    pub file_name: Option<String>,
-    pub full_path: Option<String>,
+    pub path: String,
 }

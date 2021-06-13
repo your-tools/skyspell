@@ -1,4 +1,5 @@
 declare-option str skyspell_lang
+declare-option str skyspell_project
 declare-option range-specs spell_errors
 declare-option -hidden str skyspell_current_error
 declare-option str skyspell_word_to_add
@@ -6,6 +7,7 @@ declare-option str skyspell_word_to_add
 define-command -params 1 skyspell-enable %{
   evaluate-commands %sh{
     echo "set global skyspell_lang $1"
+    echo "set global skyspell_project $(pwd)"
   }
   add-highlighter global/spell ranges spell_errors
   hook -group skyspell global BufWritePost .* skyspell-check
@@ -31,6 +33,7 @@ define-command skyspell-check -docstring "check the open buffers for spelling er
   evaluate-commands %sh{
     : $kak_timestamp
     : $kak_opt_skyspell_lang
+    : $kak_opt_skyspell_project
     skyspell kak check $kak_buflist
   }
 }
@@ -40,6 +43,7 @@ define-command -hidden -params 1.. skyspell-action %{
   evaluate-commands %sh{
     : $kak_selection
     : $kak_opt_skyspell_lang
+    : $kak_opt_skyspell_project
     skyspell kak $*
   }
 }
@@ -89,6 +93,7 @@ define-command skyspell-replace -docstring "replace the selection with a suggest
 
   evaluate-commands %sh{
     : $kak_opt_skyspell_lang
+    : $kak_opt_skyspell_project
     : $kak_selection
     skyspell kak suggest
   }

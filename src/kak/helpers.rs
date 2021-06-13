@@ -1,6 +1,8 @@
 use anyhow::{anyhow, Context, Result};
 
-use crate::kak::checker::KAK_SPELL_LANG_OPT;
+use std::path::PathBuf;
+
+use crate::kak::checker::{SKYSPELL_LANG_OPT, SKYSPELL_PROJECT_OPT};
 
 #[allow(dead_code)]
 pub(crate) fn debug(message: &str) {
@@ -31,7 +33,14 @@ pub(crate) fn get_selection() -> Result<String> {
 }
 
 pub(crate) fn get_lang() -> Result<String> {
-    get_option(KAK_SPELL_LANG_OPT)
+    get_option(SKYSPELL_LANG_OPT)
+}
+
+pub(crate) fn get_project_path() -> Result<PathBuf> {
+    let as_str = get_option(SKYSPELL_PROJECT_OPT)?;
+    let res = PathBuf::from(as_str);
+    let res = std::fs::canonicalize(res)?;
+    Ok(res)
 }
 
 pub(crate) fn goto_previous_buffer() {

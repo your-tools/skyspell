@@ -20,12 +20,9 @@ dirs-next = "2.0.0"
 enchant = "0.2.0"
 itertools = "0.10.0"
 lazy_static = "1.4.0"
+pathdiff = "0.2.0"
 platform-dirs = "0.3.0"
 regex = "1.5.4"
-
-[[bin]]
-name = "skyspell"
-path = "src/main.rs"
 
 [dev-dependencies]
 paste = "1.0.5"

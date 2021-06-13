@@ -4,15 +4,16 @@ use std::path::{Path, PathBuf};
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
 
-use crate::checker::lookup_token;
 use crate::kak::helpers::*;
+use crate::Checker;
 use crate::Db;
 use crate::{Dictionary, Repository};
 
-pub(crate) const KAK_SPELL_LANG_OPT: &str = "skyspell_lang";
+pub(crate) const SKYSPELL_LANG_OPT: &str = "skyspell_lang";
+pub(crate) const SKYSPELL_PROJECT_OPT: &str = "skyspell_project";
 
 pub(crate) fn get_lang() -> Result<String> {
-    get_option(KAK_SPELL_LANG_OPT)
+    get_option(SKYSPELL_LANG_OPT)
 }
 
 pub(crate) fn open_db() -> Result<crate::Db> {
@@ -31,38 +32,66 @@ pub struct KakouneChecker<D: Dictionary, R: Repository> {
     dictionary: D,
     repo: R,
     errors: Vec<Error>,
+    project_path: PathBuf,
+}
+
+impl<D: Dictionary, R: Repository> Checker for KakouneChecker<D, R> {
+    // bufname, line, column
+    type Context = (String, usize, usize);
+
+    fn handle_error(&mut self, error: &str, path: &Path, context: &Self::Context) -> Result<()> {
+        let (buffer, line, column) = context;
+        let path = std::fs::canonicalize(path)?;
+        let relative_path = pathdiff::diff_paths(&path, &self.project_path).ok_or_else(|| {
+            anyhow!(
+                "Could not build relative path from {} to {}",
+                path.display(),
+                &self.project_path.display()
+            )
+        })?;
+        let pos = (*line, *column);
+        self.errors.push(Error {
+            path: relative_path,
+            pos,
+            buffer: buffer.to_string(),
+            token: error.to_string(),
+        });
+        Ok(())
+    }
+
+    fn success(&self) -> bool {
+        true
+    }
+
+    fn repo_mut(&mut self) -> &mut dyn Repository {
+        &mut self.repo
+    }
+
+    fn repo(&self) -> &dyn Repository {
+        &self.repo
+    }
+
+    fn dictionary(&self) -> &dyn Dictionary {
+        &self.dictionary
+    }
+
+    fn set_project_path(&mut self, path: &Path) {
+        self.project_path = path.to_path_buf();
+    }
+
+    fn project_path(&self) -> Option<&Path> {
+        Some(self.project_path.as_ref())
+    }
 }
 
 impl<D: Dictionary, R: Repository> KakouneChecker<D, R> {
-    pub fn new(dictionary: D, repo: R) -> Self {
+    pub fn new(dictionary: D, repo: R, project_path: &Path) -> Self {
         Self {
             dictionary,
             repo,
+            project_path: project_path.to_path_buf(),
             errors: vec![],
         }
-    }
-
-    pub fn is_skipped(&self, path: &Path) -> Result<bool> {
-        self.repo.is_skipped(path)
-    }
-
-    pub fn handle_token(
-        &mut self,
-        path: &Path,
-        buffer: &str,
-        pos: (usize, usize),
-        token: &str,
-    ) -> Result<()> {
-        let found = lookup_token(&self.dictionary, &self.repo, token, path)?;
-        if !found {
-            self.errors.push(Error {
-                path: path.to_path_buf(),
-                pos,
-                buffer: buffer.to_string(),
-                token: token.to_string(),
-            });
-        }
-        Ok(())
     }
 
     fn write_code(&self, f: &mut impl Write) -> Result<()> {
@@ -91,10 +120,24 @@ impl<D: Dictionary, R: Repository> KakouneChecker<D, R> {
 }
 
 fn write_status(f: &mut impl Write, errors: &[Error]) -> Result<()> {
+    let project_path = get_project_path()?;
     match errors.len() {
-        0 => write!(f, "echo -markup {{green}} no spelling errors"),
-        1 => write!(f, "echo -markup {{red}} 1 spelling error"),
-        n => write!(f, "echo -markup {{red}} {} spelling errors", n),
+        0 => write!(
+            f,
+            "echo -markup {}: {{green}}No spelling errors",
+            project_path.display()
+        ),
+        1 => write!(
+            f,
+            "echo -markup {}: {{red}}1 spelling error",
+            project_path.display()
+        ),
+        n => write!(
+            f,
+            "echo -markup {}: {{red}}{} Spelling errors",
+            project_path.display(),
+            n,
+        ),
     }?;
     Ok(())
 }

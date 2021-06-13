@@ -12,9 +12,3 @@ Filter mode (read stdin, write stdout)
 Write more tests for kak.rs
 
 Undo?
-
-Project handling
-  add a skyspell --project . option
-  ignore list per project
-  only check files belonging to the current project
-  remember lang per project
