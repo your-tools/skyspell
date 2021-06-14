@@ -45,7 +45,7 @@ impl FakeInteractor {
 
 impl Drop for FakeInteractor {
     fn drop(&mut self) {
-        if !self.answers.borrow().is_empty() {
+        if !self.answers.borrow().is_empty() && !std::thread::panicking() {
             panic!("not all answers have been consumed by the tests");
         }
     }
