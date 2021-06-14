@@ -18,6 +18,7 @@ pub trait Interactor {
 pub struct ConsoleInteractor;
 impl Interactor for ConsoleInteractor {
     fn input(&self, prompt: &str) -> String {
+        #[allow(clippy::unwrap_used)]
         Input::new()
             .with_prompt(prompt)
             .allow_empty(false)
@@ -26,6 +27,7 @@ impl Interactor for ConsoleInteractor {
     }
 
     fn input_letter(&self, prompt: &str, choices: &str) -> String {
+        #[allow(clippy::unwrap_used)]
         Input::new()
             .with_prompt(prompt)
             .validate_with(|input: &String| -> Result<(), &str> {
@@ -40,6 +42,7 @@ impl Interactor for ConsoleInteractor {
     }
 
     fn select(&self, prompt: &str, choices: &[&str]) -> Option<usize> {
+        #[allow(clippy::clippy::unwrap_used)]
         Select::new()
             .with_prompt(prompt)
             .items(choices)
@@ -52,6 +55,7 @@ impl Interactor for ConsoleInteractor {
     }
 
     fn confirm(&self, prompt: &str) -> bool {
+        #[allow(clippy::unwrap_used)]
         Confirm::new().with_prompt(prompt).interact().unwrap()
     }
 

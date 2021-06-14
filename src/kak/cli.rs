@@ -181,7 +181,13 @@ fn check(opts: CheckOpts) -> Result<()> {
             continue;
         }
 
-        let relative_path = pathdiff::diff_paths(&source_path, &project_path).unwrap();
+        let relative_path = pathdiff::diff_paths(&source_path, &project_path).ok_or_else(|| {
+            anyhow!(
+                "Could not get relative path from {} to {}",
+                source_path.display(),
+                project_path.display()
+            )
+        })?;
         if relative_path.to_string_lossy().starts_with("..") {
             continue;
         }

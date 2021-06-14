@@ -18,7 +18,7 @@ lazy_static! {
                 [ \\ + . / : = ? @ _ ~ - ]  # all possible chars found in an URL or email
             )+
         "
-    ).ignore_whitespace(true).build().unwrap();
+    ).ignore_whitespace(true).build().expect("syntax error in static regex");
 
     // We want to match HTTP in HTTPError
     static ref ABBREV_RE: Regex = RegexBuilder::new(
@@ -28,7 +28,7 @@ lazy_static! {
             \p{Ll}      # A lower case letter
          "
     )
-    .ignore_whitespace(true).build().unwrap();
+    .ignore_whitespace(true).build().expect("syntax error in static regex");
 
     // We want to match URL and URLs
     static ref CONSTANT_RE: Regex = RegexBuilder::new(
@@ -37,7 +37,7 @@ lazy_static! {
         ^(\p{Lu}+) s ?$
         "
     )
-    .ignore_whitespace(true).build().unwrap();
+    .ignore_whitespace(true).build().expect("syntax error in static regex");
 
     // We want to match 8a1007e (for git sha1)
     static ref HEXA_RE: Regex = RegexBuilder::new(
@@ -45,7 +45,7 @@ lazy_static! {
         # Only letter a to f and numbers, at list 5 in size
         [a-f0-9]{5,}
         "
-    ).ignore_whitespace(true).build().unwrap();
+    ).ignore_whitespace(true).build().expect("syntax error in static regex");
 
     // One we've skipped tokens, we want to match any word
     // inside
@@ -58,7 +58,7 @@ lazy_static! {
         (\p{Alphabetic}+)
         (\\[nt])*
         "
-    ).ignore_whitespace(true).build().unwrap();
+    ).ignore_whitespace(true).build().expect("syntax error in static regex");
 }
 
 pub(crate) struct TokenProcessor {
@@ -187,9 +187,9 @@ fn extract_word(token: &str) -> Option<(&str, usize)> {
 }
 
 fn word_from_ident(ident: &str, pos: usize) -> Option<(&str, usize)> {
-    // We know the ident cannot be empty because of IDENT_RE
     let mut iter = ident.char_indices();
-    let (_, first_char) = iter.next().unwrap();
+    // We know the ident cannot be empty because of IDENT_RE
+    let (_, first_char) = iter.next().expect("empty ident");
     if first_char.is_lowercase() {
         // camelCase -> camel
         if let Some(p) = ident.find(char::is_uppercase) {
