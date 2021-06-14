@@ -115,14 +115,22 @@ fn add_extension() -> Result<()> {
 
 fn add_file() -> Result<()> {
     let LineSelection { path, word, .. } = &parse_line_selection()?;
-    let mut db = open_db()?;
+    let path = &Path::new(path);
     let project_path = get_project_path()?;
-    let relative_path = Path::new(path);
-    db.ignore_for_path(word, &project_path, relative_path)?;
+    let relative_path = pathdiff::diff_paths(&path, &project_path).ok_or_else(|| {
+        anyhow!(
+            "Could not get relative path from {} to {}",
+            path.display(),
+            project_path.display()
+        )
+    })?;
+    let mut db = open_db()?;
+    db.ignore_for_path(word, &project_path, &relative_path)?;
     kak_recheck();
     println!(
         "echo '\"{}\" added to the ignore list for file: \"{}\"'",
-        word, path
+        word,
+        relative_path.display()
     );
     Ok(())
 }
