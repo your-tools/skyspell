@@ -242,12 +242,20 @@ fn init() -> Result<()> {
 
 fn skip_file() -> Result<()> {
     let LineSelection { path, .. } = &parse_line_selection()?;
-    // We know it's a relative path thanks to handle_error()
-    let relative_path = Path::new(path);
+    // We know it's a full path thanks to handle_error in KakouneChecker
+    let full_path = Path::new(path);
     let project_path = get_project_path()?;
 
+    let relative_path = pathdiff::diff_paths(&full_path, &project_path).ok_or_else(|| {
+        anyhow!(
+            "Could not build relative path from {} to {}",
+            &full_path.display(),
+            &project_path.display()
+        )
+    })?;
+
     let mut db = open_db()?;
-    db.skip_path(&project_path, relative_path)?;
+    db.skip_path(&project_path, &relative_path)?;
 
     kak_recheck();
     println!("echo 'will now skip \"{}\"'", relative_path.display());

@@ -41,17 +41,10 @@ impl<D: Dictionary, R: Repository> Checker for KakouneChecker<D, R> {
 
     fn handle_error(&mut self, error: &str, path: &Path, context: &Self::Context) -> Result<()> {
         let (buffer, line, column) = context;
-        let path = std::fs::canonicalize(path)?;
-        let relative_path = pathdiff::diff_paths(&path, &self.project_path).ok_or_else(|| {
-            anyhow!(
-                "Could not build relative path from {} to {}",
-                path.display(),
-                &self.project_path.display()
-            )
-        })?;
+        let full_path = std::fs::canonicalize(path)?;
         let pos = (*line, *column);
         self.errors.push(Error {
-            path: relative_path,
+            path: full_path,
             pos,
             buffer: buffer.to_string(),
             token: error.to_string(),
