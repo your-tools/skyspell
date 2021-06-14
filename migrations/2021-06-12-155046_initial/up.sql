@@ -30,7 +30,8 @@ CREATE TABLE ignored_for_project (
   id INTEGER PRIMARY KEY NOT NULL,
   word TEXT NOT NULL,
   project_id INTEGER NOT NULL,
-  FOREIGN KEY(project_id) REFERENCES project(id)
+  FOREIGN KEY(project_id) REFERENCES project(id),
+  UNIQUE(word, project_id)
 );
 
 CREATE TABLE ignored_for_path (
