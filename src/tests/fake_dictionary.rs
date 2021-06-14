@@ -11,7 +11,7 @@ pub(crate) struct FakeDictionary {
 }
 
 impl FakeDictionary {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Default::default()
     }
 

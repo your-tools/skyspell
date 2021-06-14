@@ -41,13 +41,9 @@ impl FakeInteractor {
     pub(crate) fn push_bool(&self, b: bool) {
         self.answers.borrow_mut().push_front(Answer::Bool(b))
     }
-}
 
-impl Drop for FakeInteractor {
-    fn drop(&mut self) {
-        if !self.answers.borrow().is_empty() && !std::thread::panicking() {
-            panic!("not all answers have been consumed by the tests");
-        }
+    pub(crate) fn is_empty(&self) -> bool {
+        self.answers.borrow().is_empty()
     }
 }
 

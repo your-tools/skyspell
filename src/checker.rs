@@ -166,11 +166,6 @@ impl<I: Interactor, D: Dictionary, R: Repository> InteractiveChecker<I, D, R> {
         }
     }
 
-    #[allow(dead_code)]
-    fn interactor(&self) -> &I {
-        &self.interactor
-    }
-
     fn on_error(&mut self, path: &Path, pos: (usize, usize), error: &str) -> Result<()> {
         let (lineno, column) = pos;
         let prefix = format!("{}:{}:{}", path.display(), lineno, column);
@@ -365,30 +360,64 @@ mod tests {
     use super::*;
     use crate::tests::{FakeDictionary, FakeInteractor, FakeRepository};
 
-    #[derive(Default)]
+    type TestChecker = InteractiveChecker<FakeInteractor, FakeDictionary, FakeRepository>;
+
     struct TestApp {
-        dictionary: FakeDictionary,
-        repo: FakeRepository,
-        interactor: FakeInteractor,
+        checker: TestChecker,
     }
 
     impl TestApp {
-        fn checker(self) -> InteractiveChecker<impl Interactor, impl Dictionary, impl Repository> {
-            InteractiveChecker::new(self.interactor, self.dictionary, self.repo)
-        }
-
         fn new() -> Self {
-            Default::default()
+            let interactor = FakeInteractor::new();
+            let dictionary = FakeDictionary::new();
+            let repository = FakeRepository::new();
+            let checker = TestChecker::new(interactor, dictionary, repository);
+            Self { checker }
         }
 
         fn add_known(&mut self, words: &[&str]) {
             for word in words.iter() {
-                self.dictionary.add_known(word);
+                self.checker.dictionary.add_known(word);
             }
         }
 
         fn push_text(&mut self, answer: &str) {
-            self.interactor.push_text(answer)
+            self.checker.interactor.push_text(answer)
+        }
+
+        fn handle_token(&mut self, token: &str, path: &str) {
+            let path = &Path::new(path);
+            let context = &(3, 42);
+            self.checker.handle_token(token, path, context).unwrap()
+        }
+
+        fn ensure_project(&mut self, project_path: &Path) {
+            self.checker.ensure_project(project_path).unwrap()
+        }
+
+        fn should_ignore(
+            &self,
+            token: &str,
+            project_path: Option<&Path>,
+            relative_path: &Path,
+        ) -> bool {
+            self.checker
+                .repo
+                .should_ignore(token, project_path, relative_path)
+                .unwrap()
+        }
+
+        fn should_skip(&self, project_path: Option<&Path>, relative_path: &Path) -> bool {
+            self.checker
+                .repo
+                .should_skip(project_path, relative_path)
+                .unwrap()
+        }
+
+        fn end(&self) {
+            if !self.checker.interactor.is_empty() {
+                panic!("Not all answered consumed by the test");
+            }
         }
     }
 
@@ -402,16 +431,12 @@ mod tests {
         let mut app = TestApp::new();
         app.add_known(&["hello", "world"]);
         app.push_text("a");
-        let mut checker = app.checker();
 
-        checker
-            .handle_token("foo", &Path::new("foo.txt"), &(3, 2))
-            .unwrap();
+        app.handle_token("foo", "foo.txt");
 
-        assert!(checker
-            .repo
-            .should_ignore("foo", None, &Path::new("other.txt"))
-            .unwrap());
+        assert!(app.should_ignore("foo", None, &Path::new("other.txt")));
+
+        app.end();
     }
 
     #[test]
@@ -424,16 +449,12 @@ mod tests {
         let mut app = TestApp::new();
         app.add_known(&["hello", "world"]);
         app.push_text("n");
-        let mut checker = app.checker();
 
-        checker
-            .handle_token("foo", &Path::new("path/to/yarn.lock"), &(3, 2))
-            .unwrap();
+        app.handle_token("foo", "path/to/yarn.lock");
 
-        assert!(checker
-            .repo()
-            .should_skip(None, &Path::new("path/to/other/yarn.lock"))
-            .unwrap());
+        assert!(app.should_skip(None, &Path::new("path/to/other/yarn.lock")));
+
+        app.end();
     }
 
     #[test]
@@ -447,20 +468,14 @@ mod tests {
         let mut app = TestApp::new();
         app.add_known(&["hello", "world"]);
         app.push_text("e");
-        let mut checker = app.checker();
 
-        checker
-            .handle_token("defaultdict", &Path::new("hello.py"), &(3, 2))
-            .unwrap();
+        app.handle_token("defaultdict", "hello.py");
 
-        assert!(checker
-            .repo()
-            .should_ignore("defaultdict", None, &Path::new("hello.py"))
-            .unwrap());
+        assert!(app.should_ignore("defaultdict", None, &Path::new("hello.py")));
 
-        checker
-            .handle_token("defaultdict", &Path::new("hello.py"), &(3, 2))
-            .unwrap();
+        app.handle_token("defaultdict", "hello.py");
+
+        app.end();
     }
 
     /// Scenario:
@@ -474,15 +489,11 @@ mod tests {
         let mut app = TestApp::new();
         app.add_known(&["hello", "world"]);
         app.push_text("x");
-        let mut checker = app.checker();
 
-        checker
-            .handle_token("foo", &Path::new("foo.py"), &(3, 2))
-            .unwrap();
+        app.handle_token("foo", "foo.py");
+        app.handle_token("foo", "foo.py");
 
-        checker
-            .handle_token("foo", &Path::new("foo.py"), &(5, 2))
-            .unwrap();
+        app.end();
     }
 
     /// Scenario:
@@ -495,15 +506,11 @@ mod tests {
         let mut app = TestApp::new();
         app.add_known(&["hello", "world"]);
         app.push_text("e");
-        let mut checker = app.checker();
 
-        checker
-            .handle_token("abstractmethod", &Path::new("foo.py"), &(3, 2))
-            .unwrap();
+        app.handle_token("abstractmethod", "foo.py");
+        app.handle_token("abstractmethod", "foo.py");
 
-        checker
-            .handle_token("abstractmethod", &Path::new("foo.py"), &(10, 2))
-            .unwrap();
+        app.end();
     }
 
     /// Scenario:
@@ -514,27 +521,19 @@ mod tests {
         let mut app = TestApp::new();
         app.push_text("p");
 
-        let mut checker = app.checker();
-        checker
-            .ensure_project(Path::new("/path/to/project"))
-            .unwrap();
+        app.ensure_project(Path::new("/path/to/project"));
 
-        checker
-            .handle_token("foo", &Path::new("/path/to/project/foo.py"), &(3, 2))
-            .unwrap();
+        app.handle_token("foo", "/path/to/project/foo.py");
 
-        assert!(checker
-            .repo()
-            .should_ignore(
-                "foo",
-                Some(&Path::new("/path/to/project")),
-                &Path::new("hello.py")
-            )
-            .unwrap());
+        assert!(app.should_ignore(
+            "foo",
+            Some(&Path::new("/path/to/project")),
+            &Path::new("hello.py")
+        ));
 
-        checker
-            .handle_token("foo", &Path::new("/path/to/project/foo.py"), &(6, 2))
-            .unwrap();
+        app.handle_token("foo", "/path/to/project/foo.py");
+
+        app.end()
     }
 
     /// Scenario:
@@ -545,21 +544,15 @@ mod tests {
         let mut app = TestApp::new();
         app.push_text("s");
 
-        let mut checker = app.checker();
-        checker
-            .ensure_project(Path::new("/path/to/project"))
-            .unwrap();
+        app.ensure_project(Path::new("/path/to/project"));
 
-        checker
-            .handle_token("foo", &Path::new("/path/to/project/foo.py"), &(3, 2))
-            .unwrap();
+        app.handle_token("foo", "/path/to/project/foo.py");
 
-        assert!(checker
-            .repo()
-            .should_skip(
-                Some(&Path::new("/path/to/project")),
-                &Path::new("/path/to/project/foo.py")
-            )
-            .unwrap());
+        assert!(app.should_skip(
+            Some(&Path::new("/path/to/project")),
+            &Path::new("/path/to/project/foo.py")
+        ));
+
+        app.end();
     }
 }
