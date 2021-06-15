@@ -1,19 +1,19 @@
 use anyhow::{bail, Result};
 
 use std::collections::{HashMap, HashSet};
-use std::path::{Path, PathBuf};
 
-use crate::repository::Repository;
+use crate::path::{ProjectPath, RelativePath};
+use crate::Repository;
 
 #[derive(Default, Debug)]
 pub(crate) struct FakeRepository {
     global: HashSet<String>,
     by_extension: HashMap<String, Vec<String>>,
-    by_project: HashMap<PathBuf, Vec<String>>,
-    by_project_path: HashMap<(PathBuf, PathBuf), Vec<String>>,
+    by_project: HashMap<String, Vec<String>>,
+    by_project_path: HashMap<(String, String), Vec<String>>,
     skip_file_names: HashSet<String>,
-    skipped_paths: HashSet<(PathBuf, PathBuf)>,
-    projects: Vec<PathBuf>,
+    skipped_paths: HashSet<(String, String)>,
+    projects: Vec<String>,
 }
 
 impl FakeRepository {
@@ -25,6 +25,20 @@ impl FakeRepository {
 }
 
 impl Repository for FakeRepository {
+    fn project_exists(&self, path: &ProjectPath) -> Result<bool> {
+        let index = &self.projects.iter().position(|x| x == &path.to_string());
+        Ok(index.is_some())
+    }
+
+    fn new_project(&mut self, path: &ProjectPath) -> Result<()> {
+        if self.project_exists(path)? {
+            bail!("Project in '{}' already exists", path);
+        }
+
+        self.projects.push(path.to_string());
+        Ok(())
+    }
+
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()> {
         for word in words {
             self.global.insert(word.to_string());
@@ -50,20 +64,6 @@ impl Repository for FakeRepository {
         Ok(self.skip_file_names.contains(file_name))
     }
 
-    fn project_exists(&self, path: &Path) -> Result<bool> {
-        let index = &self.projects.iter().position(|x| x == path);
-        Ok(index.is_some())
-    }
-
-    fn new_project(&mut self, path: &Path) -> Result<()> {
-        if self.project_exists(path)? {
-            bail!("Project in '{}' already exists", path.display());
-        }
-
-        self.projects.push(path.to_path_buf());
-        Ok(())
-    }
-
     fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
         let entry = &mut self
             .by_extension
@@ -81,36 +81,46 @@ impl Repository for FakeRepository {
         }
     }
 
-    fn ignore_for_project(&mut self, word: &str, project_path: &Path) -> Result<()> {
+    fn ignore_for_project(&mut self, word: &str, project_path: &ProjectPath) -> Result<()> {
         let entry = &mut self
             .by_project
-            .entry(project_path.to_path_buf())
+            .entry(project_path.to_string())
             .or_insert_with(Vec::new);
         entry.push(word.to_string());
         Ok(())
     }
 
-    fn is_ignored_for_project(&self, word: &str, project_path: &Path) -> Result<bool> {
-        if let Some(words) = self.by_project.get(project_path) {
+    fn is_ignored_for_project(&self, word: &str, project_path: &ProjectPath) -> Result<bool> {
+        if let Some(words) = self.by_project.get(&project_path.to_string()) {
             Ok(words.contains(&word.to_string()))
         } else {
             Ok(false)
         }
     }
 
-    fn ignore_for_path(&mut self, word: &str, project_path: &Path, path: &Path) -> Result<()> {
+    fn ignore_for_path(
+        &mut self,
+        word: &str,
+        project_path: &ProjectPath,
+        path: &RelativePath,
+    ) -> Result<()> {
         let entry = &mut self
             .by_project_path
-            .entry((project_path.to_path_buf(), path.to_path_buf()))
+            .entry((project_path.to_string(), path.to_string()))
             .or_insert_with(Vec::new);
         entry.push(word.to_string());
         Ok(())
     }
 
-    fn is_ignored_for_path(&self, word: &str, project_path: &Path, path: &Path) -> Result<bool> {
+    fn is_ignored_for_path(
+        &self,
+        word: &str,
+        project_path: &ProjectPath,
+        path: &RelativePath,
+    ) -> Result<bool> {
         if let Some(words) = self
             .by_project_path
-            .get(&(project_path.to_path_buf(), path.to_path_buf()))
+            .get(&(project_path.to_string(), path.to_string()))
         {
             Ok(words.contains(&word.to_string()))
         } else {
@@ -118,15 +128,15 @@ impl Repository for FakeRepository {
         }
     }
 
-    fn skip_path(&mut self, project_path: &Path, path: &Path) -> Result<()> {
+    fn skip_path(&mut self, project_path: &ProjectPath, path: &RelativePath) -> Result<()> {
         self.skipped_paths
-            .insert((project_path.to_path_buf(), path.to_path_buf()));
+            .insert((project_path.to_string(), path.to_string()));
         Ok(())
     }
 
-    fn is_skipped_path(&self, project_path: &Path, path: &Path) -> Result<bool> {
+    fn is_skipped_path(&self, project_path: &ProjectPath, path: &RelativePath) -> Result<bool> {
         Ok(self
             .skipped_paths
-            .contains(&(project_path.to_path_buf(), path.to_path_buf())))
+            .contains(&(project_path.to_string(), path.to_string())))
     }
 }

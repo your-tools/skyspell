@@ -1,7 +1,5 @@
 Check coverage with tarpaulin
 
-Introduce a RelativePath NewType - there are too many bugs now
-
 Fix processing \newpage for Latex
 (it finds that 'ewpage' is an error)
 

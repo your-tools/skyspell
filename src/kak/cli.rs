@@ -3,6 +3,7 @@ use std::path::Path;
 use crate::kak::checker::open_db;
 use crate::kak::helpers::*;
 use crate::kak::KakouneChecker;
+use crate::path::RelativePath;
 use crate::Checker;
 use crate::EnchantDictionary;
 use crate::TokenProcessor;
@@ -30,6 +31,8 @@ enum Action {
     AddExtension,
     #[clap(about = "Add selection to the ignore list for the given file")]
     AddFile,
+    #[clap(about = "Add selection to the ignore list for the given project")]
+    AddProject,
     #[clap(about = "Spell check every open buffer that belongs to the current project")]
     Check(CheckOpts),
 
@@ -66,6 +69,7 @@ pub(crate) fn run(opts: Opts) -> Result<()> {
         Action::AddExtension => add_extension(),
         Action::AddFile => add_file(),
         Action::AddGlobal => add_global(),
+        Action::AddProject => add_project(),
         Action::Check(opts) => check(opts),
         Action::Jump => jump(),
         Action::NextError(opts) => goto_next_error(opts),
@@ -117,20 +121,13 @@ fn add_file() -> Result<()> {
     let LineSelection { path, word, .. } = &parse_line_selection()?;
     let path = &Path::new(path);
     let project_path = get_project_path()?;
-    let relative_path = pathdiff::diff_paths(&path, &project_path).ok_or_else(|| {
-        anyhow!(
-            "Could not get relative path from {} to {}",
-            path.display(),
-            project_path.display()
-        )
-    })?;
+    let relative_path = RelativePath::new(&project_path, path)?;
     let mut db = open_db()?;
     db.ignore_for_path(word, &project_path, &relative_path)?;
     kak_recheck();
     println!(
         "echo '\"{}\" added to the ignore list for file: \"{}\"'",
-        word,
-        relative_path.display()
+        word, relative_path
     );
     Ok(())
 }
@@ -141,6 +138,19 @@ fn add_global() -> Result<()> {
     db.ignore(word)?;
     kak_recheck();
     println!("echo '\"{}\" added to global ignore list'", word);
+    Ok(())
+}
+
+fn add_project() -> Result<()> {
+    let LineSelection { word, .. } = &parse_line_selection()?;
+    let project_path = get_project_path()?;
+    let mut db = open_db()?;
+    db.ignore_for_project(word, &project_path)?;
+    kak_recheck();
+    println!(
+        "echo '\"{}\" added to ignore list for the current project'",
+        word
+    );
     Ok(())
 }
 
@@ -164,12 +174,12 @@ fn check(opts: CheckOpts) -> Result<()> {
     //  * contain special buffers, like *debug*
     //  * use ~ for home dir
     //  * need to be canonicalize
-    let repo = open_db()?;
+    let repository = open_db()?;
     let home_dir = home_dir().ok_or_else(|| anyhow!("Could not get home directory"))?;
     let home_dir = home_dir
         .to_str()
         .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
-    let mut checker = KakouneChecker::new(dictionary, repo, &project_path);
+    let mut checker = KakouneChecker::new(&project_path, dictionary, repository);
     for bufname in &opts.buflist {
         if bufname.starts_with('*') && bufname.ends_with('*') {
             continue;
@@ -180,29 +190,25 @@ fn check(opts: CheckOpts) -> Result<()> {
 
         let full_path = bufname.replace("~", home_dir);
         let source_path = Path::new(&full_path);
+
         if !source_path.exists() {
             continue;
         }
 
         let source_path = std::fs::canonicalize(&source_path)?;
-        if checker.should_skip(&source_path)? {
+        let relative_path = RelativePath::new(&project_path, &source_path)?;
+
+        if checker.should_skip(&relative_path)? {
             continue;
         }
 
-        let relative_path = pathdiff::diff_paths(&source_path, &project_path).ok_or_else(|| {
-            anyhow!(
-                "Could not get relative path from {} to {}",
-                source_path.display(),
-                project_path.display()
-            )
-        })?;
-        if relative_path.to_string_lossy().starts_with("..") {
+        if relative_path.as_str().starts_with("..") {
             continue;
         }
 
         let token_processor = TokenProcessor::new(&source_path)?;
         token_processor.each_token(|word, line, column| {
-            checker.handle_token(&word, &source_path, &(bufname.to_string(), line, column))
+            checker.handle_token(&word, &relative_path, &(bufname.to_string(), line, column))
         })?;
     }
 
@@ -254,19 +260,13 @@ fn skip_file() -> Result<()> {
     let full_path = Path::new(path);
     let project_path = get_project_path()?;
 
-    let relative_path = pathdiff::diff_paths(&full_path, &project_path).ok_or_else(|| {
-        anyhow!(
-            "Could not build relative path from {} to {}",
-            &full_path.display(),
-            &project_path.display()
-        )
-    })?;
+    let relative_path = RelativePath::new(&project_path, &full_path)?;
 
     let mut db = open_db()?;
     db.skip_path(&project_path, &relative_path)?;
 
     kak_recheck();
-    println!("echo 'will now skip \"{}\"'", relative_path.display());
+    println!("echo 'will now skip \"{}\"'", relative_path);
     Ok(())
 }
 

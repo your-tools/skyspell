@@ -1,10 +1,11 @@
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
 
 use crate::kak::helpers::*;
+use crate::path::{ProjectPath, RelativePath};
 use crate::Checker;
 use crate::Db;
 use crate::{Dictionary, Repository};
@@ -28,18 +29,23 @@ pub(crate) struct Error {
     token: String,
 }
 
-pub struct KakouneChecker<D: Dictionary, R: Repository> {
+pub(crate) struct KakouneChecker<D: Dictionary, R: Repository> {
+    project_path: ProjectPath,
     dictionary: D,
-    repo: R,
+    repository: R,
     errors: Vec<Error>,
-    project_path: PathBuf,
 }
 
 impl<D: Dictionary, R: Repository> Checker for KakouneChecker<D, R> {
     // bufname, line, column
     type Context = (String, usize, usize);
 
-    fn handle_error(&mut self, error: &str, path: &Path, context: &Self::Context) -> Result<()> {
+    fn handle_error(
+        &mut self,
+        error: &str,
+        path: &RelativePath,
+        context: &Self::Context,
+    ) -> Result<()> {
         let (buffer, line, column) = context;
         let full_path = std::fs::canonicalize(path)?;
         let pos = (*line, *column);
@@ -56,33 +62,29 @@ impl<D: Dictionary, R: Repository> Checker for KakouneChecker<D, R> {
         true
     }
 
-    fn repo_mut(&mut self) -> &mut dyn Repository {
-        &mut self.repo
+    fn repository_mut(&mut self) -> &mut dyn Repository {
+        &mut self.repository
     }
 
-    fn repo(&self) -> &dyn Repository {
-        &self.repo
+    fn repository(&self) -> &dyn Repository {
+        &self.repository
     }
 
     fn dictionary(&self) -> &dyn Dictionary {
         &self.dictionary
     }
 
-    fn set_project_path(&mut self, path: &Path) {
-        self.project_path = path.to_path_buf();
-    }
-
-    fn project_path(&self) -> Option<&Path> {
-        Some(self.project_path.as_ref())
+    fn project_path(&self) -> &ProjectPath {
+        &self.project_path
     }
 }
 
 impl<D: Dictionary, R: Repository> KakouneChecker<D, R> {
-    pub fn new(dictionary: D, repo: R, project_path: &Path) -> Self {
+    pub(crate) fn new(project_path: &ProjectPath, dictionary: D, repository: R) -> Self {
         Self {
+            project_path: project_path.clone(),
             dictionary,
-            repo,
-            project_path: project_path.to_path_buf(),
+            repository,
             errors: vec![],
         }
     }
@@ -118,18 +120,13 @@ fn write_status(f: &mut impl Write, errors: &[Error]) -> Result<()> {
         0 => write!(
             f,
             "echo -markup {}: {{green}}No spelling errors",
-            project_path.display()
+            project_path
         ),
-        1 => write!(
-            f,
-            "echo -markup {}: {{red}}1 spelling error",
-            project_path.display()
-        ),
+        1 => write!(f, "echo -markup {}: {{red}}1 spelling error", project_path),
         n => write!(
             f,
             "echo -markup {}: {{red}}{} Spelling errors",
-            project_path.display(),
-            n,
+            project_path, n,
         ),
     }?;
     Ok(())

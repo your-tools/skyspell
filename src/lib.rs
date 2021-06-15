@@ -13,6 +13,7 @@ mod dictionary;
 pub(crate) mod interactor;
 pub mod kak;
 pub(crate) mod models;
+pub(crate) mod path;
 pub(crate) mod repository;
 pub(crate) mod schema;
 pub(crate) mod token;

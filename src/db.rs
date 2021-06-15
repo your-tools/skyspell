@@ -4,9 +4,9 @@ use anyhow::{anyhow, Context, Result};
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use platform_dirs::AppDirs;
-use std::path::Path;
 
 use crate::models::*;
+use crate::path::{ProjectPath, RelativePath};
 use crate::repository::Repository;
 use crate::schema::*;
 
@@ -72,16 +72,15 @@ impl Db {
     pub(crate) fn remove_ignored_for_path(
         &mut self,
         word: &str,
-        project_path: &Path,
-        relative_path: &Path,
+        project_path: &ProjectPath,
+        relative_path: &RelativePath,
     ) -> Result<()> {
         let word = word.to_lowercase();
         let project_id = self.get_project_id(project_path)?;
-        let path = &relative_path.to_string_lossy();
         diesel::delete(ignored_for_path::table)
             .filter(ignored_for_path::word.eq(word))
             .filter(ignored_for_path::project_id.eq(project_id))
-            .filter(ignored_for_path::path.eq(path))
+            .filter(ignored_for_path::path.eq(relative_path.as_str()))
             .execute(&self.connection)?;
         Ok(())
     }
@@ -89,7 +88,7 @@ impl Db {
     pub(crate) fn remove_ignored_for_project(
         &mut self,
         word: &str,
-        project_path: &Path,
+        project_path: &ProjectPath,
     ) -> Result<()> {
         let word = word.to_lowercase();
         let project_id = self.get_project_id(project_path)?;
@@ -107,25 +106,22 @@ impl Db {
         Ok(())
     }
 
-    pub(crate) fn unskip_path(&mut self, project_path: &Path, relative_path: &Path) -> Result<()> {
-        let relative_path = relative_path.to_string_lossy();
+    pub(crate) fn unskip_path(
+        &mut self,
+        project_path: &ProjectPath,
+        relative_path: &RelativePath,
+    ) -> Result<()> {
         let project_id = self.get_project_id(project_path)?;
         diesel::delete(skipped_paths::table)
-            .filter(skipped_paths::path.eq(relative_path))
+            .filter(skipped_paths::path.eq(relative_path.as_str()))
             .filter(skipped_paths::project_id.eq(project_id))
             .execute(&self.connection)?;
         Ok(())
     }
 
-    fn get_project_id(&self, path: &Path) -> Result<i32> {
-        // Note: we could prevent non-UTF8 project paths to be ever stored,
-        // or use a binary type in the db ...
-        //
-        // But the odds we get two different project paths with the same lossy
-        // representations are *really* small, so let's not bother here
-        let path = path.to_string_lossy();
+    fn get_project_id(&self, project_path: &ProjectPath) -> Result<i32> {
         let res = projects::table
-            .filter(projects::path.eq(path))
+            .filter(projects::path.eq(project_path.as_str()))
             .select(projects::id)
             .first::<i32>(&self.connection)?;
         Ok(res)
@@ -133,6 +129,24 @@ impl Db {
 }
 
 impl Repository for Db {
+    fn new_project(&mut self, path: &ProjectPath) -> Result<()> {
+        let new_project = NewProject {
+            path: &path.as_str(),
+        };
+        diesel::insert_into(projects::table)
+            .values(new_project)
+            .execute(&self.connection)?;
+        Ok(())
+    }
+
+    fn project_exists(&self, path: &ProjectPath) -> Result<bool> {
+        Ok(projects::table
+            .filter(projects::path.eq(path.as_str()))
+            .select(projects::id)
+            .first::<i32>(&self.connection)
+            .optional()?
+            .is_some())
+    }
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()> {
         let new_ignored_words: Vec<_> = words.iter().map(|x| NewIgnored { word: x }).collect();
         diesel::insert_or_ignore_into(ignored::table)
@@ -178,8 +192,8 @@ impl Repository for Db {
             .is_some())
     }
 
-    fn ignore_for_project(&mut self, word: &str, project_path: &Path) -> Result<()> {
-        let project_id = self.get_project_id(&project_path)?;
+    fn ignore_for_project(&mut self, word: &str, project_path: &ProjectPath) -> Result<()> {
+        let project_id = self.get_project_id(project_path)?;
         let word = &word.to_lowercase();
         diesel::insert_or_ignore_into(ignored_for_project::table)
             .values(NewIgnoredForProject { word, project_id })
@@ -187,7 +201,7 @@ impl Repository for Db {
         Ok(())
     }
 
-    fn is_ignored_for_project(&self, word: &str, project_path: &Path) -> Result<bool> {
+    fn is_ignored_for_project(&self, word: &str, project_path: &ProjectPath) -> Result<bool> {
         let project_id = self.get_project_id(project_path)?;
         let word = &word.to_lowercase();
         Ok(ignored_for_project::table
@@ -202,17 +216,16 @@ impl Repository for Db {
     fn ignore_for_path(
         &mut self,
         word: &str,
-        project_path: &Path,
-        relative_path: &Path,
+        project_path: &ProjectPath,
+        relative_path: &RelativePath,
     ) -> Result<()> {
         let word = &word.to_lowercase();
         let project_id = self.get_project_id(project_path)?;
-        let relative_path = relative_path.to_string_lossy();
         diesel::insert_or_ignore_into(ignored_for_path::table)
             .values(NewIgnoredForPath {
                 word,
                 project_id,
-                path: &relative_path,
+                path: &relative_path.as_str(),
             })
             .execute(&self.connection)?;
         Ok(())
@@ -221,16 +234,15 @@ impl Repository for Db {
     fn is_ignored_for_path(
         &self,
         word: &str,
-        project_path: &Path,
-        relative_path: &Path,
+        project_path: &ProjectPath,
+        relative_path: &RelativePath,
     ) -> Result<bool> {
         let word = &word.to_lowercase();
         let project_id = self.get_project_id(project_path)?;
-        let relative_path = &relative_path.to_string_lossy();
         Ok(ignored_for_path::table
             .filter(ignored_for_path::project_id.eq(project_id))
             .filter(ignored_for_path::word.eq(word))
-            .filter(ignored_for_path::path.eq(relative_path))
+            .filter(ignored_for_path::path.eq(relative_path.as_str()))
             .select(ignored_for_path::id)
             .first::<i32>(&self.connection)
             .optional()?
@@ -253,44 +265,31 @@ impl Repository for Db {
             .is_some())
     }
 
-    fn skip_path(&mut self, project_path: &Path, relative_path: &Path) -> Result<()> {
+    fn skip_path(
+        &mut self,
+        project_path: &ProjectPath,
+        relative_path: &RelativePath,
+    ) -> Result<()> {
         let project_id = self.get_project_id(project_path)?;
-        let relative_path = relative_path.to_string_lossy();
         diesel::insert_or_ignore_into(skipped_paths::table)
             .values(NewSkippedPath {
-                path: &relative_path,
+                path: &relative_path.as_str(),
                 project_id,
             })
             .execute(&self.connection)?;
         Ok(())
     }
 
-    fn is_skipped_path(&self, project_path: &Path, relative_path: &Path) -> Result<bool> {
+    fn is_skipped_path(
+        &self,
+        project_path: &ProjectPath,
+        relative_path: &RelativePath,
+    ) -> Result<bool> {
         let project_id = self.get_project_id(project_path)?;
-        let relative_path = relative_path.to_string_lossy();
         Ok(skipped_paths::table
             .filter(skipped_paths::project_id.eq(project_id))
-            .filter(skipped_paths::path.eq(&relative_path))
+            .filter(skipped_paths::path.eq(relative_path.as_str()))
             .select(skipped_paths::id)
-            .first::<i32>(&self.connection)
-            .optional()?
-            .is_some())
-    }
-
-    fn new_project(&mut self, path: &Path) -> Result<()> {
-        let path = &path.to_string_lossy();
-        let new_project = NewProject { path };
-        diesel::insert_into(projects::table)
-            .values(new_project)
-            .execute(&self.connection)?;
-        Ok(())
-    }
-
-    fn project_exists(&self, path: &Path) -> Result<bool> {
-        let path = &path.to_string_lossy();
-        Ok(projects::table
-            .filter(projects::path.eq(path))
-            .select(projects::id)
             .first::<i32>(&self.connection)
             .optional()?
             .is_some())

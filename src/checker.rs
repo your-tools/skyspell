@@ -1,9 +1,10 @@
 use std::collections::HashSet;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{bail, Result};
 use colored::*;
 
+use crate::path::{ProjectPath, RelativePath};
 use crate::Dictionary;
 use crate::Interactor;
 use crate::Repository;
@@ -11,25 +12,34 @@ use crate::Repository;
 pub(crate) trait Checker {
     type Context;
 
-    fn handle_error(&mut self, error: &str, path: &Path, context: &Self::Context) -> Result<()>;
+    fn handle_error(
+        &mut self,
+        error: &str,
+        path: &RelativePath,
+        context: &Self::Context,
+    ) -> Result<()>;
 
     fn success(&self) -> bool;
-    fn repo_mut(&mut self) -> &mut dyn Repository;
-    fn repo(&self) -> &dyn Repository;
+    fn repository_mut(&mut self) -> &mut dyn Repository;
+    fn repository(&self) -> &dyn Repository;
     fn dictionary(&self) -> &dyn Dictionary;
 
-    fn set_project_path(&mut self, path: &Path);
-    fn project_path(&self) -> Option<&Path>;
+    fn project_path(&self) -> &ProjectPath;
 
-    fn should_skip(&self, path: &Path) -> Result<bool> {
-        let repo = self.repo();
+    fn should_skip(&self, path: &RelativePath) -> Result<bool> {
+        let repository = self.repository();
         let project_path = self.project_path();
-        repo.should_skip(project_path, path)
+        repository.should_skip(project_path, path)
     }
 
-    fn handle_token(&mut self, token: &str, path: &Path, context: &Self::Context) -> Result<()> {
+    fn handle_token(
+        &mut self,
+        token: &str,
+        relative_path: &RelativePath,
+        context: &Self::Context,
+    ) -> Result<()> {
         let token = &token.to_lowercase();
-        if self.should_skip(path)? {
+        if self.should_skip(relative_path)? {
             return Ok(());
         }
         let project_path = self.project_path();
@@ -38,39 +48,31 @@ pub(crate) trait Checker {
         if in_dict {
             return Ok(());
         }
-        let repo = self.repo();
-        let should_ignore = repo.should_ignore(&token, project_path, path)?;
+        let repository = self.repository();
+        let should_ignore = repository.should_ignore(&token, project_path, relative_path)?;
         if !should_ignore {
-            self.handle_error(token, path, context)?
+            self.handle_error(token, relative_path, context)?
         }
-        Ok(())
-    }
-
-    fn ensure_project(&mut self, path: &Path) -> Result<()> {
-        let repo = self.repo_mut();
-        if !repo.project_exists(path)? {
-            repo.new_project(path)?;
-        }
-        self.set_project_path(path);
         Ok(())
     }
 }
 
 pub(crate) struct NonInteractiveChecker<D: Dictionary, R: Repository> {
+    project_path: ProjectPath,
     dictionary: D,
-    repo: R,
+    repository: R,
     errors_found: bool,
-    project_path: Option<PathBuf>,
 }
 
 impl<D: Dictionary, R: Repository> NonInteractiveChecker<D, R> {
-    pub(crate) fn new(dictionary: D, repo: R) -> Self {
-        Self {
+    pub(crate) fn new(project_path: ProjectPath, dictionary: D, mut repository: R) -> Result<Self> {
+        repository.ensure_project(&project_path)?;
+        Ok(Self {
+            project_path,
             dictionary,
-            repo,
+            repository,
             errors_found: false,
-            project_path: None,
-        }
+        })
     }
 }
 
@@ -82,10 +84,15 @@ impl<D: Dictionary, R: Repository> Checker for NonInteractiveChecker<D, R> {
         &self.dictionary
     }
 
-    fn handle_error(&mut self, token: &str, path: &Path, context: &Self::Context) -> Result<()> {
+    fn handle_error(
+        &mut self,
+        token: &str,
+        path: &RelativePath,
+        context: &Self::Context,
+    ) -> Result<()> {
         let &(line, column) = context;
         self.errors_found = true;
-        print_unknown_token(token, path, line, column);
+        print_unknown_token(token, path.as_ref(), line, column);
         Ok(())
     }
 
@@ -93,28 +100,24 @@ impl<D: Dictionary, R: Repository> Checker for NonInteractiveChecker<D, R> {
         !self.errors_found
     }
 
-    fn project_path(&self) -> Option<&Path> {
-        self.project_path.as_ref().map(|x| x.as_ref())
+    fn project_path(&self) -> &ProjectPath {
+        &self.project_path
     }
 
-    fn set_project_path(&mut self, path: &Path) {
-        self.project_path = Some(path.to_path_buf())
+    fn repository_mut(&mut self) -> &mut dyn Repository {
+        &mut self.repository
     }
 
-    fn repo_mut(&mut self) -> &mut dyn Repository {
-        &mut self.repo
-    }
-
-    fn repo(&self) -> &dyn Repository {
-        &self.repo
+    fn repository(&self) -> &dyn Repository {
+        &self.repository
     }
 }
 
 pub(crate) struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository> {
+    project_path: ProjectPath,
     interactor: I,
     dictionary: D,
-    repo: R,
-    project_path: Option<PathBuf>,
+    repository: R,
     skipped: HashSet<String>,
 }
 
@@ -126,27 +129,28 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
         self.skipped.is_empty()
     }
 
-    fn project_path(&self) -> Option<&Path> {
-        self.project_path.as_ref().map(|x| x.as_ref())
+    fn project_path(&self) -> &ProjectPath {
+        &self.project_path
     }
 
-    fn set_project_path(&mut self, path: &Path) {
-        self.project_path = Some(path.to_path_buf());
-    }
-
-    fn repo_mut(&mut self) -> &mut dyn Repository {
-        &mut self.repo
+    fn repository_mut(&mut self) -> &mut dyn Repository {
+        &mut self.repository
     }
 
     fn dictionary(&self) -> &dyn Dictionary {
         &self.dictionary
     }
 
-    fn repo(&self) -> &dyn Repository {
-        &self.repo
+    fn repository(&self) -> &dyn Repository {
+        &self.repository
     }
 
-    fn handle_error(&mut self, error: &str, path: &Path, context: &Self::Context) -> Result<()> {
+    fn handle_error(
+        &mut self,
+        error: &str,
+        path: &RelativePath,
+        context: &Self::Context,
+    ) -> Result<()> {
         let &(line, column) = context;
         if self.skipped.contains(error) {
             return Ok(());
@@ -156,19 +160,25 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
 }
 
 impl<I: Interactor, D: Dictionary, R: Repository> InteractiveChecker<I, D, R> {
-    pub(crate) fn new(interactor: I, dictionary: D, repo: R) -> Self {
-        Self {
+    pub(crate) fn new(
+        project_path: ProjectPath,
+        interactor: I,
+        dictionary: D,
+        mut repository: R,
+    ) -> Result<Self> {
+        repository.ensure_project(&project_path)?;
+        Ok(Self {
+            project_path,
             dictionary,
             interactor,
-            repo,
-            project_path: None,
+            repository,
             skipped: HashSet::new(),
-        }
+        })
     }
 
-    fn on_error(&mut self, path: &Path, pos: (usize, usize), error: &str) -> Result<()> {
+    fn on_error(&mut self, path: &RelativePath, pos: (usize, usize), error: &str) -> Result<()> {
         let (lineno, column) = pos;
-        let prefix = format!("{}:{}:{}", path.display(), lineno, column);
+        let prefix = format!("{}:{}:{}", path, lineno, column);
         println!("{} {}", prefix.bold(), error.blue());
         let prompt = r#"What to do?
 a : Add word to global ignore list
@@ -226,92 +236,59 @@ q : Quit
     }
 
     fn on_global_ignore(&mut self, error: &str) -> Result<()> {
-        self.repo.ignore(error)?;
+        self.repository.ignore(error)?;
         print_addition(error, "the global ignore list");
         Ok(())
     }
 
-    fn on_extension(&mut self, path: &Path, error: &str) -> Result<bool> {
-        let os_ext = if let Some(os_ext) = path.extension() {
-            os_ext
-        } else {
-            print_error(&format!("{} has no extension", path.display()));
-            return Ok(false);
+    fn on_extension(&mut self, relative_path: &RelativePath, error: &str) -> Result<bool> {
+        let extension = match relative_path.extension() {
+            None => {
+                print_error(&format!("{} has no extension", relative_path));
+                return Ok(false);
+            }
+            Some(e) => e,
         };
 
-        let ext = if let Some(s) = os_ext.to_str() {
-            s
-        } else {
-            print_error(&format!("{} has a non-UTF-8 extension", path.display()));
-            return Ok(false);
-        };
-
-        self.repo.ignore_for_extension(error, ext)?;
+        self.repository.ignore_for_extension(error, &extension)?;
         print_addition(
             error,
-            &format!("the ignore list for extension '.{}'", ext.bold()),
+            &format!("the ignore list for extension '.{}'", extension.bold()),
         );
         Ok(true)
     }
 
     fn on_project_ignore(&mut self, error: &str) -> Result<bool> {
-        Ok(match self.project_path.as_ref() {
-            None => {
-                print_error("No project was set\n");
-                false
-            }
-            Some(p) => {
-                self.repo.ignore_for_project(error, p)?;
-                print_addition(
-                    error,
-                    &format!("the ignore list for project '{}'", p.display()),
-                );
-                true
-            }
-        })
+        self.repository
+            .ignore_for_project(error, &self.project_path)?;
+        print_addition(
+            error,
+            &format!("the ignore list for project '{}'", &self.project_path),
+        );
+        Ok(true)
     }
 
-    fn on_file_ignore(&mut self, error: &str, path: &Path) -> Result<bool> {
-        Ok(match self.project_path.as_ref() {
-            None => {
-                print_error("No project was set\n");
-                false
-            }
-            Some(project_path) => {
-                let relative_path = pathdiff::diff_paths(path, project_path).ok_or_else(|| {
-                    anyhow!(
-                        "Could not build relative path from {} to {}",
-                        path.display(),
-                        project_path.display()
-                    )
-                })?;
-                self.repo
-                    .ignore_for_path(error, project_path, &relative_path)?;
-                print_addition(
-                    error,
-                    &format!("the ignore list for path '{}'", path.display()),
-                );
-                true
-            }
-        })
+    fn on_file_ignore(&mut self, error: &str, relative_path: &RelativePath) -> Result<bool> {
+        self.repository
+            .ignore_for_path(error, &self.project_path, &relative_path)?;
+
+        print_addition(
+            error,
+            &format!("the ignore list for path '{}'", relative_path),
+        );
+        Ok(true)
     }
 
-    fn on_file_name_skip(&mut self, path: &Path) -> Result<bool> {
-        let file_name = if let Some(s) = path.file_name() {
-            s
-        } else {
-            print_error(&format!("{} has no file name", path.display()));
-            return Ok(false);
+    fn on_file_name_skip(&mut self, relative_path: &RelativePath) -> Result<bool> {
+        let file_name = match relative_path.file_name() {
+            None => {
+                print_error(&format!("{} has no file name", relative_path));
+                return Ok(false);
+            }
+            Some(r) => r,
         };
 
-        let file_name = if let Some(s) = file_name.to_str() {
-            s
-        } else {
-            print_error(&format!("{} has a non-UTF-8 file name", path.display()));
-            return Ok(false);
-        };
-
-        self.repo.skip_file_name(file_name)?;
+        self.repository.skip_file_name(&file_name)?;
 
         println!(
             "\n{}Added '{}' to the list of file names to skip\n",
@@ -321,21 +298,14 @@ q : Quit
         Ok(true)
     }
 
-    fn on_project_file_skip(&mut self, path: &Path) -> Result<bool> {
-        let project_path = match self.project_path.as_ref() {
-            None => {
-                eprintln!("No project was set");
-                return Ok(false);
-            }
-            Some(p) => p,
-        };
-
-        self.repo.skip_path(project_path, path)?;
+    fn on_project_file_skip(&mut self, relative_path: &RelativePath) -> Result<bool> {
+        self.repository
+            .skip_path(&self.project_path, relative_path)?;
         println!(
-            "\n{}Added '{:?}' to the list of files to skip for project: '{}'\n",
+            "\n{}Added '{}' to the list of files to skip for project: '{}'\n",
             "=> ".blue(),
-            path.display(),
-            project_path.to_string_lossy().bold(),
+            relative_path,
+            &self.project_path.as_str().bold(),
         );
         Ok(true)
     }
@@ -358,6 +328,9 @@ fn print_unknown_token(token: &str, path: &Path, line: usize, column: usize) {
 mod tests {
 
     use super::*;
+
+    use tempdir::TempDir;
+
     use crate::tests::{FakeDictionary, FakeInteractor, FakeRepository};
 
     type TestChecker = InteractiveChecker<FakeInteractor, FakeDictionary, FakeRepository>;
@@ -367,11 +340,13 @@ mod tests {
     }
 
     impl TestApp {
-        fn new() -> Self {
+        fn new(temp_dir: &TempDir) -> Self {
             let interactor = FakeInteractor::new();
             let dictionary = FakeDictionary::new();
             let repository = FakeRepository::new();
-            let checker = TestChecker::new(interactor, dictionary, repository);
+            let project_path = ProjectPath::new(temp_dir.path()).unwrap();
+            let checker =
+                TestChecker::new(project_path, interactor, dictionary, repository).unwrap();
             Self { checker }
         }
 
@@ -385,32 +360,64 @@ mod tests {
             self.checker.interactor.push_text(answer)
         }
 
-        fn handle_token(&mut self, token: &str, path: &str) {
-            let path = &Path::new(path);
+        fn to_relative_path(&self, path: &str) -> RelativePath {
+            let project_path = self.checker.project_path();
+            let path = project_path.as_ref().join(path);
+            RelativePath::new(project_path, &path).unwrap()
+        }
+
+        fn handle_token(&mut self, token: &str, relative_name: &str) {
+            let project_path = self.checker.project_path();
+            let full_path = project_path.as_ref().join(relative_name);
+            std::fs::write(&full_path, "").unwrap();
+            let relative_path = self.to_relative_path(relative_name);
             let context = &(3, 42);
-            self.checker.handle_token(token, path, context).unwrap()
-        }
-
-        fn ensure_project(&mut self, project_path: &Path) {
-            self.checker.ensure_project(project_path).unwrap()
-        }
-
-        fn should_ignore(
-            &self,
-            token: &str,
-            project_path: Option<&Path>,
-            relative_path: &Path,
-        ) -> bool {
             self.checker
-                .repo
-                .should_ignore(token, project_path, relative_path)
+                .handle_token(token, &relative_path, context)
                 .unwrap()
         }
 
-        fn should_skip(&self, project_path: Option<&Path>, relative_path: &Path) -> bool {
+        fn is_ignored(&self, word: &str) -> bool {
+            self.checker.repository.is_ignored(word).unwrap()
+        }
+
+        fn is_skipped_file_name(&self, file_name: &str) -> bool {
             self.checker
-                .repo
-                .should_skip(project_path, relative_path)
+                .repository
+                .is_skipped_file_name(file_name)
+                .unwrap()
+        }
+
+        fn is_skipped_path(&self, relative_name: &str) -> bool {
+            let project_path = self.checker.project_path();
+            let relative_path = self.to_relative_path(relative_name);
+            self.checker
+                .repository
+                .is_skipped_path(&project_path, &relative_path)
+                .unwrap()
+        }
+
+        fn is_ignored_for_extension(&self, word: &str, extension: &str) -> bool {
+            self.checker
+                .repository
+                .is_ignored_for_extension(word, extension)
+                .unwrap()
+        }
+
+        fn is_ignored_for_project(&self, word: &str) -> bool {
+            let project_path = self.checker.project_path();
+            self.checker
+                .repository
+                .is_ignored_for_project(word, &project_path)
+                .unwrap()
+        }
+
+        fn is_ignored_for_path(&self, word: &str, relative_name: &str) -> bool {
+            let project_path = self.checker.project_path();
+            let relative_path = self.to_relative_path(relative_name);
+            self.checker
+                .repository
+                .is_ignored_for_path(word, &project_path, &relative_path)
                 .unwrap()
         }
 
@@ -422,58 +429,81 @@ mod tests {
     }
 
     #[test]
-    /// Scenario:
-    /// * call handle_token with 'foo'
-    /// * add 'foo' to the global ignore list (aka: press 'g')
-    ///
-    /// Check that 'foo' is in the globally ignore list
-    fn test_adding_to_ignore() {
-        let mut app = TestApp::new();
+    fn test_adding_token_to_global_ignore() {
+        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let mut app = TestApp::new(&temp_dir);
         app.add_known(&["hello", "world"]);
         app.push_text("a");
 
         app.handle_token("foo", "foo.txt");
 
-        assert!(app.should_ignore("foo", None, &Path::new("other.txt")));
+        assert!(app.is_ignored("foo"));
 
         app.end();
     }
 
     #[test]
-    /// Scenario:
-    /// * call handle_token with 'foo' and path/to/yarn.lock
-    /// * add 'yarn.lock' to the file names to skip (aka: press 'n')
-    ///
-    /// Check that 'foo' is in also ignored for other/path/to/yarn.lock
-    fn test_adding_to_skipped() {
-        let mut app = TestApp::new();
-        app.add_known(&["hello", "world"]);
-        app.push_text("n");
-
-        app.handle_token("foo", "path/to/yarn.lock");
-
-        assert!(app.should_skip(None, &Path::new("path/to/other/yarn.lock")));
-
-        app.end();
-    }
-
-    #[test]
-    /// Scenario:
-    /// * call handle_token with 'defaultdict' error and a `.py` extension
-    /// * press 'e'
-    /// * confirm
-    ///
-    /// Check that 'defaultdict' is ignored for the `py` extension
-    fn test_adding_to_extension() {
-        let mut app = TestApp::new();
+    fn test_adding_token_to_extension() {
+        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let mut app = TestApp::new(&temp_dir);
         app.add_known(&["hello", "world"]);
         app.push_text("e");
 
         app.handle_token("defaultdict", "hello.py");
 
-        assert!(app.should_ignore("defaultdict", None, &Path::new("hello.py")));
+        assert!(app.is_ignored_for_extension("defaultdict", "py"));
 
-        app.handle_token("defaultdict", "hello.py");
+        app.end();
+    }
+
+    #[test]
+    fn test_adding_token_to_project() {
+        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let mut app = TestApp::new(&temp_dir);
+        app.push_text("p");
+
+        app.handle_token("foo", "foo.py");
+
+        assert!(app.is_ignored_for_project("foo"));
+
+        app.end()
+    }
+
+    #[test]
+    fn test_ignore_token_to_project_file() {
+        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let mut app = TestApp::new(&temp_dir);
+        app.push_text("f");
+
+        app.handle_token("foo", "foo.py");
+
+        assert!(app.is_ignored_for_path("foo", "foo.py"));
+
+        app.end()
+    }
+
+    #[test]
+    fn test_adding_to_skipped_file_names() {
+        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let mut app = TestApp::new(&temp_dir);
+        app.add_known(&["hello", "world"]);
+        app.push_text("n");
+
+        app.handle_token("foo", "yarn.lock");
+
+        assert!(app.is_skipped_file_name("yarn.lock"));
+
+        app.end();
+    }
+    #[test]
+    fn test_adding_to_skipped_paths() {
+        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let mut app = TestApp::new(&temp_dir);
+        app.push_text("s");
+
+        app.handle_token("foo", "foo.py");
+
+        assert!(app.is_skipped_path("foo.py"));
 
         app.end();
     }
@@ -483,10 +513,10 @@ mod tests {
     /// * press 'x' - 'foo' token is skipped
     /// * call handle_token again
     /// * check that no more interaction took place
-    ///   (this is done by FakeInteractor::drop, by the way)
     #[test]
     fn test_remember_skipped_tokens() {
-        let mut app = TestApp::new();
+        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let mut app = TestApp::new(&temp_dir);
         app.add_known(&["hello", "world"]);
         app.push_text("x");
 
@@ -503,55 +533,13 @@ mod tests {
     /// * check that no more interaction took place
     #[test]
     fn test_remember_extensions() {
-        let mut app = TestApp::new();
+        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let mut app = TestApp::new(&temp_dir);
         app.add_known(&["hello", "world"]);
         app.push_text("e");
 
         app.handle_token("abstractmethod", "foo.py");
         app.handle_token("abstractmethod", "foo.py");
-
-        app.end();
-    }
-
-    /// Scenario:
-    /// * call handle_token with 'foo' error
-    /// * press 'p' - 'foo' token is added to the ignore list for the current project
-    #[test]
-    fn test_ignore_token_for_project() {
-        let mut app = TestApp::new();
-        app.push_text("p");
-
-        app.ensure_project(Path::new("/path/to/project"));
-
-        app.handle_token("foo", "/path/to/project/foo.py");
-
-        assert!(app.should_ignore(
-            "foo",
-            Some(&Path::new("/path/to/project")),
-            &Path::new("hello.py")
-        ));
-
-        app.handle_token("foo", "/path/to/project/foo.py");
-
-        app.end()
-    }
-
-    /// Scenario:
-    /// * call handle_token with 'foo' error
-    /// * press 'p' - 'foo' token is added to the ignore list for the current project
-    #[test]
-    fn test_ignore_for_project_path() {
-        let mut app = TestApp::new();
-        app.push_text("s");
-
-        app.ensure_project(Path::new("/path/to/project"));
-
-        app.handle_token("foo", "/path/to/project/foo.py");
-
-        assert!(app.should_skip(
-            Some(&Path::new("/path/to/project")),
-            &Path::new("/path/to/project/foo.py")
-        ));
 
         app.end();
     }
