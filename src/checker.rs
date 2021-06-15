@@ -4,10 +4,10 @@ use std::path::Path;
 use anyhow::{bail, Result};
 use colored::*;
 
-use crate::path::{ProjectPath, RelativePath};
 use crate::Dictionary;
 use crate::Interactor;
 use crate::Repository;
+use crate::{Project, RelativePath};
 
 pub(crate) trait Checker {
     type Context;
@@ -24,7 +24,7 @@ pub(crate) trait Checker {
     fn repository(&self) -> &dyn Repository;
     fn dictionary(&self) -> &dyn Dictionary;
 
-    fn project_path(&self) -> &ProjectPath;
+    fn project_path(&self) -> &Project;
 
     fn should_skip(&self, path: &RelativePath) -> Result<bool> {
         let repository = self.repository();
@@ -58,14 +58,14 @@ pub(crate) trait Checker {
 }
 
 pub(crate) struct NonInteractiveChecker<D: Dictionary, R: Repository> {
-    project_path: ProjectPath,
+    project_path: Project,
     dictionary: D,
     repository: R,
     errors_found: bool,
 }
 
 impl<D: Dictionary, R: Repository> NonInteractiveChecker<D, R> {
-    pub(crate) fn new(project_path: ProjectPath, dictionary: D, mut repository: R) -> Result<Self> {
+    pub(crate) fn new(project_path: Project, dictionary: D, mut repository: R) -> Result<Self> {
         repository.ensure_project(&project_path)?;
         Ok(Self {
             project_path,
@@ -100,7 +100,7 @@ impl<D: Dictionary, R: Repository> Checker for NonInteractiveChecker<D, R> {
         !self.errors_found
     }
 
-    fn project_path(&self) -> &ProjectPath {
+    fn project_path(&self) -> &Project {
         &self.project_path
     }
 
@@ -114,7 +114,7 @@ impl<D: Dictionary, R: Repository> Checker for NonInteractiveChecker<D, R> {
 }
 
 pub(crate) struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository> {
-    project_path: ProjectPath,
+    project_path: Project,
     interactor: I,
     dictionary: D,
     repository: R,
@@ -129,7 +129,7 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
         self.skipped.is_empty()
     }
 
-    fn project_path(&self) -> &ProjectPath {
+    fn project_path(&self) -> &Project {
         &self.project_path
     }
 
@@ -161,7 +161,7 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
 
 impl<I: Interactor, D: Dictionary, R: Repository> InteractiveChecker<I, D, R> {
     pub(crate) fn new(
-        project_path: ProjectPath,
+        project_path: Project,
         interactor: I,
         dictionary: D,
         mut repository: R,
@@ -344,7 +344,7 @@ mod tests {
             let interactor = FakeInteractor::new();
             let dictionary = FakeDictionary::new();
             let repository = FakeRepository::new();
-            let project_path = ProjectPath::new(temp_dir.path()).unwrap();
+            let project_path = Project::new(temp_dir.path()).unwrap();
             let checker =
                 TestChecker::new(project_path, interactor, dictionary, repository).unwrap();
             Self { checker }

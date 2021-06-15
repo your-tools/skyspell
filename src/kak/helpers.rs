@@ -3,7 +3,7 @@ use anyhow::{anyhow, Context, Result};
 use std::path::PathBuf;
 
 use crate::kak::checker::{SKYSPELL_LANG_OPT, SKYSPELL_PROJECT_OPT};
-use crate::path::ProjectPath;
+use crate::Project;
 
 #[allow(dead_code)]
 pub(crate) fn debug(message: &str) {
@@ -37,10 +37,10 @@ pub(crate) fn get_lang() -> Result<String> {
     get_option(SKYSPELL_LANG_OPT)
 }
 
-pub(crate) fn get_project_path() -> Result<ProjectPath> {
+pub(crate) fn get_project_path() -> Result<Project> {
     let as_str = get_option(SKYSPELL_PROJECT_OPT)?;
     let path = PathBuf::from(as_str);
-    ProjectPath::new(&path)
+    Project::new(&path)
 }
 
 pub(crate) fn goto_previous_buffer() {

@@ -6,9 +6,9 @@ use diesel::sqlite::SqliteConnection;
 use platform_dirs::AppDirs;
 
 use crate::models::*;
-use crate::path::{ProjectPath, RelativePath};
 use crate::repository::Repository;
 use crate::schema::*;
+use crate::{Project, RelativePath};
 
 diesel_migrations::embed_migrations!("migrations");
 
@@ -72,7 +72,7 @@ impl Db {
     pub(crate) fn remove_ignored_for_path(
         &mut self,
         word: &str,
-        project_path: &ProjectPath,
+        project_path: &Project,
         relative_path: &RelativePath,
     ) -> Result<()> {
         let word = word.to_lowercase();
@@ -88,7 +88,7 @@ impl Db {
     pub(crate) fn remove_ignored_for_project(
         &mut self,
         word: &str,
-        project_path: &ProjectPath,
+        project_path: &Project,
     ) -> Result<()> {
         let word = word.to_lowercase();
         let project_id = self.get_project_id(project_path)?;
@@ -108,7 +108,7 @@ impl Db {
 
     pub(crate) fn unskip_path(
         &mut self,
-        project_path: &ProjectPath,
+        project_path: &Project,
         relative_path: &RelativePath,
     ) -> Result<()> {
         let project_id = self.get_project_id(project_path)?;
@@ -119,7 +119,7 @@ impl Db {
         Ok(())
     }
 
-    fn get_project_id(&self, project_path: &ProjectPath) -> Result<i32> {
+    fn get_project_id(&self, project_path: &Project) -> Result<i32> {
         let res = projects::table
             .filter(projects::path.eq(project_path.as_str()))
             .select(projects::id)
@@ -129,7 +129,7 @@ impl Db {
 }
 
 impl Repository for Db {
-    fn new_project(&mut self, path: &ProjectPath) -> Result<()> {
+    fn new_project(&mut self, path: &Project) -> Result<()> {
         let new_project = NewProject {
             path: &path.as_str(),
         };
@@ -139,7 +139,7 @@ impl Repository for Db {
         Ok(())
     }
 
-    fn project_exists(&self, path: &ProjectPath) -> Result<bool> {
+    fn project_exists(&self, path: &Project) -> Result<bool> {
         Ok(projects::table
             .filter(projects::path.eq(path.as_str()))
             .select(projects::id)
@@ -192,7 +192,7 @@ impl Repository for Db {
             .is_some())
     }
 
-    fn ignore_for_project(&mut self, word: &str, project_path: &ProjectPath) -> Result<()> {
+    fn ignore_for_project(&mut self, word: &str, project_path: &Project) -> Result<()> {
         let project_id = self.get_project_id(project_path)?;
         let word = &word.to_lowercase();
         diesel::insert_or_ignore_into(ignored_for_project::table)
@@ -201,7 +201,7 @@ impl Repository for Db {
         Ok(())
     }
 
-    fn is_ignored_for_project(&self, word: &str, project_path: &ProjectPath) -> Result<bool> {
+    fn is_ignored_for_project(&self, word: &str, project_path: &Project) -> Result<bool> {
         let project_id = self.get_project_id(project_path)?;
         let word = &word.to_lowercase();
         Ok(ignored_for_project::table
@@ -216,7 +216,7 @@ impl Repository for Db {
     fn ignore_for_path(
         &mut self,
         word: &str,
-        project_path: &ProjectPath,
+        project_path: &Project,
         relative_path: &RelativePath,
     ) -> Result<()> {
         let word = &word.to_lowercase();
@@ -234,7 +234,7 @@ impl Repository for Db {
     fn is_ignored_for_path(
         &self,
         word: &str,
-        project_path: &ProjectPath,
+        project_path: &Project,
         relative_path: &RelativePath,
     ) -> Result<bool> {
         let word = &word.to_lowercase();
@@ -267,7 +267,7 @@ impl Repository for Db {
 
     fn skip_path(
         &mut self,
-        project_path: &ProjectPath,
+        project_path: &Project,
         relative_path: &RelativePath,
     ) -> Result<()> {
         let project_id = self.get_project_id(project_path)?;
@@ -282,7 +282,7 @@ impl Repository for Db {
 
     fn is_skipped_path(
         &self,
-        project_path: &ProjectPath,
+        project_path: &Project,
         relative_path: &RelativePath,
     ) -> Result<bool> {
         let project_id = self.get_project_id(project_path)?;

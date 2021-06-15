@@ -2,8 +2,8 @@ use anyhow::{bail, Result};
 
 use std::collections::{HashMap, HashSet};
 
-use crate::path::{ProjectPath, RelativePath};
 use crate::Repository;
+use crate::{Project, RelativePath};
 
 #[derive(Default, Debug)]
 pub(crate) struct FakeRepository {
@@ -25,12 +25,12 @@ impl FakeRepository {
 }
 
 impl Repository for FakeRepository {
-    fn project_exists(&self, path: &ProjectPath) -> Result<bool> {
+    fn project_exists(&self, path: &Project) -> Result<bool> {
         let index = &self.projects.iter().position(|x| x == &path.to_string());
         Ok(index.is_some())
     }
 
-    fn new_project(&mut self, path: &ProjectPath) -> Result<()> {
+    fn new_project(&mut self, path: &Project) -> Result<()> {
         if self.project_exists(path)? {
             bail!("Project in '{}' already exists", path);
         }
@@ -81,7 +81,7 @@ impl Repository for FakeRepository {
         }
     }
 
-    fn ignore_for_project(&mut self, word: &str, project_path: &ProjectPath) -> Result<()> {
+    fn ignore_for_project(&mut self, word: &str, project_path: &Project) -> Result<()> {
         let entry = &mut self
             .by_project
             .entry(project_path.to_string())
@@ -90,7 +90,7 @@ impl Repository for FakeRepository {
         Ok(())
     }
 
-    fn is_ignored_for_project(&self, word: &str, project_path: &ProjectPath) -> Result<bool> {
+    fn is_ignored_for_project(&self, word: &str, project_path: &Project) -> Result<bool> {
         if let Some(words) = self.by_project.get(&project_path.to_string()) {
             Ok(words.contains(&word.to_string()))
         } else {
@@ -101,7 +101,7 @@ impl Repository for FakeRepository {
     fn ignore_for_path(
         &mut self,
         word: &str,
-        project_path: &ProjectPath,
+        project_path: &Project,
         path: &RelativePath,
     ) -> Result<()> {
         let entry = &mut self
@@ -115,7 +115,7 @@ impl Repository for FakeRepository {
     fn is_ignored_for_path(
         &self,
         word: &str,
-        project_path: &ProjectPath,
+        project_path: &Project,
         path: &RelativePath,
     ) -> Result<bool> {
         if let Some(words) = self
@@ -128,13 +128,13 @@ impl Repository for FakeRepository {
         }
     }
 
-    fn skip_path(&mut self, project_path: &ProjectPath, path: &RelativePath) -> Result<()> {
+    fn skip_path(&mut self, project_path: &Project, path: &RelativePath) -> Result<()> {
         self.skipped_paths
             .insert((project_path.to_string(), path.to_string()));
         Ok(())
     }
 
-    fn is_skipped_path(&self, project_path: &ProjectPath, path: &RelativePath) -> Result<bool> {
+    fn is_skipped_path(&self, project_path: &Project, path: &RelativePath) -> Result<bool> {
         Ok(self
             .skipped_paths
             .contains(&(project_path.to_string(), path.to_string())))

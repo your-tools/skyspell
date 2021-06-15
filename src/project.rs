@@ -8,9 +8,9 @@ use std::path::{Path, PathBuf};
 //
 // An other option would be to store the OsStr representation as binary in the DB
 
-pub(crate) struct ProjectPath(PathBuf);
+pub(crate) struct Project(PathBuf);
 
-impl ProjectPath {
+impl Project {
     pub(crate) fn new(project_path: &Path) -> Result<Self> {
         let path = std::fs::canonicalize(project_path).with_context(|| {
             anyhow!(
@@ -18,7 +18,7 @@ impl ProjectPath {
                 project_path.display()
             )
         })?;
-        Ok(ProjectPath(path))
+        Ok(Project(path))
     }
 
     pub(crate) fn as_str(&self) -> Cow<str> {
@@ -26,19 +26,19 @@ impl ProjectPath {
     }
 }
 
-impl AsRef<Path> for ProjectPath {
+impl AsRef<Path> for Project {
     fn as_ref(&self) -> &Path {
         &self.0
     }
 }
 
-impl Clone for ProjectPath {
+impl Clone for Project {
     fn clone(&self) -> Self {
-        ProjectPath(self.0.clone())
+        Project(self.0.clone())
     }
 }
 
-impl Display for ProjectPath {
+impl Display for Project {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0.display())
     }
@@ -47,7 +47,7 @@ impl Display for ProjectPath {
 pub(crate) struct RelativePath(PathBuf);
 
 impl RelativePath {
-    pub(crate) fn new(project_path: &ProjectPath, source_path: &Path) -> Result<Self> {
+    pub(crate) fn new(project_path: &Project, source_path: &Path) -> Result<Self> {
         let source_path = std::fs::canonicalize(source_path).with_context(|| {
             anyhow!(
                 "Could not canonicalize relative path: {}",

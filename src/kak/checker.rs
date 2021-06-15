@@ -5,10 +5,10 @@ use anyhow::{anyhow, Result};
 use itertools::Itertools;
 
 use crate::kak::helpers::*;
-use crate::path::{ProjectPath, RelativePath};
 use crate::Checker;
 use crate::Db;
 use crate::{Dictionary, Repository};
+use crate::{Project, RelativePath};
 
 pub(crate) const SKYSPELL_LANG_OPT: &str = "skyspell_lang";
 pub(crate) const SKYSPELL_PROJECT_OPT: &str = "skyspell_project";
@@ -30,7 +30,7 @@ pub(crate) struct Error {
 }
 
 pub(crate) struct KakouneChecker<D: Dictionary, R: Repository> {
-    project_path: ProjectPath,
+    project_path: Project,
     dictionary: D,
     repository: R,
     errors: Vec<Error>,
@@ -74,13 +74,13 @@ impl<D: Dictionary, R: Repository> Checker for KakouneChecker<D, R> {
         &self.dictionary
     }
 
-    fn project_path(&self) -> &ProjectPath {
+    fn project_path(&self) -> &Project {
         &self.project_path
     }
 }
 
 impl<D: Dictionary, R: Repository> KakouneChecker<D, R> {
-    pub(crate) fn new(project_path: &ProjectPath, dictionary: D, repository: R) -> Self {
+    pub(crate) fn new(project_path: &Project, dictionary: D, repository: R) -> Self {
         Self {
             project_path: project_path.clone(),
             dictionary,

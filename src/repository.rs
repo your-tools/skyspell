@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::path::{ProjectPath, RelativePath};
+use crate::{Project, RelativePath};
 
 pub(crate) trait Repository {
     // Add the list of words to the global ignore list
@@ -11,10 +11,10 @@ pub(crate) trait Repository {
     // Is the word in the global ignore list?
     fn is_ignored(&self, word: &str) -> Result<bool>;
 
-    fn new_project(&mut self, path: &ProjectPath) -> Result<()>;
-    fn project_exists(&self, path: &ProjectPath) -> Result<bool>;
+    fn new_project(&mut self, path: &Project) -> Result<()>;
+    fn project_exists(&self, path: &Project) -> Result<bool>;
 
-    fn ensure_project(&mut self, path: &ProjectPath) -> Result<()> {
+    fn ensure_project(&mut self, path: &Project) -> Result<()> {
         if !self.project_exists(path)? {
             self.new_project(path)?;
         }
@@ -33,39 +33,39 @@ pub(crate) trait Repository {
     fn is_ignored_for_extension(&self, word: &str, extension: &str) -> Result<bool>;
 
     // Add word to the ignore list for the given project
-    fn ignore_for_project(&mut self, word: &str, project_path: &ProjectPath) -> Result<()>;
+    fn ignore_for_project(&mut self, word: &str, project_path: &Project) -> Result<()>;
     // Is the word in the ignore list for the given project?
-    fn is_ignored_for_project(&self, word: &str, project_path: &ProjectPath) -> Result<bool>;
+    fn is_ignored_for_project(&self, word: &str, project_path: &Project) -> Result<bool>;
 
     // Add word to the ignore list for the given project and path
     fn ignore_for_path(
         &mut self,
         word: &str,
-        project_path: &ProjectPath,
+        project_path: &Project,
         relative_path: &RelativePath,
     ) -> Result<()>;
     // Add word to the ignore list for the given project and path
     fn is_ignored_for_path(
         &self,
         word: &str,
-        project_path: &ProjectPath,
+        project_path: &Project,
         relative_path: &RelativePath,
     ) -> Result<bool>;
 
     // Always skip the given file for the given project
-    fn skip_path(&mut self, project_path: &ProjectPath, relative_path: &RelativePath)
+    fn skip_path(&mut self, project_path: &Project, relative_path: &RelativePath)
         -> Result<()>;
     // Is the given path in the given project to be skipped ?
     fn is_skipped_path(
         &self,
-        project_path: &ProjectPath,
+        project_path: &Project,
         relative_path: &RelativePath,
     ) -> Result<bool>;
 
     // Should this file be skipped ?
     fn should_skip(
         &self,
-        project_path: &ProjectPath,
+        project_path: &Project,
         relative_path: &RelativePath,
     ) -> Result<bool> {
         if let Some(f) = relative_path.file_name() {
@@ -85,7 +85,7 @@ pub(crate) trait Repository {
     fn should_ignore(
         &self,
         error: &str,
-        project_path: &ProjectPath,
+        project_path: &Project,
         relative_path: &RelativePath,
     ) -> Result<bool> {
         if self.is_ignored(error)? {
@@ -116,14 +116,14 @@ mod tests {
 
     use super::*;
 
-    fn new_project(temp_dir: &TempDir, name: &'static str) -> ProjectPath {
+    fn new_project(temp_dir: &TempDir, name: &'static str) -> Project {
         let temp_path = temp_dir.path();
         let project_path = temp_path.join(name);
         std::fs::create_dir(&project_path).unwrap();
-        ProjectPath::new(&project_path).unwrap()
+        Project::new(&project_path).unwrap()
     }
 
-    fn new_relative_path(project_path: &ProjectPath, name: &'static str) -> RelativePath {
+    fn new_relative_path(project_path: &Project, name: &'static str) -> RelativePath {
         let rel_path = project_path.as_ref().join(name);
         std::fs::write(&rel_path, "").unwrap();
         RelativePath::new(project_path, &rel_path).unwrap()

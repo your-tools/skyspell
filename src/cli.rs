@@ -4,12 +4,12 @@ use anyhow::{bail, Result};
 use clap::Clap;
 
 use crate::kak;
-use crate::path::{ProjectPath, RelativePath};
 use crate::Db;
 use crate::EnchantDictionary;
 use crate::TokenProcessor;
 use crate::{Checker, InteractiveChecker, NonInteractiveChecker};
 use crate::{ConsoleInteractor, Dictionary, Repository};
+use crate::{Project, RelativePath};
 
 pub fn run() -> Result<()> {
     let opts: Opts = Opts::parse();
@@ -151,12 +151,12 @@ fn add(lang: &str, opts: AddOpts) -> Result<()> {
         (None, None, None) => db.ignore(word),
         (None, _, Some(e)) => db.ignore_for_extension(word, &e),
         (Some(project_path), Some(relative_path), None) => {
-            let project_path = ProjectPath::new(&project_path)?;
+            let project_path = Project::new(&project_path)?;
             let relative_path = RelativePath::new(&project_path, &relative_path)?;
             db.ignore_for_path(word, &project_path, &relative_path)
         }
         (Some(project_path), None, None) => {
-            let project_path = ProjectPath::new(&project_path)?;
+            let project_path = Project::new(&project_path)?;
             db.ignore_for_project(word, &project_path)
         }
         (None, Some(_), None) => bail!("Cannot use --relative-path without --project-path"),
@@ -171,12 +171,12 @@ fn remove(lang: &str, opts: RemoveOpts) -> Result<()> {
         (None, None, None) => db.remove_ignored(word),
         (None, _, Some(e)) => db.remove_ignored_for_extension(word, &e),
         (Some(project_path), Some(relative_path), None) => {
-            let project_path = ProjectPath::new(&project_path)?;
+            let project_path = Project::new(&project_path)?;
             let relative_path = RelativePath::new(&project_path, &relative_path)?;
             db.remove_ignored_for_path(word, &project_path, &relative_path)
         }
         (Some(project_path), None, None) => {
-            let project_path = ProjectPath::new(&project_path)?;
+            let project_path = Project::new(&project_path)?;
             db.remove_ignored_for_project(word, &project_path)
         }
         (None, Some(_), None) => bail!("Cannot use --relative-path without --project-path"),
@@ -185,7 +185,7 @@ fn remove(lang: &str, opts: RemoveOpts) -> Result<()> {
 }
 
 fn check(lang: &str, opts: CheckOpts) -> Result<()> {
-    let project_path = ProjectPath::new(&opts.project_path)?;
+    let project_path = Project::new(&opts.project_path)?;
 
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, lang)?;
@@ -255,7 +255,7 @@ fn skip(lang: &str, opts: SkipOpts) -> Result<()> {
     let mut db = open_db(lang)?;
     match (opts.project_path, opts.relative_path, opts.file_name) {
         (Some(project_path), Some(relative_path), None) => {
-            let project_path = ProjectPath::new(&project_path)?;
+            let project_path = Project::new(&project_path)?;
             let relative_path = RelativePath::new(&project_path, &relative_path)?;
             db.skip_path(&project_path, &relative_path)
         }
@@ -270,7 +270,7 @@ fn unskip(lang: &str, opts: UnskipOpts) -> Result<()> {
     let mut db = open_db(lang)?;
     match (opts.project_path, opts.relative_path, opts.file_name) {
         (Some(project_path), Some(relative_path), None) => {
-            let project_path = ProjectPath::new(&project_path)?;
+            let project_path = Project::new(&project_path)?;
             let relative_path = RelativePath::new(&project_path, &relative_path)?;
             db.unskip_path(&project_path, &relative_path)
         }
