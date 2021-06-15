@@ -1,7 +1,6 @@
 # skyspell
 
-A fast and handy spell checker for source code and other texts
-for Kakoune.
+A fast and handy spell checker for the command line.
 
 # skyspell in action
 
