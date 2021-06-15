@@ -30,7 +30,7 @@ pub(crate) struct Error {
 }
 
 pub(crate) struct KakouneChecker<D: Dictionary, R: Repository> {
-    project_path: Project,
+    project: Project,
     dictionary: D,
     repository: R,
     errors: Vec<Error>,
@@ -74,15 +74,15 @@ impl<D: Dictionary, R: Repository> Checker for KakouneChecker<D, R> {
         &self.dictionary
     }
 
-    fn project_path(&self) -> &Project {
-        &self.project_path
+    fn project(&self) -> &Project {
+        &self.project
     }
 }
 
 impl<D: Dictionary, R: Repository> KakouneChecker<D, R> {
-    pub(crate) fn new(project_path: &Project, dictionary: D, repository: R) -> Self {
+    pub(crate) fn new(project: &Project, dictionary: D, repository: R) -> Self {
         Self {
-            project_path: project_path.clone(),
+            project: project.clone(),
             dictionary,
             repository,
             errors: vec![],
@@ -115,19 +115,11 @@ impl<D: Dictionary, R: Repository> KakouneChecker<D, R> {
 }
 
 fn write_status(f: &mut impl Write, errors: &[Error]) -> Result<()> {
-    let project_path = get_project_path()?;
+    let project = get_project()?;
     match errors.len() {
-        0 => write!(
-            f,
-            "echo -markup {}: {{green}}No spelling errors",
-            project_path
-        ),
-        1 => write!(f, "echo -markup {}: {{red}}1 spelling error", project_path),
-        n => write!(
-            f,
-            "echo -markup {}: {{red}}{} Spelling errors",
-            project_path, n,
-        ),
+        0 => write!(f, "echo -markup {}: {{green}}No spelling errors", project),
+        1 => write!(f, "echo -markup {}: {{red}}1 spelling error", project),
+        n => write!(f, "echo -markup {}: {{red}}{} Spelling errors", project, n,),
     }?;
     Ok(())
 }

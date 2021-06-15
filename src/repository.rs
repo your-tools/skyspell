@@ -33,48 +33,39 @@ pub(crate) trait Repository {
     fn is_ignored_for_extension(&self, word: &str, extension: &str) -> Result<bool>;
 
     // Add word to the ignore list for the given project
-    fn ignore_for_project(&mut self, word: &str, project_path: &Project) -> Result<()>;
+    fn ignore_for_project(&mut self, word: &str, project: &Project) -> Result<()>;
     // Is the word in the ignore list for the given project?
-    fn is_ignored_for_project(&self, word: &str, project_path: &Project) -> Result<bool>;
+    fn is_ignored_for_project(&self, word: &str, project: &Project) -> Result<bool>;
 
     // Add word to the ignore list for the given project and path
     fn ignore_for_path(
         &mut self,
         word: &str,
-        project_path: &Project,
+        project: &Project,
         relative_path: &RelativePath,
     ) -> Result<()>;
     // Add word to the ignore list for the given project and path
     fn is_ignored_for_path(
         &self,
         word: &str,
-        project_path: &Project,
+        project: &Project,
         relative_path: &RelativePath,
     ) -> Result<bool>;
 
     // Always skip the given file for the given project
-    fn skip_path(&mut self, project_path: &Project, relative_path: &RelativePath)
-        -> Result<()>;
+    fn skip_path(&mut self, project: &Project, relative_path: &RelativePath) -> Result<()>;
     // Is the given path in the given project to be skipped ?
-    fn is_skipped_path(
-        &self,
-        project_path: &Project,
-        relative_path: &RelativePath,
-    ) -> Result<bool>;
+    fn is_skipped_path(&self, project: &Project, relative_path: &RelativePath) -> Result<bool>;
 
     // Should this file be skipped ?
-    fn should_skip(
-        &self,
-        project_path: &Project,
-        relative_path: &RelativePath,
-    ) -> Result<bool> {
+    fn should_skip(&self, project: &Project, relative_path: &RelativePath) -> Result<bool> {
         if let Some(f) = relative_path.file_name() {
             if self.is_skipped_file_name(&f)? {
                 return Ok(true);
             }
         }
 
-        if self.is_skipped_path(project_path, relative_path)? {
+        if self.is_skipped_path(project, relative_path)? {
             return Ok(true);
         }
 
@@ -85,7 +76,7 @@ pub(crate) trait Repository {
     fn should_ignore(
         &self,
         error: &str,
-        project_path: &Project,
+        project: &Project,
         relative_path: &RelativePath,
     ) -> Result<bool> {
         if self.is_ignored(error)? {
@@ -98,11 +89,11 @@ pub(crate) trait Repository {
             }
         }
 
-        if self.is_ignored_for_project(error, project_path)? {
+        if self.is_ignored_for_project(error, project)? {
             return Ok(true);
         }
 
-        self.is_ignored_for_path(error, project_path, &relative_path)
+        self.is_ignored_for_path(error, project, &relative_path)
     }
 }
 
@@ -123,43 +114,39 @@ mod tests {
         Project::new(&project_path).unwrap()
     }
 
-    fn new_relative_path(project_path: &Project, name: &'static str) -> RelativePath {
-        let rel_path = project_path.as_ref().join(name);
+    fn new_relative_path(project: &Project, name: &'static str) -> RelativePath {
+        let rel_path = project.path().join(name);
         std::fs::write(&rel_path, "").unwrap();
-        RelativePath::new(project_path, &rel_path).unwrap()
+        RelativePath::new(project, &rel_path).unwrap()
     }
 
     #[test]
     fn test_should_ignore_when_in_global_list() {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let project_path = new_project(&temp_dir, "project");
-        let relative_path = new_relative_path(&project_path, "foo");
+        let project = new_project(&temp_dir, "project");
+        let relative_path = new_relative_path(&project, "foo");
         let mut repository = FakeRepository::new();
 
         repository.ignore("foo").unwrap();
 
         assert!(repository
-            .should_ignore("foo", &project_path, &relative_path)
+            .should_ignore("foo", &project, &relative_path)
             .unwrap());
     }
 
     #[test]
     fn test_should_ignore_when_in_list_for_extension() {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let project_path = new_project(&temp_dir, "project");
-        let foo_py = new_relative_path(&project_path, "foo.py");
-        let foo_rs = new_relative_path(&project_path, "foo.rs");
+        let project = new_project(&temp_dir, "project");
+        let foo_py = new_relative_path(&project, "foo.py");
+        let foo_rs = new_relative_path(&project, "foo.rs");
 
         let mut repository = FakeRepository::new();
         repository.ignore_for_extension("foo", "py").unwrap();
 
-        assert!(repository
-            .should_ignore("foo", &project_path, &foo_py)
-            .unwrap());
+        assert!(repository.should_ignore("foo", &project, &foo_py).unwrap());
 
-        assert!(!repository
-            .should_ignore("foo", &project_path, &foo_rs)
-            .unwrap());
+        assert!(!repository.should_ignore("foo", &project, &foo_rs).unwrap());
     }
 
     #[test]

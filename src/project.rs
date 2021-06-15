@@ -24,10 +24,8 @@ impl Project {
     pub(crate) fn as_str(&self) -> Cow<str> {
         self.0.to_string_lossy()
     }
-}
 
-impl AsRef<Path> for Project {
-    fn as_ref(&self) -> &Path {
+    pub(crate) fn path(&self) -> &Path {
         &self.0
     }
 }
@@ -47,18 +45,18 @@ impl Display for Project {
 pub(crate) struct RelativePath(PathBuf);
 
 impl RelativePath {
-    pub(crate) fn new(project_path: &Project, source_path: &Path) -> Result<Self> {
+    pub(crate) fn new(project: &Project, source_path: &Path) -> Result<Self> {
         let source_path = std::fs::canonicalize(source_path).with_context(|| {
             anyhow!(
                 "Could not canonicalize relative path: {}",
                 source_path.display()
             )
         })?;
-        let path = pathdiff::diff_paths(&source_path, project_path).ok_or_else(|| {
+        let path = pathdiff::diff_paths(&source_path, project.path()).ok_or_else(|| {
             anyhow!(
                 "Could not diff paths '{}' and '{}'",
                 source_path.display(),
-                project_path,
+                project,
             )
         })?;
         Ok(Self(path))

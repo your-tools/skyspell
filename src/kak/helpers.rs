@@ -37,7 +37,7 @@ pub(crate) fn get_lang() -> Result<String> {
     get_option(SKYSPELL_LANG_OPT)
 }
 
-pub(crate) fn get_project_path() -> Result<Project> {
+pub(crate) fn get_project() -> Result<Project> {
     let as_str = get_option(SKYSPELL_PROJECT_OPT)?;
     let path = PathBuf::from(as_str);
     Project::new(&path)

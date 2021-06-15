@@ -24,12 +24,12 @@ pub(crate) trait Checker {
     fn repository(&self) -> &dyn Repository;
     fn dictionary(&self) -> &dyn Dictionary;
 
-    fn project_path(&self) -> &Project;
+    fn project(&self) -> &Project;
 
     fn should_skip(&self, path: &RelativePath) -> Result<bool> {
         let repository = self.repository();
-        let project_path = self.project_path();
-        repository.should_skip(project_path, path)
+        let project = self.project();
+        repository.should_skip(project, path)
     }
 
     fn handle_token(
@@ -42,14 +42,14 @@ pub(crate) trait Checker {
         if self.should_skip(relative_path)? {
             return Ok(());
         }
-        let project_path = self.project_path();
+        let project = self.project();
         let dictionary = self.dictionary();
         let in_dict = dictionary.check(token)?;
         if in_dict {
             return Ok(());
         }
         let repository = self.repository();
-        let should_ignore = repository.should_ignore(&token, project_path, relative_path)?;
+        let should_ignore = repository.should_ignore(&token, project, relative_path)?;
         if !should_ignore {
             self.handle_error(token, relative_path, context)?
         }
@@ -58,17 +58,17 @@ pub(crate) trait Checker {
 }
 
 pub(crate) struct NonInteractiveChecker<D: Dictionary, R: Repository> {
-    project_path: Project,
+    project: Project,
     dictionary: D,
     repository: R,
     errors_found: bool,
 }
 
 impl<D: Dictionary, R: Repository> NonInteractiveChecker<D, R> {
-    pub(crate) fn new(project_path: Project, dictionary: D, mut repository: R) -> Result<Self> {
-        repository.ensure_project(&project_path)?;
+    pub(crate) fn new(project: Project, dictionary: D, mut repository: R) -> Result<Self> {
+        repository.ensure_project(&project)?;
         Ok(Self {
-            project_path,
+            project,
             dictionary,
             repository,
             errors_found: false,
@@ -100,8 +100,8 @@ impl<D: Dictionary, R: Repository> Checker for NonInteractiveChecker<D, R> {
         !self.errors_found
     }
 
-    fn project_path(&self) -> &Project {
-        &self.project_path
+    fn project(&self) -> &Project {
+        &self.project
     }
 
     fn repository_mut(&mut self) -> &mut dyn Repository {
@@ -114,7 +114,7 @@ impl<D: Dictionary, R: Repository> Checker for NonInteractiveChecker<D, R> {
 }
 
 pub(crate) struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository> {
-    project_path: Project,
+    project: Project,
     interactor: I,
     dictionary: D,
     repository: R,
@@ -129,8 +129,8 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
         self.skipped.is_empty()
     }
 
-    fn project_path(&self) -> &Project {
-        &self.project_path
+    fn project(&self) -> &Project {
+        &self.project
     }
 
     fn repository_mut(&mut self) -> &mut dyn Repository {
@@ -161,14 +161,14 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
 
 impl<I: Interactor, D: Dictionary, R: Repository> InteractiveChecker<I, D, R> {
     pub(crate) fn new(
-        project_path: Project,
+        project: Project,
         interactor: I,
         dictionary: D,
         mut repository: R,
     ) -> Result<Self> {
-        repository.ensure_project(&project_path)?;
+        repository.ensure_project(&project)?;
         Ok(Self {
-            project_path,
+            project,
             dictionary,
             interactor,
             repository,
@@ -259,18 +259,17 @@ q : Quit
     }
 
     fn on_project_ignore(&mut self, error: &str) -> Result<bool> {
-        self.repository
-            .ignore_for_project(error, &self.project_path)?;
+        self.repository.ignore_for_project(error, &self.project)?;
         print_addition(
             error,
-            &format!("the ignore list for project '{}'", &self.project_path),
+            &format!("the ignore list for project '{}'", &self.project),
         );
         Ok(true)
     }
 
     fn on_file_ignore(&mut self, error: &str, relative_path: &RelativePath) -> Result<bool> {
         self.repository
-            .ignore_for_path(error, &self.project_path, &relative_path)?;
+            .ignore_for_path(error, &self.project, &relative_path)?;
 
         print_addition(
             error,
@@ -299,13 +298,12 @@ q : Quit
     }
 
     fn on_project_file_skip(&mut self, relative_path: &RelativePath) -> Result<bool> {
-        self.repository
-            .skip_path(&self.project_path, relative_path)?;
+        self.repository.skip_path(&self.project, relative_path)?;
         println!(
             "\n{}Added '{}' to the list of files to skip for project: '{}'\n",
             "=> ".blue(),
             relative_path,
-            &self.project_path.as_str().bold(),
+            &self.project.as_str().bold(),
         );
         Ok(true)
     }
@@ -344,9 +342,8 @@ mod tests {
             let interactor = FakeInteractor::new();
             let dictionary = FakeDictionary::new();
             let repository = FakeRepository::new();
-            let project_path = Project::new(temp_dir.path()).unwrap();
-            let checker =
-                TestChecker::new(project_path, interactor, dictionary, repository).unwrap();
+            let project = Project::new(temp_dir.path()).unwrap();
+            let checker = TestChecker::new(project, interactor, dictionary, repository).unwrap();
             Self { checker }
         }
 
@@ -361,14 +358,14 @@ mod tests {
         }
 
         fn to_relative_path(&self, path: &str) -> RelativePath {
-            let project_path = self.checker.project_path();
-            let path = project_path.as_ref().join(path);
-            RelativePath::new(project_path, &path).unwrap()
+            let project = self.checker.project();
+            let path = project.path().join(path);
+            RelativePath::new(project, &path).unwrap()
         }
 
         fn handle_token(&mut self, token: &str, relative_name: &str) {
-            let project_path = self.checker.project_path();
-            let full_path = project_path.as_ref().join(relative_name);
+            let project = self.checker.project();
+            let full_path = project.path().join(relative_name);
             std::fs::write(&full_path, "").unwrap();
             let relative_path = self.to_relative_path(relative_name);
             let context = &(3, 42);
@@ -389,11 +386,11 @@ mod tests {
         }
 
         fn is_skipped_path(&self, relative_name: &str) -> bool {
-            let project_path = self.checker.project_path();
+            let project = self.checker.project();
             let relative_path = self.to_relative_path(relative_name);
             self.checker
                 .repository
-                .is_skipped_path(&project_path, &relative_path)
+                .is_skipped_path(&project, &relative_path)
                 .unwrap()
         }
 
@@ -405,19 +402,19 @@ mod tests {
         }
 
         fn is_ignored_for_project(&self, word: &str) -> bool {
-            let project_path = self.checker.project_path();
+            let project = self.checker.project();
             self.checker
                 .repository
-                .is_ignored_for_project(word, &project_path)
+                .is_ignored_for_project(word, &project)
                 .unwrap()
         }
 
         fn is_ignored_for_path(&self, word: &str, relative_name: &str) -> bool {
-            let project_path = self.checker.project_path();
+            let project = self.checker.project();
             let relative_path = self.to_relative_path(relative_name);
             self.checker
                 .repository
-                .is_ignored_for_path(word, &project_path, &relative_path)
+                .is_ignored_for_path(word, &project, &relative_path)
                 .unwrap()
         }
 

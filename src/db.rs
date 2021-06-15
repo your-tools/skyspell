@@ -72,11 +72,11 @@ impl Db {
     pub(crate) fn remove_ignored_for_path(
         &mut self,
         word: &str,
-        project_path: &Project,
+        project: &Project,
         relative_path: &RelativePath,
     ) -> Result<()> {
         let word = word.to_lowercase();
-        let project_id = self.get_project_id(project_path)?;
+        let project_id = self.get_project_id(project)?;
         diesel::delete(ignored_for_path::table)
             .filter(ignored_for_path::word.eq(word))
             .filter(ignored_for_path::project_id.eq(project_id))
@@ -88,10 +88,10 @@ impl Db {
     pub(crate) fn remove_ignored_for_project(
         &mut self,
         word: &str,
-        project_path: &Project,
+        project: &Project,
     ) -> Result<()> {
         let word = word.to_lowercase();
-        let project_id = self.get_project_id(project_path)?;
+        let project_id = self.get_project_id(project)?;
         diesel::delete(ignored_for_project::table)
             .filter(ignored_for_project::word.eq(word))
             .filter(ignored_for_project::project_id.eq(project_id))
@@ -108,10 +108,10 @@ impl Db {
 
     pub(crate) fn unskip_path(
         &mut self,
-        project_path: &Project,
+        project: &Project,
         relative_path: &RelativePath,
     ) -> Result<()> {
-        let project_id = self.get_project_id(project_path)?;
+        let project_id = self.get_project_id(project)?;
         diesel::delete(skipped_paths::table)
             .filter(skipped_paths::path.eq(relative_path.as_str()))
             .filter(skipped_paths::project_id.eq(project_id))
@@ -119,9 +119,9 @@ impl Db {
         Ok(())
     }
 
-    fn get_project_id(&self, project_path: &Project) -> Result<i32> {
+    fn get_project_id(&self, project: &Project) -> Result<i32> {
         let res = projects::table
-            .filter(projects::path.eq(project_path.as_str()))
+            .filter(projects::path.eq(project.as_str()))
             .select(projects::id)
             .first::<i32>(&self.connection)?;
         Ok(res)
@@ -192,8 +192,8 @@ impl Repository for Db {
             .is_some())
     }
 
-    fn ignore_for_project(&mut self, word: &str, project_path: &Project) -> Result<()> {
-        let project_id = self.get_project_id(project_path)?;
+    fn ignore_for_project(&mut self, word: &str, project: &Project) -> Result<()> {
+        let project_id = self.get_project_id(project)?;
         let word = &word.to_lowercase();
         diesel::insert_or_ignore_into(ignored_for_project::table)
             .values(NewIgnoredForProject { word, project_id })
@@ -201,8 +201,8 @@ impl Repository for Db {
         Ok(())
     }
 
-    fn is_ignored_for_project(&self, word: &str, project_path: &Project) -> Result<bool> {
-        let project_id = self.get_project_id(project_path)?;
+    fn is_ignored_for_project(&self, word: &str, project: &Project) -> Result<bool> {
+        let project_id = self.get_project_id(project)?;
         let word = &word.to_lowercase();
         Ok(ignored_for_project::table
             .filter(ignored_for_project::project_id.eq(project_id))
@@ -216,11 +216,11 @@ impl Repository for Db {
     fn ignore_for_path(
         &mut self,
         word: &str,
-        project_path: &Project,
+        project: &Project,
         relative_path: &RelativePath,
     ) -> Result<()> {
         let word = &word.to_lowercase();
-        let project_id = self.get_project_id(project_path)?;
+        let project_id = self.get_project_id(project)?;
         diesel::insert_or_ignore_into(ignored_for_path::table)
             .values(NewIgnoredForPath {
                 word,
@@ -234,11 +234,11 @@ impl Repository for Db {
     fn is_ignored_for_path(
         &self,
         word: &str,
-        project_path: &Project,
+        project: &Project,
         relative_path: &RelativePath,
     ) -> Result<bool> {
         let word = &word.to_lowercase();
-        let project_id = self.get_project_id(project_path)?;
+        let project_id = self.get_project_id(project)?;
         Ok(ignored_for_path::table
             .filter(ignored_for_path::project_id.eq(project_id))
             .filter(ignored_for_path::word.eq(word))
@@ -265,12 +265,8 @@ impl Repository for Db {
             .is_some())
     }
 
-    fn skip_path(
-        &mut self,
-        project_path: &Project,
-        relative_path: &RelativePath,
-    ) -> Result<()> {
-        let project_id = self.get_project_id(project_path)?;
+    fn skip_path(&mut self, project: &Project, relative_path: &RelativePath) -> Result<()> {
+        let project_id = self.get_project_id(project)?;
         diesel::insert_or_ignore_into(skipped_paths::table)
             .values(NewSkippedPath {
                 path: &relative_path.as_str(),
@@ -280,12 +276,8 @@ impl Repository for Db {
         Ok(())
     }
 
-    fn is_skipped_path(
-        &self,
-        project_path: &Project,
-        relative_path: &RelativePath,
-    ) -> Result<bool> {
-        let project_id = self.get_project_id(project_path)?;
+    fn is_skipped_path(&self, project: &Project, relative_path: &RelativePath) -> Result<bool> {
+        let project_id = self.get_project_id(project)?;
         Ok(skipped_paths::table
             .filter(skipped_paths::project_id.eq(project_id))
             .filter(skipped_paths::path.eq(relative_path.as_str()))

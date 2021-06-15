@@ -120,10 +120,10 @@ fn add_extension() -> Result<()> {
 fn add_file() -> Result<()> {
     let LineSelection { path, word, .. } = &parse_line_selection()?;
     let path = &Path::new(path);
-    let project_path = get_project_path()?;
-    let relative_path = RelativePath::new(&project_path, path)?;
+    let project = get_project()?;
+    let relative_path = RelativePath::new(&project, path)?;
     let mut db = open_db()?;
-    db.ignore_for_path(word, &project_path, &relative_path)?;
+    db.ignore_for_path(word, &project, &relative_path)?;
     kak_recheck();
     println!(
         "echo '\"{}\" added to the ignore list for file: \"{}\"'",
@@ -143,9 +143,9 @@ fn add_global() -> Result<()> {
 
 fn add_project() -> Result<()> {
     let LineSelection { word, .. } = &parse_line_selection()?;
-    let project_path = get_project_path()?;
+    let project = get_project()?;
     let mut db = open_db()?;
-    db.ignore_for_project(word, &project_path)?;
+    db.ignore_for_project(word, &project)?;
     kak_recheck();
     println!(
         "echo '\"{}\" added to ignore list for the current project'",
@@ -165,7 +165,7 @@ fn jump() -> Result<()> {
 
 fn check(opts: CheckOpts) -> Result<()> {
     let lang = get_lang()?;
-    let project_path = get_project_path()?;
+    let project = get_project()?;
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, &lang)?;
 
@@ -179,7 +179,7 @@ fn check(opts: CheckOpts) -> Result<()> {
     let home_dir = home_dir
         .to_str()
         .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
-    let mut checker = KakouneChecker::new(&project_path, dictionary, repository);
+    let mut checker = KakouneChecker::new(&project, dictionary, repository);
     for bufname in &opts.buflist {
         if bufname.starts_with('*') && bufname.ends_with('*') {
             continue;
@@ -196,7 +196,7 @@ fn check(opts: CheckOpts) -> Result<()> {
         }
 
         let source_path = std::fs::canonicalize(&source_path)?;
-        let relative_path = RelativePath::new(&project_path, &source_path)?;
+        let relative_path = RelativePath::new(&project, &source_path)?;
 
         if checker.should_skip(&relative_path)? {
             continue;
@@ -258,12 +258,12 @@ fn skip_file() -> Result<()> {
     let LineSelection { path, .. } = &parse_line_selection()?;
     // We know it's a full path thanks to handle_error in KakouneChecker
     let full_path = Path::new(path);
-    let project_path = get_project_path()?;
+    let project = get_project()?;
 
-    let relative_path = RelativePath::new(&project_path, &full_path)?;
+    let relative_path = RelativePath::new(&project, &full_path)?;
 
     let mut db = open_db()?;
-    db.skip_path(&project_path, &relative_path)?;
+    db.skip_path(&project, &relative_path)?;
 
     kak_recheck();
     println!("echo 'will now skip \"{}\"'", relative_path);
