@@ -44,9 +44,6 @@ pub(crate) trait Checker {
         context: &Self::Context,
     ) -> Result<()> {
         let token = &token.to_lowercase();
-        if self.should_skip(relative_path)? {
-            return Ok(());
-        }
         let project = self.project();
         let dictionary = self.dictionary();
         let in_dict = dictionary.check(token)?;
