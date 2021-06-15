@@ -36,7 +36,7 @@ What to do?
 * Global ignore list
 * Ignore list per file extension (like `fn` for `.rs`), projects, or
   relative path inside projects
-* Skip list per file name (like always skipping file named `Cargo.lock`)
+* Skip list per file names (like always skipping files named `Cargo.lock`)
 * Skip list per relative path inside a project (like `image.svg`)
 * Kakoune integration
 
