@@ -173,7 +173,7 @@ fn write_ranges(f: &mut impl Write, timestamp: usize, errors: &[Error]) -> Resul
         )?;
         for error in group {
             write_error_range(f, error)?;
-            write!(f, "  ")?;
+            write!(f, " ")?;
         }
         writeln!(f)?;
     }
@@ -228,14 +228,17 @@ execute-keys \% <ret> d i %{/path/to/hello.js: 2.5,2.7 foo<ret>} <esc> gg
 
         let err3 = Error {
             pos: (1, 5),
-            path: PathBuf::from("/path/to/foo.js"),
-            buffer: "spam.js".to_string(),
-            token: "baz".to_string(),
+            path: PathBuf::from("/path/to/bar.js"),
+            buffer: "bar.js".to_string(),
+            token: "spam".to_string(),
         };
 
         let mut buff: Vec<u8> = vec![];
         write_ranges(&mut buff, 42, &[err1, err2, err3]).unwrap();
         let actual = std::str::from_utf8(&buff).unwrap();
-        dbg!(actual);
+        let expected = "\
+set-option buffer=foo.js spell_errors 42 2.5+3|Error 3.7+3|Error \n\
+set-option buffer=bar.js spell_errors 42 1.6+4|Error \n";
+        assert_eq!(actual, expected);
     }
 }
