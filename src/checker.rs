@@ -32,6 +32,11 @@ pub(crate) trait Checker {
         repository.should_skip(project, path)
     }
 
+    fn to_relative_path(&self, path: &Path) -> Result<RelativePath> {
+        let project = self.project();
+        RelativePath::new(project, path)
+    }
+
     fn handle_token(
         &mut self,
         token: &str,

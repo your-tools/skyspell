@@ -80,9 +80,9 @@ impl<D: Dictionary, R: Repository> Checker for KakouneChecker<D, R> {
 }
 
 impl<D: Dictionary, R: Repository> KakouneChecker<D, R> {
-    pub(crate) fn new(project: &Project, dictionary: D, repository: R) -> Self {
+    pub(crate) fn new(project: Project, dictionary: D, repository: R) -> Self {
         Self {
-            project: project.clone(),
+            project,
             dictionary,
             repository,
             errors: vec![],

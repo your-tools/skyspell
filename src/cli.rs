@@ -209,14 +209,13 @@ fn check_with<C>(checker: &mut C, opts: CheckOpts) -> Result<()>
 where
     C: Checker<Context = (usize, usize)>,
 {
-    let project = checker.project().clone();
     let mut skipped = 0;
     if opts.sources.is_empty() {
         println!("No path given - nothing to do");
     }
 
     for path in &opts.sources {
-        let relative_path = RelativePath::new(&project, &path)?;
+        let relative_path = checker.to_relative_path(&path)?;
         if checker.should_skip(&relative_path)? {
             skipped += 1;
             continue;

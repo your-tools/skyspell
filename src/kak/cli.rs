@@ -179,7 +179,7 @@ fn check(opts: CheckOpts) -> Result<()> {
     let home_dir = home_dir
         .to_str()
         .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
-    let mut checker = KakouneChecker::new(&project, dictionary, repository);
+    let mut checker = KakouneChecker::new(project, dictionary, repository);
     for bufname in &opts.buflist {
         if bufname.starts_with('*') && bufname.ends_with('*') {
             continue;
@@ -195,8 +195,7 @@ fn check(opts: CheckOpts) -> Result<()> {
             continue;
         }
 
-        let source_path = std::fs::canonicalize(&source_path)?;
-        let relative_path = RelativePath::new(&project, &source_path)?;
+        let relative_path = checker.to_relative_path(&source_path)?;
 
         if checker.should_skip(&relative_path)? {
             continue;

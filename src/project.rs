@@ -30,12 +30,6 @@ impl Project {
     }
 }
 
-impl Clone for Project {
-    fn clone(&self) -> Self {
-        Project(self.0.clone())
-    }
-}
-
 impl Display for Project {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0.display())
