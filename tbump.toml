@@ -1,0 +1,29 @@
+[version]
+current = "0.3.0"
+
+# Example of a semver regexp.
+# Make sure this matches current_version before
+# using tbump
+regex = '''
+  (?P<major>\d+)
+  \.
+  (?P<minor>\d+)
+  \.
+  (?P<patch>\d+)
+  '''
+
+[git]
+message_template = "Bump to {new_version}"
+tag_template = "v{new_version}"
+
+[[file]]
+src = "Cargo.toml"
+search = 'version = "{current_version}"'
+
+[[before_commit]]
+name = "run tests"
+cmd = "cargo test"
+
+[[after_push]]
+name = "publish"
+cmd = "cargo publish"
