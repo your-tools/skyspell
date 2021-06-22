@@ -52,7 +52,8 @@ impl Db {
         let word = word.to_lowercase();
         diesel::delete(ignored::table)
             .filter(ignored::word.eq(word))
-            .execute(&self.connection)?;
+            .execute(&self.connection)
+            .with_context(|| "Could not remove word from global ignored list")?;
         Ok(())
     }
 
@@ -65,7 +66,8 @@ impl Db {
         diesel::delete(ignored_for_extension::table)
             .filter(ignored_for_extension::extension.eq(extension))
             .filter(ignored_for_extension::word.eq(word))
-            .execute(&self.connection)?;
+            .execute(&self.connection)
+            .with_context(|| "Could not remove word from ignore list for extension")?;
         Ok(())
     }
 
@@ -81,7 +83,8 @@ impl Db {
             .filter(ignored_for_path::word.eq(word))
             .filter(ignored_for_path::project_id.eq(project_id))
             .filter(ignored_for_path::path.eq(relative_path.as_str()))
-            .execute(&self.connection)?;
+            .execute(&self.connection)
+            .with_context(|| "Could not remove word from ignore list for path")?;
         Ok(())
     }
 
@@ -95,14 +98,16 @@ impl Db {
         diesel::delete(ignored_for_project::table)
             .filter(ignored_for_project::word.eq(word))
             .filter(ignored_for_project::project_id.eq(project_id))
-            .execute(&self.connection)?;
+            .execute(&self.connection)
+            .with_context(|| "Could not remove word from ignore list for project")?;
         Ok(())
     }
 
     pub(crate) fn unskip_file_name(&mut self, file_name: &str) -> Result<()> {
         diesel::delete(skipped_file_names::table)
             .filter(skipped_file_names::file_name.eq(file_name))
-            .execute(&self.connection)?;
+            .execute(&self.connection)
+            .with_context(|| "Could not remove file name from skip list")?;
         Ok(())
     }
 
@@ -115,7 +120,8 @@ impl Db {
         diesel::delete(skipped_paths::table)
             .filter(skipped_paths::path.eq(relative_path.as_str()))
             .filter(skipped_paths::project_id.eq(project_id))
-            .execute(&self.connection)?;
+            .execute(&self.connection)
+            .with_context(|| "Could not remove file path from skip list")?;
         Ok(())
     }
 
@@ -123,35 +129,45 @@ impl Db {
         let res = projects::table
             .filter(projects::path.eq(project.as_str()))
             .select(projects::id)
-            .first::<i32>(&self.connection)?;
+            .first::<i32>(&self.connection)
+            .with_context(|| {
+                format!(
+                    "Could not get project ID for project '{}'",
+                    project.as_str()
+                )
+            })?;
         Ok(res)
     }
 }
 
 impl Repository for Db {
-    fn new_project(&mut self, path: &Project) -> Result<()> {
+    fn new_project(&mut self, project: &Project) -> Result<()> {
         let new_project = NewProject {
-            path: &path.as_str(),
+            path: &project.as_str(),
         };
         diesel::insert_into(projects::table)
             .values(new_project)
-            .execute(&self.connection)?;
+            .execute(&self.connection)
+            .with_context(|| format!("Could not insert project '{}'", project.as_str()))?;
         Ok(())
     }
 
-    fn project_exists(&self, path: &Project) -> Result<bool> {
+    fn project_exists(&self, project: &Project) -> Result<bool> {
         Ok(projects::table
-            .filter(projects::path.eq(path.as_str()))
+            .filter(projects::path.eq(project.as_str()))
             .select(projects::id)
             .first::<i32>(&self.connection)
-            .optional()?
+            .optional()
+            .with_context(|| format!("Error when looking for project {}", project.as_str()))?
             .is_some())
     }
+
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()> {
         let new_ignored_words: Vec<_> = words.iter().map(|x| NewIgnored { word: x }).collect();
         diesel::insert_or_ignore_into(ignored::table)
             .values(new_ignored_words)
-            .execute(&self.connection)?;
+            .execute(&self.connection)
+            .with_context(|| "Could not insert ignored words")?;
         Ok(())
     }
 
@@ -159,7 +175,8 @@ impl Repository for Db {
         let word = &word.to_lowercase();
         diesel::insert_or_ignore_into(ignored::table)
             .values(NewIgnored { word })
-            .execute(&self.connection)?;
+            .execute(&self.connection)
+            .with_context(|| "Could not insert ignored word")?;
         Ok(())
     }
 
@@ -169,7 +186,8 @@ impl Repository for Db {
             .filter(ignored::word.eq(word))
             .select(ignored::id)
             .first::<i32>(&self.connection)
-            .optional()?
+            .optional()
+            .with_context(|| "Error when checking if word is ignored")?
             .is_some())
     }
 
@@ -177,7 +195,8 @@ impl Repository for Db {
         let word = &word.to_lowercase();
         diesel::insert_or_ignore_into(ignored_for_extension::table)
             .values(NewIgnoredForExtension { word, extension })
-            .execute(&self.connection)?;
+            .execute(&self.connection)
+            .with_context(|| "Could not insert ignored word for extension")?;
         Ok(())
     }
 
@@ -188,7 +207,8 @@ impl Repository for Db {
             .filter(ignored_for_extension::extension.eq(extension))
             .select(ignored_for_extension::id)
             .first::<i32>(&self.connection)
-            .optional()?
+            .optional()
+            .with_context(|| "Error when checking if word is ignored for extension")?
             .is_some())
     }
 
@@ -197,7 +217,8 @@ impl Repository for Db {
         let word = &word.to_lowercase();
         diesel::insert_or_ignore_into(ignored_for_project::table)
             .values(NewIgnoredForProject { word, project_id })
-            .execute(&self.connection)?;
+            .execute(&self.connection)
+            .with_context(|| "Could not insert ignored word for project")?;
         Ok(())
     }
 
@@ -209,7 +230,8 @@ impl Repository for Db {
             .filter(ignored_for_project::word.eq(word))
             .select(ignored_for_project::id)
             .first::<i32>(&self.connection)
-            .optional()?
+            .optional()
+            .with_context(|| "Error when checking if word is ignored for project")?
             .is_some())
     }
 
@@ -227,7 +249,8 @@ impl Repository for Db {
                 project_id,
                 path: &relative_path.as_str(),
             })
-            .execute(&self.connection)?;
+            .execute(&self.connection)
+            .with_context(|| "Could not insert ignored word for path")?;
         Ok(())
     }
 
@@ -245,14 +268,16 @@ impl Repository for Db {
             .filter(ignored_for_path::path.eq(relative_path.as_str()))
             .select(ignored_for_path::id)
             .first::<i32>(&self.connection)
-            .optional()?
+            .optional()
+            .with_context(|| "Error when checking if word is ignored for given path")?
             .is_some())
     }
 
     fn skip_file_name(&mut self, file_name: &str) -> Result<()> {
         diesel::insert_or_ignore_into(skipped_file_names::table)
             .values(NewSkippedFileName { file_name })
-            .execute(&self.connection)?;
+            .execute(&self.connection)
+            .with_context(|| "Could not insert file name to the list of skipped file names")?;
         Ok(())
     }
 
@@ -261,7 +286,8 @@ impl Repository for Db {
             .filter(skipped_file_names::file_name.eq(file_name))
             .select(skipped_file_names::id)
             .first::<i32>(&self.connection)
-            .optional()?
+            .optional()
+            .with_context(|| "Error when checking if file name should be skipped")?
             .is_some())
     }
 
@@ -272,7 +298,8 @@ impl Repository for Db {
                 path: &relative_path.as_str(),
                 project_id,
             })
-            .execute(&self.connection)?;
+            .execute(&self.connection)
+            .with_context(|| "Could not insert file path to the list of skipped file paths")?;
         Ok(())
     }
 
@@ -283,7 +310,8 @@ impl Repository for Db {
             .filter(skipped_paths::path.eq(relative_path.as_str()))
             .select(skipped_paths::id)
             .first::<i32>(&self.connection)
-            .optional()?
+            .optional()
+            .with_context(|| "Error when checking if path is skipped")?
             .is_some())
     }
 }
