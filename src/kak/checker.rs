@@ -80,13 +80,14 @@ impl<D: Dictionary, R: Repository> Checker for KakouneChecker<D, R> {
 }
 
 impl<D: Dictionary, R: Repository> KakouneChecker<D, R> {
-    pub(crate) fn new(project: Project, dictionary: D, repository: R) -> Self {
-        Self {
+    pub(crate) fn new(project: Project, dictionary: D, mut repository: R) -> Result<Self> {
+        repository.ensure_project(&project)?;
+        Ok(Self {
             project,
             dictionary,
             repository,
             errors: vec![],
-        }
+        })
     }
 
     fn write_code(&self, f: &mut impl Write) -> Result<()> {
