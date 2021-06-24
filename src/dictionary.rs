@@ -8,16 +8,14 @@ pub trait Dictionary {
     fn lang(&self) -> &str;
 }
 
-// We are careful not to own the enchant Broker in the Dict struct,
-// because we need one Broker per thread
-//
+// Note: we do *not* own the enchant::Broker struct in this
+// struct, because we need one Broker per thread
 pub struct EnchantDictionary {
     dict: enchant::Dict,
     lang: String,
 }
 
 impl EnchantDictionary {
-    /// Making the dict inside EnchantDictionary gets dropped *before* the broker is
     pub fn new(broker: &mut enchant::Broker, lang: &str) -> Result<Self> {
         let dict = broker
             .request_dict(lang)
