@@ -42,7 +42,7 @@ impl Interactor for ConsoleInteractor {
     }
 
     fn select(&self, prompt: &str, choices: &[&str]) -> Option<usize> {
-        #[allow(clippy::clippy::unwrap_used)]
+        #[allow(clippy::unwrap_used)]
         Select::new()
             .with_prompt(prompt)
             .items(choices)
