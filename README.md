@@ -54,4 +54,3 @@ spell provider.
 On the other hard, scspell can replace suggestions in the file.
 
 So use the one which suits you best, I don't really care :)
-

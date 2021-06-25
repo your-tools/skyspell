@@ -43,7 +43,6 @@ pub(crate) trait Checker {
         relative_path: &RelativePath,
         context: &Self::Context,
     ) -> Result<()> {
-        let token = &token.to_lowercase();
         let project = self.project();
         let dictionary = self.dictionary();
         let in_dict = dictionary.check(token)?;
