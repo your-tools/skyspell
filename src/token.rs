@@ -14,8 +14,8 @@ lazy_static! {
     static ref TOKEN_RE: Regex = RegexBuilder::new(
         r"
             (
-                \w |                        # letters
-                [ \\ + . / : = ? @ _ ~ - ]  # all possible chars found in an URL or email
+                \w |                         # letters
+                [ \\ + . / : = ? @ _ ~ ' - ]  # all possible chars found in an URL, an email, or a word with an apostrophe (like doesn't)
             )+
         "
     ).ignore_whitespace(true).build().expect("syntax error in static regex");
@@ -53,9 +53,11 @@ lazy_static! {
         r"
         # A word is just a bunch of unicode characters matching
         # the Alphabetic group, possibly inside space escapes like
-        # \n or \t
+        # \n or \t, and possibly containing exactly one apostrophe
         (\\[nt])*
-        (\p{Alphabetic}+)
+        (
+            \p{Alphabetic}+ ' \p{Alphabetic}+ | (\p{Alphabetic}+)
+        )
         (\\[nt])*
         "
     ).ignore_whitespace(true).build().expect("syntax error in static regex");
@@ -391,6 +393,13 @@ mod tests {
         let text = "I am";
         let actual = get_tokens(text);
         assert_eq!(&actual, &["I", "am"]);
+    }
+
+    #[test]
+    fn test_apostrophes() {
+        let text = "doesn't matter if it's true";
+        let actual = get_tokens(text);
+        assert_eq!(&actual, &["doesn't", "matter", "if", "it's", "true"]);
     }
 
     #[test]

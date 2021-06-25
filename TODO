@@ -3,8 +3,6 @@ Check coverage with tarpaulin
 Fix processing \newpage for Latex
 (it finds that 'ewpage' is an error)
 
-Fix tokenizing "it's" and "doesn't"
-
 src/kak/cli.rs: use an impl Writer so we can write tests
 
 README: Add link to a nice asciinema demo (or a gif)
