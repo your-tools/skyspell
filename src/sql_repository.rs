@@ -12,18 +12,18 @@ use crate::{Project, RelativePath};
 
 diesel_migrations::embed_migrations!("migrations");
 
-pub(crate) struct Db {
+pub(crate) struct SQLRepository {
     connection: SqliteConnection,
     url: String,
 }
 
-impl Debug for Db {
+impl Debug for SQLRepository {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "Db<{}>", self.url)
     }
 }
 
-impl Db {
+impl SQLRepository {
     pub(crate) fn connect(url: &str) -> Result<Self> {
         let connection = SqliteConnection::establish(&url)
             .with_context(|| format!("Could not connect to {}", url))?;
@@ -140,7 +140,7 @@ impl Db {
     }
 }
 
-impl Repository for Db {
+impl Repository for SQLRepository {
     fn new_project(&mut self, project: &Project) -> Result<()> {
         let new_project = NewProject {
             path: &project.as_str(),

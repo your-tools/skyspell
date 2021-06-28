@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::kak::checker::open_db;
+use crate::kak::checker::open_repository;
 use crate::kak::helpers::*;
 use crate::kak::KakouneChecker;
 use crate::Checker;
@@ -107,8 +107,8 @@ fn add_extension() -> Result<()> {
     let (_, ext) = path
         .rsplit_once(".")
         .ok_or_else(|| anyhow!("File has no extension"))?;
-    let mut db = open_db()?;
-    db.ignore_for_extension(word, ext)?;
+    let mut repository = open_repository()?;
+    repository.ignore_for_extension(word, ext)?;
     kak_recheck();
     println!(
         "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
@@ -122,8 +122,8 @@ fn add_file() -> Result<()> {
     let path = &Path::new(path);
     let project = get_project()?;
     let relative_path = RelativePath::new(&project, path)?;
-    let mut db = open_db()?;
-    db.ignore_for_path(word, &project, &relative_path)?;
+    let mut repository = open_repository()?;
+    repository.ignore_for_path(word, &project, &relative_path)?;
     kak_recheck();
     println!(
         "echo '\"{}\" added to the ignore list for file: \"{}\"'",
@@ -134,8 +134,8 @@ fn add_file() -> Result<()> {
 
 fn add_global() -> Result<()> {
     let LineSelection { word, .. } = &parse_line_selection()?;
-    let mut db = open_db()?;
-    db.ignore(word)?;
+    let mut repository = open_repository()?;
+    repository.ignore(word)?;
     kak_recheck();
     println!("echo '\"{}\" added to global ignore list'", word);
     Ok(())
@@ -144,8 +144,8 @@ fn add_global() -> Result<()> {
 fn add_project() -> Result<()> {
     let LineSelection { word, .. } = &parse_line_selection()?;
     let project = get_project()?;
-    let mut db = open_db()?;
-    db.ignore_for_project(word, &project)?;
+    let mut repository = open_repository()?;
+    repository.ignore_for_project(word, &project)?;
     kak_recheck();
     println!(
         "echo '\"{}\" added to ignore list for the current project'",
@@ -174,7 +174,7 @@ fn check(opts: CheckOpts) -> Result<()> {
     //  * contain special buffers, like *debug*
     //  * use ~ for home dir
     //  * need to be canonicalize
-    let repository = open_db()?;
+    let repository = open_repository()?;
     let home_dir = home_dir().ok_or_else(|| anyhow!("Could not get home directory"))?;
     let home_dir = home_dir
         .to_str()
@@ -261,8 +261,8 @@ fn skip_file() -> Result<()> {
 
     let relative_path = RelativePath::new(&project, &full_path)?;
 
-    let mut db = open_db()?;
-    db.skip_path(&project, &relative_path)?;
+    let mut repository = open_repository()?;
+    repository.skip_path(&project, &relative_path)?;
 
     kak_recheck();
     println!("echo 'will now skip \"{}\"'", relative_path);
@@ -277,8 +277,8 @@ fn skip_name() -> Result<()> {
         .with_context(|| "no file name")?
         .to_string_lossy();
 
-    let mut db = open_db()?;
-    db.skip_file_name(&file_name)?;
+    let mut repository = open_repository()?;
+    repository.skip_file_name(&file_name)?;
 
     kak_recheck();
     println!("echo 'will now skip file named: \"{}\"'", file_name);

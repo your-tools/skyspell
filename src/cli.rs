@@ -4,8 +4,8 @@ use anyhow::{bail, Result};
 use clap::Clap;
 
 use crate::kak;
-use crate::Db;
 use crate::EnchantDictionary;
+use crate::SQLRepository;
 use crate::TokenProcessor;
 use crate::{Checker, InteractiveChecker, NonInteractiveChecker};
 use crate::{ConsoleInteractor, Dictionary, Repository};
@@ -139,25 +139,25 @@ struct RemoveOpts {
     word: String,
 }
 
-fn open_db(lang: &str) -> Result<crate::Db> {
-    Db::open(lang)
+fn open_repository(lang: &str) -> Result<crate::SQLRepository> {
+    SQLRepository::open(lang)
 }
 
 fn add(lang: &str, opts: AddOpts) -> Result<()> {
     let word = &opts.word;
-    let mut db = open_db(lang)?;
+    let mut repository = open_repository(lang)?;
 
     match (opts.project_path, opts.relative_path, opts.extension) {
-        (None, None, None) => db.ignore(word),
-        (None, _, Some(e)) => db.ignore_for_extension(word, &e),
+        (None, None, None) => repository.ignore(word),
+        (None, _, Some(e)) => repository.ignore_for_extension(word, &e),
         (Some(project_path), Some(relative_path), None) => {
             let project = Project::new(&project_path)?;
             let relative_path = RelativePath::new(&project, &relative_path)?;
-            db.ignore_for_path(word, &project, &relative_path)
+            repository.ignore_for_path(word, &project, &relative_path)
         }
         (Some(project_path), None, None) => {
             let project = Project::new(&project_path)?;
-            db.ignore_for_project(word, &project)
+            repository.ignore_for_project(word, &project)
         }
         (None, Some(_), None) => bail!("Cannot use --relative-path without --project-path"),
         (Some(_), _, Some(_)) => bail!("--extension is incompatible with --project-path"),
@@ -166,18 +166,18 @@ fn add(lang: &str, opts: AddOpts) -> Result<()> {
 
 fn remove(lang: &str, opts: RemoveOpts) -> Result<()> {
     let word = &opts.word;
-    let mut db = open_db(lang)?;
+    let mut repository = open_repository(lang)?;
     match (opts.project_path, opts.relative_path, opts.extension) {
-        (None, None, None) => db.remove_ignored(word),
-        (None, _, Some(e)) => db.remove_ignored_for_extension(word, &e),
+        (None, None, None) => repository.remove_ignored(word),
+        (None, _, Some(e)) => repository.remove_ignored_for_extension(word, &e),
         (Some(project_path), Some(relative_path), None) => {
             let project = Project::new(&project_path)?;
             let relative_path = RelativePath::new(&project, &relative_path)?;
-            db.remove_ignored_for_path(word, &project, &relative_path)
+            repository.remove_ignored_for_path(word, &project, &relative_path)
         }
         (Some(project_path), None, None) => {
             let project = Project::new(&project_path)?;
-            db.remove_ignored_for_project(word, &project)
+            repository.remove_ignored_for_project(word, &project)
         }
         (None, Some(_), None) => bail!("Cannot use --relative-path without --project-path"),
         (Some(_), _, Some(_)) => bail!("--extension is incompatible with --project-path"),
@@ -189,7 +189,7 @@ fn check(lang: &str, opts: CheckOpts) -> Result<()> {
 
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, lang)?;
-    let repository = open_db(lang)?;
+    let repository = open_repository(lang)?;
     let interactive = !opts.non_interactive;
 
     match interactive {
@@ -241,23 +241,23 @@ where
 }
 
 fn import_personal_dict(lang: &str, opts: ImportPersonalDictOpts) -> Result<()> {
-    let mut db = open_db(lang)?;
+    let mut repository = open_repository(lang)?;
     let dict = std::fs::read_to_string(&opts.personal_dict_path)?;
     let words: Vec<&str> = dict.split_ascii_whitespace().collect();
-    db.insert_ignored_words(&words)?;
+    repository.insert_ignored_words(&words)?;
 
     Ok(())
 }
 
 fn skip(lang: &str, opts: SkipOpts) -> Result<()> {
-    let mut db = open_db(lang)?;
+    let mut repository = open_repository(lang)?;
     match (opts.project_path, opts.relative_path, opts.file_name) {
         (Some(project_path), Some(relative_path), None) => {
             let project = Project::new(&project_path)?;
             let relative_path = RelativePath::new(&project, &relative_path)?;
-            db.skip_path(&project, &relative_path)
+            repository.skip_path(&project, &relative_path)
         }
-        (_, None, Some(file_name)) => db.skip_file_name(&file_name),
+        (_, None, Some(file_name)) => repository.skip_file_name(&file_name),
         (_, _, _) => {
             bail!("Either use --file-name OR --project-path and --relative-path")
         }
@@ -265,14 +265,14 @@ fn skip(lang: &str, opts: SkipOpts) -> Result<()> {
 }
 
 fn unskip(lang: &str, opts: UnskipOpts) -> Result<()> {
-    let mut db = open_db(lang)?;
+    let mut repository = open_repository(lang)?;
     match (opts.project_path, opts.relative_path, opts.file_name) {
         (Some(project_path), Some(relative_path), None) => {
             let project = Project::new(&project_path)?;
             let relative_path = RelativePath::new(&project, &relative_path)?;
-            db.unskip_path(&project, &relative_path)
+            repository.unskip_path(&project, &relative_path)
         }
-        (_, None, Some(file_name)) => db.unskip_file_name(&file_name),
+        (_, None, Some(file_name)) => repository.unskip_file_name(&file_name),
         (_, _, _) => {
             bail!("Either use --file-name OR --project-path and --relative-path")
         }

@@ -6,7 +6,7 @@ use itertools::Itertools;
 
 use crate::kak::helpers::*;
 use crate::Checker;
-use crate::Db;
+use crate::SQLRepository;
 use crate::{Dictionary, Repository};
 use crate::{Project, RelativePath};
 
@@ -17,9 +17,9 @@ pub(crate) fn get_lang() -> Result<String> {
     get_option(SKYSPELL_LANG_OPT)
 }
 
-pub(crate) fn open_db() -> Result<crate::Db> {
+pub(crate) fn open_repository() -> Result<crate::SQLRepository> {
     let lang = get_lang()?;
-    Db::open(&lang)
+    SQLRepository::open(&lang)
 }
 
 pub(crate) struct Error {

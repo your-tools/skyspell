@@ -103,7 +103,7 @@ mod tests {
     use tempdir::TempDir;
 
     use crate::tests::FakeRepository;
-    use crate::Db;
+    use crate::SQLRepository;
 
     use super::*;
 
@@ -208,7 +208,7 @@ mod tests {
 
     // Given an identifier and a block, generate a test
     // for each implementation of the Repo trait
-    // (Db and FakeRepo)
+    // (SQLRepository and FakeRepo)
     macro_rules! make_tests {
         ($name:ident, ($repository:ident) => $test:block) => {
             paste! {
@@ -217,9 +217,9 @@ mod tests {
             }
 
             #[test]
-            fn [<test_db_ $name>]() {
-                let db = Db::connect(":memory:").unwrap();
-                $name(db)
+            fn [<test_sql_repository $name>]() {
+                let repository = SQLRepository::connect(":memory:").unwrap();
+                $name(repository)
             }
 
             #[test]
