@@ -78,7 +78,8 @@ impl TokenProcessor {
     where
         F: FnMut(&str, usize, usize) -> Result<()>,
     {
-        let source = File::open(&self.path)?;
+        let source = File::open(&self.path)
+            .with_context(|| format!("Could not open {} for reading", self.path.display()))?;
         let lines = RelevantLines::new(source, self.path.file_name());
         for (i, line) in lines.enumerate() {
             let line =
