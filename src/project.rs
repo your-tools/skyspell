@@ -36,6 +36,7 @@ impl Display for Project {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct RelativePath(PathBuf);
 
 impl RelativePath {
