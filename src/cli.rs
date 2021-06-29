@@ -215,13 +215,13 @@ where
     }
 
     for path in &opts.sources {
-        let relative_path = checker.to_relative_path(&path)?;
+        let relative_path = checker.to_relative_path(path)?;
         if checker.should_skip(&relative_path)? {
             skipped += 1;
             continue;
         }
 
-        let token_processor = TokenProcessor::new(relative_path.as_ref())?;
+        let token_processor = TokenProcessor::new(path)?;
         token_processor.each_token(|word, line, column| {
             checker.handle_token(word, &relative_path, &(line, column))
         })?;
