@@ -3,13 +3,13 @@ use std::borrow::Cow;
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
-// Note: we store the paths in the DB using lossy string representation because it's really
-// convenient, although technically not correct
+// Note: we store the paths in the DB using lossy string representation
+// because it's really convenient, although technically not correct
 //
-// An other option would be to store the OsStr representation as binary in the DB
+// An other option would be to store the OsStr representation as binary
+// in the DB
 
 pub(crate) struct Project(PathBuf);
-
 impl Project {
     pub(crate) fn new(project_path: &Path) -> Result<Self> {
         let path = std::fs::canonicalize(project_path).with_context(|| {

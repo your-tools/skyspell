@@ -62,10 +62,6 @@ impl<D: Dictionary, R: Repository> Checker for KakouneChecker<D, R> {
         true
     }
 
-    fn repository_mut(&mut self) -> &mut dyn Repository {
-        &mut self.repository
-    }
-
     fn repository(&self) -> &dyn Repository {
         &self.repository
     }

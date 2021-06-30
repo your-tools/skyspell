@@ -20,7 +20,6 @@ pub(crate) trait Checker {
     ) -> Result<()>;
 
     fn success(&self) -> bool;
-    fn repository_mut(&mut self) -> &mut dyn Repository;
     fn repository(&self) -> &dyn Repository;
     fn dictionary(&self) -> &dyn Dictionary;
 
@@ -105,10 +104,6 @@ impl<D: Dictionary, R: Repository> Checker for NonInteractiveChecker<D, R> {
         &self.project
     }
 
-    fn repository_mut(&mut self) -> &mut dyn Repository {
-        &mut self.repository
-    }
-
     fn repository(&self) -> &dyn Repository {
         &self.repository
     }
@@ -132,10 +127,6 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
 
     fn project(&self) -> &Project {
         &self.project
-    }
-
-    fn repository_mut(&mut self) -> &mut dyn Repository {
-        &mut self.repository
     }
 
     fn dictionary(&self) -> &dyn Dictionary {
