@@ -1,5 +1,3 @@
-use std::fmt::{Debug, Formatter};
-
 use anyhow::{anyhow, Context, Result};
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
@@ -14,13 +12,6 @@ diesel_migrations::embed_migrations!("migrations");
 
 pub(crate) struct SQLRepository {
     connection: SqliteConnection,
-    url: String,
-}
-
-impl Debug for SQLRepository {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "SQLRepository at '{}'", self.url)
-    }
 }
 
 impl SQLRepository {
@@ -28,10 +19,7 @@ impl SQLRepository {
         let connection = SqliteConnection::establish(&url)
             .with_context(|| format!("Could not connect to {}", url))?;
         embedded_migrations::run(&connection).with_context(|| "Could not migrate db")?;
-        Ok(Self {
-            connection,
-            url: url.to_owned(),
-        })
+        Ok(Self { connection })
     }
 
     pub(crate) fn open(lang: &str) -> Result<Self> {
