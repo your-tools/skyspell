@@ -10,17 +10,9 @@ enum Answer {
     Bool(bool),
 }
 
+#[derive(Debug, Default)]
 pub(crate) struct FakeInteractor {
     answers: RefCell<VecDeque<Answer>>,
-}
-
-impl Default for FakeInteractor {
-    fn default() -> Self {
-        let queue = VecDeque::new();
-        Self {
-            answers: RefCell::new(queue),
-        }
-    }
 }
 
 impl FakeInteractor {
