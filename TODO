@@ -14,6 +14,9 @@ Write more tests for kak.rs
 When --project-path is not set, use the closest project path in
 directories above the current one?
 
+Add a command to remove projects from the db when their path no longer
+exist
+
 Undo?
 
 How to use in CI scripts?
