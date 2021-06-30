@@ -19,7 +19,7 @@ pub(crate) struct SQLRepository {
 
 impl Debug for SQLRepository {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "Db<{}>", self.url)
+        write!(f, "SQLRepository at '{}'", self.url)
     }
 }
 
