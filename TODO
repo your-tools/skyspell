@@ -11,7 +11,8 @@ Filter mode (read stdin, write stdout)
 
 Write more tests for kak.rs
 
-If you are in a subpath of an existing project, don't create a new one!
+When --project-path is not set, use the closest project path in
+directories above the current one?
 
 Undo?
 
