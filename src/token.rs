@@ -14,8 +14,9 @@ lazy_static! {
     static ref TOKEN_RE: Regex = RegexBuilder::new(
         r"
             (
-                \w |                         # letters
-                [ \\ + . / : = ? @ _ ~ ' - ]  # all possible chars found in an URL, an email, or a word with an apostrophe (like doesn't)
+                \w |                          # letters .. or:
+                [ \\ + . / : = ? @ _ ~ ' - ]  # all possible chars found in an URL, an email,
+                                              # or a word with an apostrophe (like doesn't)
             )+
         "
     ).ignore_whitespace(true).build().expect("syntax error in static regex");
@@ -217,6 +218,7 @@ fn word_from_ident(ident: &str, pos: usize) -> Option<(&str, usize)> {
             None => return Some((ident, pos)),
             Some(x) => x,
         };
+
         // PascalCase -> Pascal
         if let Some(next_upper) = (&ident[second_pos..]).find(char::is_uppercase) {
             let res = &ident[..next_upper + second_pos];
@@ -226,6 +228,7 @@ fn word_from_ident(ident: &str, pos: usize) -> Option<(&str, usize)> {
 
     Some((ident, pos))
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;

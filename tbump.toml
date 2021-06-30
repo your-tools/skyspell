@@ -1,9 +1,6 @@
 [version]
 current = "0.4.0"
 
-# Example of a semver regexp.
-# Make sure this matches current_version before
-# using tbump
 regex = '''
   (?P<major>\d+)
   \.

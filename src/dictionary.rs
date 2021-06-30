@@ -8,8 +8,6 @@ pub trait Dictionary {
     fn lang(&self) -> &str;
 }
 
-// Note: we do *not* own the enchant::Broker struct in this
-// struct, because we need one Broker per thread
 pub struct EnchantDictionary {
     dict: enchant::Dict,
     lang: String,

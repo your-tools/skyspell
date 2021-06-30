@@ -484,6 +484,7 @@ mod tests {
 
         app.end();
     }
+
     #[test]
     fn test_adding_to_skipped_paths() {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();

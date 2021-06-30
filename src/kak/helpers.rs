@@ -92,7 +92,6 @@ pub(crate) fn get_previous_selection(
     let (cursor_line, cursor_col) = cursor;
     for range in ranges.iter().rev() {
         let &(start_line, _start_col, end_col) = range;
-
         if start_line > cursor_line {
             continue;
         }

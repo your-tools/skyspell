@@ -11,9 +11,11 @@ pub(crate) trait Repository {
     // Is the word in the global ignore list?
     fn is_ignored(&self, word: &str) -> Result<bool>;
 
+    // Add a new project
     fn new_project(&mut self, path: &Project) -> Result<()>;
+    // Check if a project exists
     fn project_exists(&self, path: &Project) -> Result<bool>;
-
+    // Create a project if it does not exist yet
     fn ensure_project(&mut self, path: &Project) -> Result<()> {
         if !self.project_exists(path)? {
             self.new_project(path)?;
@@ -73,27 +75,38 @@ pub(crate) trait Repository {
     }
 
     // Should this word be ignored?
+    // This is called when a word is *not* found in the spelling dictionary.
+    //
+    // A word is ignored if:
+    //   * it's in the global ignore list
+    //   * the relative path has an extension and it's in the ignore list
+    //     for this extension
+    //   * it's in the ignore list for the project
+    //   * it's in the ignore list for the relative path
+    //
+    // Otherwise, it's *not* ignored and the Checker will call handle_error()
+    //
     fn should_ignore(
         &self,
-        error: &str,
+        word: &str,
         project: &Project,
         relative_path: &RelativePath,
     ) -> Result<bool> {
-        if self.is_ignored(error)? {
+        if self.is_ignored(word)? {
             return Ok(true);
         }
 
         if let Some(e) = relative_path.extension() {
-            if self.is_ignored_for_extension(error, &e)? {
+            if self.is_ignored_for_extension(word, &e)? {
                 return Ok(true);
             }
         }
 
-        if self.is_ignored_for_project(error, project)? {
+        if self.is_ignored_for_project(word, project)? {
             return Ok(true);
         }
 
-        self.is_ignored_for_path(error, project, &relative_path)
+        self.is_ignored_for_path(word, project, &relative_path)
     }
 }
 
@@ -207,8 +220,8 @@ mod tests {
     }
 
     // Given an identifier and a block, generate a test
-    // for each implementation of the Repo trait
-    // (SQLRepository and FakeRepo)
+    // for each implementation of the Repository trait
+    // (SQLRepository and FakeRepository)
     macro_rules! make_tests {
         ($name:ident, ($repository:ident) => $test:block) => {
             paste! {

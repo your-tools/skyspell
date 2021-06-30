@@ -173,7 +173,6 @@ fn check(opts: CheckOpts) -> Result<()> {
     // kak_buflist may:
     //  * contain special buffers, like *debug*
     //  * use ~ for home dir
-    //  * need to be canonicalize
     let repository = open_repository()?;
     let home_dir = home_dir().ok_or_else(|| anyhow!("Could not get home directory"))?;
     let home_dir = home_dir
