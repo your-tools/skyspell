@@ -18,9 +18,7 @@ pub(crate) struct FakeRepository {
 
 impl FakeRepository {
     pub(crate) fn new() -> Self {
-        Self {
-            ..Default::default()
-        }
+        Default::default()
     }
 }
 
