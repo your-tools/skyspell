@@ -11,6 +11,8 @@ Filter mode (read stdin, write stdout)
 
 Write more tests for kak.rs
 
+If you are in a subpath of an existing project, don't create a new one!
+
 Undo?
 
 How to use in CI scripts?
