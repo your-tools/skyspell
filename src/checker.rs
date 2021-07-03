@@ -144,6 +144,10 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
         context: &Self::Context,
     ) -> Result<()> {
         let &(line, column) = context;
+        // The list of skipped paths may have changed
+        if self.should_skip(path)? {
+            return Ok(());
+        }
         if self.skipped.contains(error) {
             return Ok(());
         }
@@ -494,6 +498,8 @@ mod tests {
         app.handle_token("foo", "foo.py");
 
         assert!(app.is_skipped_path("foo.py"));
+
+        app.handle_token("bar", "foo.py");
 
         app.end();
     }
