@@ -16,7 +16,7 @@ What to do?
 
 => Added 'Redistributions' to the global ignore list
 
-foo.rs:32:0 2fn
+foo.rs:32:2 fn
 What to do?
 ...
 > e
