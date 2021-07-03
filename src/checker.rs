@@ -431,6 +431,7 @@ mod tests {
         app.handle_token("foo", "foo.txt");
 
         assert!(app.is_ignored("foo"));
+        app.handle_token("foo", "other.ext");
 
         app.end();
     }
@@ -445,6 +446,7 @@ mod tests {
         app.handle_token("defaultdict", "hello.py");
 
         assert!(app.is_ignored_for_extension("defaultdict", "py"));
+        app.handle_token("defaultdict", "bar.py");
 
         app.end();
     }
@@ -458,6 +460,7 @@ mod tests {
         app.handle_token("foo", "foo.py");
 
         assert!(app.is_ignored_for_project("foo"));
+        app.handle_token("foo", "foo.py");
 
         app.end()
     }
@@ -471,6 +474,7 @@ mod tests {
         app.handle_token("foo", "foo.py");
 
         assert!(app.is_ignored_for_path("foo", "foo.py"));
+        app.handle_token("foo", "foo.py");
 
         app.end()
     }
@@ -485,6 +489,7 @@ mod tests {
         app.handle_token("foo", "yarn.lock");
 
         assert!(app.is_skipped_file_name("yarn.lock"));
+        app.handle_token("bar", "yarn.lock");
 
         app.end();
     }
@@ -498,17 +503,11 @@ mod tests {
         app.handle_token("foo", "foo.py");
 
         assert!(app.is_skipped_path("foo.py"));
-
         app.handle_token("bar", "foo.py");
 
         app.end();
     }
 
-    /// Scenario:
-    /// * call handle_token with 'foo' error
-    /// * press 'x' - 'foo' token is skipped
-    /// * call handle_token again
-    /// * check that no more interaction took place
     #[test]
     fn test_remember_skipped_tokens() {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
@@ -518,24 +517,6 @@ mod tests {
 
         app.handle_token("foo", "foo.py");
         app.handle_token("foo", "foo.py");
-
-        app.end();
-    }
-
-    /// Scenario:
-    /// * call handle_token with 'abstractmethod' error
-    /// * press 'e' - 'abstractmethod' token is added to the ignore list for '.py' extensions
-    /// * call handle_token again
-    /// * check that no more interaction took place
-    #[test]
-    fn test_remember_extensions() {
-        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let mut app = TestApp::new(&temp_dir);
-        app.add_known(&["hello", "world"]);
-        app.push_text("e");
-
-        app.handle_token("abstractmethod", "foo.py");
-        app.handle_token("abstractmethod", "foo.py");
 
         app.end();
     }
