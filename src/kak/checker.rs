@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
 
-use crate::kak::helpers::Helper;
+use crate::kak::helpers::{KakouneIO, OperatingSystemIO};
 use crate::Checker;
 use crate::{Dictionary, Repository};
 use crate::{Project, RelativePath};
@@ -19,15 +19,15 @@ pub(crate) struct Error {
     token: String,
 }
 
-pub(crate) struct KakouneChecker<D: Dictionary, R: Repository> {
+pub(crate) struct KakouneChecker<D: Dictionary, R: Repository, S: OperatingSystemIO> {
     project: Project,
     dictionary: D,
     repository: R,
     errors: Vec<Error>,
-    helper: Helper,
+    helper: KakouneIO<S>,
 }
 
-impl<D: Dictionary, R: Repository> Checker for KakouneChecker<D, R> {
+impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChecker<D, R, S> {
     // bufname, line, column
     type Context = (String, usize, usize);
 
@@ -66,15 +66,20 @@ impl<D: Dictionary, R: Repository> Checker for KakouneChecker<D, R> {
     }
 }
 
-impl<D: Dictionary, R: Repository> KakouneChecker<D, R> {
-    pub(crate) fn new(project: Project, dictionary: D, mut repository: R) -> Result<Self> {
+impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S> {
+    pub(crate) fn new(
+        project: Project,
+        dictionary: D,
+        mut repository: R,
+        standard_io: S,
+    ) -> Result<Self> {
         repository.ensure_project(&project)?;
         Ok(Self {
             project,
             dictionary,
             repository,
             errors: vec![],
-            helper: Helper::new(),
+            helper: KakouneIO::new(standard_io),
         })
     }
 
@@ -177,11 +182,13 @@ impl<D: Dictionary, R: Repository> KakouneChecker<D, R> {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
 
     use super::*;
     use crate::tests::{FakeDictionary, FakeRepository};
     use std::path::Path;
+
+    use crate::kak::helpers::tests::FakeIO;
 
     #[test]
     fn test_insert_errors() {
@@ -196,7 +203,8 @@ mod tests {
         let project = Project::new(&Path::new(".")).unwrap();
         let dictionary = FakeDictionary::new();
         let repository = FakeRepository::new();
-        let checker = KakouneChecker::new(project, dictionary, repository).unwrap();
+        let interactor = FakeIO::new();
+        let checker = KakouneChecker::new(project, dictionary, repository, interactor).unwrap();
         checker.write_spelling_buffer(&mut buff, &[error]).unwrap();
         let actual = std::str::from_utf8(&buff).unwrap();
         let expected = r#"edit -scratch *spelling*
@@ -232,7 +240,8 @@ execute-keys \% <ret> d i %{/path/to/hello.js: 2.5,2.7 foo<ret>} <esc> gg
         let project = Project::new(&Path::new(".")).unwrap();
         let dictionary = FakeDictionary::new();
         let repository = FakeRepository::new();
-        let checker = KakouneChecker::new(project, dictionary, repository).unwrap();
+        let interacor = FakeIO::new();
+        let checker = KakouneChecker::new(project, dictionary, repository, interacor).unwrap();
         checker
             .write_ranges(&mut buff, 42, &[err1, err2, err3])
             .unwrap();

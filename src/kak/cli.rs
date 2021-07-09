@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::kak::helpers::Helper;
+use crate::kak::helpers::{KakouneIO, OperatingSystemIO};
 use crate::kak::KakouneChecker;
 use crate::sql_repository::SQLRepository;
 use crate::Checker;
@@ -21,6 +21,26 @@ use dirs_next::home_dir;
 pub(crate) struct Opts {
     #[clap(subcommand)]
     action: Action,
+}
+
+#[derive(Copy, Clone)]
+struct StandardIO;
+
+impl OperatingSystemIO for StandardIO {
+    fn get_env_var(&self, key: &str) -> Result<String> {
+        std::env::var(key).map_err(|_| anyhow!("{} not found in environment", key))
+    }
+
+    fn print(&self, text: &str) {
+        print!("{}", text);
+    }
+}
+
+type StdKakouneIO = KakouneIO<StandardIO>;
+
+fn new_helper() -> StdKakouneIO {
+    let io = StandardIO;
+    KakouneIO::new(io)
 }
 
 #[derive(Clap)]
@@ -87,13 +107,13 @@ struct LineSelection {
     selection: String,
 }
 
-fn open_repository(helper: &Helper) -> Result<SQLRepository> {
+fn open_repository(helper: &KakouneIO<StandardIO>) -> Result<SQLRepository> {
     let lang = helper.get_lang()?;
     SQLRepository::open(&lang)
 }
 
 fn parse_line_selection() -> Result<LineSelection> {
-    let helper = Helper::new();
+    let helper = new_helper();
     let line_selection = helper.get_selection()?;
     let (path, rest) = line_selection
         .split_once(": ")
@@ -109,7 +129,7 @@ fn parse_line_selection() -> Result<LineSelection> {
 }
 
 fn add_extension() -> Result<()> {
-    let helper = Helper::new();
+    let helper = new_helper();
     let LineSelection { path, word, .. } = &parse_line_selection()?;
     let (_, ext) = path
         .rsplit_once(".")
@@ -125,7 +145,7 @@ fn add_extension() -> Result<()> {
 }
 
 fn add_file() -> Result<()> {
-    let helper = Helper::new();
+    let helper = new_helper();
     let LineSelection { path, word, .. } = &parse_line_selection()?;
     let path = &Path::new(path);
     let project = helper.get_project()?;
@@ -141,7 +161,7 @@ fn add_file() -> Result<()> {
 }
 
 fn add_global() -> Result<()> {
-    let helper = Helper::new();
+    let helper = new_helper();
     let LineSelection { word, .. } = &parse_line_selection()?;
     let mut repository = open_repository(&helper)?;
     repository.ignore(word)?;
@@ -151,7 +171,7 @@ fn add_global() -> Result<()> {
 }
 
 fn add_project() -> Result<()> {
-    let helper = Helper::new();
+    let helper = new_helper();
     let LineSelection { word, .. } = &parse_line_selection()?;
     let project = helper.get_project()?;
     let mut repository = open_repository(&helper)?;
@@ -174,7 +194,8 @@ fn jump() -> Result<()> {
 }
 
 fn check(opts: CheckOpts) -> Result<()> {
-    let helper = Helper::new();
+    let interactor = StandardIO;
+    let helper = KakouneIO::new(interactor);
     let lang = helper.get_lang()?;
     let project = helper.get_project()?;
     let mut broker = enchant::Broker::new();
@@ -189,7 +210,7 @@ fn check(opts: CheckOpts) -> Result<()> {
     let home_dir = home_dir
         .to_str()
         .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
-    let mut checker = KakouneChecker::new(project, dictionary, repository)?;
+    let mut checker = KakouneChecker::new(project, dictionary, repository, interactor)?;
     for bufname in &opts.buflist {
         if bufname.starts_with('*') && bufname.ends_with('*') {
             continue;
@@ -230,7 +251,7 @@ enum Direction {
 }
 
 fn goto_error(opts: MoveOpts, direction: Direction) -> Result<()> {
-    let helper = Helper::new();
+    let helper = new_helper();
     let range_spec = opts.range_spec;
     let cursor = helper.get_cursor()?;
     let ranges = helper.parse_range_spec(&range_spec)?;
@@ -265,7 +286,7 @@ fn init() -> Result<()> {
 }
 
 fn skip_file() -> Result<()> {
-    let helper = Helper::new();
+    let helper = new_helper();
     let LineSelection { path, .. } = &parse_line_selection()?;
     // We know it's a full path thanks to handle_error in KakouneChecker
     let full_path = Path::new(path);
@@ -282,7 +303,7 @@ fn skip_file() -> Result<()> {
 }
 
 fn skip_name() -> Result<()> {
-    let helper = Helper::new();
+    let helper = new_helper();
     let LineSelection { path, .. } = &parse_line_selection()?;
     let path = Path::new(path);
     let file_name = path
@@ -299,7 +320,7 @@ fn skip_name() -> Result<()> {
 }
 
 fn suggest() -> Result<()> {
-    let helper = Helper::new();
+    let helper = new_helper();
     let lang = &helper.get_lang()?;
     let word = &helper.get_selection()?;
     let mut broker = enchant::Broker::new();
