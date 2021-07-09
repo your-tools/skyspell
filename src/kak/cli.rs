@@ -38,7 +38,7 @@ impl OperatingSystemIO for StandardIO {
 
 type StdKakouneIO = KakouneIO<StandardIO>;
 
-fn new_helper() -> StdKakouneIO {
+fn new_kakoune_io() -> StdKakouneIO {
     let io = StandardIO;
     KakouneIO::new(io)
 }
@@ -107,14 +107,14 @@ struct LineSelection {
     selection: String,
 }
 
-fn open_repository(helper: &KakouneIO<StandardIO>) -> Result<SQLRepository> {
-    let lang = helper.get_lang()?;
+fn open_repository(kakoune_io: &KakouneIO<StandardIO>) -> Result<SQLRepository> {
+    let lang = kakoune_io.get_lang()?;
     SQLRepository::open(&lang)
 }
 
 fn parse_line_selection() -> Result<LineSelection> {
-    let helper = new_helper();
-    let line_selection = helper.get_selection()?;
+    let kakoune_io = new_kakoune_io();
+    let line_selection = kakoune_io.get_selection()?;
     let (path, rest) = line_selection
         .split_once(": ")
         .with_context(|| "line selection should contain :")?;
@@ -129,12 +129,12 @@ fn parse_line_selection() -> Result<LineSelection> {
 }
 
 fn add_extension() -> Result<()> {
-    let helper = new_helper();
+    let kakoune_io = new_kakoune_io();
     let LineSelection { path, word, .. } = &parse_line_selection()?;
     let (_, ext) = path
         .rsplit_once(".")
         .ok_or_else(|| anyhow!("File has no extension"))?;
-    let mut repository = open_repository(&helper)?;
+    let mut repository = open_repository(&kakoune_io)?;
     repository.ignore_for_extension(word, ext)?;
     kak_recheck();
     println!(
@@ -145,12 +145,12 @@ fn add_extension() -> Result<()> {
 }
 
 fn add_file() -> Result<()> {
-    let helper = new_helper();
+    let kakoune_io = new_kakoune_io();
     let LineSelection { path, word, .. } = &parse_line_selection()?;
     let path = &Path::new(path);
-    let project = helper.get_project()?;
+    let project = kakoune_io.get_project()?;
     let relative_path = RelativePath::new(&project, path)?;
-    let mut repository = open_repository(&helper)?;
+    let mut repository = open_repository(&kakoune_io)?;
     repository.ignore_for_path(word, &project, &relative_path)?;
     kak_recheck();
     println!(
@@ -161,9 +161,9 @@ fn add_file() -> Result<()> {
 }
 
 fn add_global() -> Result<()> {
-    let helper = new_helper();
+    let kakoune_io = new_kakoune_io();
     let LineSelection { word, .. } = &parse_line_selection()?;
-    let mut repository = open_repository(&helper)?;
+    let mut repository = open_repository(&kakoune_io)?;
     repository.ignore(word)?;
     kak_recheck();
     println!("echo '\"{}\" added to global ignore list'", word);
@@ -171,10 +171,10 @@ fn add_global() -> Result<()> {
 }
 
 fn add_project() -> Result<()> {
-    let helper = new_helper();
+    let kakoune_io = new_kakoune_io();
     let LineSelection { word, .. } = &parse_line_selection()?;
-    let project = helper.get_project()?;
-    let mut repository = open_repository(&helper)?;
+    let project = kakoune_io.get_project()?;
+    let mut repository = open_repository(&kakoune_io)?;
     repository.ignore_for_project(word, &project)?;
     kak_recheck();
     println!(
@@ -195,9 +195,9 @@ fn jump() -> Result<()> {
 
 fn check(opts: CheckOpts) -> Result<()> {
     let interactor = StandardIO;
-    let helper = KakouneIO::new(interactor);
-    let lang = helper.get_lang()?;
-    let project = helper.get_project()?;
+    let kakoune_io = KakouneIO::new(interactor);
+    let lang = kakoune_io.get_lang()?;
+    let project = kakoune_io.get_project()?;
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, &lang)?;
 
@@ -205,7 +205,7 @@ fn check(opts: CheckOpts) -> Result<()> {
     // kak_buflist may:
     //  * contain special buffers, like *debug*
     //  * use ~ for home dir
-    let repository = open_repository(&helper)?;
+    let repository = open_repository(&kakoune_io)?;
     let home_dir = home_dir().ok_or_else(|| anyhow!("Could not get home directory"))?;
     let home_dir = home_dir
         .to_str()
@@ -251,13 +251,13 @@ enum Direction {
 }
 
 fn goto_error(opts: MoveOpts, direction: Direction) -> Result<()> {
-    let helper = new_helper();
+    let kakoune_io = new_kakoune_io();
     let range_spec = opts.range_spec;
-    let cursor = helper.get_cursor()?;
-    let ranges = helper.parse_range_spec(&range_spec)?;
+    let cursor = kakoune_io.get_cursor()?;
+    let ranges = kakoune_io.parse_range_spec(&range_spec)?;
     let new_range = match direction {
-        Direction::Forward => helper.get_next_selection(cursor, &ranges),
-        Direction::Backward => helper.get_previous_selection(cursor, &ranges),
+        Direction::Forward => kakoune_io.get_next_selection(cursor, &ranges),
+        Direction::Backward => kakoune_io.get_previous_selection(cursor, &ranges),
     };
     let (line, start, end) = match new_range {
         None => return Ok(()),
@@ -286,15 +286,15 @@ fn init() -> Result<()> {
 }
 
 fn skip_file() -> Result<()> {
-    let helper = new_helper();
+    let kakoune_io = new_kakoune_io();
     let LineSelection { path, .. } = &parse_line_selection()?;
     // We know it's a full path thanks to handle_error in KakouneChecker
     let full_path = Path::new(path);
-    let project = helper.get_project()?;
+    let project = kakoune_io.get_project()?;
 
     let relative_path = RelativePath::new(&project, &full_path)?;
 
-    let mut repository = open_repository(&helper)?;
+    let mut repository = open_repository(&kakoune_io)?;
     repository.skip_path(&project, &relative_path)?;
 
     kak_recheck();
@@ -303,7 +303,7 @@ fn skip_file() -> Result<()> {
 }
 
 fn skip_name() -> Result<()> {
-    let helper = new_helper();
+    let kakoune_io = new_kakoune_io();
     let LineSelection { path, .. } = &parse_line_selection()?;
     let path = Path::new(path);
     let file_name = path
@@ -311,7 +311,7 @@ fn skip_name() -> Result<()> {
         .with_context(|| "no file name")?
         .to_string_lossy();
 
-    let mut repository = open_repository(&helper)?;
+    let mut repository = open_repository(&kakoune_io)?;
     repository.skip_file_name(&file_name)?;
 
     kak_recheck();
@@ -320,9 +320,9 @@ fn skip_name() -> Result<()> {
 }
 
 fn suggest() -> Result<()> {
-    let helper = new_helper();
-    let lang = &helper.get_lang()?;
-    let word = &helper.get_selection()?;
+    let kakoune_io = new_kakoune_io();
+    let lang = &kakoune_io.get_lang()?;
+    let word = &kakoune_io.get_selection()?;
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, lang)?;
     if dictionary.check(word)? {

@@ -24,7 +24,7 @@ pub(crate) struct KakouneChecker<D: Dictionary, R: Repository, S: OperatingSyste
     dictionary: D,
     repository: R,
     errors: Vec<Error>,
-    helper: KakouneIO<S>,
+    kakoune_io: KakouneIO<S>,
 }
 
 impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChecker<D, R, S> {
@@ -71,7 +71,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
         project: Project,
         dictionary: D,
         mut repository: R,
-        standard_io: S,
+        os_io: S,
     ) -> Result<Self> {
         repository.ensure_project(&project)?;
         Ok(Self {
@@ -79,7 +79,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
             dictionary,
             repository,
             errors: vec![],
-            helper: KakouneIO::new(standard_io),
+            kakoune_io: KakouneIO::new(os_io),
         })
     }
 
@@ -92,7 +92,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
             .map_err(|_| anyhow!("could not parse kak_timestamp has a positive integer"))?;
 
         self.write_spelling_buffer(f, &self.errors)?;
-        self.helper.goto_previous_buffer();
+        self.kakoune_io.goto_previous_buffer();
         self.write_ranges(f, kak_timestamp, &self.errors)?;
         self.write_status(f, &self.errors)?;
 
@@ -108,7 +108,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
     }
 
     fn write_status(&self, f: &mut impl Write, errors: &[Error]) -> Result<()> {
-        let project = self.helper.get_project()?;
+        let project = self.kakoune_io.get_project()?;
         match errors.len() {
             0 => write!(f, "echo -markup {}: {{green}}No spelling errors", project),
             1 => write!(f, "echo -markup {}: {{red}}1 spelling error", project),

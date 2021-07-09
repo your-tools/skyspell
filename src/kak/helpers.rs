@@ -188,31 +188,31 @@ pub(crate) mod tests {
         }
     }
 
-    fn new_helper() -> FakeKakouneIO {
+    fn new_fake_io() -> FakeKakouneIO {
         let interactor = FakeIO::new();
         KakouneIO::new(interactor)
     }
 
     #[test]
     fn test_get_previous_selection() {
-        let helper = new_helper();
+        let kakoune_io = new_fake_io();
         let pos = (1, 21);
         let ranges = [(1, 12, 19), (2, 19, 27)];
-        let actual = helper.get_previous_selection(pos, &ranges).unwrap();
+        let actual = kakoune_io.get_previous_selection(pos, &ranges).unwrap();
         assert_eq!(actual, &(1, 12, 19));
     }
 
     #[test]
     fn test_get_selection() {
-        let helper = new_helper();
-        let err = helper.get_selection().unwrap_err();
+        let kakoune_io = new_fake_io();
+        let err = kakoune_io.get_selection().unwrap_err();
         assert_eq!(err.to_string(), "No such key: kak_selection");
     }
 
     #[test]
     fn test_goto_previous_buffer() {
-        let helper = new_helper();
-        helper.goto_previous_buffer();
-        assert_eq!(helper.get_output(), "execute-keys ga\n");
+        let kakoune_io = new_fake_io();
+        kakoune_io.goto_previous_buffer();
+        assert_eq!(kakoune_io.get_output(), "execute-keys ga\n");
     }
 }
