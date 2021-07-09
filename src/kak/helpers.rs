@@ -3,7 +3,6 @@ use anyhow::{anyhow, Context, Result};
 use std::path::PathBuf;
 
 use crate::kak::checker::{SKYSPELL_LANG_OPT, SKYSPELL_PROJECT_OPT};
-use crate::sql_repository::SQLRepository;
 use crate::Project;
 
 #[derive(Default)]
@@ -138,11 +137,6 @@ impl Helper {
 
     pub(crate) fn get_lang(&self) -> Result<String> {
         self.get_option(SKYSPELL_LANG_OPT)
-    }
-
-    pub(crate) fn open_repository(&self) -> Result<SQLRepository> {
-        let lang = self.get_lang()?;
-        SQLRepository::open(&lang)
     }
 }
 

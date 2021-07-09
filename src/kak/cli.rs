@@ -2,6 +2,7 @@ use std::path::Path;
 
 use crate::kak::helpers::Helper;
 use crate::kak::KakouneChecker;
+use crate::sql_repository::SQLRepository;
 use crate::Checker;
 use crate::EnchantDictionary;
 use crate::RelativePath;
@@ -86,6 +87,11 @@ struct LineSelection {
     selection: String,
 }
 
+fn open_repository(helper: &Helper) -> Result<SQLRepository> {
+    let lang = helper.get_lang()?;
+    SQLRepository::open(&lang)
+}
+
 fn parse_line_selection() -> Result<LineSelection> {
     let helper = Helper::new();
     let line_selection = helper.get_selection()?;
@@ -108,7 +114,7 @@ fn add_extension() -> Result<()> {
     let (_, ext) = path
         .rsplit_once(".")
         .ok_or_else(|| anyhow!("File has no extension"))?;
-    let mut repository = helper.open_repository()?;
+    let mut repository = open_repository(&helper)?;
     repository.ignore_for_extension(word, ext)?;
     kak_recheck();
     println!(
@@ -124,7 +130,7 @@ fn add_file() -> Result<()> {
     let path = &Path::new(path);
     let project = helper.get_project()?;
     let relative_path = RelativePath::new(&project, path)?;
-    let mut repository = helper.open_repository()?;
+    let mut repository = open_repository(&helper)?;
     repository.ignore_for_path(word, &project, &relative_path)?;
     kak_recheck();
     println!(
@@ -137,7 +143,7 @@ fn add_file() -> Result<()> {
 fn add_global() -> Result<()> {
     let helper = Helper::new();
     let LineSelection { word, .. } = &parse_line_selection()?;
-    let mut repository = helper.open_repository()?;
+    let mut repository = open_repository(&helper)?;
     repository.ignore(word)?;
     kak_recheck();
     println!("echo '\"{}\" added to global ignore list'", word);
@@ -148,7 +154,7 @@ fn add_project() -> Result<()> {
     let helper = Helper::new();
     let LineSelection { word, .. } = &parse_line_selection()?;
     let project = helper.get_project()?;
-    let mut repository = helper.open_repository()?;
+    let mut repository = open_repository(&helper)?;
     repository.ignore_for_project(word, &project)?;
     kak_recheck();
     println!(
@@ -178,7 +184,7 @@ fn check(opts: CheckOpts) -> Result<()> {
     // kak_buflist may:
     //  * contain special buffers, like *debug*
     //  * use ~ for home dir
-    let repository = helper.open_repository()?;
+    let repository = open_repository(&helper)?;
     let home_dir = home_dir().ok_or_else(|| anyhow!("Could not get home directory"))?;
     let home_dir = home_dir
         .to_str()
@@ -267,7 +273,7 @@ fn skip_file() -> Result<()> {
 
     let relative_path = RelativePath::new(&project, &full_path)?;
 
-    let mut repository = helper.open_repository()?;
+    let mut repository = open_repository(&helper)?;
     repository.skip_path(&project, &relative_path)?;
 
     kak_recheck();
@@ -284,7 +290,7 @@ fn skip_name() -> Result<()> {
         .with_context(|| "no file name")?
         .to_string_lossy();
 
-    let mut repository = helper.open_repository()?;
+    let mut repository = open_repository(&helper)?;
     repository.skip_file_name(&file_name)?;
 
     kak_recheck();
