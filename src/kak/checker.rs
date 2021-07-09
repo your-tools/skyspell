@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
 
-use crate::kak::helpers::{KakouneIO, OperatingSystemIO};
+use crate::kak::io::{KakouneIO, OperatingSystemIO};
 use crate::Checker;
 use crate::{Dictionary, Repository};
 use crate::{Project, RelativePath};
@@ -185,10 +185,11 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
 pub mod tests {
 
     use super::*;
-    use crate::tests::{FakeDictionary, FakeRepository};
-    use std::path::Path;
 
-    use crate::kak::helpers::tests::FakeIO;
+    use crate::kak::io::tests::FakeIO;
+    use crate::tests::{FakeDictionary, FakeRepository};
+
+    use std::path::Path;
 
     #[test]
     fn test_insert_errors() {
@@ -240,8 +241,8 @@ execute-keys \% <ret> d i %{/path/to/hello.js: 2.5,2.7 foo<ret>} <esc> gg
         let project = Project::new(&Path::new(".")).unwrap();
         let dictionary = FakeDictionary::new();
         let repository = FakeRepository::new();
-        let interacor = FakeIO::new();
-        let checker = KakouneChecker::new(project, dictionary, repository, interacor).unwrap();
+        let io = FakeIO::new();
+        let checker = KakouneChecker::new(project, dictionary, repository, io).unwrap();
         checker
             .write_ranges(&mut buff, 42, &[err1, err2, err3])
             .unwrap();

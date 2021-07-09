@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::kak::helpers::{KakouneIO, OperatingSystemIO};
+use crate::kak::io::{KakouneIO, OperatingSystemIO};
 use crate::kak::KakouneChecker;
 use crate::sql_repository::SQLRepository;
 use crate::Checker;
@@ -12,10 +12,9 @@ use anyhow::{anyhow, Context, Result};
 use clap::Clap;
 use dirs_next::home_dir;
 
-// Warning: most of the things written to stdout while this code
-// is called will be interpreted as a Kakoune command.
-
-// Use the debug() function in crate::kak::helpers for instead of dbg! or println!
+// Warning: most of the things written to stdout while this code is
+// called will be interpreted as a Kakoune command. Use the debug()
+// function in crate::kak::io for debugging instead of dbg! or println!
 
 #[derive(Clap)]
 pub(crate) struct Opts {
