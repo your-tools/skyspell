@@ -1,4 +1,8 @@
-Check coverage with tarpaulin
+Improve coverage for the kakoune integration
+  Remove usage of print and write
+  Add more tests
+  Possibly integration tests for src/kak/cli.rs ?
+
 
 Fix processing \newpage for Latex
 (it finds that 'ewpage' is an error)
