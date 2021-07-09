@@ -1,7 +1,6 @@
 use std::path::Path;
 
-use crate::kak::checker::open_repository;
-use crate::kak::helpers::*;
+use crate::kak::helpers::Helper;
 use crate::kak::KakouneChecker;
 use crate::Checker;
 use crate::EnchantDictionary;
@@ -88,7 +87,8 @@ struct LineSelection {
 }
 
 fn parse_line_selection() -> Result<LineSelection> {
-    let line_selection = get_selection()?;
+    let helper = Helper::new();
+    let line_selection = helper.get_selection()?;
     let (path, rest) = line_selection
         .split_once(": ")
         .with_context(|| "line selection should contain :")?;
@@ -103,11 +103,12 @@ fn parse_line_selection() -> Result<LineSelection> {
 }
 
 fn add_extension() -> Result<()> {
+    let helper = Helper::new();
     let LineSelection { path, word, .. } = &parse_line_selection()?;
     let (_, ext) = path
         .rsplit_once(".")
         .ok_or_else(|| anyhow!("File has no extension"))?;
-    let mut repository = open_repository()?;
+    let mut repository = helper.open_repository()?;
     repository.ignore_for_extension(word, ext)?;
     kak_recheck();
     println!(
@@ -118,11 +119,12 @@ fn add_extension() -> Result<()> {
 }
 
 fn add_file() -> Result<()> {
+    let helper = Helper::new();
     let LineSelection { path, word, .. } = &parse_line_selection()?;
     let path = &Path::new(path);
-    let project = get_project()?;
+    let project = helper.get_project()?;
     let relative_path = RelativePath::new(&project, path)?;
-    let mut repository = open_repository()?;
+    let mut repository = helper.open_repository()?;
     repository.ignore_for_path(word, &project, &relative_path)?;
     kak_recheck();
     println!(
@@ -133,8 +135,9 @@ fn add_file() -> Result<()> {
 }
 
 fn add_global() -> Result<()> {
+    let helper = Helper::new();
     let LineSelection { word, .. } = &parse_line_selection()?;
-    let mut repository = open_repository()?;
+    let mut repository = helper.open_repository()?;
     repository.ignore(word)?;
     kak_recheck();
     println!("echo '\"{}\" added to global ignore list'", word);
@@ -142,9 +145,10 @@ fn add_global() -> Result<()> {
 }
 
 fn add_project() -> Result<()> {
+    let helper = Helper::new();
     let LineSelection { word, .. } = &parse_line_selection()?;
-    let project = get_project()?;
-    let mut repository = open_repository()?;
+    let project = helper.get_project()?;
+    let mut repository = helper.open_repository()?;
     repository.ignore_for_project(word, &project)?;
     kak_recheck();
     println!(
@@ -164,8 +168,9 @@ fn jump() -> Result<()> {
 }
 
 fn check(opts: CheckOpts) -> Result<()> {
-    let lang = get_lang()?;
-    let project = get_project()?;
+    let helper = Helper::new();
+    let lang = helper.get_lang()?;
+    let project = helper.get_project()?;
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, &lang)?;
 
@@ -173,7 +178,7 @@ fn check(opts: CheckOpts) -> Result<()> {
     // kak_buflist may:
     //  * contain special buffers, like *debug*
     //  * use ~ for home dir
-    let repository = open_repository()?;
+    let repository = helper.open_repository()?;
     let home_dir = home_dir().ok_or_else(|| anyhow!("Could not get home directory"))?;
     let home_dir = home_dir
         .to_str()
@@ -219,12 +224,13 @@ enum Direction {
 }
 
 fn goto_error(opts: MoveOpts, direction: Direction) -> Result<()> {
+    let helper = Helper::new();
     let range_spec = opts.range_spec;
-    let cursor = get_cursor()?;
-    let ranges = parse_range_spec(&range_spec)?;
+    let cursor = helper.get_cursor()?;
+    let ranges = helper.parse_range_spec(&range_spec)?;
     let new_range = match direction {
-        Direction::Forward => get_next_selection(cursor, &ranges),
-        Direction::Backward => get_previous_selection(cursor, &ranges),
+        Direction::Forward => helper.get_next_selection(cursor, &ranges),
+        Direction::Backward => helper.get_previous_selection(cursor, &ranges),
     };
     let (line, start, end) = match new_range {
         None => return Ok(()),
@@ -253,14 +259,15 @@ fn init() -> Result<()> {
 }
 
 fn skip_file() -> Result<()> {
+    let helper = Helper::new();
     let LineSelection { path, .. } = &parse_line_selection()?;
     // We know it's a full path thanks to handle_error in KakouneChecker
     let full_path = Path::new(path);
-    let project = get_project()?;
+    let project = helper.get_project()?;
 
     let relative_path = RelativePath::new(&project, &full_path)?;
 
-    let mut repository = open_repository()?;
+    let mut repository = helper.open_repository()?;
     repository.skip_path(&project, &relative_path)?;
 
     kak_recheck();
@@ -269,6 +276,7 @@ fn skip_file() -> Result<()> {
 }
 
 fn skip_name() -> Result<()> {
+    let helper = Helper::new();
     let LineSelection { path, .. } = &parse_line_selection()?;
     let path = Path::new(path);
     let file_name = path
@@ -276,7 +284,7 @@ fn skip_name() -> Result<()> {
         .with_context(|| "no file name")?
         .to_string_lossy();
 
-    let mut repository = open_repository()?;
+    let mut repository = helper.open_repository()?;
     repository.skip_file_name(&file_name)?;
 
     kak_recheck();
@@ -285,8 +293,9 @@ fn skip_name() -> Result<()> {
 }
 
 fn suggest() -> Result<()> {
-    let lang = &get_lang()?;
-    let word = &get_selection()?;
+    let helper = Helper::new();
+    let lang = &helper.get_lang()?;
+    let word = &helper.get_selection()?;
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, lang)?;
     if dictionary.check(word)? {

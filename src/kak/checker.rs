@@ -4,23 +4,13 @@ use std::path::PathBuf;
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
 
-use crate::kak::helpers::*;
+use crate::kak::helpers::Helper;
 use crate::Checker;
-use crate::SQLRepository;
 use crate::{Dictionary, Repository};
 use crate::{Project, RelativePath};
 
 pub(crate) const SKYSPELL_LANG_OPT: &str = "skyspell_lang";
 pub(crate) const SKYSPELL_PROJECT_OPT: &str = "skyspell_project";
-
-pub(crate) fn get_lang() -> Result<String> {
-    get_option(SKYSPELL_LANG_OPT)
-}
-
-pub(crate) fn open_repository() -> Result<crate::SQLRepository> {
-    let lang = get_lang()?;
-    SQLRepository::open(&lang)
-}
 
 pub(crate) struct Error {
     pos: (usize, usize),
@@ -34,6 +24,7 @@ pub(crate) struct KakouneChecker<D: Dictionary, R: Repository> {
     dictionary: D,
     repository: R,
     errors: Vec<Error>,
+    helper: Helper,
 }
 
 impl<D: Dictionary, R: Repository> Checker for KakouneChecker<D, R> {
@@ -83,6 +74,7 @@ impl<D: Dictionary, R: Repository> KakouneChecker<D, R> {
             dictionary,
             repository,
             errors: vec![],
+            helper: Helper::new(),
         })
     }
 
@@ -94,10 +86,10 @@ impl<D: Dictionary, R: Repository> KakouneChecker<D, R> {
             .parse::<usize>()
             .map_err(|_| anyhow!("could not parse kak_timestamp has a positive integer"))?;
 
-        write_spelling_buffer(f, &self.errors)?;
-        goto_previous_buffer();
-        write_ranges(f, kak_timestamp, &self.errors)?;
-        write_status(f, &self.errors)?;
+        self.write_spelling_buffer(f, &self.errors)?;
+        self.helper.goto_previous_buffer();
+        self.write_ranges(f, kak_timestamp, &self.errors)?;
+        self.write_status(f, &self.errors)?;
 
         Ok(())
     }
@@ -109,85 +101,87 @@ impl<D: Dictionary, R: Repository> KakouneChecker<D, R> {
 
         Ok(())
     }
-}
 
-fn write_status(f: &mut impl Write, errors: &[Error]) -> Result<()> {
-    let project = get_project()?;
-    match errors.len() {
-        0 => write!(f, "echo -markup {}: {{green}}No spelling errors", project),
-        1 => write!(f, "echo -markup {}: {{red}}1 spelling error", project),
-        n => write!(f, "echo -markup {}: {{red}}{} Spelling errors", project, n,),
-    }?;
-    Ok(())
-}
-
-fn write_spelling_buffer(f: &mut impl Write, errors: &[Error]) -> Result<()> {
-    // Open buffer
-    writeln!(f, "edit -scratch *spelling*")?;
-
-    // Delete everything
-    write!(f, r"execute-keys \% <ret> d ")?;
-
-    // Insert all errors
-    write!(f, "i %{{")?;
-
-    for error in errors.iter() {
-        write_error(f, error)?;
-        write!(f, "<ret>")?;
+    fn write_status(&self, f: &mut impl Write, errors: &[Error]) -> Result<()> {
+        let project = self.helper.get_project()?;
+        match errors.len() {
+            0 => write!(f, "echo -markup {}: {{green}}No spelling errors", project),
+            1 => write!(f, "echo -markup {}: {{red}}1 spelling error", project),
+            n => write!(f, "echo -markup {}: {{red}}{} Spelling errors", project, n,),
+        }?;
+        Ok(())
     }
-    write!(f, "}} ")?;
 
-    // Back to top
-    writeln!(f, "<esc> gg")?;
-    Ok(())
-}
+    fn write_spelling_buffer(&self, f: &mut impl Write, errors: &[Error]) -> Result<()> {
+        // Open buffer
+        writeln!(f, "edit -scratch *spelling*")?;
 
-fn write_error(f: &mut impl Write, error: &Error) -> Result<()> {
-    let Error {
-        pos, token, path, ..
-    } = error;
-    let (line, start) = pos;
-    let end = start + token.len();
-    write!(
-        f,
-        "{}: {}.{},{}.{} {}",
-        path.display(),
-        line,
-        start + 1,
-        line,
-        end,
-        token
-    )?;
-    Ok(())
-}
+        // Delete everything
+        write!(f, r"execute-keys \% <ret> d ")?;
 
-fn write_ranges(f: &mut impl Write, timestamp: usize, errors: &[Error]) -> Result<()> {
-    for (buffer, group) in &errors.iter().group_by(|e| &e.buffer) {
+        // Insert all errors
+        write!(f, "i %{{")?;
+
+        for error in errors.iter() {
+            self.write_error(f, error)?;
+            write!(f, "<ret>")?;
+        }
+        write!(f, "}} ")?;
+
+        // Back to top
+        writeln!(f, "<esc> gg")?;
+        Ok(())
+    }
+
+    fn write_error(&self, f: &mut impl Write, error: &Error) -> Result<()> {
+        let Error {
+            pos, token, path, ..
+        } = error;
+        let (line, start) = pos;
+        let end = start + token.len();
         write!(
             f,
-            "set-option buffer={} spell_errors {} ",
-            buffer, timestamp
+            "{}: {}.{},{}.{} {}",
+            path.display(),
+            line,
+            start + 1,
+            line,
+            end,
+            token
         )?;
-        for error in group {
-            write_error_range(f, error)?;
-            write!(f, " ")?;
-        }
-        writeln!(f)?;
+        Ok(())
     }
-    Ok(())
-}
 
-fn write_error_range(f: &mut impl Write, error: &Error) -> Result<()> {
-    let Error { pos, token, .. } = error;
-    let (line, start) = pos;
-    write!(f, "{}.{}+{}|Error", line, start + 1, token.len())?;
-    Ok(())
+    fn write_ranges(&self, f: &mut impl Write, timestamp: usize, errors: &[Error]) -> Result<()> {
+        for (buffer, group) in &errors.iter().group_by(|e| &e.buffer) {
+            write!(
+                f,
+                "set-option buffer={} spell_errors {} ",
+                buffer, timestamp
+            )?;
+            for error in group {
+                self.write_error_range(f, error)?;
+                write!(f, " ")?;
+            }
+            writeln!(f)?;
+        }
+        Ok(())
+    }
+
+    fn write_error_range(&self, f: &mut impl Write, error: &Error) -> Result<()> {
+        let Error { pos, token, .. } = error;
+        let (line, start) = pos;
+        write!(f, "{}.{}+{}|Error", line, start + 1, token.len())?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
+    use crate::tests::{FakeDictionary, FakeRepository};
+    use std::path::Path;
 
     #[test]
     fn test_insert_errors() {
@@ -199,7 +193,11 @@ mod tests {
         };
 
         let mut buff: Vec<u8> = vec![];
-        write_spelling_buffer(&mut buff, &[error]).unwrap();
+        let project = Project::new(&Path::new(".")).unwrap();
+        let dictionary = FakeDictionary::new();
+        let repository = FakeRepository::new();
+        let checker = KakouneChecker::new(project, dictionary, repository).unwrap();
+        checker.write_spelling_buffer(&mut buff, &[error]).unwrap();
         let actual = std::str::from_utf8(&buff).unwrap();
         let expected = r#"edit -scratch *spelling*
 execute-keys \% <ret> d i %{/path/to/hello.js: 2.5,2.7 foo<ret>} <esc> gg
@@ -231,7 +229,13 @@ execute-keys \% <ret> d i %{/path/to/hello.js: 2.5,2.7 foo<ret>} <esc> gg
         };
 
         let mut buff: Vec<u8> = vec![];
-        write_ranges(&mut buff, 42, &[err1, err2, err3]).unwrap();
+        let project = Project::new(&Path::new(".")).unwrap();
+        let dictionary = FakeDictionary::new();
+        let repository = FakeRepository::new();
+        let checker = KakouneChecker::new(project, dictionary, repository).unwrap();
+        checker
+            .write_ranges(&mut buff, 42, &[err1, err2, err3])
+            .unwrap();
         let actual = std::str::from_utf8(&buff).unwrap();
         let expected = "\
 set-option buffer=foo.js spell_errors 42 2.5+3|Error 3.7+3|Error \n\
