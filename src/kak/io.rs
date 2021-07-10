@@ -187,7 +187,7 @@ pub(crate) mod tests {
 
         pub(crate) fn set_option(&mut self, key: &str, value: &str) {
             let key = format!("kak_opt_{}", key);
-            self.os_io.env.insert(key.to_string(), value.to_string());
+            self.os_io.env.insert(key, value.to_string());
         }
 
         pub(crate) fn set_selection(&mut self, text: &str) {
