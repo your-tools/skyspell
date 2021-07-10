@@ -1,10 +1,5 @@
 use anyhow::{anyhow, Context, Result};
 
-use std::path::PathBuf;
-
-use crate::kak::checker::{SKYSPELL_LANG_OPT, SKYSPELL_PROJECT_OPT};
-use crate::Project;
-
 pub(crate) trait OperatingSystemIO {
     fn get_env_var(&self, key: &str) -> Result<String>;
     fn print(&self, text: &str);
@@ -46,12 +41,6 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
 
     pub(crate) fn get_selection(&self) -> Result<String> {
         self.get_variable("kak_selection")
-    }
-
-    pub(crate) fn get_project(&self) -> Result<Project> {
-        let as_str = self.get_option(SKYSPELL_PROJECT_OPT)?;
-        let path = PathBuf::from(as_str);
-        Project::new(&path)
     }
 
     pub(crate) fn goto_previous_buffer(&self) {
@@ -140,10 +129,6 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
         // If we reach there, return the first error (auto-wrap)
         ranges.iter().next()
     }
-
-    pub(crate) fn get_lang(&self) -> Result<String> {
-        self.get_option(SKYSPELL_LANG_OPT)
-    }
 }
 
 #[cfg(test)]
@@ -151,7 +136,6 @@ pub(crate) mod tests {
     use super::*;
     use std::cell::RefCell;
     use std::collections::HashMap;
-    use std::path::Path;
 
     pub(crate) struct FakeIO {
         env: HashMap<String, String>,
@@ -199,11 +183,6 @@ pub(crate) mod tests {
 
         fn set_selection(&mut self, text: &str) {
             self.set_env_var("kak_selection", text)
-        }
-
-        fn set_project(&mut self, path: &Path) {
-            let project = Project::new(path).unwrap();
-            self.set_option("skyspell_project", &project.as_str());
         }
 
         fn set_cursor(&mut self, line: usize, column: usize) {
@@ -306,22 +285,6 @@ pub(crate) mod tests {
         kakoune_io.set_selection("selected text");
         let actual = kakoune_io.get_selection().unwrap();
         assert_eq!(actual, "selected text");
-    }
-
-    #[test]
-    fn test_get_project_missing_key() {
-        let kakoune_io = new_fake_io();
-        let err = kakoune_io.get_project().unwrap_err();
-        assert_eq!(err.to_string(), "No such key: kak_opt_skyspell_project");
-    }
-
-    #[test]
-    fn test_get_project_set_in_fake() {
-        let mut kakoune_io = new_fake_io();
-        let test_path = Path::new(".");
-        kakoune_io.set_project(test_path);
-        let actual = kakoune_io.get_project().unwrap();
-        assert_eq!(actual.path(), std::fs::canonicalize(test_path).unwrap());
     }
 
     #[test]

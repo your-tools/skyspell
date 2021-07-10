@@ -1,16 +1,19 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
+use anyhow::{anyhow, Context, Result};
+use clap::Clap;
+use dirs_next::home_dir;
+
+use crate::kak::checker::{SKYSPELL_LANG_OPT, SKYSPELL_PROJECT_OPT};
 use crate::kak::io::{KakouneIO, OperatingSystemIO};
 use crate::kak::KakouneChecker;
 use crate::sql_repository::SQLRepository;
 use crate::Checker;
 use crate::EnchantDictionary;
+use crate::Project;
 use crate::RelativePath;
 use crate::TokenProcessor;
 use crate::{Dictionary, Repository};
-use anyhow::{anyhow, Context, Result};
-use clap::Clap;
-use dirs_next::home_dir;
 
 // Warning: most of the things written to stdout while this code is
 // called will be interpreted as a Kakoune command. Use the debug()
@@ -106,9 +109,19 @@ struct LineSelection {
     selection: String,
 }
 
-fn open_repository(kakoune_io: &KakouneIO<StandardIO>) -> Result<SQLRepository> {
-    let lang = kakoune_io.get_lang()?;
+fn get_lang(io: &StdKakouneIO) -> Result<String> {
+    io.get_option(SKYSPELL_LANG_OPT)
+}
+
+fn open_repository(io: &StdKakouneIO) -> Result<SQLRepository> {
+    let lang = get_lang(io)?;
     SQLRepository::open(&lang)
+}
+
+fn get_project(io: &StdKakouneIO) -> Result<Project> {
+    let as_str = io.get_option(SKYSPELL_PROJECT_OPT)?;
+    let path = PathBuf::from(as_str);
+    Project::new(&path)
 }
 
 fn parse_line_selection() -> Result<LineSelection> {
@@ -147,7 +160,7 @@ fn add_file() -> Result<()> {
     let kakoune_io = new_kakoune_io();
     let LineSelection { path, word, .. } = &parse_line_selection()?;
     let path = &Path::new(path);
-    let project = kakoune_io.get_project()?;
+    let project = get_project(&kakoune_io)?;
     let relative_path = RelativePath::new(&project, path)?;
     let mut repository = open_repository(&kakoune_io)?;
     repository.ignore_for_path(word, &project, &relative_path)?;
@@ -172,7 +185,7 @@ fn add_global() -> Result<()> {
 fn add_project() -> Result<()> {
     let kakoune_io = new_kakoune_io();
     let LineSelection { word, .. } = &parse_line_selection()?;
-    let project = kakoune_io.get_project()?;
+    let project = get_project(&kakoune_io)?;
     let mut repository = open_repository(&kakoune_io)?;
     repository.ignore_for_project(word, &project)?;
     kak_recheck();
@@ -193,10 +206,10 @@ fn jump() -> Result<()> {
 }
 
 fn check(opts: CheckOpts) -> Result<()> {
-    let interactor = StandardIO;
-    let kakoune_io = KakouneIO::new(interactor);
-    let lang = kakoune_io.get_lang()?;
-    let project = kakoune_io.get_project()?;
+    let std_io = StandardIO;
+    let kakoune_io = KakouneIO::new(std_io);
+    let lang = get_lang(&kakoune_io)?;
+    let project = get_project(&kakoune_io)?;
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, &lang)?;
 
@@ -209,7 +222,7 @@ fn check(opts: CheckOpts) -> Result<()> {
     let home_dir = home_dir
         .to_str()
         .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
-    let mut checker = KakouneChecker::new(project, dictionary, repository, interactor)?;
+    let mut checker = KakouneChecker::new(project, dictionary, repository, std_io)?;
     for bufname in &opts.buflist {
         if bufname.starts_with('*') && bufname.ends_with('*') {
             continue;
@@ -289,7 +302,7 @@ fn skip_file() -> Result<()> {
     let LineSelection { path, .. } = &parse_line_selection()?;
     // We know it's a full path thanks to handle_error in KakouneChecker
     let full_path = Path::new(path);
-    let project = kakoune_io.get_project()?;
+    let project = get_project(&kakoune_io)?;
 
     let relative_path = RelativePath::new(&project, &full_path)?;
 
@@ -320,10 +333,10 @@ fn skip_name() -> Result<()> {
 
 fn suggest() -> Result<()> {
     let kakoune_io = new_kakoune_io();
-    let lang = &kakoune_io.get_lang()?;
+    let lang = get_lang(&kakoune_io)?;
     let word = &kakoune_io.get_selection()?;
     let mut broker = enchant::Broker::new();
-    let dictionary = EnchantDictionary::new(&mut broker, lang)?;
+    let dictionary = EnchantDictionary::new(&mut broker, &lang)?;
     if dictionary.check(word)? {
         return Ok(());
     }

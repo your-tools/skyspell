@@ -108,7 +108,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
     }
 
     fn write_status(&self, f: &mut impl Write, errors: &[Error]) -> Result<()> {
-        let project = self.kakoune_io.get_project()?;
+        let project = &self.project;
         match errors.len() {
             0 => write!(f, "echo -markup {}: {{green}}No spelling errors", project),
             1 => write!(f, "echo -markup {}: {{red}}1 spelling error", project),
