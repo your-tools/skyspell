@@ -35,7 +35,7 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
 
     pub(crate) fn parse_usize(&self, v: &str) -> Result<usize> {
         v.parse()
-            .map_err(|_| anyhow!("could not parse {} as a positive number"))
+            .map_err(|_| anyhow!("could not parse '{}' as a positive number", v))
     }
 
     pub(crate) fn get_cursor(&self) -> Result<(usize, usize)> {
@@ -151,6 +151,7 @@ pub(crate) mod tests {
     use super::*;
     use std::cell::RefCell;
     use std::collections::HashMap;
+    use std::path::Path;
 
     pub(crate) struct FakeIO {
         env: HashMap<String, String>,
@@ -186,11 +187,148 @@ pub(crate) mod tests {
         fn get_output(&self) -> String {
             self.os_io.stdout.borrow().to_string()
         }
+
+        fn set_env_var(&mut self, key: &str, value: &str) {
+            self.os_io.env.insert(key.to_string(), value.to_string());
+        }
+
+        fn set_option(&mut self, key: &str, value: &str) {
+            let key = format!("kak_opt_{}", key);
+            self.os_io.env.insert(key.to_string(), value.to_string());
+        }
+
+        fn set_selection(&mut self, text: &str) {
+            self.set_env_var("kak_selection", text)
+        }
+
+        fn set_project(&mut self, path: &Path) {
+            let project = Project::new(path).unwrap();
+            self.set_option("skyspell_project", &project.as_str());
+        }
+
+        fn set_cursor(&mut self, line: usize, column: usize) {
+            self.set_env_var("kak_cursor_line", &line.to_string());
+            self.set_env_var("kak_cursor_column", &column.to_string());
+        }
     }
 
     fn new_fake_io() -> FakeKakouneIO {
-        let interactor = FakeIO::new();
-        KakouneIO::new(interactor)
+        let kakoune_io = FakeIO::new();
+        KakouneIO::new(kakoune_io)
+    }
+
+    #[test]
+    fn test_debug() {
+        let kakoune_io = new_fake_io();
+        kakoune_io.debug("This is a debug message");
+        let actual = kakoune_io.get_output();
+        assert_eq!(actual, "echo -debug This is a debug message");
+    }
+
+    #[test]
+    fn test_get_variable_no_such_key() {
+        let kakoune_io = new_fake_io();
+        let actual = kakoune_io.get_variable("no-such-key");
+        assert!(actual.is_err());
+    }
+
+    #[test]
+    fn test_get_variable_set_in_fake_io() {
+        let mut kakoune_io = new_fake_io();
+        kakoune_io.set_env_var("my_key", "my_value");
+        let actual = kakoune_io.get_variable("my_key").unwrap();
+        assert_eq!(actual, "my_value");
+    }
+
+    #[test]
+    fn test_get_option_no_such_key() {
+        let kakoune_io = new_fake_io();
+        let actual = kakoune_io.get_option("no-such-key");
+        assert!(actual.is_err());
+    }
+
+    #[test]
+    fn test_get_option_set_in_fake_io() {
+        let mut kakoune_io = new_fake_io();
+        kakoune_io.set_option("my_opt", "my_value");
+        let actual = kakoune_io.get_option("my_opt").unwrap();
+        assert_eq!(actual, "my_value");
+    }
+
+    #[test]
+    fn test_parse_usize_happy() {
+        let kakoune_io = new_fake_io();
+        let actual = kakoune_io.parse_usize("42").unwrap();
+        assert_eq!(actual, 42usize);
+    }
+
+    #[test]
+    fn test_parse_usize_invalid() {
+        let kakoune_io = new_fake_io();
+        let actual = kakoune_io.parse_usize("-3");
+        assert!(actual.is_err());
+    }
+
+    #[test]
+    fn test_get_cursor_set_in_fake() {
+        let mut kakoune_io = new_fake_io();
+        kakoune_io.set_cursor(3, 45);
+        let actual = kakoune_io.get_cursor().unwrap();
+        assert_eq!(actual, (3, 45));
+    }
+
+    #[test]
+    fn test_parse_range_spec_empty() {
+        let kakoune_io = new_fake_io();
+        let actual = kakoune_io.parse_range_spec("0").unwrap();
+        assert!(actual.is_empty());
+    }
+
+    #[test]
+    fn test_parse_range_spec_not_empty() {
+        let kakoune_io = new_fake_io();
+        let actual = kakoune_io
+            .parse_range_spec("42 1.4,1.13|Error 1.15,1.23|Error")
+            .unwrap();
+        assert_eq!(actual, vec![(1, 4, 13), (1, 15, 23)]);
+    }
+
+    #[test]
+    fn test_get_selection_missing_key() {
+        let kakoune_io = new_fake_io();
+        let err = kakoune_io.get_selection().unwrap_err();
+        assert_eq!(err.to_string(), "No such key: kak_selection");
+    }
+
+    #[test]
+    fn test_get_selection_set_in_fake() {
+        let mut kakoune_io = new_fake_io();
+        kakoune_io.set_selection("selected text");
+        let actual = kakoune_io.get_selection().unwrap();
+        assert_eq!(actual, "selected text");
+    }
+
+    #[test]
+    fn test_get_project_missing_key() {
+        let kakoune_io = new_fake_io();
+        let err = kakoune_io.get_project().unwrap_err();
+        assert_eq!(err.to_string(), "No such key: kak_opt_skyspell_project");
+    }
+
+    #[test]
+    fn test_get_project_set_in_fake() {
+        let mut kakoune_io = new_fake_io();
+        let test_path = Path::new(".");
+        kakoune_io.set_project(test_path);
+        let actual = kakoune_io.get_project().unwrap();
+        assert_eq!(actual.path(), std::fs::canonicalize(test_path).unwrap());
+    }
+
+    #[test]
+    fn test_goto_previous_buffer() {
+        let kakoune_io = new_fake_io();
+        kakoune_io.goto_previous_buffer();
+        assert_eq!(kakoune_io.get_output(), "execute-keys ga\n");
     }
 
     #[test]
@@ -203,16 +341,11 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn test_get_selection() {
+    fn test_get_next_selection() {
         let kakoune_io = new_fake_io();
-        let err = kakoune_io.get_selection().unwrap_err();
-        assert_eq!(err.to_string(), "No such key: kak_selection");
-    }
-
-    #[test]
-    fn test_goto_previous_buffer() {
-        let kakoune_io = new_fake_io();
-        kakoune_io.goto_previous_buffer();
-        assert_eq!(kakoune_io.get_output(), "execute-keys ga\n");
+        let pos = (1, 21);
+        let ranges = [(1, 12, 19), (2, 19, 27)];
+        let actual = kakoune_io.get_next_selection(pos, &ranges).unwrap();
+        assert_eq!(actual, &(2, 19, 27));
     }
 }

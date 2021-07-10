@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 // An other option would be to store the OsStr representation as binary
 // in the DB
 
+#[derive(Debug)]
 pub(crate) struct Project(PathBuf);
 impl Project {
     pub(crate) fn new(project_path: &Path) -> Result<Self> {
