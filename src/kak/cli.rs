@@ -206,8 +206,7 @@ fn jump() -> Result<()> {
 }
 
 fn check(opts: CheckOpts) -> Result<()> {
-    let std_io = StandardIO;
-    let kakoune_io = KakouneIO::new(std_io);
+    let kakoune_io = new_kakoune_io();
     let lang = get_lang(&kakoune_io)?;
     let project = get_project(&kakoune_io)?;
     let mut broker = enchant::Broker::new();
@@ -222,7 +221,7 @@ fn check(opts: CheckOpts) -> Result<()> {
     let home_dir = home_dir
         .to_str()
         .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
-    let mut checker = KakouneChecker::new(project, dictionary, repository, std_io)?;
+    let mut checker = KakouneChecker::new(project, dictionary, repository, kakoune_io)?;
     for bufname in &opts.buflist {
         if bufname.starts_with('*') && bufname.ends_with('*') {
             continue;
@@ -254,7 +253,7 @@ fn check(opts: CheckOpts) -> Result<()> {
         })?;
     }
 
-    checker.emit_kak_code()
+    checker.write_code()
 }
 
 enum Direction {

@@ -43,6 +43,11 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
         self.get_variable("kak_selection")
     }
 
+    pub(crate) fn get_timestamp(&self) -> Result<usize> {
+        let timestamp = self.os_io.get_env_var("kak_timestamp")?;
+        self.parse_usize(&timestamp)
+    }
+
     pub(crate) fn goto_previous_buffer(&self) {
         self.os_io.print("execute-keys ga\n")
     }
@@ -69,6 +74,10 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
         split.next();
 
         split.into_iter().map(|x| self.parse_range(x)).collect()
+    }
+
+    pub(crate) fn print(&self, command: &str) {
+        self.os_io.print(command);
     }
 
     fn parse_range(&self, range: &str) -> Result<(usize, usize, usize)> {
@@ -137,12 +146,12 @@ pub(crate) mod tests {
     use std::cell::RefCell;
     use std::collections::HashMap;
 
-    pub(crate) struct FakeIO {
+    pub(crate) struct FakeOperatingSystemIO {
         env: HashMap<String, String>,
         stdout: RefCell<String>,
     }
 
-    impl FakeIO {
+    impl FakeOperatingSystemIO {
         pub(crate) fn new() -> Self {
             Self {
                 env: HashMap::new(),
@@ -151,7 +160,7 @@ pub(crate) mod tests {
         }
     }
 
-    impl OperatingSystemIO for FakeIO {
+    impl OperatingSystemIO for FakeOperatingSystemIO {
         fn get_env_var(&self, key: &str) -> Result<String> {
             let res = self
                 .env
@@ -165,35 +174,39 @@ pub(crate) mod tests {
         }
     }
 
-    type FakeKakouneIO = KakouneIO<FakeIO>;
+    pub(crate) type FakeKakouneIO = KakouneIO<FakeOperatingSystemIO>;
 
     impl FakeKakouneIO {
-        fn get_output(&self) -> String {
+        pub(crate) fn get_output(&self) -> String {
             self.os_io.stdout.borrow().to_string()
         }
 
-        fn set_env_var(&mut self, key: &str, value: &str) {
+        pub(crate) fn set_env_var(&mut self, key: &str, value: &str) {
             self.os_io.env.insert(key.to_string(), value.to_string());
         }
 
-        fn set_option(&mut self, key: &str, value: &str) {
+        pub(crate) fn set_option(&mut self, key: &str, value: &str) {
             let key = format!("kak_opt_{}", key);
             self.os_io.env.insert(key.to_string(), value.to_string());
         }
 
-        fn set_selection(&mut self, text: &str) {
+        pub(crate) fn set_selection(&mut self, text: &str) {
             self.set_env_var("kak_selection", text)
         }
 
-        fn set_cursor(&mut self, line: usize, column: usize) {
+        pub(crate) fn set_timestamp(&mut self, timestamp: usize) {
+            self.set_env_var("kak_timestamp", &timestamp.to_string())
+        }
+
+        pub(crate) fn set_cursor(&mut self, line: usize, column: usize) {
             self.set_env_var("kak_cursor_line", &line.to_string());
             self.set_env_var("kak_cursor_column", &column.to_string());
         }
     }
 
-    fn new_fake_io() -> FakeKakouneIO {
-        let kakoune_io = FakeIO::new();
-        KakouneIO::new(kakoune_io)
+    pub(crate) fn new_fake_io() -> FakeKakouneIO {
+        let fake_os_io = FakeOperatingSystemIO::new();
+        KakouneIO::new(fake_os_io)
     }
 
     #[test]
@@ -232,6 +245,21 @@ pub(crate) mod tests {
         kakoune_io.set_option("my_opt", "my_value");
         let actual = kakoune_io.get_option("my_opt").unwrap();
         assert_eq!(actual, "my_value");
+    }
+
+    #[test]
+    fn test_get_timestamp_not_set() {
+        let kakoune_io = new_fake_io();
+        let actual = kakoune_io.get_timestamp();
+        assert!(actual.is_err());
+    }
+
+    #[test]
+    fn test_get_timestamp_set_in_fake_io() {
+        let mut kakoune_io = new_fake_io();
+        kakoune_io.set_timestamp(42);
+        let actual = kakoune_io.get_timestamp().unwrap();
+        assert_eq!(actual, 42);
     }
 
     #[test]
@@ -295,7 +323,7 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn test_get_previous_selection() {
+    fn test_get_previous_selection_between_two_selections_other_line() {
         let kakoune_io = new_fake_io();
         let pos = (1, 21);
         let ranges = [(1, 12, 19), (2, 19, 27)];
@@ -304,11 +332,56 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn test_get_next_selection() {
+    fn test_get_previous_selection_from_next_line() {
         let kakoune_io = new_fake_io();
-        let pos = (1, 21);
-        let ranges = [(1, 12, 19), (2, 19, 27)];
+        let pos = (2, 1);
+        let ranges = [(1, 12, 19)];
+        let actual = kakoune_io.get_previous_selection(pos, &ranges).unwrap();
+        assert_eq!(actual, &(1, 12, 19));
+    }
+
+    #[test]
+    fn test_get_previous_selection_wraps() {
+        let kakoune_io = new_fake_io();
+        let pos = (1, 1);
+        let ranges = [(2, 3, 5), (3, 12, 19)];
+        let actual = kakoune_io.get_previous_selection(pos, &ranges).unwrap();
+        assert_eq!(actual, &(3, 12, 19));
+    }
+
+    #[test]
+    fn test_get_previous_selection_between_two_selections_same_line() {
+        let kakoune_io = new_fake_io();
+        let pos = (1, 15);
+        let ranges = [(1, 12, 13), (1, 19, 21)];
+        let actual = kakoune_io.get_previous_selection(pos, &ranges).unwrap();
+        assert_eq!(actual, &(1, 12, 13));
+    }
+
+    #[test]
+    fn test_get_next_selection_from_previous_line() {
+        let kakoune_io = new_fake_io();
+        let pos = (1, 1);
+        let ranges = [(2, 12, 19)];
         let actual = kakoune_io.get_next_selection(pos, &ranges).unwrap();
-        assert_eq!(actual, &(2, 19, 27));
+        assert_eq!(actual, &(2, 12, 19));
+    }
+
+    #[test]
+    fn test_get_next_selection_wraps() {
+        let kakoune_io = new_fake_io();
+        let pos = (4, 1);
+        let ranges = [(2, 3, 5), (3, 12, 19)];
+        let actual = kakoune_io.get_next_selection(pos, &ranges).unwrap();
+        assert_eq!(actual, &(2, 3, 5));
+    }
+
+    #[test]
+    fn test_get_next_selection_between_two_selections_same_line() {
+        let kakoune_io = new_fake_io();
+        let pos = (1, 15);
+        let ranges = [(1, 12, 13), (1, 19, 21)];
+        let actual = kakoune_io.get_next_selection(pos, &ranges).unwrap();
+        assert_eq!(actual, &(1, 19, 21));
     }
 }

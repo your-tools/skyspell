@@ -1,8 +1,6 @@
-use std::io::Write;
-use std::path::PathBuf;
-
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use itertools::Itertools;
+use std::path::PathBuf;
 
 use crate::kak::io::{KakouneIO, OperatingSystemIO};
 use crate::Checker;
@@ -15,7 +13,7 @@ pub(crate) const SKYSPELL_PROJECT_OPT: &str = "skyspell_project";
 pub(crate) struct Error {
     pos: (usize, usize),
     buffer: String,
-    path: PathBuf,
+    full_path: PathBuf,
     token: String,
 }
 
@@ -38,10 +36,10 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChec
         context: &Self::Context,
     ) -> Result<()> {
         let (buffer, line, column) = context;
-        let full_path = std::fs::canonicalize(path)?;
         let pos = (*line, *column);
+        let full_path = self.project.path().join(&path);
         self.errors.push(Error {
-            path: full_path,
+            full_path,
             pos,
             buffer: buffer.to_string(),
             token: error.to_string(),
@@ -71,113 +69,109 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
         project: Project,
         dictionary: D,
         mut repository: R,
-        os_io: S,
+        kakoune_io: KakouneIO<S>,
     ) -> Result<Self> {
         repository.ensure_project(&project)?;
         Ok(Self {
             project,
             dictionary,
+            kakoune_io,
             repository,
             errors: vec![],
-            kakoune_io: KakouneIO::new(os_io),
         })
     }
 
-    fn write_code(&self, f: &mut impl Write) -> Result<()> {
-        let kak_timestamp =
-            std::env::var("kak_timestamp").map_err(|_| anyhow!("kak_timestamp is not defined"))?;
+    fn print(&self, command: &str) {
+        self.kakoune_io.print(command)
+    }
 
-        let kak_timestamp = kak_timestamp
-            .parse::<usize>()
-            .map_err(|_| anyhow!("could not parse kak_timestamp has a positive integer"))?;
-
-        self.write_spelling_buffer(f, &self.errors)?;
+    pub(crate) fn write_code(&self) -> Result<()> {
+        let kak_timestamp = self.kakoune_io.get_timestamp()?;
+        self.write_spelling_buffer();
         self.kakoune_io.goto_previous_buffer();
-        self.write_ranges(f, kak_timestamp, &self.errors)?;
-        self.write_status(f, &self.errors)?;
+        self.write_ranges(kak_timestamp);
+        self.write_status();
 
         Ok(())
     }
 
-    pub fn emit_kak_code(&self) -> Result<()> {
-        let stdout = std::io::stdout();
-        let mut handle = stdout.lock();
-        self.write_code(&mut handle)?;
-
-        Ok(())
-    }
-
-    fn write_status(&self, f: &mut impl Write, errors: &[Error]) -> Result<()> {
+    fn write_status(&self) {
         let project = &self.project;
-        match errors.len() {
-            0 => write!(f, "echo -markup {}: {{green}}No spelling errors", project),
-            1 => write!(f, "echo -markup {}: {{red}}1 spelling error", project),
-            n => write!(f, "echo -markup {}: {{red}}{} Spelling errors", project, n,),
-        }?;
-        Ok(())
+        match self.errors.len() {
+            0 => self.print(&format!(
+                "echo -markup {}: {{green}}No spelling errors\n",
+                project
+            )),
+            1 => self.print(&format!(
+                "echo -markup {}: {{red}}1 spelling error\n",
+                project
+            )),
+            n => self.print(&format!(
+                "echo -markup {}: {{red}}{} Spelling errors\n",
+                project, n,
+            )),
+        }
     }
 
-    fn write_spelling_buffer(&self, f: &mut impl Write, errors: &[Error]) -> Result<()> {
+    fn write_spelling_buffer(&self) {
         // Open buffer
-        writeln!(f, "edit -scratch *spelling*")?;
+        self.print("edit -scratch *spelling*\n");
 
         // Delete everything
-        write!(f, r"execute-keys \% <ret> d ")?;
+        self.print(r"execute-keys \% <ret> d ");
 
         // Insert all errors
-        write!(f, "i %{{")?;
+        self.print("i %{");
 
-        for error in errors.iter() {
-            self.write_error(f, error)?;
-            write!(f, "<ret>")?;
+        for error in self.errors.iter() {
+            self.write_error(error);
+            self.print("<ret>");
         }
-        write!(f, "}} ")?;
+        self.print("} ");
 
         // Back to top
-        writeln!(f, "<esc> gg")?;
-        Ok(())
+        self.print("<esc> gg\n");
     }
 
-    fn write_error(&self, f: &mut impl Write, error: &Error) -> Result<()> {
+    fn write_error(&self, error: &Error) {
         let Error {
-            pos, token, path, ..
+            pos,
+            token,
+            full_path,
+            ..
         } = error;
         let (line, start) = pos;
         let end = start + token.len();
-        write!(
-            f,
+        self.print(&format!(
             "{}: {}.{},{}.{} {}",
-            path.display(),
+            full_path.display(),
             line,
+            // Columns start at 1
             start + 1,
             line,
             end,
             token
-        )?;
-        Ok(())
+        ));
     }
 
-    fn write_ranges(&self, f: &mut impl Write, timestamp: usize, errors: &[Error]) -> Result<()> {
-        for (buffer, group) in &errors.iter().group_by(|e| &e.buffer) {
-            write!(
-                f,
+    fn write_ranges(&self, timestamp: usize) {
+        for (buffer, group) in &self.errors.iter().group_by(|e| &e.buffer) {
+            self.print(&format!(
                 "set-option buffer={} spell_errors {} ",
                 buffer, timestamp
-            )?;
+            ));
             for error in group {
-                self.write_error_range(f, error)?;
-                write!(f, " ")?;
+                self.write_error_range(error);
+                self.print(" ");
             }
-            writeln!(f)?;
+            self.print("\n");
         }
-        Ok(())
     }
 
-    fn write_error_range(&self, f: &mut impl Write, error: &Error) -> Result<()> {
+    fn write_error_range(&self, error: &Error) {
         let Error { pos, token, .. } = error;
         let (line, start) = pos;
-        write!(f, "{}.{}+{}|Error", line, start + 1, token.len())?;
-        Ok(())
+        self.print(&format!("{}.{}+{}|Error", line, start + 1, token.len()));
     }
 }
 
@@ -186,70 +180,80 @@ pub mod tests {
 
     use super::*;
 
-    use crate::kak::io::tests::FakeIO;
+    use tempdir::TempDir;
+
+    use crate::kak::io::tests::{new_fake_io, FakeOperatingSystemIO};
     use crate::tests::{FakeDictionary, FakeRepository};
+    use crate::{Project, RelativePath};
 
-    use std::path::Path;
+    type FakeChecker = KakouneChecker<FakeDictionary, FakeRepository, FakeOperatingSystemIO>;
 
-    #[test]
-    fn test_insert_errors() {
-        let error = Error {
-            pos: (2, 4),
-            buffer: "hello.js".to_string(),
-            path: PathBuf::from("/path/to/hello.js"),
-            token: "foo".to_string(),
-        };
+    impl FakeChecker {
+        fn get_output(&self) -> String {
+            self.kakoune_io.get_output()
+        }
 
-        let mut buff: Vec<u8> = vec![];
-        let project = Project::new(&Path::new(".")).unwrap();
+        fn ensure_path(&self, relative_name: &str) -> RelativePath {
+            let project = self.project();
+            let full_path = project.path().join(relative_name);
+            std::fs::write(&full_path, "").unwrap();
+            RelativePath::new(project, &full_path).unwrap()
+        }
+    }
+
+    fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
+        let project = Project::new(temp_dir.path()).unwrap();
         let dictionary = FakeDictionary::new();
         let repository = FakeRepository::new();
-        let interactor = FakeIO::new();
-        let checker = KakouneChecker::new(project, dictionary, repository, interactor).unwrap();
-        checker.write_spelling_buffer(&mut buff, &[error]).unwrap();
-        let actual = std::str::from_utf8(&buff).unwrap();
-        let expected = r#"edit -scratch *spelling*
-execute-keys \% <ret> d i %{/path/to/hello.js: 2.5,2.7 foo<ret>} <esc> gg
-"#;
+        let fake_io = new_fake_io();
+        KakouneChecker::new(project, dictionary, repository, fake_io).unwrap()
+    }
+
+    #[test]
+    fn test_write_errors_in_spelling_buffer() {
+        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let mut checker = new_fake_checker(&temp_dir);
+        let hello_js = checker.ensure_path("hello.js");
+        checker.ensure_path("hello.js");
+        checker
+            .handle_error("foo", &hello_js, &(hello_js.to_string(), 2, 4))
+            .unwrap();
+        checker.write_spelling_buffer();
+        let actual = checker.get_output();
+        let expected = format!(
+            "edit -scratch *spelling*
+execute-keys \\% <ret> d i %{{{}/hello.js: 2.5,2.7 foo<ret>}} <esc> gg
+",
+            temp_dir.path().display()
+        );
         assert_eq!(actual, expected);
     }
 
     #[test]
-    fn test_write_ranges() {
-        let err1 = Error {
-            pos: (2, 4),
-            buffer: "foo.js".to_string(),
-            path: PathBuf::from("/path/to/foo.js"),
-            token: "foo".to_string(),
-        };
-
-        let err2 = Error {
-            pos: (3, 6),
-            buffer: "foo.js".to_string(),
-            path: PathBuf::from("/path/to/foo.js"),
-            token: "bar".to_string(),
-        };
-
-        let err3 = Error {
-            pos: (1, 5),
-            path: PathBuf::from("/path/to/bar.js"),
-            buffer: "bar.js".to_string(),
-            token: "spam".to_string(),
-        };
-
-        let mut buff: Vec<u8> = vec![];
-        let project = Project::new(&Path::new(".")).unwrap();
-        let dictionary = FakeDictionary::new();
-        let repository = FakeRepository::new();
-        let io = FakeIO::new();
-        let checker = KakouneChecker::new(project, dictionary, repository, io).unwrap();
+    fn test_write_errors_as_buffer_options() {
+        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let mut checker = new_fake_checker(&temp_dir);
+        let foo_js = checker.ensure_path("foo.js");
+        let bar_js = checker.ensure_path("bar.js");
         checker
-            .write_ranges(&mut buff, 42, &[err1, err2, err3])
+            .handle_error("foo", &foo_js, &(foo_js.to_string(), 2, 4))
             .unwrap();
-        let actual = std::str::from_utf8(&buff).unwrap();
+
+        checker
+            .handle_error("bar", &foo_js, &(foo_js.to_string(), 3, 6))
+            .unwrap();
+
+        checker
+            .handle_error("spam", &bar_js, &(bar_js.to_string(), 1, 5))
+            .unwrap();
+
+        let timestamp = 42;
+        checker.write_ranges(timestamp);
+
+        let actual = checker.get_output();
         let expected = "\
-set-option buffer=foo.js spell_errors 42 2.5+3|Error 3.7+3|Error \n\
-set-option buffer=bar.js spell_errors 42 1.6+4|Error \n";
+    set-option buffer=foo.js spell_errors 42 2.5+3|Error 3.7+3|Error \n\
+    set-option buffer=bar.js spell_errors 42 1.6+4|Error \n";
         assert_eq!(actual, expected);
     }
 }
