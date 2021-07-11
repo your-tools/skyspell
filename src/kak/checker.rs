@@ -7,7 +7,6 @@ use crate::Checker;
 use crate::{Dictionary, Repository};
 use crate::{Project, RelativePath};
 
-pub(crate) const SKYSPELL_LANG_OPT: &str = "skyspell_lang";
 pub(crate) const SKYSPELL_PROJECT_OPT: &str = "skyspell_project";
 
 pub(crate) struct Error {
@@ -19,10 +18,10 @@ pub(crate) struct Error {
 
 pub(crate) struct KakouneChecker<D: Dictionary, R: Repository, S: OperatingSystemIO> {
     project: Project,
-    dictionary: D,
-    repository: R,
+    pub(crate) dictionary: D,
+    pub(crate) repository: R,
     errors: Vec<Error>,
-    kakoune_io: KakouneIO<S>,
+    pub(crate) kakoune_io: KakouneIO<S>,
 }
 
 impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChecker<D, R, S> {

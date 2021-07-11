@@ -17,7 +17,7 @@ impl EnchantDictionary {
     pub fn new(broker: &mut enchant::Broker, lang: &str) -> Result<Self> {
         let dict = broker
             .request_dict(lang)
-            .map_err(|e| anyhow!("Could not request dict for lang {}: {}", lang, e))?;
+            .map_err(|e| anyhow!("Could not request dict for lang '{}': {}", lang, e))?;
         Ok(Self {
             dict,
             lang: lang.to_string(),

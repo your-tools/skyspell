@@ -33,9 +33,8 @@ define-command skyspell-disable %{
 define-command skyspell-check -docstring "check the open buffers for spelling errors" %{
   evaluate-commands %sh{
     : $kak_timestamp
-    : $kak_opt_skyspell_lang
     : $kak_opt_skyspell_project
-    skyspell kak check $kak_buflist
+    skyspell --lang $kak_opt_skyspell_lang kak check $kak_buflist
   }
 }
 
@@ -43,9 +42,8 @@ define-command -hidden -params 1.. skyspell-action %{
   execute-keys gi GL
   evaluate-commands %sh{
     : $kak_selection
-    : $kak_opt_skyspell_lang
     : $kak_opt_skyspell_project
-    skyspell kak $*
+    skyspell --lang $kak_opt_skyspell_lang kak $*
   }
 }
 
@@ -70,17 +68,19 @@ define-command skyspell-list -docstring "list spelling errors" %{
 
 define-command skyspell-next -docstring "go to the next spelling error" %{
    evaluate-commands %sh{
+     : $kak_opt_skyspell_project
      : $kak_cursor_line
      : $kak_cursor_column
-     skyspell kak next-error "${kak_opt_spell_errors}"
+     skyspell --lang $kak_opt_skyspell_lang kak next-error "${kak_opt_spell_errors}"
    }
 }
 
 define-command skyspell-previous -docstring "go to the previous spelling error" %{
    evaluate-commands %sh{
+     : $kak_opt_skyspell_project
      : $kak_cursor_line
      : $kak_cursor_column
-     skyspell kak previous-error "${kak_opt_spell_errors}"
+     skyspell --lang $kak_opt_skyspell_lang kak previous-error "${kak_opt_spell_errors}"
    }
 }
 
@@ -91,13 +91,17 @@ define-command skyspell-replace -docstring "replace the selection with a suggest
       printf %s\\n 'echo -markup {Error}The `skyspell_lang` option is not set'
       exit 1
     fi
+
+    if [ -z "${kak_selection}" ]; then
+      printf %s\\n 'echo -markup {Error}The selection is empty'
+      exit 1
+    fi
   }
 
   evaluate-commands %sh{
-    : $kak_opt_skyspell_lang
     : $kak_opt_skyspell_project
     : $kak_selection
-    skyspell kak suggest
+    skyspell --lang $kak_opt_skyspell_lang kak suggest
   }
 
 }

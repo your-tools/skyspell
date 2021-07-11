@@ -10,11 +10,11 @@ use crate::{Project, RelativePath};
 
 diesel_migrations::embed_migrations!("migrations");
 
-pub(crate) struct SQLRepository {
+pub struct SQLRepository {
     connection: SqliteConnection,
 }
 
-pub(crate) fn get_default_db_path(lang: &str) -> Result<String> {
+pub fn get_default_db_path(lang: &str) -> Result<String> {
     let app_dirs = AppDirs::new(Some("skyspell"), false)
         .with_context(|| "Could not get app dirs for skyspell application")?;
     let data_dir = app_dirs.data_dir;
@@ -29,88 +29,11 @@ pub(crate) fn get_default_db_path(lang: &str) -> Result<String> {
 }
 
 impl SQLRepository {
-    pub(crate) fn new(url: &str) -> Result<Self> {
+    pub fn new(url: &str) -> Result<Self> {
         let connection = SqliteConnection::establish(&url)
             .with_context(|| format!("Could not connect to {}", url))?;
         embedded_migrations::run(&connection).with_context(|| "Could not migrate db")?;
         Ok(Self { connection })
-    }
-
-    pub(crate) fn remove_ignored(&mut self, word: &str) -> Result<()> {
-        let word = word.to_lowercase();
-        diesel::delete(ignored::table)
-            .filter(ignored::word.eq(word))
-            .execute(&self.connection)
-            .with_context(|| "Could not remove word from global ignored list")?;
-        Ok(())
-    }
-
-    pub(crate) fn remove_ignored_for_extension(
-        &mut self,
-        word: &str,
-        extension: &str,
-    ) -> Result<()> {
-        let word = word.to_lowercase();
-        diesel::delete(ignored_for_extension::table)
-            .filter(ignored_for_extension::extension.eq(extension))
-            .filter(ignored_for_extension::word.eq(word))
-            .execute(&self.connection)
-            .with_context(|| "Could not remove word from ignore list for extension")?;
-        Ok(())
-    }
-
-    pub(crate) fn remove_ignored_for_path(
-        &mut self,
-        word: &str,
-        project: &Project,
-        relative_path: &RelativePath,
-    ) -> Result<()> {
-        let word = word.to_lowercase();
-        let project_id = self.get_project_id(project)?;
-        diesel::delete(ignored_for_path::table)
-            .filter(ignored_for_path::word.eq(word))
-            .filter(ignored_for_path::project_id.eq(project_id))
-            .filter(ignored_for_path::path.eq(relative_path.as_str()))
-            .execute(&self.connection)
-            .with_context(|| "Could not remove word from ignore list for path")?;
-        Ok(())
-    }
-
-    pub(crate) fn remove_ignored_for_project(
-        &mut self,
-        word: &str,
-        project: &Project,
-    ) -> Result<()> {
-        let word = word.to_lowercase();
-        let project_id = self.get_project_id(project)?;
-        diesel::delete(ignored_for_project::table)
-            .filter(ignored_for_project::word.eq(word))
-            .filter(ignored_for_project::project_id.eq(project_id))
-            .execute(&self.connection)
-            .with_context(|| "Could not remove word from ignore list for project")?;
-        Ok(())
-    }
-
-    pub(crate) fn unskip_file_name(&mut self, file_name: &str) -> Result<()> {
-        diesel::delete(skipped_file_names::table)
-            .filter(skipped_file_names::file_name.eq(file_name))
-            .execute(&self.connection)
-            .with_context(|| "Could not remove file name from skip list")?;
-        Ok(())
-    }
-
-    pub(crate) fn unskip_path(
-        &mut self,
-        project: &Project,
-        relative_path: &RelativePath,
-    ) -> Result<()> {
-        let project_id = self.get_project_id(project)?;
-        diesel::delete(skipped_paths::table)
-            .filter(skipped_paths::path.eq(relative_path.as_str()))
-            .filter(skipped_paths::project_id.eq(project_id))
-            .execute(&self.connection)
-            .with_context(|| "Could not remove file path from skip list")?;
-        Ok(())
     }
 
     fn get_project_id(&self, project: &Project) -> Result<i32> {
@@ -301,5 +224,70 @@ impl Repository for SQLRepository {
             .optional()
             .with_context(|| "Error when checking if path is skipped")?
             .is_some())
+    }
+
+    fn remove_ignored(&mut self, word: &str) -> Result<()> {
+        let word = word.to_lowercase();
+        diesel::delete(ignored::table)
+            .filter(ignored::word.eq(word))
+            .execute(&self.connection)
+            .with_context(|| "Could not remove word from global ignored list")?;
+        Ok(())
+    }
+
+    fn remove_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
+        let word = word.to_lowercase();
+        diesel::delete(ignored_for_extension::table)
+            .filter(ignored_for_extension::extension.eq(extension))
+            .filter(ignored_for_extension::word.eq(word))
+            .execute(&self.connection)
+            .with_context(|| "Could not remove word from ignore list for extension")?;
+        Ok(())
+    }
+
+    fn remove_ignored_for_path(
+        &mut self,
+        word: &str,
+        project: &Project,
+        relative_path: &RelativePath,
+    ) -> Result<()> {
+        let word = word.to_lowercase();
+        let project_id = self.get_project_id(project)?;
+        diesel::delete(ignored_for_path::table)
+            .filter(ignored_for_path::word.eq(word))
+            .filter(ignored_for_path::project_id.eq(project_id))
+            .filter(ignored_for_path::path.eq(relative_path.as_str()))
+            .execute(&self.connection)
+            .with_context(|| "Could not remove word from ignore list for path")?;
+        Ok(())
+    }
+
+    fn remove_ignored_for_project(&mut self, word: &str, project: &Project) -> Result<()> {
+        let word = word.to_lowercase();
+        let project_id = self.get_project_id(project)?;
+        diesel::delete(ignored_for_project::table)
+            .filter(ignored_for_project::word.eq(word))
+            .filter(ignored_for_project::project_id.eq(project_id))
+            .execute(&self.connection)
+            .with_context(|| "Could not remove word from ignore list for project")?;
+        Ok(())
+    }
+
+    fn unskip_file_name(&mut self, file_name: &str) -> Result<()> {
+        diesel::delete(skipped_file_names::table)
+            .filter(skipped_file_names::file_name.eq(file_name))
+            .execute(&self.connection)
+            .with_context(|| "Could not remove file name from skip list")?;
+        Ok(())
+    }
+
+    fn unskip_path(&mut self, project: &Project, relative_path: &RelativePath) -> Result<()> {
+        let project_id = self.get_project_id(project)?;
+        diesel::delete(skipped_paths::table)
+            .filter(skipped_paths::path.eq(relative_path.as_str()))
+            .filter(skipped_paths::project_id.eq(project_id))
+            .execute(&self.connection)
+            .with_context(|| "Could not remove file path from skip list")?;
+        Ok(())
     }
 }

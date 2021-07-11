@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
 
 use std::collections::{HashMap, HashSet};
 
@@ -136,5 +136,53 @@ impl Repository for FakeRepository {
         Ok(self
             .skipped_paths
             .contains(&(project.to_string(), path.to_string())))
+    }
+
+    fn remove_ignored(&mut self, word: &str) -> Result<()> {
+        self.global.remove(word);
+        Ok(())
+    }
+
+    fn remove_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
+        let entry = self
+            .by_extension
+            .get_mut(extension)
+            .ok_or_else(|| anyhow!("no such key"))?;
+        entry.retain(|w| w != word);
+        Ok(())
+    }
+
+    fn remove_ignored_for_path(
+        &mut self,
+        word: &str,
+        project: &Project,
+        relative_path: &RelativePath,
+    ) -> Result<()> {
+        let entry = self
+            .by_project_and_path
+            .get_mut(&(project.to_string(), relative_path.to_string()))
+            .ok_or_else(|| anyhow!("no such key"))?;
+        entry.retain(|w| w != word);
+        Ok(())
+    }
+
+    fn remove_ignored_for_project(&mut self, word: &str, project: &Project) -> Result<()> {
+        let entry = self
+            .by_project
+            .get_mut(&project.to_string())
+            .ok_or_else(|| anyhow!("no such key"))?;
+        entry.retain(|w| w != word);
+        Ok(())
+    }
+
+    fn unskip_file_name(&mut self, file_name: &str) -> Result<()> {
+        self.skip_file_names.retain(|x| x != file_name);
+        Ok(())
+    }
+
+    fn unskip_path(&mut self, project: &Project, relative_path: &RelativePath) -> Result<()> {
+        self.skipped_paths
+            .retain(|x| x != &(project.to_string(), relative_path.to_string()));
+        Ok(())
     }
 }

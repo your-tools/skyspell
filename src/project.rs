@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 // in the DB
 
 #[derive(Debug)]
-pub(crate) struct Project(PathBuf);
+pub struct Project(PathBuf);
 impl Project {
     pub(crate) fn new(project_path: &Path) -> Result<Self> {
         let path = std::fs::canonicalize(project_path).with_context(|| {
@@ -38,7 +38,7 @@ impl Display for Project {
 }
 
 #[derive(Debug)]
-pub(crate) struct RelativePath(PathBuf);
+pub struct RelativePath(PathBuf);
 
 impl RelativePath {
     pub(crate) fn new(project: &Project, source_path: &Path) -> Result<Self> {

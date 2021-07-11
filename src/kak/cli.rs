@@ -4,14 +4,12 @@ use anyhow::{anyhow, bail, Context, Result};
 use clap::Clap;
 use dirs_next::home_dir;
 
-use crate::kak::checker::{SKYSPELL_LANG_OPT, SKYSPELL_PROJECT_OPT};
+use crate::kak::checker::SKYSPELL_PROJECT_OPT;
 use crate::kak::io::{KakouneIO, OperatingSystemIO};
 use crate::kak::KakouneChecker;
 use crate::Checker;
-use crate::EnchantDictionary;
 use crate::Project;
 use crate::RelativePath;
-use crate::SQLRepository;
 use crate::TokenProcessor;
 use crate::{Dictionary, Repository};
 
@@ -23,26 +21,6 @@ use crate::{Dictionary, Repository};
 pub(crate) struct Opts {
     #[clap(subcommand)]
     action: Action,
-}
-
-#[derive(Copy, Clone)]
-struct StandardIO;
-
-impl OperatingSystemIO for StandardIO {
-    fn get_env_var(&self, key: &str) -> Result<String> {
-        std::env::var(key).map_err(|_| anyhow!("{} not found in environment", key))
-    }
-
-    fn print(&self, text: &str) {
-        print!("{}", text);
-    }
-}
-
-type StdKakouneIO = KakouneIO<StandardIO>;
-
-fn new_kakoune_io() -> StdKakouneIO {
-    let io = StandardIO;
-    KakouneIO::new(io)
 }
 
 #[derive(Clap)]
@@ -86,171 +64,10 @@ struct MoveOpts {
     range_spec: String,
 }
 
-pub(crate) fn run(db_path: &str, opts: Opts) -> Result<()> {
-    match opts.action {
-        Action::AddExtension => add_extension(db_path),
-        Action::AddFile => add_file(db_path),
-        Action::AddGlobal => add_global(db_path),
-        Action::AddProject => add_project(db_path),
-        Action::Check(opts) => check(db_path, opts),
-        Action::Jump => jump(),
-        Action::NextError(opts) => goto_next_error(opts),
-        Action::PreviousError(opts) => goto_previous_error(opts),
-        Action::SkipFile => skip_file(db_path),
-        Action::SkipName => skip_name(db_path),
-        Action::Suggest => suggest(),
-        Action::Init => init(),
-    }
-}
-
 struct LineSelection {
     path: String,
     word: String,
     selection: String,
-}
-
-fn get_lang(io: &StdKakouneIO) -> Result<String> {
-    let res = io.get_option(SKYSPELL_LANG_OPT);
-    match res {
-        Ok(s) if s.is_empty() => bail!("{} option is empty", SKYSPELL_LANG_OPT),
-        r => r,
-    }
-}
-
-fn get_project(io: &StdKakouneIO) -> Result<Project> {
-    let as_str = io.get_option(SKYSPELL_PROJECT_OPT)?;
-    let path = PathBuf::from(as_str);
-    Project::new(&path)
-}
-
-fn parse_line_selection() -> Result<LineSelection> {
-    let kakoune_io = new_kakoune_io();
-    let line_selection = kakoune_io.get_selection()?;
-    let (path, rest) = line_selection
-        .split_once(": ")
-        .with_context(|| "line selection should contain :")?;
-    let (selection, word) = rest
-        .split_once(' ')
-        .with_context(|| "expected at least two words after the path name in line selection")?;
-    Ok(LineSelection {
-        path: path.to_string(),
-        word: word.to_string(),
-        selection: selection.to_string(),
-    })
-}
-
-fn add_extension(db_path: &str) -> Result<()> {
-    let LineSelection { path, word, .. } = &parse_line_selection()?;
-    let (_, ext) = path
-        .rsplit_once(".")
-        .ok_or_else(|| anyhow!("File has no extension"))?;
-    let mut repository = SQLRepository::new(db_path)?;
-    repository.ignore_for_extension(word, ext)?;
-    kak_recheck();
-    println!(
-        "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
-        word, ext
-    );
-    Ok(())
-}
-
-fn add_file(db_path: &str) -> Result<()> {
-    let kakoune_io = new_kakoune_io();
-    let LineSelection { path, word, .. } = &parse_line_selection()?;
-    let path = &Path::new(path);
-    let project = get_project(&kakoune_io)?;
-    let relative_path = RelativePath::new(&project, path)?;
-    let mut repository = SQLRepository::new(db_path)?;
-    repository.ignore_for_path(word, &project, &relative_path)?;
-    kak_recheck();
-    println!(
-        "echo '\"{}\" added to the ignore list for file: \"{}\"'",
-        word, relative_path
-    );
-    Ok(())
-}
-
-fn add_global(db_path: &str) -> Result<()> {
-    let LineSelection { word, .. } = &parse_line_selection()?;
-    let mut repository = SQLRepository::new(db_path)?;
-    repository.ignore(word)?;
-    kak_recheck();
-    println!("echo '\"{}\" added to global ignore list'", word);
-    Ok(())
-}
-
-fn add_project(db_path: &str) -> Result<()> {
-    let kakoune_io = new_kakoune_io();
-    let LineSelection { word, .. } = &parse_line_selection()?;
-    let project = get_project(&kakoune_io)?;
-    let mut repository = SQLRepository::new(db_path)?;
-    repository.ignore_for_project(word, &project)?;
-    kak_recheck();
-    println!(
-        "echo '\"{}\" added to ignore list for the current project'",
-        word
-    );
-    Ok(())
-}
-
-fn jump() -> Result<()> {
-    let LineSelection {
-        path, selection, ..
-    } = &parse_line_selection()?;
-    println!("edit {}", path);
-    println!("select {}", selection);
-    Ok(())
-}
-
-fn check(db_path: &str, opts: CheckOpts) -> Result<()> {
-    let kakoune_io = new_kakoune_io();
-    let lang = get_lang(&kakoune_io)?;
-    let project = get_project(&kakoune_io)?;
-    let mut broker = enchant::Broker::new();
-    let dictionary = EnchantDictionary::new(&mut broker, &lang)?;
-
-    // Note:
-    // kak_buflist may:
-    //  * contain special buffers, like *debug*
-    //  * use ~ for home dir
-    let repository = SQLRepository::new(db_path)?;
-    let home_dir = home_dir().ok_or_else(|| anyhow!("Could not get home directory"))?;
-    let home_dir = home_dir
-        .to_str()
-        .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
-    let mut checker = KakouneChecker::new(project, dictionary, repository, kakoune_io)?;
-    for bufname in &opts.buflist {
-        if bufname.starts_with('*') && bufname.ends_with('*') {
-            continue;
-        }
-
-        // cleanup any errors that may have been set during last run
-        println!("unset-option buffer={} spell_errors", bufname);
-
-        let full_path = bufname.replace("~", home_dir);
-        let source_path = Path::new(&full_path);
-
-        if !source_path.exists() {
-            continue;
-        }
-
-        let relative_path = checker.to_relative_path(&source_path)?;
-
-        if checker.should_skip(&relative_path)? {
-            continue;
-        }
-
-        if relative_path.as_str().starts_with("..") {
-            continue;
-        }
-
-        let token_processor = TokenProcessor::new(&source_path)?;
-        token_processor.each_token(|word, line, column| {
-            checker.handle_token(&word, &relative_path, &(bufname.to_string(), line, column))
-        })?;
-    }
-
-    checker.write_code()
 }
 
 enum Direction {
@@ -258,103 +75,281 @@ enum Direction {
     Backward,
 }
 
-fn goto_error(opts: MoveOpts, direction: Direction) -> Result<()> {
-    let kakoune_io = new_kakoune_io();
-    let range_spec = opts.range_spec;
-    let cursor = kakoune_io.get_cursor()?;
-    let ranges = kakoune_io.parse_range_spec(&range_spec)?;
-    let new_range = match direction {
-        Direction::Forward => kakoune_io.get_next_selection(cursor, &ranges),
-        Direction::Backward => kakoune_io.get_previous_selection(cursor, &ranges),
-    };
-    let (line, start, end) = match new_range {
-        None => return Ok(()),
-        Some(x) => x,
-    };
-    println!(
-        "select {line}.{start},{line}.{end}",
-        line = line,
-        start = start,
-        end = end
-    );
-    Ok(())
-}
-
-fn goto_next_error(opts: MoveOpts) -> Result<()> {
-    goto_error(opts, Direction::Forward)
-}
-
-fn goto_previous_error(opts: MoveOpts) -> Result<()> {
-    goto_error(opts, Direction::Backward)
-}
-
-fn init() -> Result<()> {
-    println!("{}", include_str!("init.kak"));
-    Ok(())
-}
-
-fn skip_file(db_path: &str) -> Result<()> {
-    let kakoune_io = new_kakoune_io();
-    let LineSelection { path, .. } = &parse_line_selection()?;
-    // We know it's a full path thanks to handle_error in KakouneChecker
-    let full_path = Path::new(path);
-    let project = get_project(&kakoune_io)?;
-
-    let relative_path = RelativePath::new(&project, &full_path)?;
-
-    let mut repository = SQLRepository::new(db_path)?;
-    repository.skip_path(&project, &relative_path)?;
-
-    kak_recheck();
-    println!("echo 'will now skip \"{}\"'", relative_path);
-    Ok(())
-}
-
-fn skip_name(db_path: &str) -> Result<()> {
-    let LineSelection { path, .. } = &parse_line_selection()?;
-    let path = Path::new(path);
-    let file_name = path
-        .file_name()
-        .with_context(|| "no file name")?
-        .to_string_lossy();
-
-    let mut repository = SQLRepository::new(db_path)?;
-    repository.skip_file_name(&file_name)?;
-
-    kak_recheck();
-    println!("echo 'will now skip file named: \"{}\"'", file_name);
-    Ok(())
-}
-
-fn suggest() -> Result<()> {
-    let kakoune_io = new_kakoune_io();
-    let lang = get_lang(&kakoune_io)?;
-    let word = &kakoune_io.get_selection()?;
-    let mut broker = enchant::Broker::new();
-    let dictionary = EnchantDictionary::new(&mut broker, &lang)?;
-    if dictionary.check(word)? {
-        bail!("Selection: `{}` is not an error", word);
+pub(crate) fn run<S: OperatingSystemIO>(
+    repository: impl Repository,
+    dictionary: impl Dictionary,
+    kakoune_io: KakouneIO<S>,
+    opts: Opts,
+) -> Result<()> {
+    // Note: init is the only command that does not require a KakouneChecker
+    if matches!(opts.action, Action::Init) {
+        print!("{}", include_str!("init.kak"));
+        return Ok(());
     }
 
-    let suggestions = dictionary.suggest(word);
+    let as_str = kakoune_io.get_option(SKYSPELL_PROJECT_OPT)?;
+    let path = PathBuf::from(as_str);
+    let project = Project::new(&path)?;
+    let checker = KakouneChecker::new(project, dictionary, repository, kakoune_io)?;
+    let mut cli = KakCli::new(checker);
 
-    if suggestions.is_empty() {
-        bail!("No suggestions found");
+    match opts.action {
+        Action::AddExtension => cli.add_extension(),
+        Action::AddFile => cli.add_file(),
+        Action::AddGlobal => cli.add_global(),
+        Action::AddProject => cli.add_project(),
+        Action::Check(opts) => cli.check(&opts),
+        Action::Jump => cli.jump(),
+        Action::NextError(opts) => cli.goto_next_error(opts),
+        Action::PreviousError(opts) => cli.goto_previous_error(opts),
+        Action::SkipFile => cli.skip_file(),
+        Action::SkipName => cli.skip_name(),
+        Action::Suggest => cli.suggest(),
+        _ => unreachable!(),
     }
-
-    print!("menu ");
-    for suggestion in suggestions.iter() {
-        print!("%{{{}}} ", suggestion);
-        print!("%{{execute-keys -itersel %{{c{}<esc>be}} ", suggestion);
-        print!(":write <ret> :skyspell-check <ret>}}");
-        print!(" ");
-    }
-
-    Ok(())
 }
 
-fn kak_recheck() {
-    println!("write-all");
-    println!("skyspell-check");
-    println!("skyspell-list");
+struct KakCli<D: Dictionary, R: Repository, S: OperatingSystemIO> {
+    checker: KakouneChecker<D, R, S>,
+}
+
+impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
+    fn new(checker: KakouneChecker<D, R, S>) -> Self {
+        Self { checker }
+    }
+
+    fn kakoune_io(&self) -> &KakouneIO<S> {
+        &self.checker.kakoune_io
+    }
+
+    fn repository(&mut self) -> &mut R {
+        &mut self.checker.repository
+    }
+
+    fn dictionary(&mut self) -> &mut D {
+        &mut self.checker.dictionary
+    }
+
+    fn get_project(&self) -> Result<Project> {
+        let as_str = self.kakoune_io().get_option(SKYSPELL_PROJECT_OPT)?;
+        let path = PathBuf::from(as_str);
+        Project::new(&path)
+    }
+
+    fn parse_line_selection(&self) -> Result<LineSelection> {
+        let line_selection = self.kakoune_io().get_selection()?;
+        let (path, rest) = line_selection
+            .split_once(": ")
+            .with_context(|| "line selection should contain :")?;
+        let (selection, word) = rest
+            .split_once(' ')
+            .with_context(|| "expected at least two words after the path name in line selection")?;
+        Ok(LineSelection {
+            path: path.to_string(),
+            word: word.to_string(),
+            selection: selection.to_string(),
+        })
+    }
+
+    fn add_extension(&mut self) -> Result<()> {
+        let LineSelection { path, word, .. } = &self.parse_line_selection()?;
+        let (_, ext) = path
+            .rsplit_once(".")
+            .ok_or_else(|| anyhow!("File has no extension"))?;
+        self.repository().ignore_for_extension(word, ext)?;
+        self.kak_recheck();
+        self.kakoune_io().print(&format!(
+            "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
+            word, ext,
+        ));
+        Ok(())
+    }
+
+    fn add_file(&mut self) -> Result<()> {
+        let LineSelection { path, word, .. } = &self.parse_line_selection()?;
+        let path = &Path::new(path);
+        let project = self.get_project()?;
+        let relative_path = RelativePath::new(&project, path)?;
+        self.repository()
+            .ignore_for_path(word, &project, &relative_path)?;
+        self.kak_recheck();
+        self.kakoune_io().print(&format!(
+            "echo '\"{}\" added to the ignore list for file: \"{}\"'",
+            word, relative_path
+        ));
+        Ok(())
+    }
+
+    fn add_global(&mut self) -> Result<()> {
+        let LineSelection { word, .. } = &self.parse_line_selection()?;
+        self.repository().ignore(word)?;
+        self.kak_recheck();
+        self.kakoune_io()
+            .print(&format!("echo '\"{}\" added to global ignore list'", word));
+        Ok(())
+    }
+
+    fn add_project(&mut self) -> Result<()> {
+        let LineSelection { word, .. } = &self.parse_line_selection()?;
+        let project = self.get_project()?;
+        self.repository().ignore_for_project(word, &project)?;
+        self.kak_recheck();
+        self.kakoune_io().print(&format!(
+            "echo '\"{}\" added to ignore list for the current project'",
+            word
+        ));
+        Ok(())
+    }
+
+    fn jump(&self) -> Result<()> {
+        let LineSelection {
+            path, selection, ..
+        } = self.parse_line_selection()?;
+        self.kakoune_io().print(&format!("edit {}\n", path));
+        self.kakoune_io().print(&format!("select {}\n", selection));
+        Ok(())
+    }
+
+    fn check(&mut self, opts: &CheckOpts) -> Result<()> {
+        // Note:
+        // kak_buflist may:
+        //  * contain special buffers, like *debug*
+        //  * use ~ for home dir
+        let home_dir = home_dir().ok_or_else(|| anyhow!("Could not get home directory"))?;
+        let home_dir = home_dir
+            .to_str()
+            .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
+        for bufname in &opts.buflist {
+            if bufname.starts_with('*') && bufname.ends_with('*') {
+                continue;
+            }
+
+            // cleanup any errors that may have been set during last run
+            self.kakoune_io()
+                .print(&format!("unset-option buffer={} spell_errors\n", bufname));
+
+            let full_path = bufname.replace("~", home_dir);
+            let source_path = Path::new(&full_path);
+
+            if !source_path.exists() {
+                continue;
+            }
+
+            let relative_path = self.checker.to_relative_path(&source_path)?;
+
+            if self.checker.should_skip(&relative_path)? {
+                continue;
+            }
+
+            if relative_path.as_str().starts_with("..") {
+                continue;
+            }
+
+            let token_processor = TokenProcessor::new(&source_path)?;
+            token_processor.each_token(|word, line, column| {
+                self.checker.handle_token(
+                    &word,
+                    &relative_path,
+                    &(bufname.to_string(), line, column),
+                )
+            })?;
+        }
+
+        self.checker.write_code()
+    }
+
+    fn goto_error(&self, opts: MoveOpts, direction: Direction) -> Result<()> {
+        let range_spec = opts.range_spec;
+        let cursor = self.kakoune_io().get_cursor()?;
+        let ranges = self.kakoune_io().parse_range_spec(&range_spec)?;
+        let new_range = match direction {
+            Direction::Forward => self.kakoune_io().get_next_selection(cursor, &ranges),
+            Direction::Backward => self.kakoune_io().get_previous_selection(cursor, &ranges),
+        };
+        let (line, start, end) = match new_range {
+            None => return Ok(()),
+            Some(x) => x,
+        };
+        self.kakoune_io().print(&format!(
+            "select {line}.{start},{line}.{end}\n",
+            line = line,
+            start = start,
+            end = end
+        ));
+        Ok(())
+    }
+
+    fn goto_next_error(&self, opts: MoveOpts) -> Result<()> {
+        self.goto_error(opts, Direction::Forward)
+    }
+
+    fn goto_previous_error(&self, opts: MoveOpts) -> Result<()> {
+        self.goto_error(opts, Direction::Backward)
+    }
+
+    fn skip_file(&mut self) -> Result<()> {
+        let LineSelection { path, .. } = &self.parse_line_selection()?;
+        // We know it's a full path thanks to handle_error in KakouneChecker
+        let full_path = Path::new(path);
+        let project = self.get_project()?;
+
+        let relative_path = RelativePath::new(&project, &full_path)?;
+
+        self.repository().skip_path(&project, &relative_path)?;
+
+        self.kak_recheck();
+        println!("echo 'will now skip \"{}\"'", relative_path);
+        Ok(())
+    }
+
+    fn skip_name(&mut self) -> Result<()> {
+        let LineSelection { path, .. } = &self.parse_line_selection()?;
+        let path = Path::new(path);
+        let file_name = path
+            .file_name()
+            .with_context(|| "no file name")?
+            .to_string_lossy();
+
+        self.repository().skip_file_name(&file_name)?;
+
+        self.kak_recheck();
+        self.kakoune_io().print(&format!(
+            "echo 'will now skip file named: \"{}\"'",
+            file_name
+        ));
+        Ok(())
+    }
+
+    fn suggest(&mut self) -> Result<()> {
+        let word = &self.kakoune_io().get_selection()?;
+        if self.dictionary().check(word)? {
+            bail!("Selection: `{}` is not an error", word);
+        }
+
+        let suggestions = self.dictionary().suggest(word);
+
+        if suggestions.is_empty() {
+            bail!("No suggestions found");
+        }
+
+        self.kakoune_io().print("menu ");
+        for suggestion in suggestions.iter() {
+            self.kakoune_io().print(&format!("%{{{}}} ", suggestion));
+            self.kakoune_io().print(&format!(
+                "%{{execute-keys -itersel %{{c{}<esc>be}} ",
+                suggestion
+            ));
+            self.kakoune_io()
+                .print(&format!(":write <ret> :skyspell-check <ret>}}"));
+            self.kakoune_io().print(&format!(" "));
+        }
+
+        Ok(())
+    }
+
+    fn kak_recheck(&self) {
+        self.kakoune_io().print("write-all\n");
+        self.kakoune_io().print("skyspell-check\n");
+        self.kakoune_io().print("skyspell-list\n");
+    }
 }

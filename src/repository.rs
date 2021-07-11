@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use crate::{Project, RelativePath};
 
-pub(crate) trait Repository {
+pub trait Repository {
     // Add the list of words to the global ignore list
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()>;
 
@@ -54,10 +54,28 @@ pub(crate) trait Repository {
         relative_path: &RelativePath,
     ) -> Result<bool>;
 
+    // Remove word from the global ignore list
+    fn remove_ignored(&mut self, word: &str) -> Result<()>;
+    // Remove word from the ignore list for the given extension
+    fn remove_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<()>;
+    // Remove word from the ignore list for the given path
+    fn remove_ignored_for_path(
+        &mut self,
+        word: &str,
+        project: &Project,
+        relative_path: &RelativePath,
+    ) -> Result<()>;
+    // Remove word from the ignore list for the given project
+    fn remove_ignored_for_project(&mut self, word: &str, project: &Project) -> Result<()>;
+
     // Always skip the given file for the given project
     fn skip_path(&mut self, project: &Project, relative_path: &RelativePath) -> Result<()>;
     // Is the given path in the given project to be skipped ?
     fn is_skipped_path(&self, project: &Project, relative_path: &RelativePath) -> Result<bool>;
+    // Remove file name from the skip list
+    fn unskip_file_name(&mut self, file_name: &str) -> Result<()>;
+    // Remove relative file path from the skip list
+    fn unskip_path(&mut self, project: &Project, relative_path: &RelativePath) -> Result<()>;
 
     // Should this file be skipped ?
     fn should_skip(&self, project: &Project, relative_path: &RelativePath) -> Result<bool> {
@@ -115,8 +133,8 @@ mod tests {
     use paste::paste;
     use tempdir::TempDir;
 
+    use crate::sql_repository::SQLRepository;
     use crate::tests::FakeRepository;
-    use crate::SQLRepository;
 
     use super::*;
 
@@ -335,5 +353,65 @@ mod tests {
         repository.skip_path(&project, &test_txt).unwrap();
 
         assert!(repository.is_skipped_path(&project, &test_txt).unwrap());
+    });
+
+    make_tests!(remove_ignored, (repository) => {
+        repository.ignore("foo").unwrap();
+
+        repository.remove_ignored("foo").unwrap();
+
+        assert!(!repository.is_ignored("foo").unwrap());
+    });
+
+    make_tests!(remove_ignored_for_extension, (repository) => {
+        repository.ignore_for_extension("foo", "py").unwrap();
+
+        repository.remove_ignored_for_extension("foo", "py").unwrap();
+
+        assert!(!repository.is_ignored_for_extension("foo", "py").unwrap());
+
+    });
+
+    make_tests!(remove_ignored_for_path, (repository) => {
+        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let project = new_project(&temp_dir, "project");
+        repository.new_project(&project).unwrap();
+        let foo_py = new_relative_path(&project, "foo.py");
+        repository.ignore_for_path("foo", &project, &foo_py).unwrap();
+
+        repository.remove_ignored_for_path("foo", &project, &foo_py).unwrap();
+
+        assert!(!repository.is_ignored_for_path("foo", &project, &foo_py).unwrap());
+    });
+
+    make_tests!(remove_ignored_for_project, (repository) => {
+        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let project = new_project(&temp_dir, "project");
+        repository.new_project(&project).unwrap();
+        repository.ignore_for_project("foo", &project).unwrap();
+
+        repository.remove_ignored_for_project("foo", &project).unwrap();
+
+        assert!(!repository.is_ignored_for_project("foo", &project).unwrap());
+    });
+
+    make_tests!(unskip_file_name, (repository) => {
+        repository.skip_file_name("Cargo.lock").unwrap();
+
+        repository.unskip_file_name("Cargo.lock").unwrap();
+
+        assert!(!repository.is_skipped_file_name("Cargo.lock").unwrap());
+    });
+
+    make_tests!(unskip_path, (repository) => {
+        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let project = new_project(&temp_dir, "project");
+        repository.new_project(&project).unwrap();
+        let foo_py = new_relative_path(&project, "foo.py");
+        repository.skip_path(&project, &foo_py).unwrap();
+
+        repository.unskip_path(&project, &foo_py).unwrap();
+
+        assert!(!repository.is_skipped_path(&project, &foo_py).unwrap());
     });
 }

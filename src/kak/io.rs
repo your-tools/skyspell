@@ -1,12 +1,32 @@
 use anyhow::{anyhow, Context, Result};
 
-pub(crate) trait OperatingSystemIO {
+pub trait OperatingSystemIO {
     fn get_env_var(&self, key: &str) -> Result<String>;
     fn print(&self, text: &str);
 }
 
-pub(crate) struct KakouneIO<S: OperatingSystemIO> {
+pub struct KakouneIO<S: OperatingSystemIO> {
     os_io: S,
+}
+
+#[derive(Copy, Clone)]
+pub struct StandardIO;
+
+impl OperatingSystemIO for StandardIO {
+    fn get_env_var(&self, key: &str) -> Result<String> {
+        std::env::var(key).map_err(|_| anyhow!("{} not found in environment", key))
+    }
+
+    fn print(&self, text: &str) {
+        print!("{}", text);
+    }
+}
+
+pub type StdKakouneIO = KakouneIO<StandardIO>;
+
+pub fn new_kakoune_io() -> StdKakouneIO {
+    let io = StandardIO;
+    KakouneIO::new(io)
 }
 
 impl<S: OperatingSystemIO> KakouneIO<S> {
