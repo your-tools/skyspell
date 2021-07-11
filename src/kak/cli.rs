@@ -110,7 +110,11 @@ struct LineSelection {
 }
 
 fn get_lang(io: &StdKakouneIO) -> Result<String> {
-    io.get_option(SKYSPELL_LANG_OPT)
+    let res = io.get_option(SKYSPELL_LANG_OPT);
+    match res {
+        Ok(s) if s.is_empty() => bail!("{} option is empty", SKYSPELL_LANG_OPT),
+        r => r,
+    }
 }
 
 fn open_repository(io: &StdKakouneIO) -> Result<SQLRepository> {
@@ -337,7 +341,7 @@ fn suggest() -> Result<()> {
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, &lang)?;
     if dictionary.check(word)? {
-        return Ok(());
+        bail!("Selection: `{}` is not an error", word);
     }
 
     let suggestions = dictionary.suggest(word);
