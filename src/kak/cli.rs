@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use clap::Clap;
 use dirs_next::home_dir;
 
@@ -341,6 +341,10 @@ fn suggest() -> Result<()> {
     }
 
     let suggestions = dictionary.suggest(word);
+
+    if suggestions.is_empty() {
+        bail!("No suggestions found");
+    }
 
     print!("menu ");
     for suggestion in suggestions.iter() {
