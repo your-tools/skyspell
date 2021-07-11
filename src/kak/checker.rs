@@ -106,7 +106,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
                 project
             )),
             n => self.print(&format!(
-                "echo -markup {}: {{red}}{} Spelling errors\n",
+                "echo -markup {}: {{red}}{} spelling errors\n",
                 project, n,
             )),
         }
@@ -175,7 +175,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
 }
 
 #[cfg(test)]
-pub mod tests {
+pub(crate) mod tests {
 
     use super::*;
 
@@ -185,14 +185,15 @@ pub mod tests {
     use crate::tests::{FakeDictionary, FakeRepository};
     use crate::{Project, RelativePath};
 
-    type FakeChecker = KakouneChecker<FakeDictionary, FakeRepository, FakeOperatingSystemIO>;
+    pub(crate) type FakeChecker =
+        KakouneChecker<FakeDictionary, FakeRepository, FakeOperatingSystemIO>;
 
     impl FakeChecker {
-        fn get_output(&self) -> String {
+        pub(crate) fn get_output(&self) -> String {
             self.kakoune_io.get_output()
         }
 
-        fn ensure_path(&self, relative_name: &str) -> RelativePath {
+        pub(crate) fn ensure_path(&self, relative_name: &str) -> RelativePath {
             let project = self.project();
             let full_path = project.path().join(relative_name);
             std::fs::write(&full_path, "").unwrap();
@@ -200,7 +201,7 @@ pub mod tests {
         }
     }
 
-    fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
+    pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
         let project = Project::new(temp_dir.path()).unwrap();
         let dictionary = FakeDictionary::new();
         let repository = FakeRepository::new();

@@ -64,6 +64,7 @@ struct MoveOpts {
     range_spec: String,
 }
 
+#[derive(Debug, PartialEq, Eq)]
 struct LineSelection {
     path: String,
     word: String,
@@ -136,28 +137,13 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         Project::new(&path)
     }
 
-    fn parse_line_selection(&self) -> Result<LineSelection> {
-        let line_selection = self.kakoune_io().get_selection()?;
-        let (path, rest) = line_selection
-            .split_once(": ")
-            .with_context(|| "line selection should contain :")?;
-        let (selection, word) = rest
-            .split_once(' ')
-            .with_context(|| "expected at least two words after the path name in line selection")?;
-        Ok(LineSelection {
-            path: path.to_string(),
-            word: word.to_string(),
-            selection: selection.to_string(),
-        })
-    }
-
     fn add_extension(&mut self) -> Result<()> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
         let (_, ext) = path
             .rsplit_once(".")
             .ok_or_else(|| anyhow!("File has no extension"))?;
         self.repository().ignore_for_extension(word, ext)?;
-        self.kak_recheck();
+        self.recheck();
         self.kakoune_io().print(&format!(
             "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
             word, ext,
@@ -172,7 +158,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         let relative_path = RelativePath::new(&project, path)?;
         self.repository()
             .ignore_for_path(word, &project, &relative_path)?;
-        self.kak_recheck();
+        self.recheck();
         self.kakoune_io().print(&format!(
             "echo '\"{}\" added to the ignore list for file: \"{}\"'",
             word, relative_path
@@ -183,7 +169,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
     fn add_global(&mut self) -> Result<()> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
         self.repository().ignore(word)?;
-        self.kak_recheck();
+        self.recheck();
         self.kakoune_io()
             .print(&format!("echo '\"{}\" added to global ignore list'", word));
         Ok(())
@@ -193,7 +179,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
         let project = self.get_project()?;
         self.repository().ignore_for_project(word, &project)?;
-        self.kak_recheck();
+        self.recheck();
         self.kakoune_io().print(&format!(
             "echo '\"{}\" added to ignore list for the current project'",
             word
@@ -258,6 +244,21 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         self.checker.write_code()
     }
 
+    fn parse_line_selection(&self) -> Result<LineSelection> {
+        let line_selection = self.kakoune_io().get_selection()?;
+        let (path, rest) = line_selection
+            .split_once(": ")
+            .with_context(|| "line selection should contain :")?;
+        let (selection, word) = rest
+            .split_once(' ')
+            .with_context(|| "expected at least two words after the path name in line selection")?;
+        Ok(LineSelection {
+            path: path.to_string(),
+            word: word.to_string(),
+            selection: selection.to_string(),
+        })
+    }
+
     fn goto_error(&self, opts: MoveOpts, direction: Direction) -> Result<()> {
         let range_spec = opts.range_spec;
         let cursor = self.kakoune_io().get_cursor()?;
@@ -297,7 +298,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
 
         self.repository().skip_path(&project, &relative_path)?;
 
-        self.kak_recheck();
+        self.recheck();
         println!("echo 'will now skip \"{}\"'", relative_path);
         Ok(())
     }
@@ -312,7 +313,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
 
         self.repository().skip_file_name(&file_name)?;
 
-        self.kak_recheck();
+        self.recheck();
         self.kakoune_io().print(&format!(
             "echo 'will now skip file named: \"{}\"'",
             file_name
@@ -340,16 +341,354 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
                 suggestion
             ));
             self.kakoune_io()
-                .print(&format!(":write <ret> :skyspell-check <ret>}}"));
-            self.kakoune_io().print(&format!(" "));
+                .print(":write <ret> :skyspell-check <ret>}");
+            self.kakoune_io().print(" ");
         }
 
         Ok(())
     }
 
-    fn kak_recheck(&self) {
+    fn recheck(&self) {
         self.kakoune_io().print("write-all\n");
         self.kakoune_io().print("skyspell-check\n");
         self.kakoune_io().print("skyspell-list\n");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    use crate::kak::checker::tests::new_fake_checker;
+    use crate::kak::io::tests::FakeOperatingSystemIO;
+    use crate::tests::FakeDictionary;
+    use crate::tests::FakeRepository;
+    use crate::Repository;
+
+    use tempdir::TempDir;
+
+    type FakeCli = KakCli<FakeDictionary, FakeRepository, FakeOperatingSystemIO>;
+
+    fn new_cli(temp_dir: &TempDir) -> FakeCli {
+        let fake_checker = new_fake_checker(&temp_dir);
+        let mut res = KakCli::new(fake_checker);
+        res.set_option("skyspell_project", &temp_dir.path().to_string_lossy());
+        res.set_timestamp(42);
+        res
+    }
+
+    impl FakeCli {
+        fn get_output(&self) -> String {
+            self.checker.get_output()
+        }
+
+        fn set_option(&mut self, key: &str, value: &str) {
+            self.checker.kakoune_io.set_option(key, value)
+        }
+
+        fn set_selection(&mut self, selection: &str) {
+            self.checker.kakoune_io.set_selection(selection)
+        }
+
+        fn set_timestamp(&mut self, timestamp: usize) {
+            self.checker.kakoune_io.set_timestamp(timestamp)
+        }
+
+        fn set_cursor(&mut self, line: usize, column: usize) {
+            self.checker.kakoune_io.set_cursor(line, column)
+        }
+
+        fn ensure_path(&self, path: &str) -> RelativePath {
+            self.checker.ensure_path(path)
+        }
+
+        fn write_file(&self, path: &str, contents: &str) {
+            let project = self.get_project().unwrap();
+            let full_path = project.path().join(path);
+            std::fs::write(&full_path, contents).unwrap();
+        }
+
+        fn add_known(&mut self, word: &str) {
+            self.checker.dictionary.add_known(word);
+        }
+
+        fn add_suggestions(&mut self, word: &str, suggestions: &[String]) {
+            self.checker.dictionary.add_suggestions(word, suggestions);
+        }
+    }
+
+    #[test]
+    fn test_parse_line_selection() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let mut cli = new_cli(&temp_dir);
+        cli.ensure_path("foo.py");
+        let full_path = format!("{}/foo.py", temp_dir.path().display());
+        cli.set_selection(&format!("{}: 1.3,1.5 foo", full_path));
+
+        let actual = cli.parse_line_selection().unwrap();
+
+        assert_eq!(
+            actual,
+            LineSelection {
+                path: full_path,
+                word: "foo".to_string(),
+                selection: "1.3,1.5".to_string(),
+            }
+        );
+    }
+
+    #[test]
+    fn test_recheck() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let cli = new_cli(&temp_dir);
+        cli.recheck();
+        assert_eq!(
+            cli.get_output(),
+            "\
+write-all
+skyspell-check
+skyspell-list
+"
+        );
+    }
+
+    #[test]
+    fn test_get_project() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let cli = new_cli(&temp_dir);
+        let actual = cli.get_project().unwrap();
+        assert_eq!(actual.path(), temp_dir.path());
+    }
+
+    #[test]
+    fn test_add_extension() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let mut cli = new_cli(&temp_dir);
+        cli.ensure_path("foo.py");
+        let full_path = format!("{}/foo.py", temp_dir.path().display());
+        cli.set_selection(&format!("{}: 1.3,1.5 foo", full_path));
+
+        cli.add_extension().unwrap();
+
+        assert!(cli
+            .repository()
+            .is_ignored_for_extension("foo", "py")
+            .unwrap());
+    }
+
+    #[test]
+    fn test_add_file() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let mut cli = new_cli(&temp_dir);
+        let project = cli.get_project().unwrap();
+        let foo_py = cli.ensure_path("foo.py");
+        let full_path = format!("{}/foo.py", temp_dir.path().display());
+        cli.set_selection(&format!("{}: 1.3,1.5 foo", full_path));
+
+        cli.add_file().unwrap();
+
+        assert!(cli
+            .repository()
+            .is_ignored_for_path("foo", &project, &foo_py)
+            .unwrap());
+    }
+
+    #[test]
+    fn test_add_global() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let mut cli = new_cli(&temp_dir);
+        cli.ensure_path("foo.py");
+        let full_path = format!("{}/foo.py", temp_dir.path().display());
+        cli.set_selection(&format!("{}: 1.3,1.5 foo", full_path));
+
+        cli.add_global().unwrap();
+
+        assert!(cli.repository().is_ignored("foo").unwrap());
+    }
+
+    #[test]
+    fn test_add_project() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let mut cli = new_cli(&temp_dir);
+        let project = cli.get_project().unwrap();
+        cli.ensure_path("foo.py");
+        let full_path = format!("{}/foo.py", temp_dir.path().display());
+        cli.set_selection(&format!("{}: 1.3,1.5 foo", full_path));
+
+        cli.add_project().unwrap();
+
+        assert!(cli
+            .repository()
+            .is_ignored_for_project("foo", &project)
+            .unwrap());
+    }
+
+    #[test]
+    fn test_jump() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let mut cli = new_cli(&temp_dir);
+        cli.ensure_path("foo.py");
+        let full_path = format!("{}/foo.py", temp_dir.path().display());
+        cli.set_selection(&format!("{}: 1.3,1.5 foo", full_path));
+
+        cli.jump().unwrap();
+
+        let actual = cli.get_output();
+        assert_eq!(
+            actual,
+            format!(
+                "\
+edit {}
+select 1.3,1.5
+",
+                full_path
+            )
+        );
+    }
+
+    #[test]
+    fn test_check_no_errors() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let mut cli = new_cli(&temp_dir);
+        let project = cli.get_project().unwrap();
+        cli.ensure_path("foo.py");
+        let full_path = format!("{}/foo.py", temp_dir.path().display());
+
+        let opts = CheckOpts {
+            buflist: vec![full_path.clone()],
+        };
+
+        cli.check(&opts).unwrap();
+
+        let actual = cli.get_output();
+        assert_eq!(
+            actual,
+            format!(
+                "\
+unset-option buffer={full_path} spell_errors
+edit -scratch *spelling*
+execute-keys \\% <ret> d i %{{}} <esc> gg
+execute-keys ga
+echo -markup {project}: {{green}}No spelling errors
+",
+                full_path = full_path,
+                project = project
+            )
+        );
+    }
+
+    #[test]
+    fn test_check_errors_in_two_buffers() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let mut cli = new_cli(&temp_dir);
+        let project = cli.get_project().unwrap();
+        cli.ensure_path("foo.md");
+        cli.ensure_path("bar.md");
+        cli.write_file("foo.md", "This is foo");
+        cli.write_file("bar.md", "This is bar and it contains baz");
+        for word in &["This", "is", "and", "it", "contains"] {
+            cli.add_known(word);
+        }
+        let foo_path = format!("{}/foo.md", temp_dir.path().display());
+        let bar_path = format!("{}/bar.md", temp_dir.path().display());
+
+        let opts = CheckOpts {
+            buflist: vec![foo_path.clone(), bar_path.clone()],
+        };
+
+        cli.check(&opts).unwrap();
+
+        let actual = cli.get_output();
+        let expected =
+            format!(
+                "\
+unset-option buffer={foo_path} spell_errors
+unset-option buffer={bar_path} spell_errors
+edit -scratch *spelling*
+execute-keys \\% <ret> d i %{{{foo_path}: 1.9,1.11 foo<ret>{bar_path}: 1.9,1.11 bar<ret>{bar_path}: 1.29,1.31 baz<ret>}} <esc> gg
+execute-keys ga
+set-option buffer={foo_path} spell_errors 42 1.9+3|Error \n\
+set-option buffer={bar_path} spell_errors 42 1.9+3|Error 1.29+3|Error \n\
+echo -markup {project}: {{red}}3 spelling errors
+",
+                project = project,
+                foo_path = foo_path,
+                bar_path = bar_path,
+            );
+        assert_eq!(actual, expected)
+    }
+
+    #[test]
+    fn test_goto_next_error() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let mut cli = new_cli(&temp_dir);
+        let move_opts = MoveOpts {
+            range_spec: "42 1.9,1.11|Error".to_string(),
+        };
+
+        cli.set_cursor(1, 2);
+        cli.goto_next_error(move_opts).unwrap();
+
+        assert_eq!(cli.get_output(), "select 1.9,1.11\n");
+    }
+
+    #[test]
+    fn test_goto_previous_error() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let mut cli = new_cli(&temp_dir);
+        let move_opts = MoveOpts {
+            range_spec: "42 1.9,1.11|Error".to_string(),
+        };
+
+        cli.set_cursor(1, 22);
+        cli.goto_previous_error(move_opts).unwrap();
+
+        assert_eq!(cli.get_output(), "select 1.9,1.11\n");
+    }
+
+    #[test]
+    fn test_skip_file() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let mut cli = new_cli(&temp_dir);
+        let project = cli.get_project().unwrap();
+        let foo_py = cli.ensure_path("foo.py");
+        let foo_path = format!("{}/foo.py", temp_dir.path().display());
+        cli.set_selection(&format!("{}: 1.3,1.5 foo", foo_path));
+
+        cli.skip_file().unwrap();
+
+        assert!(cli.repository().is_skipped_path(&project, &foo_py).unwrap());
+    }
+
+    #[test]
+    fn test_skip_name() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let mut cli = new_cli(&temp_dir);
+        cli.ensure_path("Cargo.lock");
+        let lock_path = format!("{}/Cargo.lock", temp_dir.path().display());
+        cli.set_selection(&format!("{}: 1.3,1.5 foo", lock_path));
+
+        cli.skip_name().unwrap();
+
+        assert!(cli.repository().is_skipped_file_name("Cargo.lock").unwrap());
+    }
+
+    #[test]
+    fn test_suggest() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let mut cli = new_cli(&temp_dir);
+        cli.add_suggestions("hllo", &["hell".to_string(), "hello".to_string()]);
+        cli.set_selection("hllo");
+
+        cli.suggest().unwrap();
+
+        let actual = cli.get_output();
+        let expected = "\
+menu \
+%{hell} %{execute-keys -itersel %{chell<esc>be} :write <ret> :skyspell-check <ret>} \
+%{hello} %{execute-keys -itersel %{chello<esc>be} :write <ret> :skyspell-check <ret>} ";
+
+        assert_eq!(actual, expected);
     }
 }
