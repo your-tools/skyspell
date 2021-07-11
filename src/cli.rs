@@ -23,7 +23,13 @@ pub fn run() -> Result<()> {
         Action::Suggest(opts) => suggest(&lang, opts),
         Action::Skip(opts) => skip(&lang, opts),
         Action::Unskip(opts) => unskip(&lang, opts),
-        Action::Kak(opts) => kak::cli::run(opts),
+        Action::Kak(opts) => match kak::cli::run(opts) {
+            Ok(()) => Ok(()),
+            Err(e) => {
+                println!("echo -markup {{Error}}{}", e);
+                Err(e)
+            }
+        },
     }
 }
 
