@@ -46,7 +46,7 @@ pub trait Repository {
         project: &Project,
         relative_path: &RelativePath,
     ) -> Result<()>;
-    // Add word to the ignore list for the given project and path
+    // Is the word in the ignore list for the given project and path?
     fn is_ignored_for_path(
         &self,
         word: &str,
