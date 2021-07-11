@@ -7,11 +7,11 @@ use dirs_next::home_dir;
 use crate::kak::checker::{SKYSPELL_LANG_OPT, SKYSPELL_PROJECT_OPT};
 use crate::kak::io::{KakouneIO, OperatingSystemIO};
 use crate::kak::KakouneChecker;
-use crate::sql_repository::SQLRepository;
 use crate::Checker;
 use crate::EnchantDictionary;
 use crate::Project;
 use crate::RelativePath;
+use crate::SQLRepository;
 use crate::TokenProcessor;
 use crate::{Dictionary, Repository};
 
@@ -86,18 +86,18 @@ struct MoveOpts {
     range_spec: String,
 }
 
-pub(crate) fn run(opts: Opts) -> Result<()> {
+pub(crate) fn run(db_path: &str, opts: Opts) -> Result<()> {
     match opts.action {
-        Action::AddExtension => add_extension(),
-        Action::AddFile => add_file(),
-        Action::AddGlobal => add_global(),
-        Action::AddProject => add_project(),
-        Action::Check(opts) => check(opts),
+        Action::AddExtension => add_extension(db_path),
+        Action::AddFile => add_file(db_path),
+        Action::AddGlobal => add_global(db_path),
+        Action::AddProject => add_project(db_path),
+        Action::Check(opts) => check(db_path, opts),
         Action::Jump => jump(),
         Action::NextError(opts) => goto_next_error(opts),
         Action::PreviousError(opts) => goto_previous_error(opts),
-        Action::SkipFile => skip_file(),
-        Action::SkipName => skip_name(),
+        Action::SkipFile => skip_file(db_path),
+        Action::SkipName => skip_name(db_path),
         Action::Suggest => suggest(),
         Action::Init => init(),
     }
@@ -115,11 +115,6 @@ fn get_lang(io: &StdKakouneIO) -> Result<String> {
         Ok(s) if s.is_empty() => bail!("{} option is empty", SKYSPELL_LANG_OPT),
         r => r,
     }
-}
-
-fn open_repository(io: &StdKakouneIO) -> Result<SQLRepository> {
-    let lang = get_lang(io)?;
-    SQLRepository::open(&lang)
 }
 
 fn get_project(io: &StdKakouneIO) -> Result<Project> {
@@ -144,13 +139,12 @@ fn parse_line_selection() -> Result<LineSelection> {
     })
 }
 
-fn add_extension() -> Result<()> {
-    let kakoune_io = new_kakoune_io();
+fn add_extension(db_path: &str) -> Result<()> {
     let LineSelection { path, word, .. } = &parse_line_selection()?;
     let (_, ext) = path
         .rsplit_once(".")
         .ok_or_else(|| anyhow!("File has no extension"))?;
-    let mut repository = open_repository(&kakoune_io)?;
+    let mut repository = SQLRepository::new(db_path)?;
     repository.ignore_for_extension(word, ext)?;
     kak_recheck();
     println!(
@@ -160,13 +154,13 @@ fn add_extension() -> Result<()> {
     Ok(())
 }
 
-fn add_file() -> Result<()> {
+fn add_file(db_path: &str) -> Result<()> {
     let kakoune_io = new_kakoune_io();
     let LineSelection { path, word, .. } = &parse_line_selection()?;
     let path = &Path::new(path);
     let project = get_project(&kakoune_io)?;
     let relative_path = RelativePath::new(&project, path)?;
-    let mut repository = open_repository(&kakoune_io)?;
+    let mut repository = SQLRepository::new(db_path)?;
     repository.ignore_for_path(word, &project, &relative_path)?;
     kak_recheck();
     println!(
@@ -176,21 +170,20 @@ fn add_file() -> Result<()> {
     Ok(())
 }
 
-fn add_global() -> Result<()> {
-    let kakoune_io = new_kakoune_io();
+fn add_global(db_path: &str) -> Result<()> {
     let LineSelection { word, .. } = &parse_line_selection()?;
-    let mut repository = open_repository(&kakoune_io)?;
+    let mut repository = SQLRepository::new(db_path)?;
     repository.ignore(word)?;
     kak_recheck();
     println!("echo '\"{}\" added to global ignore list'", word);
     Ok(())
 }
 
-fn add_project() -> Result<()> {
+fn add_project(db_path: &str) -> Result<()> {
     let kakoune_io = new_kakoune_io();
     let LineSelection { word, .. } = &parse_line_selection()?;
     let project = get_project(&kakoune_io)?;
-    let mut repository = open_repository(&kakoune_io)?;
+    let mut repository = SQLRepository::new(db_path)?;
     repository.ignore_for_project(word, &project)?;
     kak_recheck();
     println!(
@@ -209,7 +202,7 @@ fn jump() -> Result<()> {
     Ok(())
 }
 
-fn check(opts: CheckOpts) -> Result<()> {
+fn check(db_path: &str, opts: CheckOpts) -> Result<()> {
     let kakoune_io = new_kakoune_io();
     let lang = get_lang(&kakoune_io)?;
     let project = get_project(&kakoune_io)?;
@@ -220,7 +213,7 @@ fn check(opts: CheckOpts) -> Result<()> {
     // kak_buflist may:
     //  * contain special buffers, like *debug*
     //  * use ~ for home dir
-    let repository = open_repository(&kakoune_io)?;
+    let repository = SQLRepository::new(db_path)?;
     let home_dir = home_dir().ok_or_else(|| anyhow!("Could not get home directory"))?;
     let home_dir = home_dir
         .to_str()
@@ -300,7 +293,7 @@ fn init() -> Result<()> {
     Ok(())
 }
 
-fn skip_file() -> Result<()> {
+fn skip_file(db_path: &str) -> Result<()> {
     let kakoune_io = new_kakoune_io();
     let LineSelection { path, .. } = &parse_line_selection()?;
     // We know it's a full path thanks to handle_error in KakouneChecker
@@ -309,7 +302,7 @@ fn skip_file() -> Result<()> {
 
     let relative_path = RelativePath::new(&project, &full_path)?;
 
-    let mut repository = open_repository(&kakoune_io)?;
+    let mut repository = SQLRepository::new(db_path)?;
     repository.skip_path(&project, &relative_path)?;
 
     kak_recheck();
@@ -317,8 +310,7 @@ fn skip_file() -> Result<()> {
     Ok(())
 }
 
-fn skip_name() -> Result<()> {
-    let kakoune_io = new_kakoune_io();
+fn skip_name(db_path: &str) -> Result<()> {
     let LineSelection { path, .. } = &parse_line_selection()?;
     let path = Path::new(path);
     let file_name = path
@@ -326,7 +318,7 @@ fn skip_name() -> Result<()> {
         .with_context(|| "no file name")?
         .to_string_lossy();
 
-    let mut repository = open_repository(&kakoune_io)?;
+    let mut repository = SQLRepository::new(db_path)?;
     repository.skip_file_name(&file_name)?;
 
     kak_recheck();

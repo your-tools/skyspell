@@ -4,6 +4,7 @@ use anyhow::{bail, Result};
 use clap::Clap;
 
 use crate::kak;
+use crate::sql_repository::get_default_db_path;
 use crate::EnchantDictionary;
 use crate::SQLRepository;
 use crate::TokenProcessor;
@@ -14,16 +15,20 @@ use crate::{Project, RelativePath};
 pub fn run() -> Result<()> {
     let opts: Opts = Opts::parse();
     let lang = opts.lang.unwrap_or_else(|| "en_US".to_string());
+    let db_path = match opts.db_path {
+        Some(p) => Ok(p),
+        None => get_default_db_path(&lang),
+    }?;
 
     match opts.action {
-        Action::Add(opts) => add(&lang, opts),
-        Action::Remove(opts) => remove(&lang, opts),
-        Action::Check(opts) => check(&lang, opts),
-        Action::ImportPersonalDict(opts) => import_personal_dict(&lang, opts),
+        Action::Add(opts) => add(&db_path, opts),
+        Action::Remove(opts) => remove(&db_path, opts),
+        Action::Check(opts) => check(&db_path, &lang, opts),
+        Action::ImportPersonalDict(opts) => import_personal_dict(&db_path, opts),
         Action::Suggest(opts) => suggest(&lang, opts),
-        Action::Skip(opts) => skip(&lang, opts),
-        Action::Unskip(opts) => unskip(&lang, opts),
-        Action::Kak(opts) => match kak::cli::run(opts) {
+        Action::Skip(opts) => skip(&db_path, opts),
+        Action::Unskip(opts) => unskip(&db_path, opts),
+        Action::Kak(opts) => match kak::cli::run(&db_path, opts) {
             Ok(()) => Ok(()),
             Err(e) => {
                 println!("echo -markup {{Error}}{}", e);
@@ -42,6 +47,9 @@ struct Opts {
         long_about = "Language to use - must match an installed dictionary for one of Enchant's provider"
     )]
     lang: Option<String>,
+
+    #[clap(long, about = "Path of the ignore repository")]
+    db_path: Option<String>,
 
     #[clap(subcommand)]
     action: Action,
@@ -145,13 +153,9 @@ struct RemoveOpts {
     word: String,
 }
 
-fn open_repository(lang: &str) -> Result<crate::SQLRepository> {
-    SQLRepository::open(lang)
-}
-
-fn add(lang: &str, opts: AddOpts) -> Result<()> {
+fn add(db_path: &str, opts: AddOpts) -> Result<()> {
     let word = &opts.word;
-    let mut repository = open_repository(lang)?;
+    let mut repository = SQLRepository::new(db_path)?;
 
     match (opts.project_path, opts.relative_path, opts.extension) {
         (None, None, None) => repository.ignore(word),
@@ -170,9 +174,9 @@ fn add(lang: &str, opts: AddOpts) -> Result<()> {
     }
 }
 
-fn remove(lang: &str, opts: RemoveOpts) -> Result<()> {
+fn remove(db_path: &str, opts: RemoveOpts) -> Result<()> {
     let word = &opts.word;
-    let mut repository = open_repository(lang)?;
+    let mut repository = SQLRepository::new(db_path)?;
     match (opts.project_path, opts.relative_path, opts.extension) {
         (None, None, None) => repository.remove_ignored(word),
         (None, _, Some(e)) => repository.remove_ignored_for_extension(word, &e),
@@ -190,12 +194,12 @@ fn remove(lang: &str, opts: RemoveOpts) -> Result<()> {
     }
 }
 
-fn check(lang: &str, opts: CheckOpts) -> Result<()> {
+fn check(db_path: &str, lang: &str, opts: CheckOpts) -> Result<()> {
     let project = Project::new(&opts.project_path)?;
 
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, lang)?;
-    let repository = open_repository(lang)?;
+    let repository = SQLRepository::new(db_path)?;
     let interactive = !opts.non_interactive;
 
     match interactive {
@@ -246,8 +250,8 @@ where
     Ok(())
 }
 
-fn import_personal_dict(lang: &str, opts: ImportPersonalDictOpts) -> Result<()> {
-    let mut repository = open_repository(lang)?;
+fn import_personal_dict(db_path: &str, opts: ImportPersonalDictOpts) -> Result<()> {
+    let mut repository = SQLRepository::new(db_path)?;
     let dict = std::fs::read_to_string(&opts.personal_dict_path)?;
     let words: Vec<&str> = dict.split_ascii_whitespace().collect();
     repository.insert_ignored_words(&words)?;
@@ -255,8 +259,8 @@ fn import_personal_dict(lang: &str, opts: ImportPersonalDictOpts) -> Result<()> 
     Ok(())
 }
 
-fn skip(lang: &str, opts: SkipOpts) -> Result<()> {
-    let mut repository = open_repository(lang)?;
+fn skip(db_path: &str, opts: SkipOpts) -> Result<()> {
+    let mut repository = SQLRepository::new(db_path)?;
     match (opts.project_path, opts.relative_path, opts.file_name) {
         (Some(project_path), Some(relative_path), None) => {
             let project = Project::new(&project_path)?;
@@ -270,8 +274,8 @@ fn skip(lang: &str, opts: SkipOpts) -> Result<()> {
     }
 }
 
-fn unskip(lang: &str, opts: UnskipOpts) -> Result<()> {
-    let mut repository = open_repository(lang)?;
+fn unskip(db_path: &str, opts: UnskipOpts) -> Result<()> {
+    let mut repository = SQLRepository::new(db_path)?;
     match (opts.project_path, opts.relative_path, opts.file_name) {
         (Some(project_path), Some(relative_path), None) => {
             let project = Project::new(&project_path)?;

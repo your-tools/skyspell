@@ -231,7 +231,7 @@ mod tests {
 
             #[test]
             fn [<test_sql_repository $name>]() {
-                let repository = SQLRepository::connect(":memory:").unwrap();
+                let repository = SQLRepository::new(":memory:").unwrap();
                 $name(repository)
             }
 

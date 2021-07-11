@@ -14,26 +14,26 @@ pub(crate) struct SQLRepository {
     connection: SqliteConnection,
 }
 
+pub(crate) fn get_default_db_path(lang: &str) -> Result<String> {
+    let app_dirs = AppDirs::new(Some("skyspell"), false)
+        .with_context(|| "Could not get app dirs for skyspell application")?;
+    let data_dir = app_dirs.data_dir;
+    std::fs::create_dir_all(&data_dir)
+        .with_context(|| format!("Could not create {}", data_dir.display()))?;
+
+    let db_path = data_dir.join(format!("{}.db", lang));
+    let url = db_path
+        .to_str()
+        .ok_or_else(|| anyhow!("{} contains non-UTF-8 chars", db_path.display()))?;
+    Ok(url.to_string())
+}
+
 impl SQLRepository {
-    pub(crate) fn connect(url: &str) -> Result<Self> {
+    pub(crate) fn new(url: &str) -> Result<Self> {
         let connection = SqliteConnection::establish(&url)
             .with_context(|| format!("Could not connect to {}", url))?;
         embedded_migrations::run(&connection).with_context(|| "Could not migrate db")?;
         Ok(Self { connection })
-    }
-
-    pub(crate) fn open(lang: &str) -> Result<Self> {
-        let app_dirs = AppDirs::new(Some("skyspell"), false)
-            .with_context(|| "Could not get app dirs for skyspell application")?;
-        let data_dir = app_dirs.data_dir;
-        std::fs::create_dir_all(&data_dir)
-            .with_context(|| format!("Could not create {}", data_dir.display()))?;
-
-        let db_path = &data_dir.join(format!("{}.db", lang));
-        let db_path = db_path
-            .to_str()
-            .ok_or_else(|| anyhow!("{} contains non-UTF-8 chars", db_path.display()))?;
-        Self::connect(db_path)
     }
 
     pub(crate) fn remove_ignored(&mut self, word: &str) -> Result<()> {
