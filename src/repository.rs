@@ -1,4 +1,6 @@
-use anyhow::Result;
+use std::path::Path;
+
+use anyhow::{bail, Result};
 
 use crate::{Project, RelativePath};
 
@@ -21,6 +23,15 @@ pub trait Repository {
             self.new_project(project)?;
         }
         Ok(())
+    }
+
+    // Open an existing project
+    fn get_project(&mut self, path: &Path) -> Result<Project> {
+        let project = Project::new(path)?;
+        if !self.project_exists(&project)? {
+            bail!("No such project : {}", project.as_str());
+        }
+        Ok(project)
     }
 
     // Always skip this file name - to be used with Cargo.lock, yarn.lock

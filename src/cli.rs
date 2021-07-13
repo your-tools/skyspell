@@ -151,12 +151,12 @@ fn add(mut repository: impl Repository, opts: AddOpts) -> Result<()> {
         (None, None, None) => repository.ignore(word),
         (None, _, Some(e)) => repository.ignore_for_extension(word, &e),
         (Some(project_path), Some(relative_path), None) => {
-            let project = Project::new(&project_path)?;
+            let project = repository.get_project(&project_path)?;
             let relative_path = RelativePath::new(&project, &relative_path)?;
             repository.ignore_for_path(word, &project, &relative_path)
         }
         (Some(project_path), None, None) => {
-            let project = Project::new(&project_path)?;
+            let project = repository.get_project(&project_path)?;
             repository.ignore_for_project(word, &project)
         }
         (None, Some(_), None) => bail!("Cannot use --relative-path without --project-path"),
@@ -170,12 +170,12 @@ fn remove(mut repository: impl Repository, opts: RemoveOpts) -> Result<()> {
         (None, None, None) => repository.remove_ignored(word),
         (None, _, Some(e)) => repository.remove_ignored_for_extension(word, &e),
         (Some(project_path), Some(relative_path), None) => {
-            let project = Project::new(&project_path)?;
+            let project = repository.get_project(&project_path)?;
             let relative_path = RelativePath::new(&project, &relative_path)?;
             repository.remove_ignored_for_path(word, &project, &relative_path)
         }
         (Some(project_path), None, None) => {
-            let project = Project::new(&project_path)?;
+            let project = repository.get_project(&project_path)?;
             repository.remove_ignored_for_project(word, &project)
         }
         (None, Some(_), None) => bail!("Cannot use --relative-path without --project-path"),
@@ -248,7 +248,7 @@ fn import_personal_dict(
 fn skip(mut repository: impl Repository, opts: SkipOpts) -> Result<()> {
     match (opts.project_path, opts.relative_path, opts.file_name) {
         (Some(project_path), Some(relative_path), None) => {
-            let project = Project::new(&project_path)?;
+            let project = repository.get_project(&project_path)?;
             let relative_path = RelativePath::new(&project, &relative_path)?;
             repository.skip_path(&project, &relative_path)
         }
@@ -262,7 +262,7 @@ fn skip(mut repository: impl Repository, opts: SkipOpts) -> Result<()> {
 fn unskip(mut repository: impl Repository, opts: UnskipOpts) -> Result<()> {
     match (opts.project_path, opts.relative_path, opts.file_name) {
         (Some(project_path), Some(relative_path), None) => {
-            let project = Project::new(&project_path)?;
+            let project = repository.get_project(&project_path)?;
             let relative_path = RelativePath::new(&project, &relative_path)?;
             repository.unskip_path(&project, &relative_path)
         }
