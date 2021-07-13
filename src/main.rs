@@ -1,7 +1,6 @@
 use anyhow::Result;
 use clap::Clap;
 use skyspell::cli::{run, Opts};
-use skyspell::kak::new_kakoune_io;
 use skyspell::sql_repository::{get_default_db_path, SQLRepository};
 use skyspell::EnchantDictionary;
 
@@ -20,6 +19,5 @@ fn main() -> Result<()> {
     let repository = SQLRepository::new(&db_path)?;
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, lang)?;
-    let kakoune_io = new_kakoune_io();
-    run(opts, dictionary, repository, kakoune_io)
+    run(opts, dictionary, repository)
 }

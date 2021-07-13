@@ -4,18 +4,14 @@ use anyhow::{bail, Result};
 use clap::Clap;
 
 use crate::kak;
-use crate::kak::io::{KakouneIO, OperatingSystemIO};
+use crate::kak::io::new_kakoune_io;
 use crate::TokenProcessor;
 use crate::{Checker, InteractiveChecker, NonInteractiveChecker};
 use crate::{ConsoleInteractor, Dictionary, Repository};
 use crate::{Project, RelativePath};
 
-pub fn run<D: Dictionary, R: Repository, S: OperatingSystemIO>(
-    opts: Opts,
-    dictionary: D,
-    repository: R,
-    kakoune_io: KakouneIO<S>,
-) -> Result<()> {
+pub fn run<D: Dictionary, R: Repository>(opts: Opts, dictionary: D, repository: R) -> Result<()> {
+    let kakoune_io = new_kakoune_io();
     match opts.action {
         Action::Add(opts) => add(repository, opts),
         Action::Remove(opts) => remove(repository, opts),
