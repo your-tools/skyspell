@@ -12,13 +12,13 @@ pub trait Repository {
     fn is_ignored(&self, word: &str) -> Result<bool>;
 
     // Add a new project
-    fn new_project(&mut self, path: &Project) -> Result<()>;
+    fn new_project(&mut self, project: &Project) -> Result<()>;
     // Check if a project exists
-    fn project_exists(&self, path: &Project) -> Result<bool>;
+    fn project_exists(&self, project: &Project) -> Result<bool>;
     // Create a project if it does not exist yet
-    fn ensure_project(&mut self, path: &Project) -> Result<()> {
-        if !self.project_exists(path)? {
-            self.new_project(path)?;
+    fn ensure_project(&mut self, project: &Project) -> Result<()> {
+        if !self.project_exists(project)? {
+            self.new_project(project)?;
         }
         Ok(())
     }
