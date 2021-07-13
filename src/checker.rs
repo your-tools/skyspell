@@ -19,7 +19,8 @@ pub(crate) trait Checker {
         context: &Self::Context,
     ) -> Result<()>;
 
-    fn success(&self) -> bool;
+    // Were all the errors handled properly?
+    fn success(&self) -> Result<()>;
     fn repository(&self) -> &dyn Repository;
     fn dictionary(&self) -> &dyn Dictionary;
 
@@ -96,8 +97,11 @@ impl<D: Dictionary, R: Repository> Checker for NonInteractiveChecker<D, R> {
         Ok(())
     }
 
-    fn success(&self) -> bool {
-        !self.errors_found
+    fn success(&self) -> Result<()> {
+        if self.errors_found {
+            bail!("Found spelling errors");
+        }
+        Ok(())
     }
 
     fn project(&self) -> &Project {
@@ -121,8 +125,11 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
     // line, column
     type Context = (usize, usize);
 
-    fn success(&self) -> bool {
-        self.skipped.is_empty()
+    fn success(&self) -> Result<()> {
+        if !self.skipped.is_empty() {
+            bail!("Some errors were skipped")
+        }
+        Ok(())
     }
 
     fn project(&self) -> &Project {

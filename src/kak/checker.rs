@@ -46,8 +46,10 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChec
         Ok(())
     }
 
-    fn success(&self) -> bool {
-        true
+    fn success(&self) -> Result<()> {
+        // This checker is always successful, unless we can't fill up the *spelling*
+        // buffer for some reason (but this is caught earlier)
+        Ok(())
     }
 
     fn repository(&self) -> &dyn Repository {

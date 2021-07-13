@@ -223,9 +223,7 @@ where
         })?;
     }
 
-    if !checker.success() {
-        std::process::exit(1);
-    }
+    checker.success()?;
 
     match skipped {
         1 => println!("Skipped one file"),
