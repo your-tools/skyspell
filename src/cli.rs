@@ -4,14 +4,14 @@ use anyhow::{bail, Result};
 use clap::Clap;
 
 use crate::kak;
-use crate::kak::io::new_kakoune_io;
+use crate::kak::io::KakouneIO;
+use crate::StandardIO;
 use crate::TokenProcessor;
 use crate::{Checker, InteractiveChecker, NonInteractiveChecker};
 use crate::{ConsoleInteractor, Dictionary, Repository};
 use crate::{Project, RelativePath};
 
 pub fn run<D: Dictionary, R: Repository>(opts: Opts, dictionary: D, repository: R) -> Result<()> {
-    let kakoune_io = new_kakoune_io();
     match opts.action {
         Action::Add(opts) => add(repository, opts),
         Action::Remove(opts) => remove(repository, opts),
@@ -20,13 +20,15 @@ pub fn run<D: Dictionary, R: Repository>(opts: Opts, dictionary: D, repository: 
         Action::Suggest(opts) => suggest(dictionary, opts),
         Action::Skip(opts) => skip(repository, opts),
         Action::Unskip(opts) => unskip(repository, opts),
-        Action::Kak(opts) => match kak::cli::run(repository, dictionary, kakoune_io, opts) {
-            Ok(()) => Ok(()),
-            Err(e) => {
+        Action::Kak(opts) => {
+            let io = StandardIO;
+            let kakoune_io = KakouneIO::new(io);
+            if let Err(e) = kak::cli::run(repository, dictionary, kakoune_io, opts) {
                 println!("echo -markup {{Error}}{}", e);
-                Err(e)
+                return Err(e);
             }
-        },
+            Ok(())
+        }
     }
 }
 
