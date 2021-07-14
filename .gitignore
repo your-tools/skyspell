@@ -1,6 +1,6 @@
 /target
 *.db
-tarpaulin-report.html
+/tarpaulin
 flamegraph.svg
 perf.data
 perf.data.old
