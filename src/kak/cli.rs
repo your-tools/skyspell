@@ -323,12 +323,15 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
     }
 
     fn suggest(&mut self) -> Result<()> {
-        let word = &self.kakoune_io().get_selection()?;
-        if self.dictionary().check(word)? {
-            bail!("Selection: `{}` is not an error", word);
+        let selection = &self.kakoune_io().get_selection()?;
+        if selection.trim().is_empty() {
+            bail!("Selection is blank");
+        }
+        if self.dictionary().check(selection)? {
+            bail!("Selection: `{}` is not an error", selection);
         }
 
-        let suggestions = self.dictionary().suggest(word);
+        let suggestions = self.dictionary().suggest(selection);
 
         if suggestions.is_empty() {
             bail!("No suggestions found");
@@ -676,7 +679,7 @@ echo -markup {project}: {{red}}3 spelling errors
     }
 
     #[test]
-    fn test_suggest() {
+    fn test_suggest_on_error() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut cli = new_cli(&temp_dir);
         cli.add_suggestions("hllo", &["hell".to_string(), "hello".to_string()]);
@@ -691,5 +694,15 @@ menu \
 %{hello} %{execute-keys -itersel %{chello<esc>be} :write <ret> :skyspell-check <ret>} ";
 
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_suggest_on_new_line_selection() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let mut cli = new_cli(&temp_dir);
+        cli.set_selection("\n");
+
+        let err = cli.suggest().unwrap_err();
+        assert!(err.to_string().contains("blank"));
     }
 }
