@@ -2,7 +2,8 @@ use anyhow::Result;
 use itertools::Itertools;
 use std::path::PathBuf;
 
-use crate::kak::io::{KakouneIO, OperatingSystemIO};
+use crate::kak::io::KakouneIO;
+use crate::os_io::OperatingSystemIO;
 use crate::Checker;
 use crate::{Dictionary, Repository};
 use crate::{Project, RelativePath};
@@ -183,15 +184,15 @@ pub(crate) mod tests {
 
     use tempdir::TempDir;
 
-    use crate::kak::io::tests::{new_fake_io, FakeOperatingSystemIO};
+    use crate::kak::io::tests::new_fake_io;
+    use crate::tests::FakeIO;
     use crate::tests::{FakeDictionary, FakeRepository};
     use crate::{Project, RelativePath};
 
-    pub(crate) type FakeChecker =
-        KakouneChecker<FakeDictionary, FakeRepository, FakeOperatingSystemIO>;
+    pub(crate) type FakeChecker = KakouneChecker<FakeDictionary, FakeRepository, FakeIO>;
 
     impl FakeChecker {
-        pub(crate) fn get_output(&self) -> String {
+        pub(crate) fn get_output(self) -> String {
             self.kakoune_io.get_output()
         }
 

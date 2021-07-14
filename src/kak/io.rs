@@ -1,25 +1,8 @@
+use crate::os_io::{OperatingSystemIO, StandardIO};
 use anyhow::{anyhow, Context, Result};
-
-pub trait OperatingSystemIO {
-    fn get_env_var(&self, key: &str) -> Result<String>;
-    fn print(&self, text: &str);
-}
 
 pub struct KakouneIO<S: OperatingSystemIO> {
     os_io: S,
-}
-
-#[derive(Copy, Clone)]
-pub struct StandardIO;
-
-impl OperatingSystemIO for StandardIO {
-    fn get_env_var(&self, key: &str) -> Result<String> {
-        std::env::var(key).map_err(|_| anyhow!("{} not found in environment", key))
-    }
-
-    fn print(&self, text: &str) {
-        print!("{}", text);
-    }
 }
 
 pub type StdKakouneIO = KakouneIO<StandardIO>;
@@ -163,51 +146,22 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
-    use std::cell::RefCell;
-    use std::collections::HashMap;
+    use crate::tests::FakeIO;
 
-    pub(crate) struct FakeOperatingSystemIO {
-        env: HashMap<String, String>,
-        stdout: RefCell<String>,
-    }
-
-    impl FakeOperatingSystemIO {
-        pub(crate) fn new() -> Self {
-            Self {
-                env: HashMap::new(),
-                stdout: RefCell::new(String::new()),
-            }
-        }
-    }
-
-    impl OperatingSystemIO for FakeOperatingSystemIO {
-        fn get_env_var(&self, key: &str) -> Result<String> {
-            let res = self
-                .env
-                .get(key)
-                .ok_or_else(|| anyhow!("No such key: {}", key))?;
-            Ok(res.to_owned())
-        }
-
-        fn print(&self, text: &str) {
-            self.stdout.borrow_mut().push_str(text)
-        }
-    }
-
-    pub(crate) type FakeKakouneIO = KakouneIO<FakeOperatingSystemIO>;
+    pub(crate) type FakeKakouneIO = KakouneIO<FakeIO>;
 
     impl FakeKakouneIO {
-        pub(crate) fn get_output(&self) -> String {
-            self.os_io.stdout.borrow().to_string()
+        pub(crate) fn get_output(self) -> String {
+            self.os_io.get_output()
         }
 
         pub(crate) fn set_env_var(&mut self, key: &str, value: &str) {
-            self.os_io.env.insert(key.to_string(), value.to_string());
+            self.os_io.set_env_var(key, value);
         }
 
         pub(crate) fn set_option(&mut self, key: &str, value: &str) {
             let key = format!("kak_opt_{}", key);
-            self.os_io.env.insert(key, value.to_string());
+            self.os_io.set_env_var(&key, value);
         }
 
         pub(crate) fn set_selection(&mut self, text: &str) {
@@ -225,7 +179,7 @@ pub(crate) mod tests {
     }
 
     pub(crate) fn new_fake_io() -> FakeKakouneIO {
-        let fake_os_io = FakeOperatingSystemIO::new();
+        let fake_os_io = FakeIO::new();
         KakouneIO::new(fake_os_io)
     }
 

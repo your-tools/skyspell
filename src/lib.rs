@@ -11,6 +11,7 @@ mod dictionary;
 pub(crate) mod interactor;
 pub mod kak;
 pub(crate) mod models;
+pub(crate) mod os_io;
 pub(crate) mod project;
 pub(crate) mod repository;
 pub(crate) mod schema;

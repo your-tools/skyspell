@@ -5,8 +5,9 @@ use clap::Clap;
 use dirs_next::home_dir;
 
 use crate::kak::checker::SKYSPELL_PROJECT_OPT;
-use crate::kak::io::{KakouneIO, OperatingSystemIO};
+use crate::kak::io::KakouneIO;
 use crate::kak::KakouneChecker;
+use crate::os_io::OperatingSystemIO;
 use crate::Checker;
 use crate::Project;
 use crate::RelativePath;
@@ -361,14 +362,14 @@ mod tests {
     use super::*;
 
     use crate::kak::checker::tests::new_fake_checker;
-    use crate::kak::io::tests::FakeOperatingSystemIO;
     use crate::tests::FakeDictionary;
+    use crate::tests::FakeIO;
     use crate::tests::FakeRepository;
     use crate::Repository;
 
     use tempdir::TempDir;
 
-    type FakeCli = KakCli<FakeDictionary, FakeRepository, FakeOperatingSystemIO>;
+    type FakeCli = KakCli<FakeDictionary, FakeRepository, FakeIO>;
 
     fn new_cli(temp_dir: &TempDir) -> FakeCli {
         let fake_checker = new_fake_checker(&temp_dir);
@@ -379,7 +380,7 @@ mod tests {
     }
 
     impl FakeCli {
-        fn get_output(&self) -> String {
+        fn get_output(self) -> String {
             self.checker.get_output()
         }
 
