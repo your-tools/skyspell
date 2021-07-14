@@ -38,7 +38,7 @@ pub struct Opts {
     #[clap(
         long,
         about = "Language to use",
-        long_about = "Language to use - must match an installed dictionary for one of Enchant's provider"
+        long_about = "Language to use - must match an installed dictionary for one of Enchant's providers"
     )]
     pub lang: Option<String>,
 
