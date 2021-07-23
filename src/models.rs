@@ -46,15 +46,3 @@ pub(crate) struct NewSkippedPath<'a> {
 pub(crate) struct NewProject<'a> {
     pub path: &'a str,
 }
-
-#[derive(Queryable)]
-pub(crate) struct IgnoredForExtension {
-    pub word: String,
-    pub extension: String,
-}
-
-#[derive(Queryable)]
-pub(crate) struct Project {
-    pub id: i32,
-    pub path: String,
-}
