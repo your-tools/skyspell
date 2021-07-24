@@ -345,7 +345,7 @@ mod tests {
             let interactor = FakeInteractor::new();
             let dictionary = FakeDictionary::new();
             let repository = FakeRepository::new();
-            let project = Project::new(temp_dir.path()).unwrap();
+            let project = Project::open(temp_dir.path()).unwrap();
             let checker = TestChecker::new(project, interactor, dictionary, repository).unwrap();
             Self { checker }
         }

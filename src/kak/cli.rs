@@ -91,7 +91,7 @@ pub(crate) fn run<S: OperatingSystemIO>(
 
     let as_str = kakoune_io.get_option(SKYSPELL_PROJECT_OPT)?;
     let path = PathBuf::from(as_str);
-    let project = Project::new(&path)?;
+    let project = Project::open(&path)?;
     let checker = KakouneChecker::new(project, dictionary, repository, kakoune_io)?;
     let mut cli = KakCli::new(checker);
 
@@ -135,7 +135,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
     fn get_project(&self) -> Result<Project> {
         let as_str = self.kakoune_io().get_option(SKYSPELL_PROJECT_OPT)?;
         let path = PathBuf::from(as_str);
-        Project::new(&path)
+        Project::open(&path)
     }
 
     fn add_extension(&mut self) -> Result<()> {

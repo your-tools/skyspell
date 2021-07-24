@@ -205,7 +205,7 @@ pub(crate) mod tests {
     }
 
     pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
-        let project = Project::new(temp_dir.path()).unwrap();
+        let project = Project::open(temp_dir.path()).unwrap();
         let dictionary = FakeDictionary::new();
         let repository = FakeRepository::new();
         let fake_io = new_fake_io();

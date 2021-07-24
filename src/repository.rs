@@ -27,7 +27,7 @@ pub trait Repository {
     }
     // Open an existing project
     fn get_project(&mut self, path: &Path) -> Result<Project> {
-        let project = Project::new(path)?;
+        let project = Project::open(path)?;
         if !self.project_exists(&project)? {
             bail!("No such project : {}", project.as_str());
         }
@@ -168,7 +168,7 @@ mod tests {
         let temp_path = temp_dir.path();
         let project_path = temp_path.join(name);
         std::fs::create_dir(&project_path).unwrap();
-        Project::new(&project_path).unwrap()
+        Project::open(&project_path).unwrap()
     }
 
     fn new_relative_path(project: &Project, name: &'static str) -> RelativePath {

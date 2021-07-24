@@ -189,7 +189,7 @@ fn remove(mut repository: impl Repository, opts: RemoveOpts) -> Result<()> {
 }
 
 fn check(repository: impl Repository, dictionary: impl Dictionary, opts: CheckOpts) -> Result<()> {
-    let project = Project::new(&opts.project_path)?;
+    let project = Project::open(&opts.project_path)?;
 
     let interactive = !opts.non_interactive;
 
@@ -314,7 +314,7 @@ mod tests {
     fn get_project(temp_dir: &TempDir, name: &str) -> Project {
         let path = temp_dir.path().join(name);
         std::fs::create_dir_all(&path).unwrap();
-        Project::new(&path).unwrap()
+        Project::open(&path).unwrap()
     }
 
     struct TestApp {

@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 #[derive(Debug)]
 pub struct Project(PathBuf);
 impl Project {
-    pub(crate) fn new(project_path: &Path) -> Result<Self> {
+    pub(crate) fn open(project_path: &Path) -> Result<Self> {
         let path = std::fs::canonicalize(project_path).with_context(|| {
             anyhow!(
                 "Could not canonicalize project path: {}",
