@@ -329,6 +329,20 @@ mod tests {
         assert!(repository.new_project(&project).is_err());
     });
 
+    make_tests!(remove_project, (repository) => {
+        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let project1 = new_project(&temp_dir, "project1");
+        let project2 = new_project(&temp_dir, "project2");
+        let project3 = new_project(&temp_dir, "project3");
+        repository.new_project(&project1).unwrap();
+        repository.new_project(&project2).unwrap();
+        repository.new_project(&project3).unwrap();
+
+        repository.remove_project(project2.path()).unwrap();
+
+        assert!(!repository.project_exists(&project2).unwrap());
+    });
+
     make_tests!(ignored_for_project, (repository) => {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
         let project = new_project(&temp_dir, "project");

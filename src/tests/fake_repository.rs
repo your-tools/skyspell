@@ -13,7 +13,7 @@ pub(crate) struct FakeRepository {
     by_extension: HashMap<String, Vec<String>>,
     by_project: HashMap<String, Vec<String>>,
     by_project_and_path: HashMap<(String, String), Vec<String>>,
-    projects: Vec<String>,
+    projects: HashMap<i32, String>,
     skip_file_names: HashSet<String>,
     skipped_paths: HashSet<(String, String)>,
 }
@@ -26,16 +26,18 @@ impl FakeRepository {
 
 impl Repository for FakeRepository {
     fn project_exists(&self, path: &Project) -> Result<bool> {
-        let index = &self.projects.iter().position(|x| x == &path.to_string());
+        let index = &self.projects.values().position(|x| x == &path.to_string());
         Ok(index.is_some())
     }
 
-    fn new_project(&mut self, path: &Project) -> Result<()> {
-        if self.project_exists(path)? {
-            bail!("Project in '{}' already exists", path);
+    fn new_project(&mut self, project: &Project) -> Result<()> {
+        if self.project_exists(project)? {
+            bail!("Project in '{}' already exists", project);
         }
+        let max_id = self.projects.keys().max().unwrap_or(&0);
+        let new_id = *max_id + 1;
 
-        self.projects.push(path.to_string());
+        self.projects.insert(new_id, project.to_string());
         Ok(())
     }
 
@@ -43,16 +45,15 @@ impl Repository for FakeRepository {
         Ok(self
             .projects
             .iter()
-            .enumerate()
             .map(|(i, p)| ProjectModel {
-                id: i as i32,
+                id: *i,
                 path: p.to_string(),
             })
             .collect())
     }
 
     fn remove_project(&mut self, path: &std::path::Path) -> Result<()> {
-        self.projects.retain(|p| Path::new(p) != path);
+        self.projects.retain(|_, p| Path::new(p) != path);
         Ok(())
     }
 
