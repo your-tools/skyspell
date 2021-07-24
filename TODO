@@ -5,8 +5,6 @@ Fix processing \newpage for Latex
 
 README: Add link to a nice asciinema demo (or a gif)
 
-Filter mode (read stdin, write stdout)
-
 Undo?
 
 How to use in CI scripts?
