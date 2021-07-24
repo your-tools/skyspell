@@ -304,8 +304,10 @@ mod tests {
         SQLRepository::new(&TestApp::db_path(&temp_dir)).unwrap()
     }
 
-    fn get_project(temp_dir: &TempDir) -> Project {
-        Project::new(temp_dir.path()).unwrap()
+    fn get_project(temp_dir: &TempDir, name: &str) -> Project {
+        let path = temp_dir.path().join(name);
+        std::fs::create_dir_all(&path).unwrap();
+        Project::new(&path).unwrap()
     }
 
     struct TestApp {
@@ -324,15 +326,19 @@ mod tests {
             }
         }
 
-        fn new_project(&mut self, temp_dir: &TempDir) -> Project {
-            let project = get_project(&temp_dir);
+        fn new_project(&mut self, temp_dir: &TempDir, project_name: &str) -> Project {
+            let project = get_project(&temp_dir, project_name);
             self.repository.new_project(&project).unwrap();
             project
         }
 
-        fn ensure_file(temp_dir: &TempDir, name: &str) -> (PathBuf, RelativePath) {
-            let project = get_project(&temp_dir);
-            let full_path = temp_dir.path().join(name);
+        fn ensure_file(
+            temp_dir: &TempDir,
+            project_name: &str,
+            file_name: &str,
+        ) -> (PathBuf, RelativePath) {
+            let project = get_project(&temp_dir, project_name);
+            let full_path = temp_dir.path().join(file_name);
             std::fs::write(&full_path, "").unwrap();
             (
                 full_path.clone(),
@@ -370,7 +376,7 @@ mod tests {
     #[test]
     fn test_add_to_project_but_project_not_found() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
-        let project = get_project(&temp_dir);
+        let project = get_project(&temp_dir, "project");
         let app = TestApp::new(&temp_dir);
 
         let err = app
@@ -384,7 +390,7 @@ mod tests {
     fn test_add_for_project_happy() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
-        let project = app.new_project(&temp_dir);
+        let project = app.new_project(&temp_dir, "project");
 
         app.run(&["add", "foo", "--project-path", &project.as_str()])
             .unwrap();
@@ -397,7 +403,7 @@ mod tests {
     fn test_add_for_extension() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let app = TestApp::new(&temp_dir);
-        TestApp::ensure_file(&temp_dir, "foo.py");
+        TestApp::ensure_file(&temp_dir, "project", "foo.py");
 
         app.run(&["add", "foo", "--extension", "py"]).unwrap();
 
@@ -409,8 +415,8 @@ mod tests {
     fn test_add_for_relative_path() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
-        let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "foo.txt");
-        let project = app.new_project(&temp_dir);
+        let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
+        let project = app.new_project(&temp_dir, "project");
 
         app.run(&[
             "add",
@@ -444,7 +450,7 @@ mod tests {
     fn test_remove_for_project() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
-        let project = app.new_project(&temp_dir);
+        let project = app.new_project(&temp_dir, "project");
 
         app.repository.ignore_for_project("foo", &project).unwrap();
 
@@ -459,8 +465,8 @@ mod tests {
     fn test_remove_for_relative_path() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
-        let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "foo.txt");
-        let project = app.new_project(&temp_dir);
+        let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
+        let project = app.new_project(&temp_dir, "project");
         app.repository
             .ignore_for_path("foo", &project, &rel_path)
             .unwrap();
@@ -485,7 +491,7 @@ mod tests {
     fn test_remove_for_extension() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
-        TestApp::ensure_file(&temp_dir, "foo.py");
+        TestApp::ensure_file(&temp_dir, "project", "foo.py");
         app.repository.ignore_for_extension("foo", "py").unwrap();
 
         app.run(&["remove", "foo", "--extension", "py"]).unwrap();
@@ -498,9 +504,9 @@ mod tests {
     fn test_check_errors_in_two_files() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
-        let project = app.new_project(&temp_dir);
-        let (foo_full, _) = TestApp::ensure_file(&temp_dir, "foo.md");
-        let (bar_full, _) = TestApp::ensure_file(&temp_dir, "bar.md");
+        let project = app.new_project(&temp_dir, "project");
+        let (foo_full, _) = TestApp::ensure_file(&temp_dir, "project", "foo.md");
+        let (bar_full, _) = TestApp::ensure_file(&temp_dir, "project", "bar.md");
         std::fs::write(&foo_full, "This is foo").unwrap();
         std::fs::write(&bar_full, "This is bar and it contains baz").unwrap();
         for word in &["This", "is", "and", "it", "contains"] {
@@ -525,9 +531,9 @@ mod tests {
     fn test_check_happy() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
-        let project = app.new_project(&temp_dir);
-        let (foo_full, _) = TestApp::ensure_file(&temp_dir, "foo.md");
-        let (bar_full, _) = TestApp::ensure_file(&temp_dir, "bar.md");
+        let project = app.new_project(&temp_dir, "project");
+        let (foo_full, _) = TestApp::ensure_file(&temp_dir, "project", "foo.md");
+        let (bar_full, _) = TestApp::ensure_file(&temp_dir, "project", "bar.md");
         std::fs::write(&foo_full, "This is fine").unwrap();
         std::fs::write(&bar_full, "This is also fine").unwrap();
         for word in &["This", "is", "also", "fine"] {
@@ -549,8 +555,8 @@ mod tests {
     fn test_skip_relative_path() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
-        let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "foo.txt");
-        let project = app.new_project(&temp_dir);
+        let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
+        let project = app.new_project(&temp_dir, "project");
 
         app.run(&[
             "skip",
@@ -580,8 +586,8 @@ mod tests {
     fn test_unskip_relative_path() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
-        let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "foo.txt");
-        let project = app.new_project(&temp_dir);
+        let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
+        let project = app.new_project(&temp_dir, "project");
         app.repository.skip_path(&project, &rel_path).unwrap();
 
         app.run(&[
