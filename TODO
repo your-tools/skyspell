@@ -7,9 +7,6 @@ README: Add link to a nice asciinema demo (or a gif)
 
 Filter mode (read stdin, write stdout)
 
-Add a command to remove projects from the db when their path no longer
-exist
-
 Undo?
 
 How to use in CI scripts?
