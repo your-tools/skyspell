@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -e
+
+remote="$1"
+url="$2"
+
+z40=0000000000000000000000000000000000000000
+
+while read local_ref local_sha remote_ref remote_sha
+do
+  if [[ "${local_sha}" = $z40 ]]; then
+    echo "Deleting stuff, nothing to do"
+  else
+    cargo clippy -- -D clippy::unwrap_used
+    cargo clippy --all-targets -- --deny warnings
+    cargo test
+    cargo run -- check --non-interactive --project-path . $(fd --type f -E "tests/*")
+    ( cd tests ; ./run )
+  fi
+done
+
+exit 0
