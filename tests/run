@@ -1,0 +1,199 @@
+#!/bin/sh
+
+# Color codes ├──────────────────────────────────────────────────────────────────
+none='\033[0m'; red='\033[31m'; green='\033[32m'; yellow='\033[33m'; magenta='\033[35m'; bold='\033[1m'
+
+# Main ├────────────────────────────────────────────────────────────────────────
+
+main() {
+  kak_commands='
+        set global autoreload yes
+        set global autoinfo ""
+        set global autocomplete ""
+        try %{
+            exec -save-regs / %{%s%\(\K[^)]+\)<ret>a<backspace><esc>i<backspace><backspace><c-u><esc><a-;>}
+        } catch %{ exec gg }
+        try %{ source rc }
+        hook global RuntimeError .+ %{
+            echo -debug -- error: %val{hook_param}
+            eval -buffer *debug* write debug
+            quit!
+        }
+        try %{ exec -with-maps -with-hooks "%sh{cat cmd}" }
+        exec -with-hooks <c-l>
+      '
+
+  root=$PWD
+  tmpdir="${TMPDIR:-/tmp}"
+  work=$(mktemp -d $tmpdir/kak-tests.XXXXXXXX)
+  trap "rm -R $work" EXIT
+
+  number_tests=0
+  number_failures=0
+  for dir in $(find "${@:-.}" -type d | sort); do
+    cd $root/$dir;
+    mkdir -p $work/$dir
+    for file in in cmd rc; do
+      [ -f $file ] && cp $file $work/$dir/
+    done
+    cd $work/$dir;
+    indent="$(echo "$dir/" | sed -e 's|[^/]*//*|  |g')"
+    name=${PWD##*/}
+    if [ ! -f cmd ]; then
+      echo "$indent$name"
+      continue
+    elif [ -x enabled ] && ! ./enabled; then
+      printf "${yellow}$indent%s (disabled)${none}\n" "$name"
+      continue
+    fi
+
+    env_vars=$(cd "${root}/${dir}" && ls -1 kak_* 2>/dev/null)
+
+    mkfifo ui-in ui-out
+    number_tests=$(($number_tests + 1))
+    touch in; cp in out
+    session="kak-tests"
+    rm -f "$(session_path $session)"
+    $DEBUGGER $root/../src/kak out -n -s "$session" -ui json -e "$kak_commands" >ui-out <ui-in &
+    kakpid=$!
+
+    failed=0
+    exec 4<ui-out 3>ui-in
+
+    if [ -f "${root}/${dir}/script" ]; then
+      . "${root}/${dir}/script"
+    else
+      # At least wait for kak to initialize so we don't deadlock
+      ui_out '{ "jsonrpc": "2.0", "method": "set_ui_options", "params": [{}] }'
+    fi
+
+    finished_commands |$root/../src/kak -p "$session" 2>/dev/null
+    cat <&4 >/dev/null
+
+    wait $kakpid
+    retval=$?
+
+    exec 3>&- 4<&-
+
+    if [ ! -e error ]; then # failure not expected
+      if [ $retval -ne 0 ]; then
+        printf "${red}$indent%s${none}\n" "$name"
+        echo "$indent  Kakoune returned error $retval"
+        failed=1
+      else
+        for file in out $env_vars; do
+          if [ -f $root/$dir/$file ] && ! cmp -s $root/$dir/$file $file; then
+            if [ $failed -eq 0 ]; then
+              printf "${red}$indent%s${none}\n" "$name"
+              failed=1
+            fi
+            show_diff $root/$dir/$file $file
+          fi
+        done
+        if [ $failed -ne 0 ] && [ -f debug ]; then
+          printf "\n${yellow}debug buffer:${none}\n"
+          cat debug
+        fi
+      fi
+    else # failure expected
+      if [ -f stderr ]; then
+        sed -i -e 's/^[0-9]*:[0-9]*: //g' stderr
+        if [ -s error ] && ! cmp -s error stderr; then
+          printf "${yellow}$indent%s${none}\n" "$name"
+          show_diff error stderr
+          failed=1
+        fi
+      elif [ $retval -eq 0 ]; then
+        printf "${red}$indent%s${none}\n" "$name"
+        echo "$indent  Expected failure, but Kakoune returned 0"
+        failed=1
+      fi
+    fi
+
+    if [ $failed -eq 0 ]; then
+      printf "${green}$indent%s${none}\n" "$name"
+    else
+      number_failures=$(($number_failures + 1))
+    fi
+  done
+
+  if [ $number_failures -gt 0 ]; then
+    color=$red
+  else
+    color=$green
+  fi
+  printf "\n${color}Summary: %s tests, %s failures${none}\n" $number_tests $number_failures
+  exit $number_failures
+}
+
+# Utility ├─────────────────────────────────────────────────────────────────────
+
+session_path() {
+  if [ -n "$XDG_RUNTIME_DIR" ]; then
+    printf %s "${XDG_RUNTIME_DIR}/kakoune/$1"
+  else
+    printf %s "${TMPDIR:-/tmp}/kakoune/${USER}/$1"
+  fi
+}
+
+show_diff() {
+  diff -u $1 $2 | while IFS='' read -r line; do
+    first_character=$(printf '%s\n' "$line" | cut -b 1)
+    case $first_character in
+      +) color=$green ;;
+      -) color=$red ;;
+      @) color=$magenta ;;
+      *) color=$none ;;
+    esac
+    printf "${color}%s${none}\n" "$line"
+  done
+}
+
+finished_commands() {
+  printf %s 'eval -client client0 %{
+               eval -buffer *debug* write debug
+               nop %sh{
+            '
+  for env_var in $env_vars; do
+    printf 'printf %%s\\\\n "$%s" >%s\n' "$env_var" "$env_var"
+  done
+  printf %s '  }
+               write out
+               quit!
+             }
+            '
+}
+
+# Script Assertions ├───────────────────────────────────────────────────────────
+
+ui_in() {
+  printf '%s\n' "$1" >&3
+}
+
+ui_out() {
+  while [ $# -ne 0 ]; do
+    case "$1" in
+    -ignore)
+      shift
+      skip_count="$1"
+      while [ $skip_count -gt 0 ]; do
+        read -r event <&4
+        skip_count=$(( skip_count - 1 ))
+      done
+      ;;
+    *)
+      read -r event <&4
+      if [ ! "$1" = "$event" ]; then
+        if [ $failed -eq 0 ]; then
+          printf "${red}$indent%s${none}\n" "$name"
+        fi
+        printf "${indent}  ${red}- %s\n${indent}  ${green}+ %s${none}\n" "$1" "$event"
+        failed=1
+      fi
+      ;;
+    esac
+    shift
+  done
+}
+
+main "$@"
