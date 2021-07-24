@@ -1,5 +1,3 @@
-Use less 'dirs' libraries in Cargo.lock
-
 Add end-to-end kakoune testing?
 
 Fix processing \newpage for Latex

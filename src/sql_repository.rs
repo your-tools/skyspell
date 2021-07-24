@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
-use platform_dirs::AppDirs;
+use directories_next::ProjectDirs;
 
 use crate::models::*;
 use crate::repository::Repository;
@@ -15,9 +15,10 @@ pub struct SQLRepository {
 }
 
 pub fn get_default_db_path(lang: &str) -> Result<String> {
-    let app_dirs = AppDirs::new(Some("skyspell"), false)
-        .with_context(|| "Could not get app dirs for skyspell application")?;
-    let data_dir = app_dirs.data_dir;
+    let project_dirs = ProjectDirs::from("info", "dmerej", "skyspell").ok_or_else(|| {
+        anyhow!("Need a home directory to get application directories for skyspell")
+    })?;
+    let data_dir = project_dirs.data_dir();
     std::fs::create_dir_all(&data_dir)
         .with_context(|| format!("Could not create {}", data_dir.display()))?;
 
