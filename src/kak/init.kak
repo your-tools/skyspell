@@ -12,7 +12,7 @@ define-command -params 1 skyspell-enable %{
   add-highlighter global/spell ranges spell_errors
   hook -group skyspell global BufWritePost .* skyspell-check
   hook -group skyspell global BufCreate \*spelling\* skyspell-hooks
-
+  skyspell-check
 }
 
 define-command skyspell-hooks %{
