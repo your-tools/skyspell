@@ -99,7 +99,12 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
 
     fn write_status(&self) {
         let project = &self.project;
-        match self.errors.len() {
+        let errors_count = self.errors.len();
+        self.print(&format!(
+            "set global skyspell_error_count {}\n",
+            errors_count
+        ));
+        match errors_count {
             0 => self.print(&format!(
                 "echo -markup {}: {{green}}No spelling errors\n",
                 project

@@ -574,6 +574,7 @@ unset-option buffer={full_path} spell_errors
 edit -scratch *spelling*
 execute-keys \\% <ret> d i %{{}} <esc> gg
 execute-keys ga
+set global skyspell_error_count 0
 echo -markup {project}: {{green}}No spelling errors
 ",
                 full_path = full_path,
@@ -614,6 +615,7 @@ execute-keys \\% <ret> d i %{{{foo_path}: 1.9,1.11 foo<ret>{bar_path}: 1.9,1.11 
 execute-keys ga
 set-option buffer={foo_path} spell_errors 42 1.9+3|Error \n\
 set-option buffer={bar_path} spell_errors 42 1.9+3|Error 1.29+3|Error \n\
+set global skyspell_error_count 3
 echo -markup {project}: {{red}}3 spelling errors
 ",
                 project = project,
