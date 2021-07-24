@@ -1,0 +1,6 @@
+evaluate-commands %sh{
+  skyspell kak init
+}
+skyspell-enable en_US
+skyspell-list
+execute-keys -with-maps -with-hooks <ret>

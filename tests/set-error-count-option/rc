@@ -1,0 +1,4 @@
+evaluate-commands %sh{
+  skyspell kak init
+}
+skyspell-enable en_US

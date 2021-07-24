@@ -1,0 +1,2 @@
+SELECT * FROM ignored_for_extension
+  WHERE word = 'fn' AND extension = 'rs';

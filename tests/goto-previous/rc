@@ -1,0 +1,7 @@
+evaluate-commands %sh{
+  skyspell kak init
+}
+skyspell-enable en_US
+execute-keys gg
+execute-keys 22 l
+skyspell-previous

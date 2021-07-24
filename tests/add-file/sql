@@ -1,0 +1,2 @@
+SELECT* FROM ignored_for_path WHERE
+  word = 'lolilol' AND path = 'foo.txt';
