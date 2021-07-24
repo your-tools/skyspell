@@ -1,7 +1,9 @@
 use anyhow::{anyhow, bail, Result};
 
 use std::collections::{HashMap, HashSet};
+use std::path::Path;
 
+use crate::models::ProjectModel;
 use crate::Repository;
 use crate::{Project, RelativePath};
 
@@ -34,6 +36,23 @@ impl Repository for FakeRepository {
         }
 
         self.projects.push(path.to_string());
+        Ok(())
+    }
+
+    fn projects(&self) -> Result<Vec<ProjectModel>> {
+        Ok(self
+            .projects
+            .iter()
+            .enumerate()
+            .map(|(i, p)| ProjectModel {
+                id: i as i32,
+                path: p.to_string(),
+            })
+            .collect())
+    }
+
+    fn remove_project(&mut self, path: &std::path::Path) -> Result<()> {
+        self.projects.retain(|p| Path::new(p) != path);
         Ok(())
     }
 

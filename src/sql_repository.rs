@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use anyhow::{anyhow, Context, Result};
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
@@ -72,6 +74,20 @@ impl Repository for SQLRepository {
             .optional()
             .with_context(|| format!("Error when looking for project {}", project.as_str()))?
             .is_some())
+    }
+
+    fn projects(&self) -> Result<Vec<ProjectModel>> {
+        projects::table
+            .load(&self.connection)
+            .with_context(|| format!("Could not retrieve project list"))
+    }
+
+    fn remove_project(&mut self, path: &Path) -> Result<()> {
+        diesel::delete(projects::table)
+            .filter(projects::path.eq(path.to_string_lossy()))
+            .execute(&self.connection)
+            .with_context(|| format!("Error when removing project from db {}", path.display()))?;
+        Ok(())
     }
 
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()> {

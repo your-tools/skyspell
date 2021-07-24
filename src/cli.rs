@@ -16,6 +16,7 @@ pub fn run<D: Dictionary, R: Repository>(opts: Opts, dictionary: D, repository: 
         Action::Add(opts) => add(repository, opts),
         Action::Remove(opts) => remove(repository, opts),
         Action::Check(opts) => check(repository, dictionary, opts),
+        Action::Clean => clean(repository),
         Action::ImportPersonalDict(opts) => import_personal_dict(repository, opts),
         Action::Suggest(opts) => suggest(dictionary, opts),
         Action::Skip(opts) => skip(repository, opts),
@@ -57,6 +58,8 @@ enum Action {
     Remove(RemoveOpts),
     #[clap(about = "Check files for spelling errors")]
     Check(CheckOpts),
+    #[clap(about = "Clean repository")]
+    Clean,
     #[clap(about = "Import a personal dictionary")]
     ImportPersonalDict(ImportPersonalDictOpts),
     #[clap(about = "Suggest replacements for the given error")]
@@ -234,6 +237,10 @@ where
     }
 
     Ok(())
+}
+
+fn clean(mut repository: impl Repository) -> Result<()> {
+    repository.clean()
 }
 
 fn import_personal_dict(
@@ -623,5 +630,27 @@ mod tests {
             .add_suggestions("hel", &["hello".to_string(), "hell".to_string()]);
 
         app.run(&["suggest", "hel"]).unwrap();
+    }
+
+    #[test]
+    fn test_clean() {
+        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let mut app = TestApp::new(&temp_dir);
+        let _project1 = app.new_project(&temp_dir, "project1");
+        let project2 = app.new_project(&temp_dir, "project2");
+        let before = app.repository.projects().unwrap();
+
+        std::fs::remove_dir_all(&project2.path()).unwrap();
+
+        app.run(&["clean"]).unwrap();
+
+        let repository = open_repository(&temp_dir);
+        let after = repository.projects().unwrap();
+
+        assert_eq!(
+            before.len() - after.len(),
+            1,
+            "Should have removed on project"
+        );
     }
 }

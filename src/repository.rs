@@ -2,6 +2,7 @@ use std::path::Path;
 
 use anyhow::{bail, Result};
 
+use crate::models::ProjectModel;
 use crate::{Project, RelativePath};
 
 pub trait Repository {
@@ -24,7 +25,6 @@ pub trait Repository {
         }
         Ok(())
     }
-
     // Open an existing project
     fn get_project(&mut self, path: &Path) -> Result<Project> {
         let project = Project::new(path)?;
@@ -32,6 +32,21 @@ pub trait Repository {
             bail!("No such project : {}", project.as_str());
         }
         Ok(project)
+    }
+    // Remove the given project from the list
+    fn remove_project(&mut self, path: &Path) -> Result<()>;
+
+    fn projects(&self) -> Result<Vec<ProjectModel>>;
+
+    fn clean(&mut self) -> Result<()> {
+        for project in self.projects()? {
+            let path = Path::new(&project.path);
+            if !path.exists() {
+                self.remove_project(path)?;
+                println!("Removed non longer existing project: {}", path.display());
+            }
+        }
+        Ok(())
     }
 
     // Always skip this file name - to be used with Cargo.lock, yarn.lock

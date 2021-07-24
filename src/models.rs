@@ -46,3 +46,9 @@ pub(crate) struct NewSkippedPath<'a> {
 pub(crate) struct NewProject<'a> {
     pub path: &'a str,
 }
+
+#[derive(Queryable)]
+pub struct ProjectModel {
+    pub id: i32,
+    pub path: String,
+}
