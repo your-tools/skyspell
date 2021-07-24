@@ -3,16 +3,9 @@ Add end-to-end kakoune testing?
 Fix processing \newpage for Latex
 (it finds that 'ewpage' is an error)
 
-src/kak/cli.rs: use an impl Writer so we can write tests
-
 README: Add link to a nice asciinema demo (or a gif)
 
 Filter mode (read stdin, write stdout)
-
-Write more tests for kak.rs
-
-When --project-path is not set, use the closest project path in
-directories above the current one?
 
 Add a command to remove projects from the db when their path no longer
 exist
