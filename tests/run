@@ -33,10 +33,11 @@ main() {
   for dir in $(find "${@:-.}" -type d | sort); do
     cd $root/$dir;
     mkdir -p $work/$dir
-    for file in in cmd rc; do
+    for file in in cmd rc sql; do
       [ -f $file ] && cp $file $work/$dir/
     done
     cd $work/$dir;
+    export SKYSPELL_DB_PATH=$(pwd)/test.db
     indent="$(echo "$dir/" | sed -e 's|[^/]*//*|  |g')"
     name=${PWD##*/}
     if [ ! -f cmd ]; then
@@ -54,7 +55,8 @@ main() {
     touch in; cp in out
     session="kak-tests"
     rm -f "$(session_path $session)"
-    $DEBUGGER $root/../src/kak out -n -s "$session" -ui json -e "$kak_commands" >ui-out <ui-in &
+    $DEBUGGER kak out -n -s "$session" -ui json -e "$kak_commands" >ui-out <ui-in &
+    # $DEBUGGER kak out -n -s "$session" -e "$kak_commands"
     kakpid=$!
 
     failed=0
@@ -67,7 +69,7 @@ main() {
       ui_out '{ "jsonrpc": "2.0", "method": "set_ui_options", "params": [{}] }'
     fi
 
-    finished_commands |$root/../src/kak -p "$session" 2>/dev/null
+    finished_commands | kak -p "$session" 2>/dev/null
     cat <&4 >/dev/null
 
     wait $kakpid
@@ -110,11 +112,27 @@ main() {
       fi
     fi
 
+
+    if [ -f sql ]; then
+      sqlite3 $SKYSPELL_DB_PATH < sql >  sql-out
+      failed=$?
+      if [ $failed -eq 0 ]; then
+        if [ ! -s sql-out ] ; then
+          printf "${red}$indent%s${none}\n" "$name"
+          cat sql
+          echo empty sql result
+          cat debug
+          failed=1
+          fi
+        fi
+    fi
+
     if [ $failed -eq 0 ]; then
       printf "${green}$indent%s${none}\n" "$name"
     else
       number_failures=$(($number_failures + 1))
     fi
+
   done
 
   if [ $number_failures -gt 0 ]; then
