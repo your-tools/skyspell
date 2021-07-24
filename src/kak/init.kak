@@ -1,7 +1,6 @@
 declare-option str skyspell_lang
 declare-option str skyspell_project
 declare-option range-specs spell_errors
-declare-option -hidden str skyspell_current_error
 declare-option str skyspell_word_to_add
 
 define-command -params 1 skyspell-enable %{
