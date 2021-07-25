@@ -1,7 +1,0 @@
-evaluate-commands %sh{
-  skyspell kak init
-}
-skyspell-enable en_US
-skyspell-list
-echo -debug %opt{skyspell_error_count}
-execute-keys -with-maps -with-hooks a

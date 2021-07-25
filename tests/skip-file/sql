@@ -1,1 +1,0 @@
-SELECT * FROM skipped_paths WHERE path = 'foo.lock';

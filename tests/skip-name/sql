@@ -1,1 +1,0 @@
-SELECT* FROM skipped_file_names WHERE file_name = 'foo.lock';
