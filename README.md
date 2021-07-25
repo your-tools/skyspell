@@ -2,7 +2,24 @@
 
 A fast and handy spell checker for the command line.
 
-# skyspell in action
+## Features
+
+* Distributed as a single binary
+* Handy command line interface
+* Leverages the excellent [enchant](https://abiword.github.io/enchant/) library,
+  so compatible with existing providers and dictionaries
+* Hand-made tokenizer, which means
+   * it can parse `camelCase` , `snake_case` identifiers
+   * it knows how to skip URLs, sha1s and the like
+   * it handles abbreviations like in `HTTPError`
+   * ... and more!
+* Global ignore list
+* Ignore list per file extension (like `fn` for `.rs`), projects, or
+  relative path inside projects
+* Skip list per file names (like always skipping files named `Cargo.lock`)
+* Skip list per relative path inside a project (like `image.svg`)
+
+## skyspell in action
 
 Basically, you give `skyspell` a project path and a list of files to check,
 then you choose how to handle the errors it finds:
@@ -24,23 +41,11 @@ What to do?
 => Added 'fn' to the ignore list for '.rs' files
 ```
 
-## Features
+## Kakoune integration
 
-* Distributed as a single binary
-* Handy command line interface
-* Leverages the excellent [enchant](https://abiword.github.io/enchant/) library,
-  so compatible with existing providers and dictionaries
-* Hand-made tokenizer, which means
-   * it can parse `camelCase` , `snake_case` identifiers
-   * it knows how to skip URLs, sha1s and the like
-   * it handles abbreviations like in `HTTPError`
-   * ... and more!
-* Global ignore list
-* Ignore list per file extension (like `fn` for `.rs`), projects, or
-  relative path inside projects
-* Skip list per file names (like always skipping files named `Cargo.lock`)
-* Skip list per relative path inside a project (like `image.svg`)
-* Kakoune integration
+You can watch a demo of the Kakoune integration on asciinema:
+
+[![asciicast](https://asciinema.org/a/427100.svg)](https://asciinema.org/a/427100)
 
 ## Comparison with scspell
 
