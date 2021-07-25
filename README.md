@@ -59,5 +59,5 @@ spell errors.
 But it's implementation is simpler and does not require to install a
 spell provider.
 
-On the other hard, scspell can apply replacements in a file automatically,
+On the other hand, scspell can apply replacements in a file automatically,
 a feature `skyspell` does not have.
