@@ -48,8 +48,7 @@ define-command -hidden -params 1.. skyspell-action %{
 }
 
 define-command skyspell-help -docstring "show help message" %{
-   info -title "*spelling* Help" "h,j,k,l: Move
-<ret>: Jump to spelling error
+   info -title "Skyspell Help" "<ret>: Jump to spelling error
 a : Add the word to the global ignore list
 e : Add the word to the ignore list for this extension
 p : Add the word to the ignore list for the current project
