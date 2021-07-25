@@ -16,7 +16,12 @@ do
     cargo clippy --all-targets -- --deny warnings
     cargo test
     cargo run -- check --non-interactive --project-path . $(fd --type f -E "tests/*")
-    ( cd tests ; ./run )
+    (
+      kitty tmux new-session -s skyspell-tests &
+      cd tests
+      pytest test.py
+      tmux kill-session -t skyspell-tests
+     )
   fi
 done
 
