@@ -308,7 +308,7 @@ mod tests {
     }
 
     fn get_tokens(text: &str) -> Vec<&str> {
-        let tokenizer = Tokenizer::new(&text);
+        let tokenizer = Tokenizer::new(text);
         tokenizer.map(|(x, _index)| x).collect()
     }
 

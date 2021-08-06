@@ -50,7 +50,7 @@ pub(crate) trait Checker {
             return Ok(());
         }
         let repository = self.repository();
-        let should_ignore = repository.should_ignore(&token, project, relative_path)?;
+        let should_ignore = repository.should_ignore(token, project, relative_path)?;
         if !should_ignore {
             self.handle_error(token, relative_path, context)?
         }
@@ -197,19 +197,19 @@ q : Quit
         loop {
             let letter = self.interactor.input_letter(prompt, "aepfnsxq");
             match letter.as_ref() {
-                "a" => return self.on_global_ignore(&error),
+                "a" => return self.on_global_ignore(error),
                 "e" => {
-                    if self.on_extension(path, &error)? {
+                    if self.on_extension(path, error)? {
                         break;
                     }
                 }
                 "p" => {
-                    if self.on_project_ignore(&error)? {
+                    if self.on_project_ignore(error)? {
                         break;
                     }
                 }
                 "f" => {
-                    if self.on_file_ignore(&error, path)? {
+                    if self.on_file_ignore(error, path)? {
                         break;
                     }
                 }
@@ -272,7 +272,7 @@ q : Quit
 
     fn on_file_ignore(&mut self, error: &str, relative_path: &RelativePath) -> Result<bool> {
         self.repository
-            .ignore_for_path(error, &self.project, &relative_path)?;
+            .ignore_for_path(error, &self.project, relative_path)?;
 
         print_addition(
             error,
@@ -393,7 +393,7 @@ mod tests {
             let relative_path = self.to_relative_path(relative_name);
             self.checker
                 .repository
-                .is_skipped_path(&project, &relative_path)
+                .is_skipped_path(project, &relative_path)
                 .unwrap()
         }
 
@@ -408,7 +408,7 @@ mod tests {
             let project = self.checker.project();
             self.checker
                 .repository
-                .is_ignored_for_project(word, &project)
+                .is_ignored_for_project(word, project)
                 .unwrap()
         }
 
@@ -417,7 +417,7 @@ mod tests {
             let relative_path = self.to_relative_path(relative_name);
             self.checker
                 .repository
-                .is_ignored_for_path(word, &project, &relative_path)
+                .is_ignored_for_path(word, project, &relative_path)
                 .unwrap()
         }
 

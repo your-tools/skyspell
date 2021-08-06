@@ -308,7 +308,7 @@ mod tests {
     use tempdir::TempDir;
 
     fn open_repository(temp_dir: &TempDir) -> SQLRepository {
-        SQLRepository::new(&TestApp::db_path(&temp_dir)).unwrap()
+        SQLRepository::new(&TestApp::db_path(temp_dir)).unwrap()
     }
 
     fn get_project(temp_dir: &TempDir, name: &str) -> Project {
@@ -334,7 +334,7 @@ mod tests {
         }
 
         fn new_project(&mut self, temp_dir: &TempDir, project_name: &str) -> Project {
-            let project = get_project(&temp_dir, project_name);
+            let project = get_project(temp_dir, project_name);
             self.repository.new_project(&project).unwrap();
             project
         }
@@ -344,7 +344,7 @@ mod tests {
             project_name: &str,
             file_name: &str,
         ) -> (PathBuf, RelativePath) {
-            let project = get_project(&temp_dir, project_name);
+            let project = get_project(temp_dir, project_name);
             let full_path = temp_dir.path().join(file_name);
             std::fs::write(&full_path, "").unwrap();
             (

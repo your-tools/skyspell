@@ -37,7 +37,7 @@ pub fn get_default_db_path(lang: &str) -> Result<String> {
 
 impl SQLRepository {
     pub fn new(url: &str) -> Result<Self> {
-        let connection = SqliteConnection::establish(&url)
+        let connection = SqliteConnection::establish(url)
             .with_context(|| format!("Could not connect to {}", url))?;
         embedded_migrations::run(&connection).with_context(|| "Could not migrate db")?;
         Ok(Self { connection })

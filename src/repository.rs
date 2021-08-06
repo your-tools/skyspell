@@ -150,7 +150,7 @@ pub trait Repository {
             return Ok(true);
         }
 
-        self.is_ignored_for_path(word, project, &relative_path)
+        self.is_ignored_for_path(word, project, relative_path)
     }
 }
 

@@ -222,7 +222,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
                 continue;
             }
 
-            let relative_path = self.checker.to_relative_path(&source_path)?;
+            let relative_path = self.checker.to_relative_path(source_path)?;
 
             if self.checker.should_skip(&relative_path)? {
                 continue;
@@ -232,10 +232,10 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
                 continue;
             }
 
-            let token_processor = TokenProcessor::new(&source_path)?;
+            let token_processor = TokenProcessor::new(source_path)?;
             token_processor.each_token(|word, line, column| {
                 self.checker.handle_token(
-                    &word,
+                    word,
                     &relative_path,
                     &(bufname.to_string(), line, column),
                 )
@@ -295,7 +295,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         let full_path = Path::new(path);
         let project = self.get_project()?;
 
-        let relative_path = RelativePath::new(&project, &full_path)?;
+        let relative_path = RelativePath::new(&project, full_path)?;
 
         self.repository().skip_path(&project, &relative_path)?;
 
@@ -375,7 +375,7 @@ mod tests {
     type FakeCli = KakCli<FakeDictionary, FakeRepository, FakeIO>;
 
     fn new_cli(temp_dir: &TempDir) -> FakeCli {
-        let fake_checker = new_fake_checker(&temp_dir);
+        let fake_checker = new_fake_checker(temp_dir);
         let mut res = KakCli::new(fake_checker);
         res.set_option("skyspell_project", &temp_dir.path().to_string_lossy());
         res.set_timestamp(42);
