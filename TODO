@@ -4,3 +4,5 @@ Fix processing \newpage for Latex
 Undo?
 
 How to use in CI scripts?
+
+Fix bug when bufname contains spaces
