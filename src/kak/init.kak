@@ -12,7 +12,12 @@ define-command -params 1 skyspell-enable %{
   add-highlighter global/spell ranges spell_errors
   hook -group skyspell global BufWritePost .* skyspell-check
   hook -group skyspell global BufCreate \*spelling\* skyspell-hooks
-  write
+  # If we've just enable spell checking *and* the current buffer is modified,
+  # we want to spell check the current buffer right away.
+  # On the other hand, maybe kakoune is still editing the *scratch* buffer at this point
+  try %{
+    write
+  }
 }
 
 define-command skyspell-hooks %{
