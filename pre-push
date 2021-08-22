@@ -17,10 +17,8 @@ do
     cargo test
     cargo run -- check --non-interactive --project-path . $(fd --type f -E "tests/*")
     (
-      kitty tmux new-session -s skyspell-tests &
       cd tests
       pytest test.py
-      tmux kill-session -t skyspell-tests
      )
   fi
 done
