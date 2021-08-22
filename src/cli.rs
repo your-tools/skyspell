@@ -190,6 +190,7 @@ fn remove(mut repository: impl Repository, opts: RemoveOpts) -> Result<()> {
 
 fn check(repository: impl Repository, dictionary: impl Dictionary, opts: CheckOpts) -> Result<()> {
     let project = Project::open(&opts.project_path)?;
+    println!("Checking project {} for spelling errors", project);
 
     let interactive = !opts.non_interactive;
 
