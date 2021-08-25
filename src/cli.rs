@@ -216,6 +216,7 @@ where
     }
 
     let mut skipped = 0;
+    let mut checked = 0;
     for path in &opts.sources {
         let relative_path = checker.to_relative_path(path)?;
         if checker.should_skip(&relative_path)? {
@@ -227,15 +228,18 @@ where
         token_processor.each_token(|word, line, column| {
             checker.handle_token(word, &relative_path, &(line, column))
         })?;
+        checked += 1;
     }
-
-    checker.success()?;
 
     match skipped {
         1 => println!("Skipped one file"),
         x if x >= 2 => println!("Skipped {} files", x),
         _ => (),
     }
+
+    checker.success()?;
+
+    println!("Success. {} files checked.", checked);
 
     Ok(())
 }
