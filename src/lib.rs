@@ -14,7 +14,7 @@ pub(crate) mod os_io;
 pub(crate) mod project;
 pub(crate) mod repository;
 pub mod sql;
-pub(crate) mod token;
+pub(crate) mod tokens;
 
 use checker::{Checker, InteractiveChecker, NonInteractiveChecker};
 use dictionary::Dictionary;
@@ -23,7 +23,7 @@ use interactor::{ConsoleInteractor, Interactor};
 pub use os_io::StandardIO;
 use project::{Project, RelativePath};
 use repository::Repository;
-use token::TokenProcessor;
+use tokens::TokenProcessor;
 
 #[cfg(test)]
 mod tests;
