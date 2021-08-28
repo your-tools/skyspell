@@ -1,117 +1,13 @@
 use std::collections::HashSet;
-use std::path::Path;
 
 use anyhow::{bail, Result};
 use colored::*;
 
+use crate::Checker;
 use crate::Dictionary;
 use crate::Interactor;
 use crate::Repository;
 use crate::{Project, RelativePath};
-
-pub(crate) trait Checker {
-    type Context;
-
-    fn handle_error(
-        &mut self,
-        error: &str,
-        path: &RelativePath,
-        context: &Self::Context,
-    ) -> Result<()>;
-
-    // Were all the errors handled properly?
-    fn success(&self) -> Result<()>;
-    fn repository(&self) -> &dyn Repository;
-    fn dictionary(&self) -> &dyn Dictionary;
-
-    fn project(&self) -> &Project;
-
-    fn should_skip(&self, path: &RelativePath) -> Result<bool> {
-        let repository = self.repository();
-        let project = self.project();
-        repository.should_skip(project, path)
-    }
-
-    fn to_relative_path(&self, path: &Path) -> Result<RelativePath> {
-        let project = self.project();
-        RelativePath::new(project, path)
-    }
-
-    fn handle_token(
-        &mut self,
-        token: &str,
-        relative_path: &RelativePath,
-        context: &Self::Context,
-    ) -> Result<()> {
-        let project = self.project();
-        let dictionary = self.dictionary();
-        let in_dict = dictionary.check(token)?;
-        if in_dict {
-            return Ok(());
-        }
-        let repository = self.repository();
-        let should_ignore = repository.should_ignore(token, project, relative_path)?;
-        if !should_ignore {
-            self.handle_error(token, relative_path, context)?
-        }
-        Ok(())
-    }
-}
-
-pub(crate) struct NonInteractiveChecker<D: Dictionary, R: Repository> {
-    project: Project,
-    dictionary: D,
-    repository: R,
-    errors_found: bool,
-}
-
-impl<D: Dictionary, R: Repository> NonInteractiveChecker<D, R> {
-    pub(crate) fn new(project: Project, dictionary: D, mut repository: R) -> Result<Self> {
-        repository.ensure_project(&project)?;
-        Ok(Self {
-            project,
-            dictionary,
-            repository,
-            errors_found: false,
-        })
-    }
-}
-
-impl<D: Dictionary, R: Repository> Checker for NonInteractiveChecker<D, R> {
-    // line, column
-    type Context = (usize, usize);
-
-    fn dictionary(&self) -> &dyn Dictionary {
-        &self.dictionary
-    }
-
-    fn handle_error(
-        &mut self,
-        token: &str,
-        path: &RelativePath,
-        context: &Self::Context,
-    ) -> Result<()> {
-        let &(line, column) = context;
-        self.errors_found = true;
-        print_unknown_token(token, path.as_ref(), line, column);
-        Ok(())
-    }
-
-    fn success(&self) -> Result<()> {
-        if self.errors_found {
-            bail!("Found spelling errors");
-        }
-        Ok(())
-    }
-
-    fn project(&self) -> &Project {
-        &self.project
-    }
-
-    fn repository(&self) -> &dyn Repository {
-        &self.repository
-    }
-}
 
 pub(crate) struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository> {
     project: Project,
@@ -179,6 +75,14 @@ impl<I: Interactor, D: Dictionary, R: Repository> InteractiveChecker<I, D, R> {
         })
     }
 
+    fn print_addition(token: &str, location: &str) {
+        println!("\n{}Added {} to {}\n", "=> ".blue(), token.blue(), location);
+    }
+
+    fn print_error(message: &str) {
+        eprintln!("{} {}", "Error:".red(), message);
+    }
+
     fn on_error(&mut self, path: &RelativePath, pos: (usize, usize), error: &str) -> Result<()> {
         let (lineno, column) = pos;
         let prefix = format!("{}:{}:{}", path, lineno, column);
@@ -240,21 +144,21 @@ q : Quit
 
     fn on_global_ignore(&mut self, error: &str) -> Result<()> {
         self.repository.ignore(error)?;
-        print_addition(error, "the global ignore list");
+        Self::print_addition(error, "the global ignore list");
         Ok(())
     }
 
     fn on_extension(&mut self, relative_path: &RelativePath, error: &str) -> Result<bool> {
         let extension = match relative_path.extension() {
             None => {
-                print_error(&format!("{} has no extension", relative_path));
+                Self::print_error(&format!("{} has no extension", relative_path));
                 return Ok(false);
             }
             Some(e) => e,
         };
 
         self.repository.ignore_for_extension(error, &extension)?;
-        print_addition(
+        Self::print_addition(
             error,
             &format!("the ignore list for extension '.{}'", extension.bold()),
         );
@@ -263,7 +167,7 @@ q : Quit
 
     fn on_project_ignore(&mut self, error: &str) -> Result<bool> {
         self.repository.ignore_for_project(error, &self.project)?;
-        print_addition(
+        Self::print_addition(
             error,
             &format!("the ignore list for project '{}'", &self.project),
         );
@@ -274,7 +178,7 @@ q : Quit
         self.repository
             .ignore_for_path(error, &self.project, relative_path)?;
 
-        print_addition(
+        Self::print_addition(
             error,
             &format!("the ignore list for path '{}'", relative_path),
         );
@@ -284,7 +188,7 @@ q : Quit
     fn on_file_name_skip(&mut self, relative_path: &RelativePath) -> Result<bool> {
         let file_name = match relative_path.file_name() {
             None => {
-                print_error(&format!("{} has no file name", relative_path));
+                Self::print_error(&format!("{} has no file name", relative_path));
                 return Ok(false);
             }
             Some(r) => r,
@@ -310,19 +214,6 @@ q : Quit
         );
         Ok(true)
     }
-}
-
-fn print_addition(token: &str, location: &str) {
-    println!("\n{}Added {} to {}\n", "=> ".blue(), token.blue(), location);
-}
-
-fn print_error(message: &str) {
-    eprintln!("{} {}", "Error:".red(), message);
-}
-
-fn print_unknown_token(token: &str, path: &Path, line: usize, column: usize) {
-    let prefix = format!("{}:{}:{}", path.display(), line, column);
-    println!("{} {}", prefix.bold(), token.blue());
 }
 
 #[cfg(test)]
