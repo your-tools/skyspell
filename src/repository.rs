@@ -2,7 +2,8 @@ use std::path::Path;
 
 use anyhow::{bail, Result};
 
-use crate::models::ProjectModel;
+// TODO
+use crate::sql::models::ProjectModel;
 use crate::{Project, RelativePath};
 
 pub trait Repository {
@@ -159,7 +160,7 @@ mod tests {
     use paste::paste;
     use tempdir::TempDir;
 
-    use crate::sql_repository::SQLRepository;
+    use crate::sql::SQLRepository;
     use crate::tests::FakeRepository;
 
     use super::*;

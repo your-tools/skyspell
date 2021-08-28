@@ -10,12 +10,10 @@ pub mod cli;
 mod dictionary;
 pub(crate) mod interactor;
 pub mod kak;
-pub(crate) mod models;
 pub(crate) mod os_io;
 pub(crate) mod project;
 pub(crate) mod repository;
-pub(crate) mod schema;
-pub mod sql_repository;
+pub mod sql;
 pub(crate) mod token;
 
 use checker::{Checker, InteractiveChecker, NonInteractiveChecker};

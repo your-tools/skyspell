@@ -3,7 +3,7 @@ use anyhow::{anyhow, bail, Result};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
-use crate::models::ProjectModel;
+use crate::sql::models::ProjectModel;
 use crate::Repository;
 use crate::{Project, RelativePath};
 

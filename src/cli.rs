@@ -306,7 +306,7 @@ fn suggest(dictionary: impl Dictionary, opts: SuggestOpts) -> Result<()> {
 mod tests {
     use super::*;
 
-    use crate::sql_repository::SQLRepository;
+    use crate::sql::SQLRepository;
     use crate::tests::FakeDictionary;
     use crate::{Project, RelativePath};
 

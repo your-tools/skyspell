@@ -5,9 +5,9 @@ use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use directories_next::ProjectDirs;
 
-use crate::models::*;
 use crate::repository::Repository;
-use crate::schema::*;
+use crate::sql::models::*;
+use crate::sql::schema::*;
 use crate::{Project, RelativePath};
 
 diesel_migrations::embed_migrations!("migrations");

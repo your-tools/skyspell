@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Clap;
 use skyspell::cli::{run, Opts};
-use skyspell::sql_repository::{get_default_db_path, SQLRepository};
+use skyspell::sql::{get_default_db_path, SQLRepository};
 use skyspell::EnchantDictionary;
 
 fn main() -> Result<()> {
