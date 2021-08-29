@@ -343,7 +343,6 @@ mod tests {
 
         fn new_project(&mut self, temp_dir: &TempDir, project_name: &str) -> Project {
             let project = get_project(temp_dir, project_name);
-            self.repository.new_project(&project).unwrap();
             project
         }
 
@@ -386,19 +385,6 @@ mod tests {
 
         let repository = open_repository(&temp_dir);
         assert!(repository.is_ignored("foo").unwrap());
-    }
-
-    #[test]
-    fn test_add_to_project_but_project_not_found() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
-        let project = get_project(&temp_dir, "project");
-        let app = TestApp::new(&temp_dir);
-
-        let err = app
-            .run(&["add", "foo", "--project-path", &project.as_str()])
-            .unwrap_err();
-
-        assert!(err.to_string().contains("No such project"));
     }
 
     #[test]
@@ -466,6 +452,7 @@ mod tests {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
         let project = app.new_project(&temp_dir, "project");
+        app.repository.new_project(&project).unwrap();
 
         app.repository.ignore_for_project("foo", &project).unwrap();
 
@@ -482,6 +469,7 @@ mod tests {
         let mut app = TestApp::new(&temp_dir);
         let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
         let project = app.new_project(&temp_dir, "project");
+        app.repository.new_project(&project).unwrap();
         app.repository
             .ignore_for_path("foo", &project, &rel_path)
             .unwrap();
@@ -603,6 +591,7 @@ mod tests {
         let mut app = TestApp::new(&temp_dir);
         let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
         let project = app.new_project(&temp_dir, "project");
+        app.repository.new_project(&project).unwrap();
         app.repository.skip_path(&project, &rel_path).unwrap();
 
         app.run(&[
@@ -644,8 +633,10 @@ mod tests {
     fn test_clean() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
-        let _project1 = app.new_project(&temp_dir, "project1");
+        let project1 = app.new_project(&temp_dir, "project1");
+        app.repository.new_project(&project1);
         let project2 = app.new_project(&temp_dir, "project2");
+        app.repository.new_project(&project2);
         let before = app.repository.projects().unwrap();
 
         std::fs::remove_dir_all(&project2.path()).unwrap();
@@ -658,7 +649,7 @@ mod tests {
         assert_eq!(
             before.len() - after.len(),
             1,
-            "Should have removed on project"
+            "Should have removed one project"
         );
     }
 }
