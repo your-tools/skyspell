@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::repository::{ProjectId, ProjectInfo};
 use crate::Repository;
-use crate::{Project, RelativePath};
+use crate::{ProjectPath, RelativePath};
 
 #[derive(Default, Debug)]
 pub(crate) struct FakeRepository {
@@ -24,11 +24,11 @@ impl FakeRepository {
 }
 
 impl Repository for FakeRepository {
-    fn project_exists(&self, project: &Project) -> Result<bool> {
+    fn project_exists(&self, project: &ProjectPath) -> Result<bool> {
         Ok(self.get_project_id(project).is_ok())
     }
 
-    fn new_project(&mut self, project: &Project) -> Result<ProjectId> {
+    fn new_project(&mut self, project: &ProjectPath) -> Result<ProjectId> {
         if self.project_exists(project)? {
             bail!("Project in '{}' already exists", project);
         }
@@ -39,7 +39,7 @@ impl Repository for FakeRepository {
         Ok(new_id)
     }
 
-    fn get_project_id(&self, project: &Project) -> Result<ProjectId> {
+    fn get_project_id(&self, project: &ProjectPath) -> Result<ProjectId> {
         let res = self
             .projects
             .get(&project.to_string())

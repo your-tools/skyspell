@@ -10,8 +10,8 @@ use std::path::{Path, PathBuf};
 // in the DB
 
 #[derive(Debug)]
-pub struct Project(PathBuf);
-impl Project {
+pub struct ProjectPath(PathBuf);
+impl ProjectPath {
     pub(crate) fn open(project_path: &Path) -> Result<Self> {
         let path = std::fs::canonicalize(project_path).with_context(|| {
             anyhow!(
@@ -19,7 +19,7 @@ impl Project {
                 project_path.display()
             )
         })?;
-        Ok(Project(path))
+        Ok(ProjectPath(path))
     }
 
     pub(crate) fn as_str(&self) -> Cow<str> {
@@ -31,7 +31,7 @@ impl Project {
     }
 }
 
-impl Display for Project {
+impl Display for ProjectPath {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0.display())
     }
@@ -41,7 +41,7 @@ impl Display for Project {
 pub struct RelativePath(PathBuf);
 
 impl RelativePath {
-    pub(crate) fn new(project: &Project, source_path: &Path) -> Result<Self> {
+    pub(crate) fn new(project: &ProjectPath, source_path: &Path) -> Result<Self> {
         let source_path = std::fs::canonicalize(source_path).with_context(|| {
             anyhow!(
                 "Could not canonicalize relative path: {}",

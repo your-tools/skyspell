@@ -7,7 +7,7 @@ use crate::os_io::OperatingSystemIO;
 use crate::repository::ProjectId;
 use crate::Checker;
 use crate::{Dictionary, Repository};
-use crate::{Project, RelativePath};
+use crate::{ProjectPath, RelativePath};
 
 pub(crate) const SKYSPELL_PROJECT_OPT: &str = "skyspell_project";
 
@@ -19,7 +19,7 @@ pub(crate) struct Error {
 }
 
 pub(crate) struct KakouneChecker<D: Dictionary, R: Repository, S: OperatingSystemIO> {
-    project: Project,
+    project: ProjectPath,
     project_id: ProjectId,
     pub(crate) dictionary: D,
     pub(crate) repository: R,
@@ -63,7 +63,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChec
         &self.dictionary
     }
 
-    fn project(&self) -> &Project {
+    fn project(&self) -> &ProjectPath {
         &self.project
     }
 
@@ -74,7 +74,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChec
 
 impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S> {
     pub(crate) fn new(
-        project: Project,
+        project: ProjectPath,
         dictionary: D,
         mut repository: R,
         kakoune_io: KakouneIO<S>,
@@ -199,7 +199,7 @@ pub(crate) mod tests {
     use crate::kak::io::tests::new_fake_io;
     use crate::tests::FakeIO;
     use crate::tests::{FakeDictionary, FakeRepository};
-    use crate::{Project, RelativePath};
+    use crate::{ProjectPath, RelativePath};
 
     pub(crate) type FakeChecker = KakouneChecker<FakeDictionary, FakeRepository, FakeIO>;
 
@@ -217,7 +217,7 @@ pub(crate) mod tests {
     }
 
     pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
-        let project = Project::open(temp_dir.path()).unwrap();
+        let project = ProjectPath::open(temp_dir.path()).unwrap();
         let dictionary = FakeDictionary::new();
         let repository = FakeRepository::new();
         let fake_io = new_fake_io();

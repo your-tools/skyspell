@@ -9,7 +9,7 @@ use crate::kak::io::KakouneIO;
 use crate::kak::KakouneChecker;
 use crate::os_io::OperatingSystemIO;
 use crate::Checker;
-use crate::Project;
+use crate::ProjectPath;
 use crate::RelativePath;
 use crate::TokenProcessor;
 use crate::{Dictionary, Repository};
@@ -91,7 +91,7 @@ pub(crate) fn run<S: OperatingSystemIO>(
 
     let as_str = kakoune_io.get_option(SKYSPELL_PROJECT_OPT)?;
     let path = PathBuf::from(as_str);
-    let project = Project::open(&path)?;
+    let project = ProjectPath::open(&path)?;
     let checker = KakouneChecker::new(project, dictionary, repository, kakoune_io)?;
     let mut cli = KakCli::new(checker);
 

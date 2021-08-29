@@ -21,7 +21,7 @@ use dictionary::Dictionary;
 pub use dictionary::EnchantDictionary;
 use interactor::{ConsoleInteractor, Interactor};
 pub use os_io::StandardIO;
-use project::{Project, RelativePath};
+use project::{ProjectPath, RelativePath};
 use repository::Repository;
 use tokens::TokenProcessor;
 

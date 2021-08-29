@@ -2,7 +2,7 @@ use std::path::Path;
 
 use anyhow::Result;
 
-use crate::{Project, RelativePath};
+use crate::{ProjectPath, RelativePath};
 
 pub type ProjectId = i32;
 
@@ -36,11 +36,11 @@ pub trait Repository {
     fn is_ignored(&self, word: &str) -> Result<bool>;
 
     // Add a new project
-    fn new_project(&mut self, project: &Project) -> Result<ProjectId>;
+    fn new_project(&mut self, project: &ProjectPath) -> Result<ProjectId>;
     // Check if a project exists
-    fn project_exists(&self, project: &Project) -> Result<bool>;
+    fn project_exists(&self, project: &ProjectPath) -> Result<bool>;
     // Create a project if it does not exist yet
-    fn ensure_project(&mut self, project: &Project) -> Result<ProjectId> {
+    fn ensure_project(&mut self, project: &ProjectPath) -> Result<ProjectId> {
         if !self.project_exists(project)? {
             self.new_project(project)?;
         }
@@ -50,7 +50,7 @@ pub trait Repository {
     // Remove the given project from the list
     fn remove_project(&mut self, project_id: ProjectId) -> Result<()>;
     // Get project id
-    fn get_project_id(&self, project: &Project) -> Result<ProjectId>;
+    fn get_project_id(&self, project: &ProjectPath) -> Result<ProjectId>;
     fn projects(&self) -> Result<Vec<ProjectInfo>>;
 
     fn clean(&mut self) -> Result<()> {
@@ -181,14 +181,14 @@ mod tests {
 
     use super::*;
 
-    fn new_project(temp_dir: &TempDir, name: &'static str) -> Project {
+    fn new_project(temp_dir: &TempDir, name: &'static str) -> ProjectPath {
         let temp_path = temp_dir.path();
         let project_path = temp_path.join(name);
         std::fs::create_dir(&project_path).unwrap();
-        Project::open(&project_path).unwrap()
+        ProjectPath::open(&project_path).unwrap()
     }
 
-    fn new_relative_path(project: &Project, name: &'static str) -> RelativePath {
+    fn new_relative_path(project: &ProjectPath, name: &'static str) -> RelativePath {
         let rel_path = project.path().join(name);
         std::fs::write(&rel_path, "").unwrap();
         RelativePath::new(project, &rel_path).unwrap()

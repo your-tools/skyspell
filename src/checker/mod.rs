@@ -5,7 +5,7 @@ use anyhow::Result;
 use crate::repository::ProjectId;
 use crate::Dictionary;
 use crate::Repository;
-use crate::{Project, RelativePath};
+use crate::{ProjectPath, RelativePath};
 
 mod interactive;
 mod non_interactive;
@@ -28,7 +28,7 @@ pub(crate) trait Checker {
     fn repository(&self) -> &dyn Repository;
     fn dictionary(&self) -> &dyn Dictionary;
 
-    fn project(&self) -> &Project;
+    fn project(&self) -> &ProjectPath;
     fn project_id(&self) -> ProjectId;
 
     fn should_skip(&self, path: &RelativePath) -> Result<bool> {

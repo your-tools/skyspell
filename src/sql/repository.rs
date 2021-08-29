@@ -6,7 +6,7 @@ use directories_next::ProjectDirs;
 use crate::repository::{ProjectId, ProjectInfo, Repository};
 use crate::sql::models::*;
 use crate::sql::schema::*;
-use crate::{Project, RelativePath};
+use crate::{ProjectPath, RelativePath};
 
 diesel_migrations::embed_migrations!("migrations");
 
@@ -43,7 +43,7 @@ impl SQLRepository {
 }
 
 impl Repository for SQLRepository {
-    fn new_project(&mut self, project: &Project) -> Result<ProjectId> {
+    fn new_project(&mut self, project: &ProjectPath) -> Result<ProjectId> {
         let new_project = NewProject {
             path: &project.as_str(),
         };
@@ -54,7 +54,7 @@ impl Repository for SQLRepository {
         self.get_project_id(project)
     }
 
-    fn get_project_id(&self, project: &Project) -> Result<ProjectId> {
+    fn get_project_id(&self, project: &ProjectPath) -> Result<ProjectId> {
         let res = projects::table
             .filter(projects::path.eq(project.as_str()))
             .select(projects::id)
@@ -68,7 +68,7 @@ impl Repository for SQLRepository {
         Ok(res)
     }
 
-    fn project_exists(&self, project: &Project) -> Result<bool> {
+    fn project_exists(&self, project: &ProjectPath) -> Result<bool> {
         Ok(projects::table
             .filter(projects::path.eq(project.as_str()))
             .select(projects::id)

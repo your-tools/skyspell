@@ -8,10 +8,10 @@ use crate::Checker;
 use crate::Dictionary;
 use crate::Interactor;
 use crate::Repository;
-use crate::{Project, RelativePath};
+use crate::{ProjectPath, RelativePath};
 
 pub(crate) struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository> {
-    project: Project,
+    project: ProjectPath,
     project_id: ProjectId,
     interactor: I,
     dictionary: D,
@@ -30,7 +30,7 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
         Ok(())
     }
 
-    fn project(&self) -> &Project {
+    fn project(&self) -> &ProjectPath {
         &self.project
     }
 
@@ -66,7 +66,7 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
 
 impl<I: Interactor, D: Dictionary, R: Repository> InteractiveChecker<I, D, R> {
     pub(crate) fn new(
-        project: Project,
+        project: ProjectPath,
         interactor: I,
         dictionary: D,
         mut repository: R,
@@ -243,7 +243,7 @@ mod tests {
             let interactor = FakeInteractor::new();
             let dictionary = FakeDictionary::new();
             let repository = FakeRepository::new();
-            let project = Project::open(temp_dir.path()).unwrap();
+            let project = ProjectPath::open(temp_dir.path()).unwrap();
             let checker = TestChecker::new(project, interactor, dictionary, repository).unwrap();
             Self { checker }
         }
