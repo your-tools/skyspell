@@ -187,14 +187,10 @@ impl Repository for FakeRepository {
         Ok(())
     }
 
-    fn remove_ignored_for_project(&mut self, word: &str, project: &Project) -> Result<()> {
-        let project_id = self
-            .projects
-            .get(&project.to_string())
-            .ok_or_else(|| anyhow!("No such project"))?;
+    fn remove_ignored_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()> {
         let entry = self
             .by_project
-            .get_mut(project_id)
+            .get_mut(&project_id)
             .ok_or_else(|| anyhow!("no such key"))?;
         entry.retain(|w| w != word);
         Ok(())

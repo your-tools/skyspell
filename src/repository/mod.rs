@@ -52,7 +52,7 @@ pub trait Repository {
     fn remove_project(&mut self, path: &Path) -> Result<()>;
     // Get Info about an existing project
     fn get_project_id(&self, project: &Project) -> Result<ProjectId>;
-
+    // Get Info about known projects
     fn projects(&self) -> Result<Vec<ProjectInfo>>;
 
     fn clean(&mut self) -> Result<()> {
@@ -110,7 +110,7 @@ pub trait Repository {
         relative_path: &RelativePath,
     ) -> Result<()>;
     // Remove word from the ignore list for the given project
-    fn remove_ignored_for_project(&mut self, word: &str, project: &Project) -> Result<()>;
+    fn remove_ignored_for_project(&mut self, word: &str, project: ProjectId) -> Result<()>;
 
     // Always skip the given file for the given project
     fn skip_path(&mut self, project: &Project, relative_path: &RelativePath) -> Result<()>;
@@ -457,7 +457,7 @@ mod tests {
         let project_id = repository.get_project_id(&project).unwrap();
         repository.ignore_for_project("foo", project_id).unwrap();
 
-        repository.remove_ignored_for_project("foo", &project).unwrap();
+        repository.remove_ignored_for_project("foo", project_id).unwrap();
 
         assert!(!repository.is_ignored_for_project("foo", project_id).unwrap());
     });

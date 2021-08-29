@@ -307,7 +307,6 @@ mod tests {
         }
 
         fn is_ignored_for_path(&self, word: &str, relative_name: &str) -> bool {
-            let project = self.checker.project();
             let project_id = self.checker.project_id;
             let relative_path = self.to_relative_path(relative_name);
             self.checker

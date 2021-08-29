@@ -282,9 +282,8 @@ impl Repository for SQLRepository {
         Ok(())
     }
 
-    fn remove_ignored_for_project(&mut self, word: &str, project: &Project) -> Result<()> {
+    fn remove_ignored_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()> {
         let word = word.to_lowercase();
-        let project_id = self.get_project_id(project)?;
         diesel::delete(ignored_for_project::table)
             .filter(ignored_for_project::word.eq(word))
             .filter(ignored_for_project::project_id.eq(project_id))

@@ -185,7 +185,8 @@ fn remove(mut repository: impl Repository, opts: RemoveOpts) -> Result<()> {
         }
         (Some(project_path), None, None) => {
             let project = Project::open(&project_path)?;
-            repository.remove_ignored_for_project(word, &project)
+            let project_id = repository.get_project_id(&project)?;
+            repository.remove_ignored_for_project(word, project_id)
         }
         (None, Some(_), None) => bail!("Cannot use --relative-path without --project-path"),
         (Some(_), _, Some(_)) => bail!("--extension is incompatible with --project-path"),
