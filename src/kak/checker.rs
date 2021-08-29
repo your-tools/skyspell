@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 use crate::kak::io::KakouneIO;
 use crate::os_io::OperatingSystemIO;
+use crate::repository::ProjectId;
 use crate::Checker;
 use crate::{Dictionary, Repository};
 use crate::{Project, RelativePath};
@@ -19,6 +20,7 @@ pub(crate) struct Error {
 
 pub(crate) struct KakouneChecker<D: Dictionary, R: Repository, S: OperatingSystemIO> {
     project: Project,
+    pub(crate) project_id: ProjectId,
     pub(crate) dictionary: D,
     pub(crate) repository: R,
     errors: Vec<Error>,
@@ -73,9 +75,10 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
         mut repository: R,
         kakoune_io: KakouneIO<S>,
     ) -> Result<Self> {
-        repository.ensure_project(&project)?;
+        let project_info = repository.ensure_project(&project)?;
         Ok(Self {
             project,
+            project_id: project_info.id(),
             dictionary,
             kakoune_io,
             repository,

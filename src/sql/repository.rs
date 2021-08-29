@@ -58,7 +58,7 @@ impl SQLRepository {
 }
 
 impl Repository for SQLRepository {
-    fn new_project(&mut self, project: &Project) -> Result<()> {
+    fn new_project(&mut self, project: &Project) -> Result<ProjectInfo> {
         let new_project = NewProject {
             path: &project.as_str(),
         };
@@ -66,7 +66,8 @@ impl Repository for SQLRepository {
             .values(new_project)
             .execute(&self.connection)
             .with_context(|| format!("Could not insert project '{}'", project.as_str()))?;
-        Ok(())
+        let id = self.get_project_id(project)?;
+        Ok(ProjectInfo::new(id, &project.to_string()))
     }
 
     fn get_project_info(&self, project: &Project) -> Result<ProjectInfo> {
@@ -152,8 +153,7 @@ impl Repository for SQLRepository {
             .is_some())
     }
 
-    fn ignore_for_project(&mut self, word: &str, project: &Project) -> Result<()> {
-        let project_id = self.get_project_id(project)?;
+    fn ignore_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()> {
         let word = &word.to_lowercase();
         diesel::insert_or_ignore_into(ignored_for_project::table)
             .values(NewIgnoredForProject { word, project_id })

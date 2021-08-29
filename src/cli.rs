@@ -164,8 +164,8 @@ fn add(mut repository: impl Repository, opts: AddOpts) -> Result<()> {
         (Some(project_path), None, None) => {
             let project = Project::open(&project_path)?;
             repository.ensure_project(&project)?;
-            let project_info = repository.get_project_info(&project)?;
-            repository.ignore_for_project(word, project_info.id())
+            let project_id = repository.get_project_info(&project)?.id();
+            repository.ignore_for_project(word, project_id)
         }
         (None, Some(_), None) => bail!("Cannot use --relative-path without --project-path"),
         (Some(_), _, Some(_)) => bail!("--extension is incompatible with --project-path"),
@@ -454,8 +454,10 @@ mod tests {
         let mut app = TestApp::new(&temp_dir);
         let project = app.open_project(&temp_dir, "project");
         app.repository.new_project(&project).unwrap();
-
-        app.repository.ignore_for_project("foo", &project).unwrap();
+        let project_id = app.repository.get_project_info(&project).unwrap().id();
+        app.repository
+            .ignore_for_project("foo", project_id)
+            .unwrap();
 
         app.run(&["remove", "foo", "--project-path", &project.as_str()])
             .unwrap();

@@ -37,16 +37,17 @@ pub trait Repository {
     fn is_ignored(&self, word: &str) -> Result<bool>;
 
     // Add a new project
-    fn new_project(&mut self, project: &Project) -> Result<()>;
+    fn new_project(&mut self, project: &Project) -> Result<ProjectInfo>;
     // Check if a project exists
     fn project_exists(&self, project: &Project) -> Result<bool>;
     // Create a project if it does not exist yet
-    fn ensure_project(&mut self, project: &Project) -> Result<()> {
+    fn ensure_project(&mut self, project: &Project) -> Result<ProjectInfo> {
         if !self.project_exists(project)? {
             self.new_project(project)?;
         }
-        Ok(())
+        self.get_project_info(project)
     }
+
     // Remove the given project from the list
     fn remove_project(&mut self, path: &Path) -> Result<()>;
     // Get Info about an existing project
@@ -56,7 +57,8 @@ pub trait Repository {
 
     fn clean(&mut self) -> Result<()> {
         for project in self.projects()? {
-            let path = Path::new(&project.path);
+            let path = project.path();
+            let path = Path::new(&path);
             if !path.exists() {
                 self.remove_project(path)?;
                 println!("Removed non longer existing project: {}", path.display());
@@ -77,7 +79,7 @@ pub trait Repository {
     fn is_ignored_for_extension(&self, word: &str, extension: &str) -> Result<bool>;
 
     // Add word to the ignore list for the given project
-    fn ignore_for_project(&mut self, word: &str, project: &Project) -> Result<()>;
+    fn ignore_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()>;
     // Is the word in the ignore list for the given project?
     fn is_ignored_for_project(&self, word: &str, project: &Project) -> Result<bool>;
 
@@ -233,7 +235,8 @@ mod tests {
         repository.new_project(&project_1).unwrap();
         repository.new_project(&project_2).unwrap();
 
-        repository.ignore_for_project("foo", &project_1).unwrap();
+        let project_1_id = repository.get_project_info(&project_1).unwrap().id();
+        repository.ignore_for_project("foo", project_1_id).unwrap();
 
         assert!(repository
             .should_ignore("foo", &project_1, &foo_txt)
@@ -368,7 +371,8 @@ mod tests {
         repository.new_project(&project).unwrap();
         repository.new_project(&other_project).unwrap();
 
-        repository.ignore_for_project("foo", &project).unwrap();
+        let project_id = repository.get_project_info(&project).unwrap().id();
+        repository.ignore_for_project("foo", project_id).unwrap();
 
         assert!(repository.is_ignored_for_project("foo", &project).unwrap());
         assert!(!repository.is_ignored_for_project("foo", &other_project).unwrap());
@@ -445,7 +449,8 @@ mod tests {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
         let project = new_project(&temp_dir, "project");
         repository.new_project(&project).unwrap();
-        repository.ignore_for_project("foo", &project).unwrap();
+        let project_id = repository.get_project_info(&project).unwrap().id();
+        repository.ignore_for_project("foo", project_id).unwrap();
 
         repository.remove_ignored_for_project("foo", &project).unwrap();
 

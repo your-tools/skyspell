@@ -41,7 +41,7 @@ impl Repository for FakeRepository {
         Ok(ProjectInfo::new(id, &project.to_string()))
     }
 
-    fn new_project(&mut self, project: &Project) -> Result<()> {
+    fn new_project(&mut self, project: &Project) -> Result<ProjectInfo> {
         if self.project_exists(project)? {
             bail!("Project in '{}' already exists", project);
         }
@@ -49,7 +49,7 @@ impl Repository for FakeRepository {
         let new_id = *max_id + 1;
 
         self.projects.insert(project.to_string(), new_id);
-        Ok(())
+        Ok(ProjectInfo::new(new_id, &project.to_string()))
     }
 
     fn projects(&self) -> Result<Vec<ProjectInfo>> {
@@ -107,15 +107,8 @@ impl Repository for FakeRepository {
         }
     }
 
-    fn ignore_for_project(&mut self, word: &str, project: &Project) -> Result<()> {
-        let project_id = self.projects.get(&project.to_string()).ok_or_else(|| {
-            anyhow!(
-                "Could not add {} to the ignore list for {} : No such project",
-                word,
-                project
-            )
-        })?;
-        let entry = &mut self.by_project.entry(*project_id).or_insert_with(Vec::new);
+    fn ignore_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()> {
+        let entry = &mut self.by_project.entry(project_id).or_insert_with(Vec::new);
         entry.push(word.to_string());
         Ok(())
     }

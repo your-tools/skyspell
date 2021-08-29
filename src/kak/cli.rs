@@ -178,8 +178,8 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
 
     fn add_project(&mut self) -> Result<()> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
-        let project = self.get_project()?;
-        self.repository().ignore_for_project(word, &project)?;
+        let project_id = self.checker.project_id;
+        self.repository().ignore_for_project(word, project_id)?;
         self.recheck();
         self.kakoune_io().print(&format!(
             "echo '\"{}\" added to ignore list for the current project'",

@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use anyhow::{bail, Result};
 use colored::*;
 
+use crate::repository::ProjectId;
 use crate::Checker;
 use crate::Dictionary;
 use crate::Interactor;
@@ -11,6 +12,7 @@ use crate::{Project, RelativePath};
 
 pub(crate) struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository> {
     project: Project,
+    project_id: ProjectId,
     interactor: I,
     dictionary: D,
     repository: R,
@@ -65,9 +67,10 @@ impl<I: Interactor, D: Dictionary, R: Repository> InteractiveChecker<I, D, R> {
         dictionary: D,
         mut repository: R,
     ) -> Result<Self> {
-        repository.ensure_project(&project)?;
+        let project_info = repository.ensure_project(&project)?;
         Ok(Self {
             project,
+            project_id: project_info.id(),
             dictionary,
             interactor,
             repository,
@@ -166,7 +169,7 @@ q : Quit
     }
 
     fn on_project_ignore(&mut self, error: &str) -> Result<bool> {
-        self.repository.ignore_for_project(error, &self.project)?;
+        self.repository.ignore_for_project(error, self.project_id)?;
         Self::print_addition(
             error,
             &format!("the ignore list for project '{}'", &self.project),
