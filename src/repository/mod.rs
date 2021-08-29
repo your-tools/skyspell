@@ -151,14 +151,12 @@ pub trait Repository {
     fn should_ignore(
         &self,
         word: &str,
-        project: &Project,
+        project_id: ProjectId,
         relative_path: &RelativePath,
     ) -> Result<bool> {
         if self.is_ignored(word)? {
             return Ok(true);
         }
-        // TODO: just sue project_id argument
-        let project_id = self.get_project_id(project)?;
 
         if let Some(e) = relative_path.extension() {
             if self.is_ignored_for_extension(word, &e)? {
@@ -205,9 +203,10 @@ mod tests {
         let mut repository = FakeRepository::new();
 
         repository.ignore("foo").unwrap();
+        let project_id = repository.new_project(&project).unwrap();
 
         assert!(repository
-            .should_ignore("foo", &project, &relative_path)
+            .should_ignore("foo", project_id, &relative_path)
             .unwrap());
     }
 
@@ -219,12 +218,16 @@ mod tests {
         let foo_rs = new_relative_path(&project, "foo.rs");
 
         let mut repository = FakeRepository::new();
-        repository.new_project(&project).unwrap();
+        let project_id = repository.new_project(&project).unwrap();
         repository.ignore_for_extension("foo", "py").unwrap();
 
-        assert!(repository.should_ignore("foo", &project, &foo_py).unwrap());
+        assert!(repository
+            .should_ignore("foo", project_id, &foo_py)
+            .unwrap());
 
-        assert!(!repository.should_ignore("foo", &project, &foo_rs).unwrap());
+        assert!(!repository
+            .should_ignore("foo", project_id, &foo_rs)
+            .unwrap());
     }
 
     #[test]
@@ -234,17 +237,16 @@ mod tests {
         let foo_txt = new_relative_path(&project_1, "foo.txt");
         let project_2 = new_project(&temp_dir, "project2");
         let mut repository = FakeRepository::new();
-        repository.new_project(&project_1).unwrap();
-        repository.new_project(&project_2).unwrap();
+        let project_id_1 = repository.new_project(&project_1).unwrap();
+        let project_id_2 = repository.new_project(&project_2).unwrap();
 
-        let project_1_id = repository.get_project_id(&project_1).unwrap();
-        repository.ignore_for_project("foo", project_1_id).unwrap();
+        repository.ignore_for_project("foo", project_id_1).unwrap();
 
         assert!(repository
-            .should_ignore("foo", &project_1, &foo_txt)
+            .should_ignore("foo", project_id_1, &foo_txt)
             .unwrap());
         assert!(!repository
-            .should_ignore("foo", &project_2, &foo_txt)
+            .should_ignore("foo", project_id_2, &foo_txt)
             .unwrap());
     }
 

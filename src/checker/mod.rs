@@ -48,14 +48,14 @@ pub(crate) trait Checker {
         relative_path: &RelativePath,
         context: &Self::Context,
     ) -> Result<()> {
-        let project = self.project();
         let dictionary = self.dictionary();
         let in_dict = dictionary.check(token)?;
         if in_dict {
             return Ok(());
         }
         let repository = self.repository();
-        let should_ignore = repository.should_ignore(token, project, relative_path)?;
+        let project_id = self.project_id();
+        let should_ignore = repository.should_ignore(token, project_id, relative_path)?;
         if !should_ignore {
             self.handle_error(token, relative_path, context)?
         }

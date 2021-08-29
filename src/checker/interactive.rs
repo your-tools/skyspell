@@ -287,7 +287,6 @@ mod tests {
         }
 
         fn is_skipped_path(&self, relative_name: &str) -> bool {
-            let projct = self.checker.project();
             let project_id = self.checker.project_id;
             let relative_path = self.to_relative_path(relative_name);
             self.checker
