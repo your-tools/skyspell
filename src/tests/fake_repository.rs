@@ -3,7 +3,7 @@ use anyhow::{anyhow, bail, Result};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
-use crate::repository::ProjectInfo;
+use crate::repository::{ProjectId, ProjectInfo};
 use crate::Repository;
 use crate::{Project, RelativePath};
 
@@ -11,9 +11,9 @@ use crate::{Project, RelativePath};
 pub(crate) struct FakeRepository {
     global: HashSet<String>,
     by_extension: HashMap<String, Vec<String>>,
-    by_project: HashMap<String, Vec<String>>,
+    by_project: HashMap<ProjectId, Vec<String>>,
     by_project_and_path: HashMap<(String, String), Vec<String>>,
-    projects: HashMap<i32, String>,
+    projects: HashMap<String, ProjectId>,
     skip_file_names: HashSet<String>,
     skipped_paths: HashSet<(String, String)>,
 }
@@ -25,19 +25,19 @@ impl FakeRepository {
 }
 
 impl Repository for FakeRepository {
-    fn project_exists(&self, path: &Project) -> Result<bool> {
-        let index = &self.projects.values().position(|x| x == &path.to_string());
-        Ok(index.is_some())
+    fn project_exists(&self, project: &Project) -> Result<bool> {
+        let project_path = project.to_string();
+        Ok(self.projects.get(&project_path).is_some())
     }
 
     fn new_project(&mut self, project: &Project) -> Result<()> {
         if self.project_exists(project)? {
             bail!("Project in '{}' already exists", project);
         }
-        let max_id = self.projects.keys().max().unwrap_or(&0);
+        let max_id = self.projects.values().max().unwrap_or(&0);
         let new_id = *max_id + 1;
 
-        self.projects.insert(new_id, project.to_string());
+        self.projects.insert(project.to_string(), new_id);
         Ok(())
     }
 
@@ -45,12 +45,12 @@ impl Repository for FakeRepository {
         Ok(self
             .projects
             .iter()
-            .map(|(i, p)| ProjectInfo::new(*i, &p.to_string()))
+            .map(|(p, i)| ProjectInfo::new(*i, &p.to_string()))
             .collect())
     }
 
     fn remove_project(&mut self, path: &std::path::Path) -> Result<()> {
-        self.projects.retain(|_, p| Path::new(p) != path);
+        self.projects.retain(|p, _| Path::new(p) != path);
         Ok(())
     }
 
@@ -97,16 +97,28 @@ impl Repository for FakeRepository {
     }
 
     fn ignore_for_project(&mut self, word: &str, project: &Project) -> Result<()> {
-        let entry = &mut self
-            .by_project
-            .entry(project.to_string())
-            .or_insert_with(Vec::new);
+        let project_id = self.projects.get(&project.to_string()).ok_or_else(|| {
+            anyhow!(
+                "Could not add {} to the ignore list for {} : No such project",
+                word,
+                project
+            )
+        })?;
+        let entry = &mut self.by_project.entry(*project_id).or_insert_with(Vec::new);
         entry.push(word.to_string());
         Ok(())
     }
 
     fn is_ignored_for_project(&self, word: &str, project: &Project) -> Result<bool> {
-        if let Some(words) = self.by_project.get(&project.to_string()) {
+        dbg!(&self);
+        let project_id = self.projects.get(&project.to_string()).ok_or_else(|| {
+            anyhow!(
+                "Could not lookup {} in the ignore list for project {} : No such project",
+                word,
+                project,
+            )
+        })?;
+        if let Some(words) = self.by_project.get(project_id) {
             Ok(words.contains(&word.to_string()))
         } else {
             Ok(false)
@@ -184,9 +196,13 @@ impl Repository for FakeRepository {
     }
 
     fn remove_ignored_for_project(&mut self, word: &str, project: &Project) -> Result<()> {
+        let project_id = self
+            .projects
+            .get(&project.to_string())
+            .ok_or_else(|| anyhow!("No such project"))?;
         let entry = self
             .by_project
-            .get_mut(&project.to_string())
+            .get_mut(project_id)
             .ok_or_else(|| anyhow!("no such key"))?;
         entry.retain(|w| w != word);
         Ok(())
