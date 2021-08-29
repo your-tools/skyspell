@@ -113,16 +113,8 @@ impl Repository for FakeRepository {
         Ok(())
     }
 
-    fn is_ignored_for_project(&self, word: &str, project: &Project) -> Result<bool> {
-        dbg!(&self);
-        let project_id = self.projects.get(&project.to_string()).ok_or_else(|| {
-            anyhow!(
-                "Could not lookup {} in the ignore list for project {} : No such project",
-                word,
-                project,
-            )
-        })?;
-        if let Some(words) = self.by_project.get(project_id) {
+    fn is_ignored_for_project(&self, word: &str, project_id: ProjectId) -> Result<bool> {
+        if let Some(words) = self.by_project.get(&project_id) {
             Ok(words.contains(&word.to_string()))
         } else {
             Ok(false)

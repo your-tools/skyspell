@@ -521,10 +521,11 @@ skyspell-list
         cli.set_selection(&format!("{}: 1.3,1.5 foo", full_path));
 
         cli.add_project().unwrap();
+        let project_id = cli.repository().get_project_info(&project).unwrap().id();
 
         assert!(cli
             .repository()
-            .is_ignored_for_project("foo", &project)
+            .is_ignored_for_project("foo", project_id)
             .unwrap());
     }
 

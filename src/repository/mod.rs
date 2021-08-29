@@ -81,7 +81,7 @@ pub trait Repository {
     // Add word to the ignore list for the given project
     fn ignore_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()>;
     // Is the word in the ignore list for the given project?
-    fn is_ignored_for_project(&self, word: &str, project: &Project) -> Result<bool>;
+    fn is_ignored_for_project(&self, word: &str, project_id: ProjectId) -> Result<bool>;
 
     // Add word to the ignore list for the given project and path
     fn ignore_for_path(
@@ -157,6 +157,7 @@ pub trait Repository {
         if self.is_ignored(word)? {
             return Ok(true);
         }
+        let project_id = self.get_project_info(project)?.id();
 
         if let Some(e) = relative_path.extension() {
             if self.is_ignored_for_extension(word, &e)? {
@@ -164,7 +165,7 @@ pub trait Repository {
             }
         }
 
-        if self.is_ignored_for_project(word, project)? {
+        if self.is_ignored_for_project(word, project_id)? {
             return Ok(true);
         }
 
@@ -372,10 +373,11 @@ mod tests {
         repository.new_project(&other_project).unwrap();
 
         let project_id = repository.get_project_info(&project).unwrap().id();
+        let other_project_id = repository.get_project_info(&other_project).unwrap().id();
         repository.ignore_for_project("foo", project_id).unwrap();
 
-        assert!(repository.is_ignored_for_project("foo", &project).unwrap());
-        assert!(!repository.is_ignored_for_project("foo", &other_project).unwrap());
+        assert!(repository.is_ignored_for_project("foo", project_id).unwrap());
+        assert!(!repository.is_ignored_for_project("foo", other_project_id).unwrap());
     });
 
     make_tests!(ignored_for_path, (repository) => {
@@ -454,7 +456,7 @@ mod tests {
 
         repository.remove_ignored_for_project("foo", &project).unwrap();
 
-        assert!(!repository.is_ignored_for_project("foo", &project).unwrap());
+        assert!(!repository.is_ignored_for_project("foo", project_id).unwrap());
     });
 
     make_tests!(unskip_file_name, (repository) => {

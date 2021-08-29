@@ -397,7 +397,10 @@ mod tests {
             .unwrap();
 
         let repository = open_repository(&temp_dir);
-        assert!(repository.is_ignored_for_project("foo", &project).unwrap());
+        let project_id = repository.get_project_info(&project).unwrap().id();
+        assert!(repository
+            .is_ignored_for_project("foo", project_id)
+            .unwrap());
     }
 
     #[test]
@@ -462,7 +465,10 @@ mod tests {
             .unwrap();
 
         let repository = open_repository(&temp_dir);
-        assert!(!repository.is_ignored_for_project("foo", &project).unwrap());
+        let project_id = repository.get_project_info(&project).unwrap().id();
+        assert!(!repository
+            .is_ignored_for_project("foo", project_id)
+            .unwrap());
     }
 
     #[test]

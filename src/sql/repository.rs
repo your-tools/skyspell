@@ -162,8 +162,7 @@ impl Repository for SQLRepository {
         Ok(())
     }
 
-    fn is_ignored_for_project(&self, word: &str, project: &Project) -> Result<bool> {
-        let project_id = self.get_project_id(project)?;
+    fn is_ignored_for_project(&self, word: &str, project_id: ProjectId) -> Result<bool> {
         let word = &word.to_lowercase();
         Ok(ignored_for_project::table
             .filter(ignored_for_project::project_id.eq(project_id))

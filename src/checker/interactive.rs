@@ -299,10 +299,10 @@ mod tests {
         }
 
         fn is_ignored_for_project(&self, word: &str) -> bool {
-            let project = self.checker.project();
+            let project_id = self.checker.project_id;
             self.checker
                 .repository
-                .is_ignored_for_project(word, project)
+                .is_ignored_for_project(word, project_id)
                 .unwrap()
         }
 
