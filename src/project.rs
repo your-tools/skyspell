@@ -3,12 +3,6 @@ use std::borrow::Cow;
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
-// Note: we store the paths in the DB using lossy string representation
-// because it's really convenient, although technically not correct
-//
-// An other option would be to store the OsStr representation as binary
-// in the DB
-
 #[derive(Debug)]
 pub struct ProjectPath(PathBuf);
 impl ProjectPath {
