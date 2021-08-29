@@ -4,11 +4,10 @@ use colored::*;
 use crate::Checker;
 use crate::Dictionary;
 use crate::Repository;
-use crate::{ProjectId, ProjectPath, RelativePath};
+use crate::{Project, ProjectPath, RelativePath};
 
 pub(crate) struct NonInteractiveChecker<D: Dictionary, R: Repository> {
-    project_path: ProjectPath,
-    project_id: ProjectId,
+    project: Project,
     dictionary: D,
     repository: R,
     errors_found: bool,
@@ -16,10 +15,9 @@ pub(crate) struct NonInteractiveChecker<D: Dictionary, R: Repository> {
 
 impl<D: Dictionary, R: Repository> NonInteractiveChecker<D, R> {
     pub(crate) fn new(project_path: ProjectPath, dictionary: D, mut repository: R) -> Result<Self> {
-        let project_id = repository.ensure_project(&project_path)?;
+        let project = repository.ensure_project(&project_path)?;
         Ok(Self {
-            project_path,
-            project_id,
+            project,
             dictionary,
             repository,
             errors_found: false,
@@ -55,12 +53,8 @@ impl<D: Dictionary, R: Repository> Checker for NonInteractiveChecker<D, R> {
         Ok(())
     }
 
-    fn project_path(&self) -> &ProjectPath {
-        &self.project_path
-    }
-
-    fn project_id(&self) -> ProjectId {
-        self.project_id
+    fn project(&self) -> &Project {
+        &self.project
     }
 
     fn repository(&self) -> &dyn Repository {

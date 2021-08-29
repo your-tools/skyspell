@@ -149,9 +149,10 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
     fn add_file(&mut self) -> Result<()> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
         let path = &Path::new(path);
-        let project = self.checker.project_path();
-        let project_id = self.checker.project_id();
-        let relative_path = RelativePath::new(project, path)?;
+        // TODO: can we avoid cloning here?
+        let project_path = self.checker.project.path().clone();
+        let project_id = self.checker.project.id();
+        let relative_path = RelativePath::new(&project_path, path)?;
         self.repository()
             .ignore_for_path(word, project_id, &relative_path)?;
         self.recheck();
@@ -173,7 +174,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
 
     fn add_project(&mut self) -> Result<()> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
-        let project_id = self.checker.project_id();
+        let project_id = self.checker.project().id();
         self.repository().ignore_for_project(word, project_id)?;
         self.recheck();
         self.kakoune_io().print(&format!(
@@ -288,9 +289,9 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         let LineSelection { path, .. } = &self.parse_line_selection()?;
         // We know it's a full path thanks to handle_error in KakouneChecker
         let full_path = Path::new(path);
-        let project = self.checker.project_path();
-        let project_id = self.checker.project_id();
-        let relative_path = RelativePath::new(project, full_path)?;
+        let project = self.checker.project();
+        let project_id = project.id();
+        let relative_path = RelativePath::new(project.path(), full_path)?;
 
         self.repository().skip_path(project_id, &relative_path)?;
 
@@ -403,7 +404,7 @@ mod tests {
         }
 
         fn write_file(&self, path: &str, contents: &str) {
-            let project_path = self.checker.project_path();
+            let project_path = self.checker.project().path();
             let full_path = project_path.as_ref().join(path);
             std::fs::write(&full_path, contents).unwrap();
         }
@@ -456,7 +457,7 @@ skyspell-list
     fn test_get_project() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let cli = new_cli(&temp_dir);
-        let actual = cli.checker.project_path();
+        let actual = cli.checker.project().path();
         assert_eq!(actual.as_ref(), temp_dir.path());
     }
 
@@ -485,7 +486,7 @@ skyspell-list
         cli.set_selection(&format!("{}: 1.3,1.5 foo", full_path));
 
         cli.add_file().unwrap();
-        let project_id = cli.checker.project_id();
+        let project_id = cli.checker.project().id();
 
         assert!(cli
             .repository()
@@ -510,7 +511,7 @@ skyspell-list
     fn test_add_project() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut cli = new_cli(&temp_dir);
-        let project_id = cli.checker.project_id();
+        let project_id = cli.checker.project().id();
         cli.ensure_path("foo.py");
         let full_path = format!("{}/foo.py", temp_dir.path().display());
         cli.set_selection(&format!("{}: 1.3,1.5 foo", full_path));
@@ -652,7 +653,7 @@ echo -markup {project_path}: {{red}}3 spelling errors
     fn test_skip_file() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut cli = new_cli(&temp_dir);
-        let project_id = cli.checker.project_id();
+        let project_id = cli.checker.project().id();
         let foo_py = cli.ensure_path("foo.py");
         let foo_path = format!("{}/foo.py", temp_dir.path().display());
         cli.set_selection(&format!("{}: 1.3,1.5 foo", foo_path));

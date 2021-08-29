@@ -43,7 +43,7 @@ pub trait Repository {
             self.new_project(project_path)?;
         }
         let id = self.get_project_id(project_path)?;
-        Ok(Project::new(project_path.clone(), id))
+        Ok(Project::new(id, project_path.clone()))
     }
 
     // Remove the given project from the list

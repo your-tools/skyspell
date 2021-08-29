@@ -7,11 +7,10 @@ use crate::Checker;
 use crate::Dictionary;
 use crate::Interactor;
 use crate::Repository;
-use crate::{ProjectId, ProjectPath, RelativePath};
+use crate::{Project, ProjectPath, RelativePath};
 
 pub(crate) struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository> {
-    project_path: ProjectPath,
-    project_id: ProjectId,
+    project: Project,
     interactor: I,
     dictionary: D,
     repository: R,
@@ -29,12 +28,8 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
         Ok(())
     }
 
-    fn project_path(&self) -> &ProjectPath {
-        &self.project_path
-    }
-
-    fn project_id(&self) -> ProjectId {
-        self.project_id
+    fn project(&self) -> &Project {
+        &self.project
     }
 
     fn dictionary(&self) -> &dyn Dictionary {
@@ -70,10 +65,9 @@ impl<I: Interactor, D: Dictionary, R: Repository> InteractiveChecker<I, D, R> {
         dictionary: D,
         mut repository: R,
     ) -> Result<Self> {
-        let project_id = repository.ensure_project(&project_path)?;
+        let project = repository.ensure_project(&project_path)?;
         Ok(Self {
-            project_path,
-            project_id,
+            project,
             dictionary,
             interactor,
             repository,
@@ -172,17 +166,18 @@ q : Quit
     }
 
     fn on_project_ignore(&mut self, error: &str) -> Result<bool> {
-        self.repository.ignore_for_project(error, self.project_id)?;
+        self.repository
+            .ignore_for_project(error, self.project.id())?;
         Self::print_addition(
             error,
-            &format!("the ignore list for project '{}'", &self.project_path),
+            &format!("the ignore list for project '{}'", &self.project.path()),
         );
         Ok(true)
     }
 
     fn on_file_ignore(&mut self, error: &str, relative_path: &RelativePath) -> Result<bool> {
         self.repository
-            .ignore_for_path(error, self.project_id, relative_path)?;
+            .ignore_for_path(error, self.project.id(), relative_path)?;
 
         Self::print_addition(
             error,
@@ -211,12 +206,13 @@ q : Quit
     }
 
     fn on_project_file_skip(&mut self, relative_path: &RelativePath) -> Result<bool> {
-        self.repository.skip_path(self.project_id, relative_path)?;
+        self.repository
+            .skip_path(self.project().id(), relative_path)?;
         println!(
             "\n{}Added '{}' to the list of files to skip for project: '{}'\n",
             "=> ".blue(),
             relative_path,
-            &self.project_path.as_str().bold(),
+            &self.project.path().as_str().bold(),
         );
         Ok(true)
     }
@@ -258,13 +254,13 @@ mod tests {
         }
 
         fn to_relative_path(&self, path: &str) -> RelativePath {
-            let project_path = self.checker.project_path();
+            let project_path = self.checker.project.path();
             let path = project_path.as_ref().join(path);
             RelativePath::new(project_path, &path).unwrap()
         }
 
         fn handle_token(&mut self, token: &str, relative_name: &str) {
-            let project_path = self.checker.project_path();
+            let project_path = self.checker.project().path();
             let full_path = project_path.as_ref().join(relative_name);
             std::fs::write(&full_path, "").unwrap();
             let relative_path = self.to_relative_path(relative_name);
@@ -286,7 +282,7 @@ mod tests {
         }
 
         fn is_skipped_path(&self, relative_name: &str) -> bool {
-            let project_id = self.checker.project_id;
+            let project_id = self.checker.project().id();
             let relative_path = self.to_relative_path(relative_name);
             self.checker
                 .repository
@@ -302,7 +298,7 @@ mod tests {
         }
 
         fn is_ignored_for_project(&self, word: &str) -> bool {
-            let project_id = self.checker.project_id;
+            let project_id = self.checker.project().id();
             self.checker
                 .repository
                 .is_ignored_for_project(word, project_id)
@@ -310,7 +306,7 @@ mod tests {
         }
 
         fn is_ignored_for_path(&self, word: &str, relative_name: &str) -> bool {
-            let project_id = self.checker.project_id;
+            let project_id = self.checker.project().id();
             let relative_path = self.to_relative_path(relative_name);
             self.checker
                 .repository

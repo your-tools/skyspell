@@ -4,7 +4,7 @@ use anyhow::Result;
 
 use crate::Dictionary;
 use crate::Repository;
-use crate::{ProjectId, ProjectPath, RelativePath};
+use crate::{Project, RelativePath};
 
 mod interactive;
 mod non_interactive;
@@ -27,18 +27,17 @@ pub(crate) trait Checker {
     fn repository(&self) -> &dyn Repository;
     fn dictionary(&self) -> &dyn Dictionary;
 
-    fn project_path(&self) -> &ProjectPath;
-    fn project_id(&self) -> ProjectId;
+    fn project(&self) -> &Project;
 
     fn should_skip(&self, path: &RelativePath) -> Result<bool> {
         let repository = self.repository();
-        let project_id = self.project_id();
+        let project_id = self.project().id();
         repository.should_skip(project_id, path)
     }
 
     fn to_relative_path(&self, path: &Path) -> Result<RelativePath> {
-        let project = self.project_path();
-        RelativePath::new(project, path)
+        let project_path = self.project().path();
+        RelativePath::new(project_path, path)
     }
 
     fn handle_token(
@@ -53,7 +52,7 @@ pub(crate) trait Checker {
             return Ok(());
         }
         let repository = self.repository();
-        let project_id = self.project_id();
+        let project_id = self.project().id();
         let should_ignore = repository.should_ignore(token, project_id, relative_path)?;
         if !should_ignore {
             self.handle_error(token, relative_path, context)?

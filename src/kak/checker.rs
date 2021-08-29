@@ -6,7 +6,7 @@ use crate::kak::io::KakouneIO;
 use crate::os_io::OperatingSystemIO;
 use crate::Checker;
 use crate::{Dictionary, Repository};
-use crate::{ProjectId, ProjectPath, RelativePath};
+use crate::{Project, ProjectPath, RelativePath};
 
 pub(crate) const SKYSPELL_PROJECT_OPT: &str = "skyspell_project";
 
@@ -18,12 +18,13 @@ pub(crate) struct Error {
 }
 
 pub(crate) struct KakouneChecker<D: Dictionary, R: Repository, S: OperatingSystemIO> {
-    project: ProjectPath,
-    project_id: ProjectId,
+    // Note: pub(crate) to avoid having to write getters and fight the
+    // borrow checker in KakCli
+    pub(crate) project: Project,
     pub(crate) dictionary: D,
     pub(crate) repository: R,
-    errors: Vec<Error>,
     pub(crate) kakoune_io: KakouneIO<S>,
+    errors: Vec<Error>,
 }
 
 impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChecker<D, R, S> {
@@ -38,7 +39,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChec
     ) -> Result<()> {
         let (buffer, line, column) = context;
         let pos = (*line, *column);
-        let full_path = self.project.as_ref().join(&path);
+        let full_path = self.project.path().as_ref().join(&path);
         self.errors.push(Error {
             full_path,
             pos,
@@ -62,26 +63,21 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChec
         &self.dictionary
     }
 
-    fn project_path(&self) -> &ProjectPath {
+    fn project(&self) -> &Project {
         &self.project
-    }
-
-    fn project_id(&self) -> ProjectId {
-        self.project_id
     }
 }
 
 impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S> {
     pub(crate) fn new(
-        project: ProjectPath,
+        project_path: ProjectPath,
         dictionary: D,
         mut repository: R,
         kakoune_io: KakouneIO<S>,
     ) -> Result<Self> {
-        let project_id = repository.ensure_project(&project)?;
+        let project = repository.ensure_project(&project_path)?;
         Ok(Self {
             project,
-            project_id,
             dictionary,
             kakoune_io,
             repository,
@@ -104,7 +100,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
     }
 
     fn write_status(&self) {
-        let project = &self.project;
+        let project_path = &self.project.path();
         let errors_count = self.errors.len();
         self.print(&format!(
             "set global skyspell_error_count {}\n",
@@ -113,15 +109,15 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
         match errors_count {
             0 => self.print(&format!(
                 "echo -markup {}: {{green}}No spelling errors\n",
-                project
+                project_path
             )),
             1 => self.print(&format!(
                 "echo -markup {}: {{red}}1 spelling error\n",
-                project
+                project_path
             )),
             n => self.print(&format!(
                 "echo -markup {}: {{red}}{} spelling errors\n",
-                project, n,
+                project_path, n,
             )),
         }
     }
@@ -208,7 +204,7 @@ pub(crate) mod tests {
         }
 
         pub(crate) fn ensure_path(&self, relative_name: &str) -> RelativePath {
-            let project_path = self.project_path();
+            let project_path = self.project.path();
             let full_path = project_path.as_ref().join(relative_name);
             std::fs::write(&full_path, "").unwrap();
             RelativePath::new(project_path, &full_path).unwrap()
