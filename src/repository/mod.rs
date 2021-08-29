@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 
 use crate::{Project, RelativePath};
 
@@ -40,7 +40,6 @@ pub trait Repository {
     fn new_project(&mut self, project: &Project) -> Result<()>;
     // Check if a project exists
     fn project_exists(&self, project: &Project) -> Result<bool>;
-    fn get_project_info(&self, project: &Project) -> Result<ProjectInfo>;
     // Create a project if it does not exist yet
     fn ensure_project(&mut self, project: &Project) -> Result<()> {
         if !self.project_exists(project)? {
@@ -48,16 +47,10 @@ pub trait Repository {
         }
         Ok(())
     }
-    // Open an existing project
-    fn get_project(&mut self, path: &Path) -> Result<Project> {
-        let project = Project::open(path)?;
-        if !self.project_exists(&project)? {
-            bail!("No such project : {}", project.as_str());
-        }
-        Ok(project)
-    }
     // Remove the given project from the list
     fn remove_project(&mut self, path: &Path) -> Result<()>;
+    // Get Info about an existing project
+    fn get_project_info(&self, project: &Project) -> Result<ProjectInfo>;
 
     fn projects(&self) -> Result<Vec<ProjectInfo>>;
 
