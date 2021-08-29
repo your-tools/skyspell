@@ -42,6 +42,19 @@ impl SQLRepository {
         embedded_migrations::run(&connection).with_context(|| "Could not migrate db")?;
         Ok(Self { connection })
     }
+    fn get_project_id(&self, project: &Project) -> Result<ProjectId> {
+        let res = projects::table
+            .filter(projects::path.eq(project.as_str()))
+            .select(projects::id)
+            .first::<i32>(&self.connection)
+            .with_context(|| {
+                format!(
+                    "Could not get project ID for project '{}'",
+                    project.as_str()
+                )
+            })?;
+        Ok(res)
+    }
 }
 
 impl Repository for SQLRepository {
@@ -56,6 +69,11 @@ impl Repository for SQLRepository {
         Ok(())
     }
 
+    fn get_project_info(&self, project: &Project) -> Result<ProjectInfo> {
+        let id = self.get_project_id(project)?;
+        Ok(ProjectInfo::new(id, &project.to_string()))
+    }
+
     fn project_exists(&self, project: &Project) -> Result<bool> {
         Ok(projects::table
             .filter(projects::path.eq(project.as_str()))
@@ -64,20 +82,6 @@ impl Repository for SQLRepository {
             .optional()
             .with_context(|| format!("Error when looking for project {}", project.as_str()))?
             .is_some())
-    }
-
-    fn get_project_id(&self, project: &Project) -> Result<ProjectId> {
-        let res = projects::table
-            .filter(projects::path.eq(project.as_str()))
-            .select(projects::id)
-            .first::<i32>(&self.connection)
-            .with_context(|| {
-                format!(
-                    "Could not get project ID for project '{}'",
-                    project.as_str()
-                )
-            })?;
-        Ok(res)
     }
 
     fn projects(&self) -> Result<Vec<ProjectInfo>> {

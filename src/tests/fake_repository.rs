@@ -22,12 +22,23 @@ impl FakeRepository {
     pub(crate) fn new() -> Self {
         Default::default()
     }
+    fn get_project_id(&self, project: &Project) -> Result<ProjectId> {
+        let res = self
+            .projects
+            .get(&project.to_string())
+            .ok_or_else(|| anyhow!("Could not get project ID for {}, project"))?;
+        Ok(*res)
+    }
 }
 
 impl Repository for FakeRepository {
     fn project_exists(&self, project: &Project) -> Result<bool> {
-        let project_path = project.to_string();
-        Ok(self.projects.get(&project_path).is_some())
+        Ok(self.get_project_id(project).is_ok())
+    }
+
+    fn get_project_info(&self, project: &Project) -> Result<ProjectInfo> {
+        let id = self.get_project_id(project)?;
+        Ok(ProjectInfo::new(id, &project.to_string()))
     }
 
     fn new_project(&mut self, project: &Project) -> Result<()> {
@@ -39,14 +50,6 @@ impl Repository for FakeRepository {
 
         self.projects.insert(project.to_string(), new_id);
         Ok(())
-    }
-
-    fn get_project_id(&self, project: &Project) -> Result<ProjectId> {
-        let res = self
-            .projects
-            .get(&project.to_string())
-            .ok_or_else(|| anyhow!("Could not get project ID for {}, project"))?;
-        Ok(*res)
     }
 
     fn projects(&self) -> Result<Vec<ProjectInfo>> {
