@@ -34,9 +34,9 @@ pub trait Repository {
     fn is_ignored(&self, word: &str) -> Result<bool>;
 
     // Add a new project
-    fn new_project(&mut self, project: &ProjectPath) -> Result<ProjectId>;
+    fn new_project(&mut self, project_path: &ProjectPath) -> Result<ProjectId>;
     // Check if a project exists
-    fn project_exists(&self, project: &ProjectPath) -> Result<bool>;
+    fn project_exists(&self, project_path: &ProjectPath) -> Result<bool>;
     // Create a project if it does not exist yet
     fn ensure_project(&mut self, project_path: &ProjectPath) -> Result<Project> {
         if !self.project_exists(project_path)? {
@@ -49,7 +49,7 @@ pub trait Repository {
     // Remove the given project from the list
     fn remove_project(&mut self, project_id: ProjectId) -> Result<()>;
     // Get project id
-    fn get_project_id(&self, project: &ProjectPath) -> Result<ProjectId>;
+    fn get_project_id(&self, project_path: &ProjectPath) -> Result<ProjectId>;
     fn projects(&self) -> Result<Vec<ProjectInfo>>;
 
     fn clean(&mut self) -> Result<()> {
@@ -180,7 +180,7 @@ mod tests {
 
     use super::*;
 
-    fn new_project(temp_dir: &TempDir, name: &'static str) -> ProjectPath {
+    fn new_project_path(temp_dir: &TempDir, name: &'static str) -> ProjectPath {
         let temp_path = temp_dir.path();
         let project_path = temp_path.join(name);
         std::fs::create_dir(&project_path).unwrap();
@@ -196,7 +196,7 @@ mod tests {
     #[test]
     fn test_should_ignore_when_in_global_list() {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let project = new_project(&temp_dir, "project");
+        let project = new_project_path(&temp_dir, "project");
         let relative_path = new_relative_path(&project, "foo");
         let mut repository = FakeRepository::new();
 
@@ -211,7 +211,7 @@ mod tests {
     #[test]
     fn test_should_ignore_when_in_list_for_extension() {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let project = new_project(&temp_dir, "project");
+        let project = new_project_path(&temp_dir, "project");
         let foo_py = new_relative_path(&project, "foo.py");
         let foo_rs = new_relative_path(&project, "foo.rs");
 
@@ -231,9 +231,9 @@ mod tests {
     #[test]
     fn test_should_ignore_when_in_project_list() {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let project_1 = new_project(&temp_dir, "project1");
+        let project_1 = new_project_path(&temp_dir, "project1");
         let foo_txt = new_relative_path(&project_1, "foo.txt");
-        let project_2 = new_project(&temp_dir, "project2");
+        let project_2 = new_project_path(&temp_dir, "project2");
         let mut repository = FakeRepository::new();
         let project_id_1 = repository.new_project(&project_1).unwrap();
         let project_id_2 = repository.new_project(&project_2).unwrap();
@@ -251,7 +251,7 @@ mod tests {
     #[test]
     fn test_should_skip_when_in_skipped_file_names_list() {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let project = new_project(&temp_dir, "project");
+        let project = new_project_path(&temp_dir, "project");
         let cargo_lock = new_relative_path(&project, "Cargo.lock");
         let poetry_lock = new_relative_path(&project, "poetry.lock");
 
@@ -267,10 +267,10 @@ mod tests {
     #[test]
     fn test_should_skip_when_in_skipped_paths() {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let project_1 = new_project(&temp_dir, "project1");
+        let project_1 = new_project_path(&temp_dir, "project1");
         let foo_txt = new_relative_path(&project_1, "foo.txt");
         let other = new_relative_path(&project_1, "other");
-        let project_2 = new_project(&temp_dir, "project2");
+        let project_2 = new_project_path(&temp_dir, "project2");
 
         let mut repository = FakeRepository::new();
         let project_id_1 = repository.new_project(&project_1).unwrap();
@@ -337,7 +337,7 @@ mod tests {
 
     make_tests!(create_project, (repository) => {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let project = new_project(&temp_dir, "project");
+        let project = new_project_path(&temp_dir, "project");
 
         assert!(!repository.project_exists(&project).unwrap());
 
@@ -347,7 +347,7 @@ mod tests {
 
     make_tests!(duplicate_projects, (repository) => {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let project = new_project(&temp_dir, "project");
+        let project = new_project_path(&temp_dir, "project");
 
         repository.new_project(&project).unwrap();
         assert!(repository.new_project(&project).is_err());
@@ -355,9 +355,9 @@ mod tests {
 
     make_tests!(remove_project, (repository) => {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let project1 = new_project(&temp_dir, "project1");
-        let project2 = new_project(&temp_dir, "project2");
-        let project3 = new_project(&temp_dir, "project3");
+        let project1 = new_project_path(&temp_dir, "project1");
+        let project2 = new_project_path(&temp_dir, "project2");
+        let project3 = new_project_path(&temp_dir, "project3");
         repository.new_project(&project1).unwrap();
         let project2_id = repository.new_project(&project2).unwrap();
         repository.new_project(&project3).unwrap();
@@ -369,8 +369,8 @@ mod tests {
 
     make_tests!(ignored_for_project, (repository) => {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let project = new_project(&temp_dir, "project");
-        let other_project = new_project(&temp_dir, "other");
+        let project = new_project_path(&temp_dir, "project");
+        let other_project = new_project_path(&temp_dir, "other");
 
         repository.new_project(&project).unwrap();
         repository.new_project(&other_project).unwrap();
@@ -385,10 +385,10 @@ mod tests {
 
     make_tests!(ignored_for_path, (repository) => {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let project = new_project(&temp_dir, "project");
+        let project = new_project_path(&temp_dir, "project");
         let foo_py = new_relative_path(&project, "foo.py");
         let foo_rs = new_relative_path(&project, "foo.rs");
-        let other_project = new_project(&temp_dir, "other");
+        let other_project = new_project_path(&temp_dir, "other");
         repository.new_project(&project).unwrap();
         repository.new_project(&other_project).unwrap();
 
@@ -412,7 +412,7 @@ mod tests {
 
     make_tests!(skip_path, (repository) => {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let project = new_project(&temp_dir, "project");
+        let project = new_project_path(&temp_dir, "project");
         let test_txt = new_relative_path(&project, "test.txt");
 
         let project_id = repository.new_project(&project).unwrap();
@@ -442,7 +442,7 @@ mod tests {
 
     make_tests!(remove_ignored_for_path, (repository) => {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let project = new_project(&temp_dir, "project");
+        let project = new_project_path(&temp_dir, "project");
         let project_id = repository.new_project(&project).unwrap();
         let foo_py = new_relative_path(&project, "foo.py");
         repository.ignore_for_path("foo", project_id, &foo_py).unwrap();
@@ -454,7 +454,7 @@ mod tests {
 
     make_tests!(remove_ignored_for_project, (repository) => {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let project = new_project(&temp_dir, "project");
+        let project = new_project_path(&temp_dir, "project");
         repository.new_project(&project).unwrap();
         let project_id = repository.get_project_id(&project).unwrap();
         repository.ignore_for_project("foo", project_id).unwrap();
@@ -474,7 +474,7 @@ mod tests {
 
     make_tests!(unskip_path, (repository) => {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
-        let project = new_project(&temp_dir, "project");
+        let project = new_project_path(&temp_dir, "project");
         let project_id = repository.new_project(&project).unwrap();
         let foo_py = new_relative_path(&project, "foo.py");
         repository.skip_path(project_id, &foo_py).unwrap();

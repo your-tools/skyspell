@@ -24,25 +24,25 @@ impl FakeRepository {
 }
 
 impl Repository for FakeRepository {
-    fn project_exists(&self, project: &ProjectPath) -> Result<bool> {
-        Ok(self.get_project_id(project).is_ok())
+    fn project_exists(&self, project_path: &ProjectPath) -> Result<bool> {
+        Ok(self.get_project_id(project_path).is_ok())
     }
 
-    fn new_project(&mut self, project: &ProjectPath) -> Result<ProjectId> {
-        if self.project_exists(project)? {
-            bail!("Project in '{}' already exists", project);
+    fn new_project(&mut self, project_path: &ProjectPath) -> Result<ProjectId> {
+        if self.project_exists(project_path)? {
+            bail!("Project in '{}' already exists", project_path);
         }
         let max_id = self.projects.values().max().unwrap_or(&0);
         let new_id = *max_id + 1;
 
-        self.projects.insert(project.to_string(), new_id);
+        self.projects.insert(project_path.to_string(), new_id);
         Ok(new_id)
     }
 
-    fn get_project_id(&self, project: &ProjectPath) -> Result<ProjectId> {
+    fn get_project_id(&self, project_path: &ProjectPath) -> Result<ProjectId> {
         let res = self
             .projects
-            .get(&project.to_string())
+            .get(&project_path.to_string())
             .ok_or_else(|| anyhow!("Could not get project ID for {}, project"))?;
         Ok(*res)
     }

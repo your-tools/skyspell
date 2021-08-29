@@ -177,14 +177,14 @@ fn remove(mut repository: impl Repository, opts: RemoveOpts) -> Result<()> {
         (None, None, None) => repository.remove_ignored(word),
         (None, _, Some(e)) => repository.remove_ignored_for_extension(word, &e),
         (Some(project_path), Some(relative_path), None) => {
-            let project = ProjectPath::new(&project_path)?;
-            let project_id = repository.get_project_id(&project)?;
-            let relative_path = RelativePath::new(&project, &relative_path)?;
+            let project_path = ProjectPath::new(&project_path)?;
+            let project_id = repository.get_project_id(&project_path)?;
+            let relative_path = RelativePath::new(&project_path, &relative_path)?;
             repository.remove_ignored_for_path(word, project_id, &relative_path)
         }
         (Some(project_path), None, None) => {
-            let project = ProjectPath::new(&project_path)?;
-            let project_id = repository.get_project_id(&project)?;
+            let project_path = ProjectPath::new(&project_path)?;
+            let project_id = repository.get_project_id(&project_path)?;
             repository.remove_ignored_for_project(word, project_id)
         }
         (None, Some(_), None) => bail!("Cannot use --relative-path without --project-path"),
@@ -193,19 +193,20 @@ fn remove(mut repository: impl Repository, opts: RemoveOpts) -> Result<()> {
 }
 
 fn check(repository: impl Repository, dictionary: impl Dictionary, opts: CheckOpts) -> Result<()> {
-    let project = ProjectPath::new(&opts.project_path)?;
-    println!("Checking project {} for spelling errors", project);
+    let project_path = ProjectPath::new(&opts.project_path)?;
+    println!("Checking project {} for spelling errors", project_path);
 
     let interactive = !opts.non_interactive;
 
     match interactive {
         false => {
-            let mut checker = NonInteractiveChecker::new(project, dictionary, repository)?;
+            let mut checker = NonInteractiveChecker::new(project_path, dictionary, repository)?;
             check_with(&mut checker, opts)
         }
         true => {
             let interactor = ConsoleInteractor;
-            let mut checker = InteractiveChecker::new(project, interactor, dictionary, repository)?;
+            let mut checker =
+                InteractiveChecker::new(project_path, interactor, dictionary, repository)?;
             check_with(&mut checker, opts)
         }
     }
@@ -322,7 +323,7 @@ mod tests {
         SQLRepository::new(&TestApp::db_path(temp_dir)).unwrap()
     }
 
-    fn open_project(temp_dir: &TempDir, name: &str) -> ProjectPath {
+    fn new_project_path(temp_dir: &TempDir, name: &str) -> ProjectPath {
         let path = temp_dir.path().join(name);
         std::fs::create_dir_all(&path).unwrap();
         ProjectPath::new(&path).unwrap()
@@ -344,8 +345,8 @@ mod tests {
             }
         }
 
-        fn open_project(&mut self, temp_dir: &TempDir, project_name: &str) -> ProjectPath {
-            open_project(temp_dir, project_name)
+        fn new_project_path(&mut self, temp_dir: &TempDir, project_name: &str) -> ProjectPath {
+            new_project_path(temp_dir, project_name)
         }
 
         fn ensure_file(
@@ -353,7 +354,7 @@ mod tests {
             project_name: &str,
             file_name: &str,
         ) -> (PathBuf, RelativePath) {
-            let project = open_project(temp_dir, project_name);
+            let project = new_project_path(temp_dir, project_name);
             let full_path = temp_dir.path().join(file_name);
             std::fs::write(&full_path, "").unwrap();
             (
@@ -393,7 +394,7 @@ mod tests {
     fn test_add_for_project_happy() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
-        let project = app.open_project(&temp_dir, "project");
+        let project = app.new_project_path(&temp_dir, "project");
 
         app.run(&["add", "foo", "--project-path", &project.as_str()])
             .unwrap();
@@ -422,7 +423,7 @@ mod tests {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
         let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
-        let project = app.open_project(&temp_dir, "project");
+        let project = app.new_project_path(&temp_dir, "project");
 
         app.run(&[
             "add",
@@ -457,7 +458,7 @@ mod tests {
     fn test_remove_for_project() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
-        let project = app.open_project(&temp_dir, "project");
+        let project = app.new_project_path(&temp_dir, "project");
         app.repository.new_project(&project).unwrap();
         let project_id = app.repository.get_project_id(&project).unwrap();
         app.repository
@@ -479,7 +480,7 @@ mod tests {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
         let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
-        let project = app.open_project(&temp_dir, "project");
+        let project = app.new_project_path(&temp_dir, "project");
         let project_id = app.repository.new_project(&project).unwrap();
         app.repository
             .ignore_for_path("foo", project_id, &rel_path)
@@ -519,7 +520,7 @@ mod tests {
     fn test_check_errors_in_two_files() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
-        let project = app.open_project(&temp_dir, "project");
+        let project = app.new_project_path(&temp_dir, "project");
         let (foo_full, _) = TestApp::ensure_file(&temp_dir, "project", "foo.md");
         let (bar_full, _) = TestApp::ensure_file(&temp_dir, "project", "bar.md");
         std::fs::write(&foo_full, "This is foo").unwrap();
@@ -546,7 +547,7 @@ mod tests {
     fn test_check_happy() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
-        let project = app.open_project(&temp_dir, "project");
+        let project = app.new_project_path(&temp_dir, "project");
         let (foo_full, _) = TestApp::ensure_file(&temp_dir, "project", "foo.md");
         let (bar_full, _) = TestApp::ensure_file(&temp_dir, "project", "bar.md");
         std::fs::write(&foo_full, "This is fine").unwrap();
@@ -571,7 +572,7 @@ mod tests {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
         let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
-        let project = app.open_project(&temp_dir, "project");
+        let project = app.new_project_path(&temp_dir, "project");
 
         app.run(&[
             "skip",
@@ -603,7 +604,7 @@ mod tests {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
         let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
-        let project = app.open_project(&temp_dir, "project");
+        let project = app.new_project_path(&temp_dir, "project");
         let project_id = app.repository.new_project(&project).unwrap();
         app.repository.skip_path(project_id, &rel_path).unwrap();
 
@@ -646,9 +647,9 @@ mod tests {
     fn test_clean() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut app = TestApp::new(&temp_dir);
-        let project1 = app.open_project(&temp_dir, "project1");
+        let project1 = app.new_project_path(&temp_dir, "project1");
         app.repository.new_project(&project1).unwrap();
-        let project2 = app.open_project(&temp_dir, "project2");
+        let project2 = app.new_project_path(&temp_dir, "project2");
         app.repository.new_project(&project2).unwrap();
         let before = app.repository.projects().unwrap();
 
