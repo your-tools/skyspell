@@ -343,8 +343,7 @@ mod tests {
         }
 
         fn open_project(&mut self, temp_dir: &TempDir, project_name: &str) -> Project {
-            let project = open_project(temp_dir, project_name);
-            project
+            open_project(temp_dir, project_name)
         }
 
         fn ensure_file(
