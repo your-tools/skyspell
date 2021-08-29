@@ -9,6 +9,11 @@ pub struct ProjectInfo {
     path: String,
 }
 
+// Note: the crucial difference with Project is that
+// ProjectInfo does *not* contain the ProjectPath struct
+// which is a NewType to represent *existing* project paths
+//
+// This is why this struct is only used in Repository::clean()
 impl ProjectInfo {
     pub(crate) fn new(id: ProjectId, path: &str) -> Self {
         Self {
