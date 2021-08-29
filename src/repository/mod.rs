@@ -87,14 +87,14 @@ pub trait Repository {
     fn ignore_for_path(
         &mut self,
         word: &str,
-        project: &Project,
+        project_id: ProjectId,
         relative_path: &RelativePath,
     ) -> Result<()>;
     // Is the word in the ignore list for the given project and path?
     fn is_ignored_for_path(
         &self,
         word: &str,
-        project: &Project,
+        project_id: ProjectId,
         relative_path: &RelativePath,
     ) -> Result<bool>;
 
@@ -170,7 +170,7 @@ pub trait Repository {
             return Ok(true);
         }
 
-        self.is_ignored_for_path(word, project, relative_path)
+        self.is_ignored_for_path(word, project_id, relative_path)
     }
 }
 
@@ -390,13 +390,15 @@ mod tests {
         repository.new_project(&project).unwrap();
         repository.new_project(&other_project).unwrap();
 
-        repository.ignore_for_path("foo", &project, &foo_py).unwrap();
+        let project_id = repository.get_project_id(&project).unwrap();
+        let other_project_id = repository.get_project_id(&other_project).unwrap();
+        repository.ignore_for_path("foo", project_id, &foo_py).unwrap();
 
-        assert!(repository.is_ignored_for_path("foo", &project, &foo_py).unwrap());
+        assert!(repository.is_ignored_for_path("foo", project_id, &foo_py).unwrap());
         // Same project, different file
-        assert!(!repository.is_ignored_for_path("foo", &project, &foo_rs).unwrap());
+        assert!(!repository.is_ignored_for_path("foo", project_id, &foo_rs).unwrap());
         // Same file, different project
-        assert!(!repository.is_ignored_for_path("foo", &other_project, &foo_py).unwrap());
+        assert!(!repository.is_ignored_for_path("foo", other_project_id, &foo_py).unwrap());
     });
 
     make_tests!(skip_file_name, (repository) => {
@@ -439,13 +441,13 @@ mod tests {
     make_tests!(remove_ignored_for_path, (repository) => {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
         let project = new_project(&temp_dir, "project");
-        repository.new_project(&project).unwrap();
+        let project_id = repository.new_project(&project).unwrap();
         let foo_py = new_relative_path(&project, "foo.py");
-        repository.ignore_for_path("foo", &project, &foo_py).unwrap();
+        repository.ignore_for_path("foo", project_id, &foo_py).unwrap();
 
         repository.remove_ignored_for_path("foo", &project, &foo_py).unwrap();
 
-        assert!(!repository.is_ignored_for_path("foo", &project, &foo_py).unwrap());
+        assert!(!repository.is_ignored_for_path("foo", project_id, &foo_py).unwrap());
     });
 
     make_tests!(remove_ignored_for_project, (repository) => {

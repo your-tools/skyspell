@@ -12,7 +12,7 @@ pub(crate) struct FakeRepository {
     global: HashSet<String>,
     by_extension: HashMap<String, Vec<String>>,
     by_project: HashMap<ProjectId, Vec<String>>,
-    by_project_and_path: HashMap<(String, String), Vec<String>>,
+    by_project_and_path: HashMap<(ProjectId, String), Vec<String>>,
     projects: HashMap<String, ProjectId>,
     skip_file_names: HashSet<String>,
     skipped_paths: HashSet<(String, String)>,
@@ -120,12 +120,12 @@ impl Repository for FakeRepository {
     fn ignore_for_path(
         &mut self,
         word: &str,
-        project: &Project,
+        project_id: ProjectId,
         path: &RelativePath,
     ) -> Result<()> {
         let entry = &mut self
             .by_project_and_path
-            .entry((project.to_string(), path.to_string()))
+            .entry((project_id, path.to_string()))
             .or_insert_with(Vec::new);
         entry.push(word.to_string());
         Ok(())
@@ -134,12 +134,12 @@ impl Repository for FakeRepository {
     fn is_ignored_for_path(
         &self,
         word: &str,
-        project: &Project,
+        project_id: ProjectId,
         path: &RelativePath,
     ) -> Result<bool> {
         if let Some(words) = self
             .by_project_and_path
-            .get(&(project.to_string(), path.to_string()))
+            .get(&(project_id, path.to_string()))
         {
             Ok(words.contains(&word.to_string()))
         } else {
@@ -179,9 +179,10 @@ impl Repository for FakeRepository {
         project: &Project,
         relative_path: &RelativePath,
     ) -> Result<()> {
+        let project_id = self.get_project_id(project)?;
         let entry = self
             .by_project_and_path
-            .get_mut(&(project.to_string(), relative_path.to_string()))
+            .get_mut(&(project_id, relative_path.to_string()))
             .ok_or_else(|| anyhow!("no such key"))?;
         entry.retain(|w| w != word);
         Ok(())

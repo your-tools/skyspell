@@ -179,7 +179,7 @@ q : Quit
 
     fn on_file_ignore(&mut self, error: &str, relative_path: &RelativePath) -> Result<bool> {
         self.repository
-            .ignore_for_path(error, &self.project, relative_path)?;
+            .ignore_for_path(error, self.project_id, relative_path)?;
 
         Self::print_addition(
             error,
@@ -308,10 +308,11 @@ mod tests {
 
         fn is_ignored_for_path(&self, word: &str, relative_name: &str) -> bool {
             let project = self.checker.project();
+            let project_id = self.checker.project_id;
             let relative_path = self.to_relative_path(relative_name);
             self.checker
                 .repository
-                .is_ignored_for_path(word, project, &relative_path)
+                .is_ignored_for_path(word, project_id, &relative_path)
                 .unwrap()
         }
 

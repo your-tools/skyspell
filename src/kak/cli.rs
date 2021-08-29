@@ -156,9 +156,10 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
         let path = &Path::new(path);
         let project = self.get_project()?;
+        let project_id = self.checker.project_id;
         let relative_path = RelativePath::new(&project, path)?;
         self.repository()
-            .ignore_for_path(word, &project, &relative_path)?;
+            .ignore_for_path(word, project_id, &relative_path)?;
         self.recheck();
         self.kakoune_io().print(&format!(
             "echo '\"{}\" added to the ignore list for file: \"{}\"'",
@@ -491,10 +492,11 @@ skyspell-list
         cli.set_selection(&format!("{}: 1.3,1.5 foo", full_path));
 
         cli.add_file().unwrap();
+        let project_id = cli.repository().get_project_id(&project).unwrap();
 
         assert!(cli
             .repository()
-            .is_ignored_for_path("foo", &project, &foo_py)
+            .is_ignored_for_path("foo", project_id, &foo_py)
             .unwrap());
     }
 

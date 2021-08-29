@@ -172,11 +172,10 @@ impl Repository for SQLRepository {
     fn ignore_for_path(
         &mut self,
         word: &str,
-        project: &Project,
+        project_id: ProjectId,
         relative_path: &RelativePath,
     ) -> Result<()> {
         let word = &word.to_lowercase();
-        let project_id = self.get_project_id(project)?;
         diesel::insert_or_ignore_into(ignored_for_path::table)
             .values(NewIgnoredForPath {
                 word,
@@ -191,11 +190,10 @@ impl Repository for SQLRepository {
     fn is_ignored_for_path(
         &self,
         word: &str,
-        project: &Project,
+        project_id: ProjectId,
         relative_path: &RelativePath,
     ) -> Result<bool> {
         let word = &word.to_lowercase();
-        let project_id = self.get_project_id(project)?;
         Ok(ignored_for_path::table
             .filter(ignored_for_path::project_id.eq(project_id))
             .filter(ignored_for_path::word.eq(word))

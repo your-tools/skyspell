@@ -157,9 +157,9 @@ fn add(mut repository: impl Repository, opts: AddOpts) -> Result<()> {
         (None, _, Some(e)) => repository.ignore_for_extension(word, &e),
         (Some(project_path), Some(relative_path), None) => {
             let project = Project::open(&project_path)?;
-            repository.ensure_project(&project)?;
+            let project_id = repository.ensure_project(&project)?;
             let relative_path = RelativePath::new(&project, &relative_path)?;
-            repository.ignore_for_path(word, &project, &relative_path)
+            repository.ignore_for_path(word, project_id, &relative_path)
         }
         (Some(project_path), None, None) => {
             let project = Project::open(&project_path)?;
@@ -433,8 +433,9 @@ mod tests {
         .unwrap();
 
         let repository = open_repository(&temp_dir);
+        let project_id = repository.get_project_id(&project).unwrap();
         assert!(repository
-            .is_ignored_for_path("foo", &project, &rel_path)
+            .is_ignored_for_path("foo", project_id, &rel_path)
             .unwrap());
     }
 
@@ -477,9 +478,9 @@ mod tests {
         let mut app = TestApp::new(&temp_dir);
         let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
         let project = app.open_project(&temp_dir, "project");
-        app.repository.new_project(&project).unwrap();
+        let project_id = app.repository.new_project(&project).unwrap();
         app.repository
-            .ignore_for_path("foo", &project, &rel_path)
+            .ignore_for_path("foo", project_id, &rel_path)
             .unwrap();
 
         app.run(&[
@@ -493,8 +494,9 @@ mod tests {
         .unwrap();
 
         let repository = open_repository(&temp_dir);
+        let project_id = repository.get_project_id(&project).unwrap();
         assert!(!repository
-            .is_ignored_for_path("foo", &project, &rel_path)
+            .is_ignored_for_path("foo", project_id, &rel_path)
             .unwrap());
     }
 
