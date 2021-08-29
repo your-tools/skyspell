@@ -38,7 +38,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChec
     ) -> Result<()> {
         let (buffer, line, column) = context;
         let pos = (*line, *column);
-        let full_path = self.project.path().join(&path);
+        let full_path = self.project.as_ref().join(&path);
         self.errors.push(Error {
             full_path,
             pos,
@@ -208,10 +208,10 @@ pub(crate) mod tests {
         }
 
         pub(crate) fn ensure_path(&self, relative_name: &str) -> RelativePath {
-            let project = self.project_path();
-            let full_path = project.path().join(relative_name);
+            let project_path = self.project_path();
+            let full_path = project_path.as_ref().join(relative_name);
             std::fs::write(&full_path, "").unwrap();
-            RelativePath::new(project, &full_path).unwrap()
+            RelativePath::new(project_path, &full_path).unwrap()
         }
     }
 

@@ -186,10 +186,10 @@ mod tests {
         ProjectPath::open(&project_path).unwrap()
     }
 
-    fn new_relative_path(project: &ProjectPath, name: &'static str) -> RelativePath {
-        let rel_path = project.path().join(name);
+    fn new_relative_path(project_path: &ProjectPath, name: &'static str) -> RelativePath {
+        let rel_path = project_path.as_ref().join(name);
         std::fs::write(&rel_path, "").unwrap();
-        RelativePath::new(project, &rel_path).unwrap()
+        RelativePath::new(project_path, &rel_path).unwrap()
     }
 
     #[test]

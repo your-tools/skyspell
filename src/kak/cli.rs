@@ -403,8 +403,8 @@ mod tests {
         }
 
         fn write_file(&self, path: &str, contents: &str) {
-            let project = self.checker.project_path();
-            let full_path = project.path().join(path);
+            let project_path = self.checker.project_path();
+            let full_path = project_path.as_ref().join(path);
             std::fs::write(&full_path, contents).unwrap();
         }
 
@@ -457,7 +457,7 @@ skyspell-list
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let cli = new_cli(&temp_dir);
         let actual = cli.checker.project_path();
-        assert_eq!(actual.path(), temp_dir.path());
+        assert_eq!(actual.as_ref(), temp_dir.path());
     }
 
     #[test]

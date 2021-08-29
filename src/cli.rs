@@ -653,7 +653,7 @@ mod tests {
         app.repository.new_project(&project2).unwrap();
         let before = app.repository.projects().unwrap();
 
-        std::fs::remove_dir_all(&project2.path()).unwrap();
+        std::fs::remove_dir_all(&project2.as_ref()).unwrap();
 
         app.run(&["clean"]).unwrap();
 
