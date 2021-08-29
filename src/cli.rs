@@ -164,7 +164,7 @@ fn add(mut repository: impl Repository, opts: AddOpts) -> Result<()> {
         (Some(project_path), None, None) => {
             let project = Project::open(&project_path)?;
             repository.ensure_project(&project)?;
-            let project_id = repository.get_project_info(&project)?.id();
+            let project_id = repository.get_project_id(&project)?;
             repository.ignore_for_project(word, project_id)
         }
         (None, Some(_), None) => bail!("Cannot use --relative-path without --project-path"),
@@ -397,7 +397,7 @@ mod tests {
             .unwrap();
 
         let repository = open_repository(&temp_dir);
-        let project_id = repository.get_project_info(&project).unwrap().id();
+        let project_id = repository.get_project_id(&project).unwrap();
         assert!(repository
             .is_ignored_for_project("foo", project_id)
             .unwrap());
@@ -456,7 +456,7 @@ mod tests {
         let mut app = TestApp::new(&temp_dir);
         let project = app.open_project(&temp_dir, "project");
         app.repository.new_project(&project).unwrap();
-        let project_id = app.repository.get_project_info(&project).unwrap().id();
+        let project_id = app.repository.get_project_id(&project).unwrap();
         app.repository
             .ignore_for_project("foo", project_id)
             .unwrap();
@@ -465,7 +465,7 @@ mod tests {
             .unwrap();
 
         let repository = open_repository(&temp_dir);
-        let project_id = repository.get_project_info(&project).unwrap().id();
+        let project_id = repository.get_project_id(&project).unwrap();
         assert!(!repository
             .is_ignored_for_project("foo", project_id)
             .unwrap());

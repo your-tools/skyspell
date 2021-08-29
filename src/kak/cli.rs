@@ -521,7 +521,7 @@ skyspell-list
         cli.set_selection(&format!("{}: 1.3,1.5 foo", full_path));
 
         cli.add_project().unwrap();
-        let project_id = cli.repository().get_project_info(&project).unwrap().id();
+        let project_id = cli.repository().get_project_id(&project).unwrap();
 
         assert!(cli
             .repository()

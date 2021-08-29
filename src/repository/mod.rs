@@ -45,13 +45,13 @@ pub trait Repository {
         if !self.project_exists(project)? {
             self.new_project(project)?;
         }
-        Ok(self.get_project_info(project)?.id())
+        self.get_project_id(project)
     }
 
     // Remove the given project from the list
     fn remove_project(&mut self, path: &Path) -> Result<()>;
     // Get Info about an existing project
-    fn get_project_info(&self, project: &Project) -> Result<ProjectInfo>;
+    fn get_project_id(&self, project: &Project) -> Result<ProjectId>;
 
     fn projects(&self) -> Result<Vec<ProjectInfo>>;
 
@@ -157,7 +157,8 @@ pub trait Repository {
         if self.is_ignored(word)? {
             return Ok(true);
         }
-        let project_id = self.get_project_info(project)?.id();
+        // TODO: just sue project_id argument
+        let project_id = self.get_project_id(project)?;
 
         if let Some(e) = relative_path.extension() {
             if self.is_ignored_for_extension(word, &e)? {
@@ -236,7 +237,7 @@ mod tests {
         repository.new_project(&project_1).unwrap();
         repository.new_project(&project_2).unwrap();
 
-        let project_1_id = repository.get_project_info(&project_1).unwrap().id();
+        let project_1_id = repository.get_project_id(&project_1).unwrap();
         repository.ignore_for_project("foo", project_1_id).unwrap();
 
         assert!(repository
@@ -372,8 +373,8 @@ mod tests {
         repository.new_project(&project).unwrap();
         repository.new_project(&other_project).unwrap();
 
-        let project_id = repository.get_project_info(&project).unwrap().id();
-        let other_project_id = repository.get_project_info(&other_project).unwrap().id();
+        let project_id = repository.get_project_id(&project).unwrap();
+        let other_project_id = repository.get_project_id(&other_project).unwrap();
         repository.ignore_for_project("foo", project_id).unwrap();
 
         assert!(repository.is_ignored_for_project("foo", project_id).unwrap());
@@ -451,7 +452,7 @@ mod tests {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
         let project = new_project(&temp_dir, "project");
         repository.new_project(&project).unwrap();
-        let project_id = repository.get_project_info(&project).unwrap().id();
+        let project_id = repository.get_project_id(&project).unwrap();
         repository.ignore_for_project("foo", project_id).unwrap();
 
         repository.remove_ignored_for_project("foo", &project).unwrap();
