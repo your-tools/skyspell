@@ -150,8 +150,8 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
         let path = &Path::new(path);
         let project = self.checker.project();
-        let project_id = self.checker.project_id;
-        let relative_path = RelativePath::new(&project, path)?;
+        let project_id = self.checker.project_id();
+        let relative_path = RelativePath::new(project, path)?;
         self.repository()
             .ignore_for_path(word, project_id, &relative_path)?;
         self.recheck();
@@ -173,7 +173,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
 
     fn add_project(&mut self) -> Result<()> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
-        let project_id = self.checker.project_id;
+        let project_id = self.checker.project_id();
         self.repository().ignore_for_project(word, project_id)?;
         self.recheck();
         self.kakoune_io().print(&format!(
@@ -289,9 +289,8 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         // We know it's a full path thanks to handle_error in KakouneChecker
         let full_path = Path::new(path);
         let project = self.checker.project();
-        let project_id = self.checker.project_id;
-
-        let relative_path = RelativePath::new(&project, full_path)?;
+        let project_id = self.checker.project_id();
+        let relative_path = RelativePath::new(project, full_path)?;
 
         self.repository().skip_path(project_id, &relative_path)?;
 
