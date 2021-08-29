@@ -132,13 +132,6 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         &mut self.checker.dictionary
     }
 
-    // TODO: remove this, the checker already contains a project
-    fn get_project(&self) -> Result<Project> {
-        let as_str = self.kakoune_io().get_option(SKYSPELL_PROJECT_OPT)?;
-        let path = PathBuf::from(as_str);
-        Project::open(&path)
-    }
-
     fn add_extension(&mut self) -> Result<()> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
         let (_, ext) = path
@@ -156,7 +149,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
     fn add_file(&mut self) -> Result<()> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
         let path = &Path::new(path);
-        let project = self.get_project()?;
+        let project = self.checker.project();
         let project_id = self.checker.project_id;
         let relative_path = RelativePath::new(&project, path)?;
         self.repository()
@@ -295,7 +288,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         let LineSelection { path, .. } = &self.parse_line_selection()?;
         // We know it's a full path thanks to handle_error in KakouneChecker
         let full_path = Path::new(path);
-        let project = self.get_project()?;
+        let project = self.checker.project();
         let project_id = self.checker.project_id;
 
         let relative_path = RelativePath::new(&project, full_path)?;
@@ -411,7 +404,7 @@ mod tests {
         }
 
         fn write_file(&self, path: &str, contents: &str) {
-            let project = self.get_project().unwrap();
+            let project = self.checker.project();
             let full_path = project.path().join(path);
             std::fs::write(&full_path, contents).unwrap();
         }
@@ -464,7 +457,7 @@ skyspell-list
     fn test_get_project() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let cli = new_cli(&temp_dir);
-        let actual = cli.get_project().unwrap();
+        let actual = cli.checker.project();
         assert_eq!(actual.path(), temp_dir.path());
     }
 
@@ -488,13 +481,12 @@ skyspell-list
     fn test_add_file() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut cli = new_cli(&temp_dir);
-        let project = cli.get_project().unwrap();
         let foo_py = cli.ensure_path("foo.py");
         let full_path = format!("{}/foo.py", temp_dir.path().display());
         cli.set_selection(&format!("{}: 1.3,1.5 foo", full_path));
 
         cli.add_file().unwrap();
-        let project_id = cli.repository().get_project_id(&project).unwrap();
+        let project_id = cli.checker.project_id();
 
         assert!(cli
             .repository()
@@ -519,13 +511,12 @@ skyspell-list
     fn test_add_project() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut cli = new_cli(&temp_dir);
-        let project = cli.get_project().unwrap();
+        let project_id = cli.checker.project_id();
         cli.ensure_path("foo.py");
         let full_path = format!("{}/foo.py", temp_dir.path().display());
         cli.set_selection(&format!("{}: 1.3,1.5 foo", full_path));
 
         cli.add_project().unwrap();
-        let project_id = cli.repository().get_project_id(&project).unwrap();
 
         assert!(cli
             .repository()
@@ -559,8 +550,8 @@ select 1.3,1.5
     #[test]
     fn test_check_no_errors() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let project_path = temp_dir.path().to_string_lossy();
         let mut cli = new_cli(&temp_dir);
-        let project = cli.get_project().unwrap();
         cli.ensure_path("foo.py");
         let full_path = format!("{}/foo.py", temp_dir.path().display());
 
@@ -580,10 +571,10 @@ edit -scratch *spelling*
 execute-keys \\% <ret> d i %{{}} <esc> gg
 execute-keys ga
 set global skyspell_error_count 0
-echo -markup {project}: {{green}}No spelling errors
+echo -markup {project_path}: {{green}}No spelling errors
 ",
                 full_path = full_path,
-                project = project
+                project_path = project_path
             )
         );
     }
@@ -591,8 +582,8 @@ echo -markup {project}: {{green}}No spelling errors
     #[test]
     fn test_check_errors_in_two_buffers() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let project_path = temp_dir.path().to_string_lossy();
         let mut cli = new_cli(&temp_dir);
-        let project = cli.get_project().unwrap();
         cli.ensure_path("foo.md");
         cli.ensure_path("bar.md");
         cli.write_file("foo.md", "This is foo");
@@ -621,9 +612,9 @@ execute-keys ga
 set-option buffer={foo_path} spell_errors 42 1.9+3|Error \n\
 set-option buffer={bar_path} spell_errors 42 1.9+3|Error 1.29+3|Error \n\
 set global skyspell_error_count 3
-echo -markup {project}: {{red}}3 spelling errors
+echo -markup {project_path}: {{red}}3 spelling errors
 ",
-                project = project,
+                project_path = project_path,
                 foo_path = foo_path,
                 bar_path = bar_path,
             );
@@ -662,13 +653,12 @@ echo -markup {project}: {{red}}3 spelling errors
     fn test_skip_file() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let mut cli = new_cli(&temp_dir);
-        let project = cli.get_project().unwrap();
+        let project_id = cli.checker.project_id();
         let foo_py = cli.ensure_path("foo.py");
         let foo_path = format!("{}/foo.py", temp_dir.path().display());
         cli.set_selection(&format!("{}: 1.3,1.5 foo", foo_path));
 
         cli.skip_file().unwrap();
-        let project_id = cli.repository().get_project_id(&project).unwrap();
 
         assert!(cli
             .repository()

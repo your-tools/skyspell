@@ -49,7 +49,7 @@ pub trait Repository {
 
     // Remove the given project from the list
     fn remove_project(&mut self, project_id: ProjectId) -> Result<()>;
-    // Get Info about an existing project
+    // Get project id
     fn get_project_id(&self, project: &Project) -> Result<ProjectId>;
     fn projects(&self) -> Result<Vec<ProjectInfo>>;
 
