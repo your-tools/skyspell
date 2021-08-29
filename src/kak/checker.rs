@@ -62,7 +62,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChec
         &self.dictionary
     }
 
-    fn project(&self) -> &ProjectPath {
+    fn project_path(&self) -> &ProjectPath {
         &self.project
     }
 
@@ -208,7 +208,7 @@ pub(crate) mod tests {
         }
 
         pub(crate) fn ensure_path(&self, relative_name: &str) -> RelativePath {
-            let project = self.project();
+            let project = self.project_path();
             let full_path = project.path().join(relative_name);
             std::fs::write(&full_path, "").unwrap();
             RelativePath::new(project, &full_path).unwrap()

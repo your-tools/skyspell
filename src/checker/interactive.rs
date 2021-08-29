@@ -10,7 +10,7 @@ use crate::Repository;
 use crate::{ProjectId, ProjectPath, RelativePath};
 
 pub(crate) struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository> {
-    project: ProjectPath,
+    project_path: ProjectPath,
     project_id: ProjectId,
     interactor: I,
     dictionary: D,
@@ -29,8 +29,8 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
         Ok(())
     }
 
-    fn project(&self) -> &ProjectPath {
-        &self.project
+    fn project_path(&self) -> &ProjectPath {
+        &self.project_path
     }
 
     fn project_id(&self) -> ProjectId {
@@ -65,14 +65,14 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
 
 impl<I: Interactor, D: Dictionary, R: Repository> InteractiveChecker<I, D, R> {
     pub(crate) fn new(
-        project: ProjectPath,
+        project_path: ProjectPath,
         interactor: I,
         dictionary: D,
         mut repository: R,
     ) -> Result<Self> {
-        let project_id = repository.ensure_project(&project)?;
+        let project_id = repository.ensure_project(&project_path)?;
         Ok(Self {
-            project,
+            project_path,
             project_id,
             dictionary,
             interactor,
@@ -175,7 +175,7 @@ q : Quit
         self.repository.ignore_for_project(error, self.project_id)?;
         Self::print_addition(
             error,
-            &format!("the ignore list for project '{}'", &self.project),
+            &format!("the ignore list for project '{}'", &self.project_path),
         );
         Ok(true)
     }
@@ -216,7 +216,7 @@ q : Quit
             "\n{}Added '{}' to the list of files to skip for project: '{}'\n",
             "=> ".blue(),
             relative_path,
-            &self.project.as_str().bold(),
+            &self.project_path.as_str().bold(),
         );
         Ok(true)
     }
@@ -258,13 +258,13 @@ mod tests {
         }
 
         fn to_relative_path(&self, path: &str) -> RelativePath {
-            let project = self.checker.project();
+            let project = self.checker.project_path();
             let path = project.path().join(path);
             RelativePath::new(project, &path).unwrap()
         }
 
         fn handle_token(&mut self, token: &str, relative_name: &str) {
-            let project = self.checker.project();
+            let project = self.checker.project_path();
             let full_path = project.path().join(relative_name);
             std::fs::write(&full_path, "").unwrap();
             let relative_path = self.to_relative_path(relative_name);

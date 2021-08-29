@@ -27,7 +27,7 @@ pub(crate) trait Checker {
     fn repository(&self) -> &dyn Repository;
     fn dictionary(&self) -> &dyn Dictionary;
 
-    fn project(&self) -> &ProjectPath;
+    fn project_path(&self) -> &ProjectPath;
     fn project_id(&self) -> ProjectId;
 
     fn should_skip(&self, path: &RelativePath) -> Result<bool> {
@@ -37,7 +37,7 @@ pub(crate) trait Checker {
     }
 
     fn to_relative_path(&self, path: &Path) -> Result<RelativePath> {
-        let project = self.project();
+        let project = self.project_path();
         RelativePath::new(project, path)
     }
 

@@ -149,7 +149,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
     fn add_file(&mut self) -> Result<()> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
         let path = &Path::new(path);
-        let project = self.checker.project();
+        let project = self.checker.project_path();
         let project_id = self.checker.project_id();
         let relative_path = RelativePath::new(project, path)?;
         self.repository()
@@ -288,7 +288,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         let LineSelection { path, .. } = &self.parse_line_selection()?;
         // We know it's a full path thanks to handle_error in KakouneChecker
         let full_path = Path::new(path);
-        let project = self.checker.project();
+        let project = self.checker.project_path();
         let project_id = self.checker.project_id();
         let relative_path = RelativePath::new(project, full_path)?;
 
@@ -403,7 +403,7 @@ mod tests {
         }
 
         fn write_file(&self, path: &str, contents: &str) {
-            let project = self.checker.project();
+            let project = self.checker.project_path();
             let full_path = project.path().join(path);
             std::fs::write(&full_path, contents).unwrap();
         }
@@ -456,7 +456,7 @@ skyspell-list
     fn test_get_project() {
         let temp_dir = TempDir::new("test-skyspell").unwrap();
         let cli = new_cli(&temp_dir);
-        let actual = cli.checker.project();
+        let actual = cli.checker.project_path();
         assert_eq!(actual.path(), temp_dir.path());
     }
 

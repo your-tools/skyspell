@@ -7,7 +7,7 @@ use crate::Repository;
 use crate::{ProjectId, ProjectPath, RelativePath};
 
 pub(crate) struct NonInteractiveChecker<D: Dictionary, R: Repository> {
-    project: ProjectPath,
+    project_path: ProjectPath,
     project_id: ProjectId,
     dictionary: D,
     repository: R,
@@ -15,10 +15,10 @@ pub(crate) struct NonInteractiveChecker<D: Dictionary, R: Repository> {
 }
 
 impl<D: Dictionary, R: Repository> NonInteractiveChecker<D, R> {
-    pub(crate) fn new(project: ProjectPath, dictionary: D, mut repository: R) -> Result<Self> {
-        let project_id = repository.ensure_project(&project)?;
+    pub(crate) fn new(project_path: ProjectPath, dictionary: D, mut repository: R) -> Result<Self> {
+        let project_id = repository.ensure_project(&project_path)?;
         Ok(Self {
-            project,
+            project_path,
             project_id,
             dictionary,
             repository,
@@ -55,8 +55,8 @@ impl<D: Dictionary, R: Repository> Checker for NonInteractiveChecker<D, R> {
         Ok(())
     }
 
-    fn project(&self) -> &ProjectPath {
-        &self.project
+    fn project_path(&self) -> &ProjectPath {
+        &self.project_path
     }
 
     fn project_id(&self) -> ProjectId {
