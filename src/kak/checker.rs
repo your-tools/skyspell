@@ -75,10 +75,10 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
         mut repository: R,
         kakoune_io: KakouneIO<S>,
     ) -> Result<Self> {
-        let project_info = repository.ensure_project(&project)?;
+        let project_id = repository.ensure_project(&project)?;
         Ok(Self {
             project,
-            project_id: project_info.id(),
+            project_id,
             dictionary,
             kakoune_io,
             repository,
