@@ -223,8 +223,7 @@ impl Repository for SQLRepository {
             .is_some())
     }
 
-    fn skip_path(&mut self, project: &Project, relative_path: &RelativePath) -> Result<()> {
-        let project_id = self.get_project_id(project)?;
+    fn skip_path(&mut self, project_id: ProjectId, relative_path: &RelativePath) -> Result<()> {
         diesel::insert_or_ignore_into(skipped_paths::table)
             .values(NewSkippedPath {
                 path: &relative_path.as_str(),
@@ -235,8 +234,7 @@ impl Repository for SQLRepository {
         Ok(())
     }
 
-    fn is_skipped_path(&self, project: &Project, relative_path: &RelativePath) -> Result<bool> {
-        let project_id = self.get_project_id(project)?;
+    fn is_skipped_path(&self, project_id: ProjectId, relative_path: &RelativePath) -> Result<bool> {
         Ok(skipped_paths::table
             .filter(skipped_paths::project_id.eq(project_id))
             .filter(skipped_paths::path.eq(relative_path.as_str()))
@@ -300,8 +298,7 @@ impl Repository for SQLRepository {
         Ok(())
     }
 
-    fn unskip_path(&mut self, project: &Project, relative_path: &RelativePath) -> Result<()> {
-        let project_id = self.get_project_id(project)?;
+    fn unskip_path(&mut self, project_id: ProjectId, relative_path: &RelativePath) -> Result<()> {
         diesel::delete(skipped_paths::table)
             .filter(skipped_paths::path.eq(relative_path.as_str()))
             .filter(skipped_paths::project_id.eq(project_id))

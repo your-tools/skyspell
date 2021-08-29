@@ -208,7 +208,7 @@ q : Quit
     }
 
     fn on_project_file_skip(&mut self, relative_path: &RelativePath) -> Result<bool> {
-        self.repository.skip_path(&self.project, relative_path)?;
+        self.repository.skip_path(self.project_id, relative_path)?;
         println!(
             "\n{}Added '{}' to the list of files to skip for project: '{}'\n",
             "=> ".blue(),
@@ -283,11 +283,12 @@ mod tests {
         }
 
         fn is_skipped_path(&self, relative_name: &str) -> bool {
-            let project = self.checker.project();
+            let projct = self.checker.project();
+            let project_id = self.checker.project_id;
             let relative_path = self.to_relative_path(relative_name);
             self.checker
                 .repository
-                .is_skipped_path(project, &relative_path)
+                .is_skipped_path(project_id, &relative_path)
                 .unwrap()
         }
 

@@ -113,23 +113,26 @@ pub trait Repository {
     fn remove_ignored_for_project(&mut self, word: &str, project: ProjectId) -> Result<()>;
 
     // Always skip the given file for the given project
-    fn skip_path(&mut self, project: &Project, relative_path: &RelativePath) -> Result<()>;
+    fn skip_path(&mut self, project_id: ProjectId, relative_path: &RelativePath) -> Result<()>;
     // Is the given path in the given project to be skipped ?
-    fn is_skipped_path(&self, project: &Project, relative_path: &RelativePath) -> Result<bool>;
+    fn is_skipped_path(&self, project: ProjectId, relative_path: &RelativePath) -> Result<bool>;
     // Remove file name from the skip list
     fn unskip_file_name(&mut self, file_name: &str) -> Result<()>;
     // Remove relative file path from the skip list
-    fn unskip_path(&mut self, project: &Project, relative_path: &RelativePath) -> Result<()>;
+    fn unskip_path(&mut self, project_id: ProjectId, relative_path: &RelativePath) -> Result<()>;
 
     // Should this file be skipped ?
     fn should_skip(&self, project: &Project, relative_path: &RelativePath) -> Result<bool> {
+        // TODO: just sue project_id argument
+        let project_id = self.get_project_id(project)?;
+
         if let Some(f) = relative_path.file_name() {
             if self.is_skipped_file_name(&f)? {
                 return Ok(true);
             }
         }
 
-        if self.is_skipped_path(project, relative_path)? {
+        if self.is_skipped_path(project_id, relative_path)? {
             return Ok(true);
         }
 
@@ -256,6 +259,7 @@ mod tests {
         let poetry_lock = new_relative_path(&project, "poetry.lock");
 
         let mut repository = FakeRepository::new();
+        repository.new_project(&project).unwrap();
         repository.skip_file_name("Cargo.lock").unwrap();
 
         assert!(repository.should_skip(&project, &cargo_lock).unwrap());
@@ -271,10 +275,10 @@ mod tests {
         let project_2 = new_project(&temp_dir, "project2");
 
         let mut repository = FakeRepository::new();
-        repository.new_project(&project_1).unwrap();
-        repository.new_project(&project_2).unwrap();
+        let project_id_1 = repository.new_project(&project_1).unwrap();
+        let project_id_2 = repository.new_project(&project_2).unwrap();
 
-        repository.skip_path(&project_1, &foo_txt).unwrap();
+        repository.skip_path(project_id_1, &foo_txt).unwrap();
 
         assert!(repository.should_skip(&project_1, &foo_txt).unwrap());
 
@@ -413,12 +417,12 @@ mod tests {
         let project = new_project(&temp_dir, "project");
         let test_txt = new_relative_path(&project, "test.txt");
 
-        repository.new_project(&project).unwrap();
-        assert!(!repository.is_skipped_path(&project, &test_txt).unwrap());
+        let project_id = repository.new_project(&project).unwrap();
+        assert!(!repository.is_skipped_path(project_id, &test_txt).unwrap());
 
-        repository.skip_path(&project, &test_txt).unwrap();
+        repository.skip_path(project_id, &test_txt).unwrap();
 
-        assert!(repository.is_skipped_path(&project, &test_txt).unwrap());
+        assert!(repository.is_skipped_path(project_id, &test_txt).unwrap());
     });
 
     make_tests!(remove_ignored, (repository) => {
@@ -473,12 +477,12 @@ mod tests {
     make_tests!(unskip_path, (repository) => {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
         let project = new_project(&temp_dir, "project");
-        repository.new_project(&project).unwrap();
+        let project_id = repository.new_project(&project).unwrap();
         let foo_py = new_relative_path(&project, "foo.py");
-        repository.skip_path(&project, &foo_py).unwrap();
+        repository.skip_path(project_id, &foo_py).unwrap();
 
-        repository.unskip_path(&project, &foo_py).unwrap();
+        repository.unskip_path(project_id, &foo_py).unwrap();
 
-        assert!(!repository.is_skipped_path(&project, &foo_py).unwrap());
+        assert!(!repository.is_skipped_path(project_id, &foo_py).unwrap());
     });
 }

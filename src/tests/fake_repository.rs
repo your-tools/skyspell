@@ -15,7 +15,7 @@ pub(crate) struct FakeRepository {
     by_project_and_path: HashMap<(ProjectId, String), Vec<String>>,
     projects: HashMap<String, ProjectId>,
     skip_file_names: HashSet<String>,
-    skipped_paths: HashSet<(String, String)>,
+    skipped_paths: HashSet<(ProjectId, String)>,
 }
 
 impl FakeRepository {
@@ -147,16 +147,13 @@ impl Repository for FakeRepository {
         }
     }
 
-    fn skip_path(&mut self, project: &Project, path: &RelativePath) -> Result<()> {
-        self.skipped_paths
-            .insert((project.to_string(), path.to_string()));
+    fn skip_path(&mut self, project_id: ProjectId, path: &RelativePath) -> Result<()> {
+        self.skipped_paths.insert((project_id, path.to_string()));
         Ok(())
     }
 
-    fn is_skipped_path(&self, project: &Project, path: &RelativePath) -> Result<bool> {
-        Ok(self
-            .skipped_paths
-            .contains(&(project.to_string(), path.to_string())))
+    fn is_skipped_path(&self, project_id: ProjectId, path: &RelativePath) -> Result<bool> {
+        Ok(self.skipped_paths.contains(&(project_id, path.to_string())))
     }
 
     fn remove_ignored(&mut self, word: &str) -> Result<()> {
@@ -201,9 +198,9 @@ impl Repository for FakeRepository {
         Ok(())
     }
 
-    fn unskip_path(&mut self, project: &Project, relative_path: &RelativePath) -> Result<()> {
+    fn unskip_path(&mut self, project_id: ProjectId, relative_path: &RelativePath) -> Result<()> {
         self.skipped_paths
-            .retain(|x| x != &(project.to_string(), relative_path.to_string()));
+            .retain(|x| x != &(project_id, relative_path.to_string()));
         Ok(())
     }
 }

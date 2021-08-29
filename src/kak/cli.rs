@@ -132,6 +132,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         &mut self.checker.dictionary
     }
 
+    // TODO: remove this, the checker already contains a project
     fn get_project(&self) -> Result<Project> {
         let as_str = self.kakoune_io().get_option(SKYSPELL_PROJECT_OPT)?;
         let path = PathBuf::from(as_str);
@@ -295,10 +296,11 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         // We know it's a full path thanks to handle_error in KakouneChecker
         let full_path = Path::new(path);
         let project = self.get_project()?;
+        let project_id = self.checker.project_id;
 
         let relative_path = RelativePath::new(&project, full_path)?;
 
-        self.repository().skip_path(&project, &relative_path)?;
+        self.repository().skip_path(project_id, &relative_path)?;
 
         self.recheck();
         println!("echo 'will now skip \"{}\"'", relative_path);
@@ -666,8 +668,12 @@ echo -markup {project}: {{red}}3 spelling errors
         cli.set_selection(&format!("{}: 1.3,1.5 foo", foo_path));
 
         cli.skip_file().unwrap();
+        let project_id = cli.repository().get_project_id(&project).unwrap();
 
-        assert!(cli.repository().is_skipped_path(&project, &foo_py).unwrap());
+        assert!(cli
+            .repository()
+            .is_skipped_path(project_id, &foo_py)
+            .unwrap());
     }
 
     #[test]

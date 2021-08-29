@@ -268,9 +268,9 @@ fn skip(mut repository: impl Repository, opts: SkipOpts) -> Result<()> {
     match (opts.project_path, opts.relative_path, opts.file_name) {
         (Some(project_path), Some(relative_path), None) => {
             let project = Project::open(&project_path)?;
-            repository.ensure_project(&project)?;
+            let project_id = repository.ensure_project(&project)?;
             let relative_path = RelativePath::new(&project, &relative_path)?;
-            repository.skip_path(&project, &relative_path)
+            repository.skip_path(project_id, &relative_path)
         }
         (_, None, Some(file_name)) => repository.skip_file_name(&file_name),
         (_, _, _) => {
@@ -283,8 +283,9 @@ fn unskip(mut repository: impl Repository, opts: UnskipOpts) -> Result<()> {
     match (opts.project_path, opts.relative_path, opts.file_name) {
         (Some(project_path), Some(relative_path), None) => {
             let project = Project::open(&project_path)?;
+            let project_id = repository.get_project_id(&project)?;
             let relative_path = RelativePath::new(&project, &relative_path)?;
-            repository.unskip_path(&project, &relative_path)
+            repository.unskip_path(project_id, &relative_path)
         }
         (_, None, Some(file_name)) => repository.unskip_file_name(&file_name),
         (_, _, _) => {
@@ -583,7 +584,8 @@ mod tests {
         .unwrap();
 
         let repository = open_repository(&temp_dir);
-        assert!(repository.is_skipped_path(&project, &rel_path).unwrap());
+        let project_id = repository.get_project_id(&project).unwrap();
+        assert!(repository.is_skipped_path(project_id, &rel_path).unwrap());
     }
 
     #[test]
@@ -603,8 +605,8 @@ mod tests {
         let mut app = TestApp::new(&temp_dir);
         let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
         let project = app.open_project(&temp_dir, "project");
-        app.repository.new_project(&project).unwrap();
-        app.repository.skip_path(&project, &rel_path).unwrap();
+        let project_id = app.repository.new_project(&project).unwrap();
+        app.repository.skip_path(project_id, &rel_path).unwrap();
 
         app.run(&[
             "unskip",
@@ -616,7 +618,7 @@ mod tests {
         .unwrap();
 
         let repository = open_repository(&temp_dir);
-        assert!(!repository.is_skipped_path(&project, &rel_path).unwrap());
+        assert!(!repository.is_skipped_path(project_id, &rel_path).unwrap());
     }
 
     #[test]
