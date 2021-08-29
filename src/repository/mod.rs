@@ -221,6 +221,7 @@ mod tests {
         let foo_rs = new_relative_path(&project, "foo.rs");
 
         let mut repository = FakeRepository::new();
+        repository.new_project(&project).unwrap();
         repository.ignore_for_extension("foo", "py").unwrap();
 
         assert!(repository.should_ignore("foo", &project, &foo_py).unwrap());
