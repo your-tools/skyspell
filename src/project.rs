@@ -5,7 +5,26 @@ use std::path::{Path, PathBuf};
 
 pub type ProjectId = i32;
 
-#[derive(Debug)]
+pub struct Project {
+    path: ProjectPath,
+    id: ProjectId,
+}
+
+impl Project {
+    pub(crate) fn new(id: ProjectId, path: ProjectPath) -> Self {
+        Self { id, path }
+    }
+
+    pub(crate) fn path(&self) -> &ProjectPath {
+        &self.path
+    }
+
+    pub(crate) fn id(&self) -> ProjectId {
+        self.id
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct ProjectPath(PathBuf);
 impl ProjectPath {
     pub(crate) fn new(project_path: &Path) -> Result<Self> {

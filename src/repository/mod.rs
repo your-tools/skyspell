@@ -2,7 +2,7 @@ use std::path::Path;
 
 use anyhow::Result;
 
-use crate::{ProjectId, ProjectPath, RelativePath};
+use crate::{Project, ProjectId, ProjectPath, RelativePath};
 
 pub struct ProjectInfo {
     id: ProjectId,
@@ -38,11 +38,12 @@ pub trait Repository {
     // Check if a project exists
     fn project_exists(&self, project: &ProjectPath) -> Result<bool>;
     // Create a project if it does not exist yet
-    fn ensure_project(&mut self, project: &ProjectPath) -> Result<ProjectId> {
-        if !self.project_exists(project)? {
-            self.new_project(project)?;
+    fn ensure_project(&mut self, project_path: &ProjectPath) -> Result<Project> {
+        if !self.project_exists(project_path)? {
+            self.new_project(project_path)?;
         }
-        self.get_project_id(project)
+        let id = self.get_project_id(project_path)?;
+        Ok(Project::new(project_path.clone(), id))
     }
 
     // Remove the given project from the list
