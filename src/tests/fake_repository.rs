@@ -41,7 +41,7 @@ impl Repository for FakeRepository {
         Ok(ProjectInfo::new(id, &project.to_string()))
     }
 
-    fn new_project(&mut self, project: &Project) -> Result<ProjectInfo> {
+    fn new_project(&mut self, project: &Project) -> Result<ProjectId> {
         if self.project_exists(project)? {
             bail!("Project in '{}' already exists", project);
         }
@@ -49,7 +49,7 @@ impl Repository for FakeRepository {
         let new_id = *max_id + 1;
 
         self.projects.insert(project.to_string(), new_id);
-        Ok(ProjectInfo::new(new_id, &project.to_string()))
+        Ok(new_id)
     }
 
     fn projects(&self) -> Result<Vec<ProjectInfo>> {

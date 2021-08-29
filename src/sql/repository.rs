@@ -58,7 +58,7 @@ impl SQLRepository {
 }
 
 impl Repository for SQLRepository {
-    fn new_project(&mut self, project: &Project) -> Result<ProjectInfo> {
+    fn new_project(&mut self, project: &Project) -> Result<ProjectId> {
         let new_project = NewProject {
             path: &project.as_str(),
         };
@@ -66,8 +66,7 @@ impl Repository for SQLRepository {
             .values(new_project)
             .execute(&self.connection)
             .with_context(|| format!("Could not insert project '{}'", project.as_str()))?;
-        let id = self.get_project_id(project)?;
-        Ok(ProjectInfo::new(id, &project.to_string()))
+        self.get_project_id(project)
     }
 
     fn get_project_info(&self, project: &Project) -> Result<ProjectInfo> {
