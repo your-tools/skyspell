@@ -1,7 +1,6 @@
 use anyhow::{anyhow, bail, Result};
 
 use std::collections::{HashMap, HashSet};
-use std::path::Path;
 
 use crate::repository::{ProjectId, ProjectInfo};
 use crate::Repository;
@@ -56,8 +55,8 @@ impl Repository for FakeRepository {
             .collect())
     }
 
-    fn remove_project(&mut self, path: &std::path::Path) -> Result<()> {
-        self.projects.retain(|p, _| Path::new(p) != path);
+    fn remove_project(&mut self, project_id: ProjectId) -> Result<()> {
+        self.projects.retain(|_, i| *i != project_id);
         Ok(())
     }
 

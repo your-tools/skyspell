@@ -26,7 +26,6 @@ impl ProjectInfo {
         &self.path
     }
 }
-
 pub trait Repository {
     // Add the list of words to the global ignore list
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()>;
@@ -49,18 +48,18 @@ pub trait Repository {
     }
 
     // Remove the given project from the list
-    fn remove_project(&mut self, path: &Path) -> Result<()>;
+    fn remove_project(&mut self, project_id: ProjectId) -> Result<()>;
     // Get Info about an existing project
     fn get_project_id(&self, project: &Project) -> Result<ProjectId>;
-    // Get Info about known projects
     fn projects(&self) -> Result<Vec<ProjectInfo>>;
 
     fn clean(&mut self) -> Result<()> {
         for project in self.projects()? {
             let path = project.path();
             let path = Path::new(&path);
+            let id = project.id();
             if !path.exists() {
-                self.remove_project(path)?;
+                self.remove_project(id)?;
                 println!("Removed non longer existing project: {}", path.display());
             }
         }
@@ -110,7 +109,7 @@ pub trait Repository {
         relative_path: &RelativePath,
     ) -> Result<()>;
     // Remove word from the ignore list for the given project
-    fn remove_ignored_for_project(&mut self, word: &str, project: ProjectId) -> Result<()>;
+    fn remove_ignored_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()>;
 
     // Always skip the given file for the given project
     fn skip_path(&mut self, project_id: ProjectId, relative_path: &RelativePath) -> Result<()>;
@@ -361,10 +360,10 @@ mod tests {
         let project2 = new_project(&temp_dir, "project2");
         let project3 = new_project(&temp_dir, "project3");
         repository.new_project(&project1).unwrap();
-        repository.new_project(&project2).unwrap();
+        let project2_id = repository.new_project(&project2).unwrap();
         repository.new_project(&project3).unwrap();
 
-        repository.remove_project(project2.path()).unwrap();
+        repository.remove_project(project2_id).unwrap();
 
         assert!(!repository.project_exists(&project2).unwrap());
     });

@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use anyhow::{anyhow, Context, Result};
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
@@ -90,11 +88,11 @@ impl Repository for SQLRepository {
             .collect())
     }
 
-    fn remove_project(&mut self, path: &Path) -> Result<()> {
+    fn remove_project(&mut self, project_id: ProjectId) -> Result<()> {
         diesel::delete(projects::table)
-            .filter(projects::path.eq(path.to_string_lossy()))
+            .filter(projects::id.eq(project_id))
             .execute(&self.connection)
-            .with_context(|| format!("Error when removing project from db {}", path.display()))?;
+            .with_context(|| format!("Error when removing project #{} from db", project_id))?;
         Ok(())
     }
 
