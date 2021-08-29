@@ -149,12 +149,10 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
     fn add_file(&mut self) -> Result<()> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
         let path = &Path::new(path);
-        // TODO: can we avoid cloning here?
-        let project_path = self.checker.project.path().clone();
-        let project_id = self.checker.project.id();
-        let relative_path = RelativePath::new(&project_path, path)?;
+        let project = self.checker.project().clone();
+        let relative_path = RelativePath::new(project.path(), path)?;
         self.repository()
-            .ignore_for_path(word, project_id, &relative_path)?;
+            .ignore_for_path(word, project.id(), &relative_path)?;
         self.recheck();
         self.kakoune_io().print(&format!(
             "echo '\"{}\" added to the ignore list for file: \"{}\"'",
