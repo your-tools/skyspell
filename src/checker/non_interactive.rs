@@ -1,6 +1,7 @@
 use anyhow::{bail, Result};
 use colored::*;
 
+use crate::repository::ProjectId;
 use crate::Checker;
 use crate::Dictionary;
 use crate::Repository;
@@ -8,6 +9,7 @@ use crate::{Project, RelativePath};
 
 pub(crate) struct NonInteractiveChecker<D: Dictionary, R: Repository> {
     project: Project,
+    project_id: ProjectId,
     dictionary: D,
     repository: R,
     errors_found: bool,
@@ -15,9 +17,10 @@ pub(crate) struct NonInteractiveChecker<D: Dictionary, R: Repository> {
 
 impl<D: Dictionary, R: Repository> NonInteractiveChecker<D, R> {
     pub(crate) fn new(project: Project, dictionary: D, mut repository: R) -> Result<Self> {
-        repository.ensure_project(&project)?;
+        let project_id = repository.ensure_project(&project)?;
         Ok(Self {
             project,
+            project_id,
             dictionary,
             repository,
             errors_found: false,
@@ -55,6 +58,10 @@ impl<D: Dictionary, R: Repository> Checker for NonInteractiveChecker<D, R> {
 
     fn project(&self) -> &Project {
         &self.project
+    }
+
+    fn project_id(&self) -> ProjectId {
+        self.project_id
     }
 
     fn repository(&self) -> &dyn Repository {

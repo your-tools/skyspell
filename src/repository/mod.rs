@@ -122,10 +122,7 @@ pub trait Repository {
     fn unskip_path(&mut self, project_id: ProjectId, relative_path: &RelativePath) -> Result<()>;
 
     // Should this file be skipped ?
-    fn should_skip(&self, project: &Project, relative_path: &RelativePath) -> Result<bool> {
-        // TODO: just sue project_id argument
-        let project_id = self.get_project_id(project)?;
-
+    fn should_skip(&self, project_id: ProjectId, relative_path: &RelativePath) -> Result<bool> {
         if let Some(f) = relative_path.file_name() {
             if self.is_skipped_file_name(&f)? {
                 return Ok(true);
@@ -261,9 +258,10 @@ mod tests {
         let mut repository = FakeRepository::new();
         repository.new_project(&project).unwrap();
         repository.skip_file_name("Cargo.lock").unwrap();
+        let project_id = repository.get_project_id(&project).unwrap();
 
-        assert!(repository.should_skip(&project, &cargo_lock).unwrap());
-        assert!(!repository.should_skip(&project, &poetry_lock).unwrap());
+        assert!(repository.should_skip(project_id, &cargo_lock).unwrap());
+        assert!(!repository.should_skip(project_id, &poetry_lock).unwrap());
     }
 
     #[test]
@@ -280,13 +278,13 @@ mod tests {
 
         repository.skip_path(project_id_1, &foo_txt).unwrap();
 
-        assert!(repository.should_skip(&project_1, &foo_txt).unwrap());
+        assert!(repository.should_skip(project_id_1, &foo_txt).unwrap());
 
         // Same project, other path
-        assert!(!repository.should_skip(&project_1, &other).unwrap());
+        assert!(!repository.should_skip(project_id_1, &other).unwrap());
 
         // Same file, other project
-        assert!(!repository.should_skip(&project_2, &foo_txt).unwrap());
+        assert!(!repository.should_skip(project_id_2, &foo_txt).unwrap());
     }
 
     // Given an identifier and a block, generate a test

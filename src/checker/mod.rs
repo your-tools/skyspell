@@ -2,6 +2,7 @@ use std::path::Path;
 
 use anyhow::Result;
 
+use crate::repository::ProjectId;
 use crate::Dictionary;
 use crate::Repository;
 use crate::{Project, RelativePath};
@@ -28,11 +29,12 @@ pub(crate) trait Checker {
     fn dictionary(&self) -> &dyn Dictionary;
 
     fn project(&self) -> &Project;
+    fn project_id(&self) -> ProjectId;
 
     fn should_skip(&self, path: &RelativePath) -> Result<bool> {
         let repository = self.repository();
-        let project = self.project();
-        repository.should_skip(project, path)
+        let project_id = self.project_id();
+        repository.should_skip(project_id, path)
     }
 
     fn to_relative_path(&self, path: &Path) -> Result<RelativePath> {

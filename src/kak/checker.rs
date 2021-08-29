@@ -66,6 +66,10 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChec
     fn project(&self) -> &Project {
         &self.project
     }
+
+    fn project_id(&self) -> ProjectId {
+        self.project_id
+    }
 }
 
 impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S> {

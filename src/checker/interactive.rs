@@ -34,6 +34,10 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
         &self.project
     }
 
+    fn project_id(&self) -> ProjectId {
+        self.project_id
+    }
+
     fn dictionary(&self) -> &dyn Dictionary {
         &self.dictionary
     }
