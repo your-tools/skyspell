@@ -156,13 +156,13 @@ fn add(mut repository: impl Repository, opts: AddOpts) -> Result<()> {
         (None, None, None) => repository.ignore(word),
         (None, _, Some(e)) => repository.ignore_for_extension(word, &e),
         (Some(project_path), Some(relative_path), None) => {
-            let project = ProjectPath::open(&project_path)?;
+            let project = ProjectPath::new(&project_path)?;
             let project_id = repository.ensure_project(&project)?;
             let relative_path = RelativePath::new(&project, &relative_path)?;
             repository.ignore_for_path(word, project_id, &relative_path)
         }
         (Some(project_path), None, None) => {
-            let project = ProjectPath::open(&project_path)?;
+            let project = ProjectPath::new(&project_path)?;
             repository.ensure_project(&project)?;
             let project_id = repository.get_project_id(&project)?;
             repository.ignore_for_project(word, project_id)
@@ -178,13 +178,13 @@ fn remove(mut repository: impl Repository, opts: RemoveOpts) -> Result<()> {
         (None, None, None) => repository.remove_ignored(word),
         (None, _, Some(e)) => repository.remove_ignored_for_extension(word, &e),
         (Some(project_path), Some(relative_path), None) => {
-            let project = ProjectPath::open(&project_path)?;
+            let project = ProjectPath::new(&project_path)?;
             let project_id = repository.get_project_id(&project)?;
             let relative_path = RelativePath::new(&project, &relative_path)?;
             repository.remove_ignored_for_path(word, project_id, &relative_path)
         }
         (Some(project_path), None, None) => {
-            let project = ProjectPath::open(&project_path)?;
+            let project = ProjectPath::new(&project_path)?;
             let project_id = repository.get_project_id(&project)?;
             repository.remove_ignored_for_project(word, project_id)
         }
@@ -194,7 +194,7 @@ fn remove(mut repository: impl Repository, opts: RemoveOpts) -> Result<()> {
 }
 
 fn check(repository: impl Repository, dictionary: impl Dictionary, opts: CheckOpts) -> Result<()> {
-    let project = ProjectPath::open(&opts.project_path)?;
+    let project = ProjectPath::new(&opts.project_path)?;
     println!("Checking project {} for spelling errors", project);
 
     let interactive = !opts.non_interactive;
@@ -267,7 +267,7 @@ fn import_personal_dict(
 fn skip(mut repository: impl Repository, opts: SkipOpts) -> Result<()> {
     match (opts.project_path, opts.relative_path, opts.file_name) {
         (Some(project_path), Some(relative_path), None) => {
-            let project = ProjectPath::open(&project_path)?;
+            let project = ProjectPath::new(&project_path)?;
             let project_id = repository.ensure_project(&project)?;
             let relative_path = RelativePath::new(&project, &relative_path)?;
             repository.skip_path(project_id, &relative_path)
@@ -282,7 +282,7 @@ fn skip(mut repository: impl Repository, opts: SkipOpts) -> Result<()> {
 fn unskip(mut repository: impl Repository, opts: UnskipOpts) -> Result<()> {
     match (opts.project_path, opts.relative_path, opts.file_name) {
         (Some(project_path), Some(relative_path), None) => {
-            let project = ProjectPath::open(&project_path)?;
+            let project = ProjectPath::new(&project_path)?;
             let project_id = repository.get_project_id(&project)?;
             let relative_path = RelativePath::new(&project, &relative_path)?;
             repository.unskip_path(project_id, &relative_path)
@@ -326,7 +326,7 @@ mod tests {
     fn open_project(temp_dir: &TempDir, name: &str) -> ProjectPath {
         let path = temp_dir.path().join(name);
         std::fs::create_dir_all(&path).unwrap();
-        ProjectPath::open(&path).unwrap()
+        ProjectPath::new(&path).unwrap()
     }
 
     struct TestApp {

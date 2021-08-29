@@ -91,7 +91,7 @@ pub(crate) fn run<S: OperatingSystemIO>(
 
     let as_str = kakoune_io.get_option(SKYSPELL_PROJECT_OPT)?;
     let path = PathBuf::from(as_str);
-    let project = ProjectPath::open(&path)?;
+    let project = ProjectPath::new(&path)?;
     let checker = KakouneChecker::new(project, dictionary, repository, kakoune_io)?;
     let mut cli = KakCli::new(checker);
 

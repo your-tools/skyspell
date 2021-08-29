@@ -183,7 +183,7 @@ mod tests {
         let temp_path = temp_dir.path();
         let project_path = temp_path.join(name);
         std::fs::create_dir(&project_path).unwrap();
-        ProjectPath::open(&project_path).unwrap()
+        ProjectPath::new(&project_path).unwrap()
     }
 
     fn new_relative_path(project_path: &ProjectPath, name: &'static str) -> RelativePath {

@@ -8,7 +8,7 @@ pub type ProjectId = i32;
 #[derive(Debug)]
 pub struct ProjectPath(PathBuf);
 impl ProjectPath {
-    pub(crate) fn open(project_path: &Path) -> Result<Self> {
+    pub(crate) fn new(project_path: &Path) -> Result<Self> {
         let path = std::fs::canonicalize(project_path).with_context(|| {
             anyhow!(
                 "Could not canonicalize project path: {}",
