@@ -2,9 +2,30 @@ use std::path::Path;
 
 use anyhow::{bail, Result};
 
-// TODO
-use crate::sql::models::ProjectModel;
 use crate::{Project, RelativePath};
+
+pub type ProjectId = i32;
+
+pub struct ProjectInfo {
+    id: ProjectId,
+    path: String,
+}
+
+impl ProjectInfo {
+    pub(crate) fn new(id: ProjectId, path: &str) -> Self {
+        Self {
+            id,
+            path: path.to_string(),
+        }
+    }
+    pub(crate) fn id(&self) -> ProjectId {
+        self.id
+    }
+
+    pub(crate) fn path(&self) -> &str {
+        &self.path
+    }
+}
 
 pub trait Repository {
     // Add the list of words to the global ignore list
@@ -37,7 +58,7 @@ pub trait Repository {
     // Remove the given project from the list
     fn remove_project(&mut self, path: &Path) -> Result<()>;
 
-    fn projects(&self) -> Result<Vec<ProjectModel>>;
+    fn projects(&self) -> Result<Vec<ProjectInfo>>;
 
     fn clean(&mut self) -> Result<()> {
         for project in self.projects()? {

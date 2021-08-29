@@ -5,7 +5,7 @@ use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use directories_next::ProjectDirs;
 
-use crate::repository::Repository;
+use crate::repository::{ProjectInfo, Repository};
 use crate::sql::models::*;
 use crate::sql::schema::*;
 use crate::{Project, RelativePath};
@@ -80,10 +80,14 @@ impl Repository for SQLRepository {
             .is_some())
     }
 
-    fn projects(&self) -> Result<Vec<ProjectModel>> {
-        projects::table
+    fn projects(&self) -> Result<Vec<ProjectInfo>> {
+        let rows: Vec<ProjectModel> = projects::table
             .load(&self.connection)
-            .with_context(|| "Could not retrieve project list")
+            .with_context(|| "Could not retrieve project list")?;
+        Ok(rows
+            .iter()
+            .map(|x| ProjectInfo::new(x.id, &x.path))
+            .collect())
     }
 
     fn remove_project(&mut self, path: &Path) -> Result<()> {

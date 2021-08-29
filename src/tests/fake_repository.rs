@@ -3,7 +3,7 @@ use anyhow::{anyhow, bail, Result};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
-use crate::sql::models::ProjectModel;
+use crate::repository::ProjectInfo;
 use crate::Repository;
 use crate::{Project, RelativePath};
 
@@ -41,14 +41,11 @@ impl Repository for FakeRepository {
         Ok(())
     }
 
-    fn projects(&self) -> Result<Vec<ProjectModel>> {
+    fn projects(&self) -> Result<Vec<ProjectInfo>> {
         Ok(self
             .projects
             .iter()
-            .map(|(i, p)| ProjectModel {
-                id: *i,
-                path: p.to_string(),
-            })
+            .map(|(i, p)| ProjectInfo::new(*i, &p.to_string()))
             .collect())
     }
 
