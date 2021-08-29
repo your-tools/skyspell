@@ -106,7 +106,7 @@ pub trait Repository {
     fn remove_ignored_for_path(
         &mut self,
         word: &str,
-        project: &Project,
+        project_id: ProjectId,
         relative_path: &RelativePath,
     ) -> Result<()>;
     // Remove word from the ignore list for the given project
@@ -445,7 +445,7 @@ mod tests {
         let foo_py = new_relative_path(&project, "foo.py");
         repository.ignore_for_path("foo", project_id, &foo_py).unwrap();
 
-        repository.remove_ignored_for_path("foo", &project, &foo_py).unwrap();
+        repository.remove_ignored_for_path("foo", project_id, &foo_py).unwrap();
 
         assert!(!repository.is_ignored_for_path("foo", project_id, &foo_py).unwrap());
     });

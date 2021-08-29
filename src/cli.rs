@@ -179,8 +179,9 @@ fn remove(mut repository: impl Repository, opts: RemoveOpts) -> Result<()> {
         (None, _, Some(e)) => repository.remove_ignored_for_extension(word, &e),
         (Some(project_path), Some(relative_path), None) => {
             let project = Project::open(&project_path)?;
+            let project_id = repository.get_project_id(&project)?;
             let relative_path = RelativePath::new(&project, &relative_path)?;
-            repository.remove_ignored_for_path(word, &project, &relative_path)
+            repository.remove_ignored_for_path(word, project_id, &relative_path)
         }
         (Some(project_path), None, None) => {
             let project = Project::open(&project_path)?;

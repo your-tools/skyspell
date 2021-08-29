@@ -269,11 +269,10 @@ impl Repository for SQLRepository {
     fn remove_ignored_for_path(
         &mut self,
         word: &str,
-        project: &Project,
+        project_id: ProjectId,
         relative_path: &RelativePath,
     ) -> Result<()> {
         let word = word.to_lowercase();
-        let project_id = self.get_project_id(project)?;
         diesel::delete(ignored_for_path::table)
             .filter(ignored_for_path::word.eq(word))
             .filter(ignored_for_path::project_id.eq(project_id))

@@ -176,10 +176,9 @@ impl Repository for FakeRepository {
     fn remove_ignored_for_path(
         &mut self,
         word: &str,
-        project: &Project,
+        project_id: ProjectId,
         relative_path: &RelativePath,
     ) -> Result<()> {
-        let project_id = self.get_project_id(project)?;
         let entry = self
             .by_project_and_path
             .get_mut(&(project_id, relative_path.to_string()))
