@@ -3,12 +3,11 @@ use std::collections::HashSet;
 use anyhow::{bail, Result};
 use colored::*;
 
-use crate::repository::ProjectId;
 use crate::Checker;
 use crate::Dictionary;
 use crate::Interactor;
 use crate::Repository;
-use crate::{ProjectPath, RelativePath};
+use crate::{ProjectId, ProjectPath, RelativePath};
 
 pub(crate) struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository> {
     project: ProjectPath,

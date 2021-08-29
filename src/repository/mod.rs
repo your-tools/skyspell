@@ -2,9 +2,7 @@ use std::path::Path;
 
 use anyhow::Result;
 
-use crate::{ProjectPath, RelativePath};
-
-pub type ProjectId = i32;
+use crate::{ProjectId, ProjectPath, RelativePath};
 
 pub struct ProjectInfo {
     id: ProjectId,

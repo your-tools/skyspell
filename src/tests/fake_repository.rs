@@ -2,9 +2,9 @@ use anyhow::{anyhow, bail, Result};
 
 use std::collections::{HashMap, HashSet};
 
-use crate::repository::{ProjectId, ProjectInfo};
+use crate::repository::ProjectInfo;
 use crate::Repository;
-use crate::{ProjectPath, RelativePath};
+use crate::{ProjectId, ProjectPath, RelativePath};
 
 #[derive(Default, Debug)]
 pub(crate) struct FakeRepository {

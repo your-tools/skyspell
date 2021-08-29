@@ -4,10 +4,9 @@ use std::path::PathBuf;
 
 use crate::kak::io::KakouneIO;
 use crate::os_io::OperatingSystemIO;
-use crate::repository::ProjectId;
 use crate::Checker;
 use crate::{Dictionary, Repository};
-use crate::{ProjectPath, RelativePath};
+use crate::{ProjectId, ProjectPath, RelativePath};
 
 pub(crate) const SKYSPELL_PROJECT_OPT: &str = "skyspell_project";
 

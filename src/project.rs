@@ -3,6 +3,8 @@ use std::borrow::Cow;
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
+pub type ProjectId = i32;
+
 #[derive(Debug)]
 pub struct ProjectPath(PathBuf);
 impl ProjectPath {

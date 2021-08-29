@@ -1,11 +1,10 @@
 use anyhow::{bail, Result};
 use colored::*;
 
-use crate::repository::ProjectId;
 use crate::Checker;
 use crate::Dictionary;
 use crate::Repository;
-use crate::{ProjectPath, RelativePath};
+use crate::{ProjectId, ProjectPath, RelativePath};
 
 pub(crate) struct NonInteractiveChecker<D: Dictionary, R: Repository> {
     project: ProjectPath,

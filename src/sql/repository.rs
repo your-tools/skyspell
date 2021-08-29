@@ -9,10 +9,10 @@ use directories_next::ProjectDirs;
 // An other option would be to store the OsStr representation as binary
 // in the DB
 
-use crate::repository::{ProjectId, ProjectInfo, Repository};
+use crate::repository::{ProjectInfo, Repository};
 use crate::sql::models::*;
 use crate::sql::schema::*;
-use crate::{ProjectPath, RelativePath};
+use crate::{ProjectId, ProjectPath, RelativePath};
 
 diesel_migrations::embed_migrations!("migrations");
 

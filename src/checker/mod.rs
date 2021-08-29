@@ -2,10 +2,9 @@ use std::path::Path;
 
 use anyhow::Result;
 
-use crate::repository::ProjectId;
 use crate::Dictionary;
 use crate::Repository;
-use crate::{ProjectPath, RelativePath};
+use crate::{ProjectId, ProjectPath, RelativePath};
 
 mod interactive;
 mod non_interactive;
