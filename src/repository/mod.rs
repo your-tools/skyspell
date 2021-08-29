@@ -40,6 +40,8 @@ pub trait Repository {
     fn new_project(&mut self, project: &Project) -> Result<()>;
     // Check if a project exists
     fn project_exists(&self, project: &Project) -> Result<bool>;
+    // Get the id of a given project
+    fn get_project_id(&self, project: &Project) -> Result<ProjectId>;
     // Create a project if it does not exist yet
     fn ensure_project(&mut self, project: &Project) -> Result<()> {
         if !self.project_exists(project)? {

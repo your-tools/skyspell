@@ -41,6 +41,14 @@ impl Repository for FakeRepository {
         Ok(())
     }
 
+    fn get_project_id(&self, project: &Project) -> Result<ProjectId> {
+        let res = self
+            .projects
+            .get(&project.to_string())
+            .ok_or_else(|| anyhow!("Could not get project ID for {}, project"))?;
+        Ok(*res)
+    }
+
     fn projects(&self) -> Result<Vec<ProjectInfo>> {
         Ok(self
             .projects

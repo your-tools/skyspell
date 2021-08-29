@@ -5,7 +5,7 @@ use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use directories_next::ProjectDirs;
 
-use crate::repository::{ProjectInfo, Repository};
+use crate::repository::{ProjectId, ProjectInfo, Repository};
 use crate::sql::models::*;
 use crate::sql::schema::*;
 use crate::{Project, RelativePath};
@@ -42,20 +42,6 @@ impl SQLRepository {
         embedded_migrations::run(&connection).with_context(|| "Could not migrate db")?;
         Ok(Self { connection })
     }
-
-    fn get_project_id(&self, project: &Project) -> Result<i32> {
-        let res = projects::table
-            .filter(projects::path.eq(project.as_str()))
-            .select(projects::id)
-            .first::<i32>(&self.connection)
-            .with_context(|| {
-                format!(
-                    "Could not get project ID for project '{}'",
-                    project.as_str()
-                )
-            })?;
-        Ok(res)
-    }
 }
 
 impl Repository for SQLRepository {
@@ -78,6 +64,20 @@ impl Repository for SQLRepository {
             .optional()
             .with_context(|| format!("Error when looking for project {}", project.as_str()))?
             .is_some())
+    }
+
+    fn get_project_id(&self, project: &Project) -> Result<ProjectId> {
+        let res = projects::table
+            .filter(projects::path.eq(project.as_str()))
+            .select(projects::id)
+            .first::<i32>(&self.connection)
+            .with_context(|| {
+                format!(
+                    "Could not get project ID for project '{}'",
+                    project.as_str()
+                )
+            })?;
+        Ok(res)
     }
 
     fn projects(&self) -> Result<Vec<ProjectInfo>> {
