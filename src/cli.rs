@@ -12,20 +12,32 @@ use crate::{Checker, InteractiveChecker, NonInteractiveChecker};
 use crate::{ConsoleInteractor, Dictionary, Repository};
 use crate::{ProjectPath, RelativePath};
 
-pub(crate) fn info_1(message: &str) {
-    println!("{} {}", "::".bold().blue(), message)
+#[macro_export]
+macro_rules! info_1 {
+    ($($arg:tt)*) => ({
+        println!("{} {}", "::".bold().blue(), format!($($arg)*));
+    })
 }
 
-pub(crate) fn info_2(message: &str) {
-    println!("{} {}", "=>".bold().blue(), message)
+#[macro_export]
+macro_rules! info_2 {
+    ($($arg:tt)*) => ({
+        println!("{} {}", "=>".bold().blue(), format!($($arg)*));
+    })
 }
 
-pub(crate) fn info_3(message: &str) {
-    println!("{} {}", "*".bold().blue(), message)
+#[macro_export]
+macro_rules! info_3 {
+    ($($arg:tt)*) => ({
+        println!("{} {}", "*".bold().blue(), format!($($arg)*));
+    })
 }
 
-pub fn print_error(message: &str) {
-    eprintln!("{} {}", "Error:".red(), message);
+#[macro_export]
+macro_rules! print_error {
+    ($($arg:tt)*) => ({
+    eprintln!("{} {}", "Error:".red(), format!($($arg)*));
+    })
 }
 
 pub fn run<D: Dictionary, R: Repository>(opts: Opts, dictionary: D, repository: R) -> Result<()> {
@@ -211,10 +223,10 @@ fn remove(mut repository: impl Repository, opts: RemoveOpts) -> Result<()> {
 
 fn check(repository: impl Repository, dictionary: impl Dictionary, opts: CheckOpts) -> Result<()> {
     let project_path = ProjectPath::new(&opts.project_path)?;
-    info_1(&format!(
+    info_1!(
         "Checking project {} for spelling errors",
         project_path.as_str().bold()
-    ));
+    );
 
     let interactive = !opts.non_interactive;
 
@@ -255,14 +267,14 @@ where
     }
 
     match skipped {
-        1 => info_3("Skipped one file"),
-        x if x >= 2 => info_3(&format!("Skipped {} files", x)),
+        1 => info_3!("Skipped one file"),
+        x if x >= 2 => info_3!("Skipped {} files", x),
         _ => (),
     }
 
     checker.success()?;
 
-    info_1("Success. No spelling errors found");
+    info_1!("Success. No spelling errors found");
 
     Ok(())
 }

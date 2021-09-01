@@ -1,6 +1,9 @@
 use anyhow::Result;
 use clap::Clap;
-use skyspell::cli::{print_error, run, Opts};
+use colored::Colorize;
+
+use skyspell::cli::{run, Opts};
+use skyspell::print_error;
 use skyspell::sql::{get_default_db_path, SQLRepository};
 use skyspell::EnchantDictionary;
 
@@ -20,7 +23,7 @@ fn main() -> Result<()> {
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, lang)?;
     if let Err(e) = run(opts, dictionary, repository) {
-        print_error(&e.to_string());
+        print_error!("{}", e);
         std::process::exit(1);
     }
     Ok(())
