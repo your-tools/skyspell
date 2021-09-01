@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::Clap;
-use skyspell::cli::{run, Opts};
+use skyspell::cli::{print_error, run, Opts};
 use skyspell::sql::{get_default_db_path, SQLRepository};
 use skyspell::EnchantDictionary;
 
@@ -19,5 +19,9 @@ fn main() -> Result<()> {
     let repository = SQLRepository::new(&db_path)?;
     let mut broker = enchant::Broker::new();
     let dictionary = EnchantDictionary::new(&mut broker, lang)?;
-    run(opts, dictionary, repository)
+    if let Err(e) = run(opts, dictionary, repository) {
+        print_error(&e.to_string());
+        std::process::exit(1);
+    }
+    Ok(())
 }

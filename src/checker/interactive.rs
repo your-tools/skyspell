@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use anyhow::{bail, Result};
 use colored::*;
 
+use crate::cli::{info_2, print_error};
 use crate::Checker;
 use crate::Dictionary;
 use crate::Interactor;
@@ -75,18 +76,10 @@ impl<I: Interactor, D: Dictionary, R: Repository> InteractiveChecker<I, D, R> {
         })
     }
 
-    fn print_addition(token: &str, location: &str) {
-        println!("\n{}Added {} to {}\n", "=> ".blue(), token.blue(), location);
-    }
-
-    fn print_error(message: &str) {
-        eprintln!("{} {}", "Error:".red(), message);
-    }
-
     fn on_error(&mut self, path: &RelativePath, pos: (usize, usize), error: &str) -> Result<()> {
         let (lineno, column) = pos;
         let prefix = format!("{}:{}:{}", path, lineno, column);
-        println!("{} {}", prefix.bold(), error.blue());
+        println!("{} {}", prefix, error.red());
         let prompt = r#"What to do?
 a : Add word to global ignore list
 e : Add word to ignore list for this extension
@@ -144,52 +137,51 @@ q : Quit
 
     fn on_global_ignore(&mut self, error: &str) -> Result<()> {
         self.repository.ignore(error)?;
-        Self::print_addition(error, "the global ignore list");
+        info_2(&format!("Added {} to the global ignore list", error));
         Ok(())
     }
 
     fn on_extension(&mut self, relative_path: &RelativePath, error: &str) -> Result<bool> {
         let extension = match relative_path.extension() {
             None => {
-                Self::print_error(&format!("{} has no extension", relative_path));
+                print_error(&format!("{} has no extension", relative_path));
                 return Ok(false);
             }
             Some(e) => e,
         };
 
         self.repository.ignore_for_extension(error, &extension)?;
-        Self::print_addition(
-            error,
-            &format!("the ignore list for extension '.{}'", extension.bold()),
-        );
+        info_2(&format!(
+            "Added {} to the ignore list for extension '{}'",
+            error, extension
+        ));
         Ok(true)
     }
 
     fn on_project_ignore(&mut self, error: &str) -> Result<bool> {
         self.repository
             .ignore_for_project(error, self.project.id())?;
-        Self::print_addition(
-            error,
-            &format!("the ignore list for project '{}'", &self.project.path()),
-        );
+        info_2(&format!(
+            "Added {} to the ignore list for the current project",
+            error
+        ));
         Ok(true)
     }
 
     fn on_file_ignore(&mut self, error: &str, relative_path: &RelativePath) -> Result<bool> {
         self.repository
             .ignore_for_path(error, self.project.id(), relative_path)?;
-
-        Self::print_addition(
-            error,
-            &format!("the ignore list for path '{}'", relative_path),
-        );
+        info_2(&format!(
+            "Added {} to the ignore list for path '{}'",
+            error, relative_path
+        ));
         Ok(true)
     }
 
     fn on_file_name_skip(&mut self, relative_path: &RelativePath) -> Result<bool> {
         let file_name = match relative_path.file_name() {
             None => {
-                Self::print_error(&format!("{} has no file name", relative_path));
+                print_error(&format!("{} has no file name", relative_path));
                 return Ok(false);
             }
             Some(r) => r,

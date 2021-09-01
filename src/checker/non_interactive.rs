@@ -42,7 +42,7 @@ impl<D: Dictionary, R: Repository> Checker for NonInteractiveChecker<D, R> {
         let &(line, column) = context;
         self.errors_found = true;
         let prefix = format!("{}:{}:{}", path, line, column);
-        println!("{} {}", prefix.bold(), token.blue());
+        println!("{} {}", prefix, token.red());
         Ok(())
     }
 

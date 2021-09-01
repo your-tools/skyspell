@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::{bail, Result};
 use clap::Clap;
+use colored::*;
 
 use crate::kak;
 use crate::kak::io::KakouneIO;
@@ -10,6 +11,22 @@ use crate::TokenProcessor;
 use crate::{Checker, InteractiveChecker, NonInteractiveChecker};
 use crate::{ConsoleInteractor, Dictionary, Repository};
 use crate::{ProjectPath, RelativePath};
+
+pub(crate) fn info_1(message: &str) {
+    println!("{} {}", "::".bold().blue(), message)
+}
+
+pub(crate) fn info_2(message: &str) {
+    println!("{} {}", "=>".bold().blue(), message)
+}
+
+pub(crate) fn info_3(message: &str) {
+    println!("{} {}", "*".bold().blue(), message)
+}
+
+pub fn print_error(message: &str) {
+    eprintln!("{} {}", "Error:".red(), message);
+}
 
 pub fn run<D: Dictionary, R: Repository>(opts: Opts, dictionary: D, repository: R) -> Result<()> {
     match opts.action {
@@ -194,7 +211,10 @@ fn remove(mut repository: impl Repository, opts: RemoveOpts) -> Result<()> {
 
 fn check(repository: impl Repository, dictionary: impl Dictionary, opts: CheckOpts) -> Result<()> {
     let project_path = ProjectPath::new(&opts.project_path)?;
-    println!("Checking project {} for spelling errors", project_path);
+    info_1(&format!(
+        "Checking project {} for spelling errors",
+        project_path.as_str().bold()
+    ));
 
     let interactive = !opts.non_interactive;
 
@@ -221,7 +241,6 @@ where
     }
 
     let mut skipped = 0;
-    let mut checked = 0;
     for path in &opts.sources {
         let relative_path = checker.to_relative_path(path)?;
         if checker.should_skip(&relative_path)? {
@@ -233,18 +252,17 @@ where
         token_processor.each_token(|word, line, column| {
             checker.handle_token(word, &relative_path, &(line, column))
         })?;
-        checked += 1;
     }
 
     match skipped {
-        1 => println!("Skipped one file"),
-        x if x >= 2 => println!("Skipped {} files", x),
+        1 => info_3("Skipped one file"),
+        x if x >= 2 => info_3(&format!("Skipped {} files", x)),
         _ => (),
     }
 
     checker.success()?;
 
-    println!("Success. {} files checked.", checked);
+    info_1("Success. No spelling errors found");
 
     Ok(())
 }
