@@ -18,7 +18,7 @@ do
     cargo run -- check --non-interactive --project-path . $(fd --type f -E "tests/*")
     (
       cd tests
-      pytest test.py
+      pytest -vs test.py
      )
   fi
 done
