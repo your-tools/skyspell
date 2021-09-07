@@ -21,7 +21,8 @@ class KittyWindow:
         self.process = subprocess.Popen(
             [
                 "kitty",
-                "--config=None",
+                "--config",
+                "None",
                 "-o",
                 "allow_remote_control=yes",
                 "--listen-on",
