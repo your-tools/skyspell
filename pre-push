@@ -18,7 +18,7 @@ do
     cargo run -- check --non-interactive --project-path . $(fd --type f -E "tests/*")
     (
       cd tests
-      pytest -vs test.py
+      poetry run pytest -n auto
      )
   fi
 done
