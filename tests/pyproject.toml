@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "skyspell-tests"
+version = "0.1.0"
+description = ""
+authors = ["Dimitri Merejkowsky <dimitri@dmerej.info>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+pytest = "^6.2.5"
+pytest-xdist = "^2.3.0"
+
+[tool.poetry.dev-dependencies]
+# Task runner
+invoke = "^1.5.0"
+
+# Linters
+black = "21.5b0"
+flake8 = "3.9.2"
+flake8-comprehensions = "^3.4.0"
+flake8-bugbear = "^21.4.3"
+pep8-naming = "^0.11.1"
+isort = "^5.6.4"
+mypy = "^0.910"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
