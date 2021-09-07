@@ -23,6 +23,8 @@ class KittyWindow:
                 "kitty",
                 "--config",
                 "None",
+                "--class",
+                "kitty-tests",
                 "-o",
                 "allow_remote_control=yes",
                 "--listen-on",
