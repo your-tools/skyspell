@@ -78,26 +78,25 @@ class RemoteKakoune:
         human_readable = text.replace(r"\n", "\n")
         print(human_readable, end="")
 
-    def extract_from_info(self, prefix: str) -> str:
+    def extract_from_debug_buffer(self, prefix: str) -> str:
+        self.send_command("edit", "-existing", "*debug*")
         text = self.kitty_window.get_text()
-        matching_lines = [x for x in text.splitlines() if prefix in x]
+        matching_lines = [x for x in text.splitlines() if x.startswith(prefix)]
         assert len(matching_lines) == 1
         line = matching_lines[0]
-        start = line.find(prefix)
-        trail = line[start + len(prefix) :]
-        match = re.search("`(.*)`", trail)
-        assert match
-        return match.groups()[0]
+        res = line[len(prefix) :]
+        self.send_command("buffer-previous")
+        return res
 
     def get_option(self, option: str) -> str:
-        prefix = f"{option} => "
-        self.send_command("info", "-title", "tests", f'"{prefix}`%opt[{option}]`"')
-        return self.extract_from_info(prefix)
+        prefix = f"option : {option} => "
+        self.send_command("echo", "-debug", prefix, f"%opt[{option}]")
+        return self.extract_from_debug_buffer(prefix)
 
     def get_selection(self) -> str:
         prefix = "selection => "
-        self.send_command("info", "-title", "tests", f'"{prefix}`%val[selection]`"')
-        return self.extract_from_info(prefix)
+        self.send_command("echo", "-debug", prefix, "%val{selection}")
+        return self.extract_from_debug_buffer(prefix)
 
 
 def run_query(tmp_path: Path, sql: str) -> List[Any]:
