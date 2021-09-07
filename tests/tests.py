@@ -1,55 +1,84 @@
+import os
 import re
 import sqlite3
 import subprocess
-import sys
 import time
+from pathlib import Path
+from typing import Any, Iterator, List
 
 import pytest
 
+SOCKET_PATH = "unix:/tmp/kitty.sock"
+
 
 class KittyWindow:
-    def __init__(self, title):
-        self.title = title
-        process = subprocess.run(
-            ["kitty", "@", "launch", "--title", title, "sh"],
-            check=True,
-            text=True,
-        )
+    def __init__(self, socket_path: Path) -> None:
+        self.socket_path = socket_path
+        env = os.environ.copy()
+        env["PS1"] = r"\w$ "
+        env["PATH"] = os.environ["PATH"]
 
-    def send_text(self, text):
-        cmd = ["kitty", "@", "send-text", "--match", f"title:{self.title}", text]
+        self.process = subprocess.Popen(
+            [
+                "kitty",
+                "--config=None",
+                "-o",
+                "allow_remote_control=yes",
+                "--listen-on",
+                f"unix:{self.socket_path}",
+                "sh",
+            ],
+            env=env,
+        )
+        # Wait until the kitty server is done starting
+        while not self.socket_path.exists():
+            time.sleep(0.1)
+
+    def send_text(self, text: str) -> None:
+        cmd = [
+            "kitty",
+            "@",
+            "--to",
+            f"unix:{self.socket_path}",
+            "send-text",
+            text,
+        ]
         subprocess.run(cmd, check=True)
 
-    def get_text(self):
-        cmd = ["kitty", "@", "get-text", "--match", f"title:{self.title}"]
+    def get_text(self) -> str:
+        cmd = [
+            "kitty",
+            "@",
+            "--to",
+            f"unix:{self.socket_path}",
+            "get-text",
+        ]
         process = subprocess.run(cmd, check=True, capture_output=True, text=True)
         return process.stdout
 
-    def close(self):
-        subprocess.run(
-            ["kitty", "@", "close-window", "--match", f"title:{self.title}"],
-            check=False,
-            capture_output=True,  # don't print an error message in case this fails
-        )
+    def close(self) -> None:
+        self.process.kill()
 
 
 class RemoteKakoune:
-    def __init__(self, kitty_window):
+    def __init__(self, kitty_window: KittyWindow) -> None:
         self.kitty_window = kitty_window
         self.kitty_window.send_text(r"kak -n\n")
 
-    def send_keys(self, keys):
+    def send_keys(self, keys: str) -> None:
+        human_readable = re.sub("\x1b(.)", r"alt-\1 ", keys)
+        print(human_readable)
         self.kitty_window.send_text(keys)
 
-    def send_command(self, command, *args):
+    def send_command(self, command: str, *args: str) -> None:
         self.kitty_window.send_text(r"\x1b")
-        text = rf": {command} {' '.join(args)} \n"
-        print(text)
+        text = rf":{command} {' '.join(args)} \n"
         self.kitty_window.send_text(text)
+        human_readable = text.replace(r"\n", "\n")
+        print(human_readable, end="")
 
-    def extract_from_info(self, prefix):
+    def extract_from_info(self, prefix: str) -> str:
         text = self.kitty_window.get_text()
-        lines = text.splitlines()
         matching_lines = [x for x in text.splitlines() if prefix in x]
         assert len(matching_lines) == 1
         line = matching_lines[0]
@@ -59,23 +88,18 @@ class RemoteKakoune:
         assert match
         return match.groups()[0]
 
-    def get_option(self, option):
+    def get_option(self, option: str) -> str:
         prefix = f"{option} => "
         self.send_command("info", "-title", "tests", f'"{prefix}`%opt[{option}]`"')
         return self.extract_from_info(prefix)
 
-    def get_selection(self):
+    def get_selection(self) -> str:
         prefix = "selection => "
         self.send_command("info", "-title", "tests", f'"{prefix}`%val[selection]`"')
         return self.extract_from_info(prefix)
 
 
-class KakChecker(RemoteKakoune):
-    def __init__(self, tmp_path):
-        super().__init__(kitty_window)
-
-
-def run_query(tmp_path, sql):
+def run_query(tmp_path: Path, sql: str) -> List[Any]:
     db_path = tmp_path / "tests.db"
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
@@ -85,24 +109,15 @@ def run_query(tmp_path, sql):
 
 
 @pytest.fixture
-def kitty_window():
-    res = KittyWindow(title="skyspell-tests")
+def kitty_window(tmp_path: Path) -> Iterator[KittyWindow]:
+    socket_path = tmp_path / "kitty.sock"
+    res = KittyWindow(socket_path=socket_path)
     yield res
     res.close()
 
 
 @pytest.fixture
-def remote_kakoune(kitty_window):
-    res = RemoteKakoune(kitty_window)
-    yield res
-    res.send_command("quit!")
-
-
-@pytest.fixture
-def kak_checker(tmp_path, kitty_window):
-    # Make sure skyspell is in PATH
-    kitty_window.send_text(r"export PATH=$HOME/.cargo/bin:$PATH\n")
-
+def kak_checker(tmp_path: Path, kitty_window: KittyWindow) -> Iterator[RemoteKakoune]:
     # Set db path
     db_path = tmp_path / "tests.db"
     kitty_window.send_text(fr"cd {tmp_path} \n")
@@ -117,19 +132,19 @@ def kak_checker(tmp_path, kitty_window):
     kakoune.send_command("quit!")
 
 
-def ensure_file(kak_checker, name, text):
+def ensure_file(kak_checker: RemoteKakoune, name: str, text: str) -> None:
     kak_checker.send_command("edit", name)
     kak_checker.send_keys(rf"I{text}")
     kak_checker.send_command("write")
 
 
-def test_no_spelling_errors(kak_checker):
+def test_no_spelling_errors(kak_checker: RemoteKakoune) -> None:
     ensure_file(kak_checker, "foo.txt", "There is no mistake there\n")
     actual = kak_checker.get_option("skyspell_error_count")
     assert actual == "0"
 
 
-def test_jump_to_first_error(kak_checker):
+def test_jump_to_first_error(kak_checker: RemoteKakoune) -> None:
     ensure_file(
         kak_checker, "foo.txt", r"There is a missstake here\nand an othhher one there"
     )
@@ -138,7 +153,7 @@ def test_jump_to_first_error(kak_checker):
     assert kak_checker.get_selection() == "missstake"
 
 
-def test_goto_next(kak_checker):
+def test_goto_next(kak_checker: RemoteKakoune) -> None:
     ensure_file(
         kak_checker, "foo.txt", r"There is a missstake here\nand an othhher one there"
     )
@@ -147,7 +162,7 @@ def test_goto_next(kak_checker):
     assert kak_checker.get_selection() == "othhher"
 
 
-def test_goto_previous(kak_checker):
+def test_goto_previous(kak_checker: RemoteKakoune) -> None:
     ensure_file(
         kak_checker, "foo.txt", r"There is a missstake here\nand an othhher one there"
     )
@@ -156,7 +171,7 @@ def test_goto_previous(kak_checker):
     assert kak_checker.get_selection() == "missstake"
 
 
-def test_add_global(tmp_path, kak_checker):
+def test_add_global(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     ensure_file(kak_checker, "foo.txt", r"I'm testing skyspell here")
 
     kak_checker.send_command("skyspell-list")
@@ -165,7 +180,7 @@ def test_add_global(tmp_path, kak_checker):
     assert run_query(tmp_path, "SELECT word FROM ignored") == [("skyspell",)]
 
 
-def test_add_to_project(tmp_path, kak_checker):
+def test_add_to_project(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     ensure_file(kak_checker, "foo.txt", r"I'm testing skyspell here")
 
     kak_checker.send_command("skyspell-list")
@@ -177,7 +192,7 @@ def test_add_to_project(tmp_path, kak_checker):
     ]
 
 
-def test_add_to_file(tmp_path, kak_checker):
+def test_add_to_file(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     ensure_file(kak_checker, "foo.txt", r"I'm testing skyspell here")
 
     kak_checker.send_command("skyspell-list")
@@ -189,7 +204,7 @@ def test_add_to_file(tmp_path, kak_checker):
     ]
 
 
-def test_add_to_extension(tmp_path, kak_checker):
+def test_add_to_extension(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     ensure_file(kak_checker, "foo.rs", "fn function(parameter: type) { body }")
 
     kak_checker.send_command("skyspell-list")
@@ -201,7 +216,7 @@ def test_add_to_extension(tmp_path, kak_checker):
     ]
 
 
-def test_skip_file_path(tmp_path, kak_checker):
+def test_skip_file_path(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     ensure_file(kak_checker, "foo.txt", r"I'm testing skyspell here")
 
     kak_checker.send_command("skyspell-list")
@@ -211,7 +226,7 @@ def test_skip_file_path(tmp_path, kak_checker):
     assert run_query(tmp_path, "SELECT path FROM skipped_paths") == [("foo.txt",)]
 
 
-def test_skip_file_name(tmp_path, kak_checker):
+def test_skip_file_name(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     ensure_file(kak_checker, "foo.lock", "notaword=42")
 
     kak_checker.send_command("skyspell-list")
@@ -223,7 +238,7 @@ def test_skip_file_name(tmp_path, kak_checker):
     ]
 
 
-def test_replace_with_suggestion(tmp_path, kak_checker):
+def test_replace_with_suggestion(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     ensure_file(kak_checker, "foo.txt", "There is a missstake here")
 
     kak_checker.send_command("skyspell-next")
