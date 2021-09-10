@@ -261,11 +261,15 @@ impl Repository for SQLRepository {
 
     fn remove_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
         let word = word.to_lowercase();
-        diesel::delete(ignored_for_extension::table)
+        let num_rows = diesel::delete(ignored_for_extension::table)
             .filter(ignored_for_extension::extension.eq(extension))
             .filter(ignored_for_extension::word.eq(word))
             .execute(&self.connection)
             .with_context(|| "Could not remove word from ignore list for extension")?;
+        ensure!(
+            num_rows != 0,
+            "word was not in the ignore list for the given extension"
+        );
         Ok(())
     }
 
@@ -276,12 +280,16 @@ impl Repository for SQLRepository {
         relative_path: &RelativePath,
     ) -> Result<()> {
         let word = word.to_lowercase();
-        diesel::delete(ignored_for_path::table)
+        let num_rows = diesel::delete(ignored_for_path::table)
             .filter(ignored_for_path::word.eq(word))
             .filter(ignored_for_path::project_id.eq(project_id))
             .filter(ignored_for_path::path.eq(relative_path.as_str()))
             .execute(&self.connection)
             .with_context(|| "Could not remove word from ignore list for path")?;
+        ensure!(
+            num_rows != 0,
+            "word was not in the ignore list for the given project and path"
+        );
         Ok(())
     }
 
@@ -296,19 +304,21 @@ impl Repository for SQLRepository {
     }
 
     fn unskip_file_name(&mut self, file_name: &str) -> Result<()> {
-        diesel::delete(skipped_file_names::table)
+        let num_rows = diesel::delete(skipped_file_names::table)
             .filter(skipped_file_names::file_name.eq(file_name))
             .execute(&self.connection)
             .with_context(|| "Could not remove file name from skip list")?;
+        ensure!(num_rows != 0, "this file name was not skipped");
         Ok(())
     }
 
     fn unskip_path(&mut self, project_id: ProjectId, relative_path: &RelativePath) -> Result<()> {
-        diesel::delete(skipped_paths::table)
+        let num_rows = diesel::delete(skipped_paths::table)
             .filter(skipped_paths::path.eq(relative_path.as_str()))
             .filter(skipped_paths::project_id.eq(project_id))
             .execute(&self.connection)
             .with_context(|| "Could not remove file path from skip list")?;
+        ensure!(num_rows != 0, "this path was not skipped");
         Ok(())
     }
 }

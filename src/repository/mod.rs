@@ -443,7 +443,7 @@ mod tests {
 
     });
 
-    make_tests!(remove_ignored_for_extension, (repository) => {
+    make_tests!(remove_ignored_for_extension_happy, (repository) => {
         repository.ignore_for_extension("foo", "py").unwrap();
 
         repository.remove_ignored_for_extension("foo", "py").unwrap();
@@ -452,7 +452,13 @@ mod tests {
 
     });
 
-    make_tests!(remove_ignored_for_path, (repository) => {
+    make_tests!(remove_ignored_for_extension_when_not_ignored, (repository) => {
+        assert!(!repository.is_ignored_for_extension("foo", "py").unwrap());
+
+        assert!(repository.remove_ignored_for_extension("foo", "py").is_err());
+    });
+
+    make_tests!(remove_ignored_for_path_happy, (repository) => {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
         let project = new_project_path(&temp_dir, "project");
         let project_id = repository.new_project(&project).unwrap();
@@ -462,6 +468,17 @@ mod tests {
         repository.remove_ignored_for_path("foo", project_id, &foo_py).unwrap();
 
         assert!(!repository.is_ignored_for_path("foo", project_id, &foo_py).unwrap());
+    });
+
+    make_tests!(remove_ignored_for_path_when_not_ignored, (repository) => {
+        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let project = new_project_path(&temp_dir, "project");
+        let project_id = repository.new_project(&project).unwrap();
+        let foo_py = new_relative_path(&project, "foo.py");
+
+        assert!(!repository.is_ignored_for_path("foo", project_id, &foo_py).unwrap());
+
+        assert!(repository.remove_ignored_for_path("foo", project_id, &foo_py).is_err());
     });
 
     make_tests!(remove_ignored_for_project, (repository) => {
@@ -476,7 +493,7 @@ mod tests {
         assert!(!repository.is_ignored_for_project("foo", project_id).unwrap());
     });
 
-    make_tests!(unskip_file_name, (repository) => {
+    make_tests!(unskip_file_name_happy, (repository) => {
         repository.skip_file_name("Cargo.lock").unwrap();
 
         repository.unskip_file_name("Cargo.lock").unwrap();
@@ -484,7 +501,14 @@ mod tests {
         assert!(!repository.is_skipped_file_name("Cargo.lock").unwrap());
     });
 
-    make_tests!(unskip_path, (repository) => {
+    make_tests!(unskip_file_name_not_skipped, (repository) => {
+        assert!(!repository.is_skipped_file_name("Cargo.lock").unwrap());
+
+        assert!(repository.unskip_file_name("Cargo.lock").is_err())
+
+    });
+
+    make_tests!(unskip_path_happy, (repository) => {
         let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
         let project = new_project_path(&temp_dir, "project");
         let project_id = repository.new_project(&project).unwrap();
@@ -494,5 +518,16 @@ mod tests {
         repository.unskip_path(project_id, &foo_py).unwrap();
 
         assert!(!repository.is_skipped_path(project_id, &foo_py).unwrap());
+    });
+
+    make_tests!(unskip_path_not_skipped, (repository) => {
+        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let project = new_project_path(&temp_dir, "project");
+        let project_id = repository.new_project(&project).unwrap();
+        let foo_py = new_relative_path(&project, "foo.py");
+        assert!(!repository.is_skipped_path(project_id, &foo_py).unwrap());
+
+        assert!(repository.unskip_path(project_id, &foo_py).is_err());
+
     });
 }

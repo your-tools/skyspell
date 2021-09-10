@@ -194,13 +194,19 @@ impl Repository for FakeRepository {
     }
 
     fn unskip_file_name(&mut self, file_name: &str) -> Result<()> {
+        let old_len = self.skip_file_names.len();
         self.skip_file_names.retain(|x| x != file_name);
+        let new_len = self.skipped_paths.len();
+        ensure!(old_len != new_len, "this file name was not skipped");
         Ok(())
     }
 
     fn unskip_path(&mut self, project_id: ProjectId, relative_path: &RelativePath) -> Result<()> {
+        let old_len = self.skipped_paths.len();
         self.skipped_paths
             .retain(|x| x != &(project_id, relative_path.to_string()));
+        let new_len = self.skipped_paths.len();
+        ensure!(old_len != new_len, "this path was not skipped");
         Ok(())
     }
 }
