@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, bail, ensure, Result};
 
 use std::collections::{HashMap, HashSet};
 
@@ -156,7 +156,8 @@ impl Repository for FakeRepository {
     }
 
     fn remove_ignored(&mut self, word: &str) -> Result<()> {
-        self.global.remove(word);
+        let was_present = self.global.remove(word);
+        ensure!(was_present, "word was not globally ignored");
         Ok(())
     }
 

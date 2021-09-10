@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use directories_next::ProjectDirs;
@@ -251,10 +251,11 @@ impl Repository for SQLRepository {
 
     fn remove_ignored(&mut self, word: &str) -> Result<()> {
         let word = word.to_lowercase();
-        diesel::delete(ignored::table)
+        let num_rows = diesel::delete(ignored::table)
             .filter(ignored::word.eq(word))
             .execute(&self.connection)
             .with_context(|| "Could not remove word from global ignored list")?;
+        ensure!(num_rows != 0, "word was not globally ignored");
         Ok(())
     }
 

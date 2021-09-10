@@ -428,12 +428,19 @@ mod tests {
         assert!(repository.is_skipped_path(project_id, &test_txt).unwrap());
     });
 
-    make_tests!(remove_ignored, (repository) => {
+    make_tests!(remove_ignored_happy, (repository) => {
         repository.ignore("foo").unwrap();
 
         repository.remove_ignored("foo").unwrap();
 
         assert!(!repository.is_ignored("foo").unwrap());
+    });
+
+    make_tests!(remove_ignored_when_not_ignored, (repository) => {
+        assert!(!repository.is_ignored("foo").unwrap());
+
+        assert!(repository.remove_ignored("foo").is_err());
+
     });
 
     make_tests!(remove_ignored_for_extension, (repository) => {
