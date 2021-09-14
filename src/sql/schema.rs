@@ -31,6 +31,14 @@ table! {
 }
 
 table! {
+    operations (id) {
+        id -> Integer,
+        json -> Text,
+        date -> Integer,
+    }
+}
+
+table! {
     projects (id) {
         id -> Integer,
         path -> Text,
@@ -57,6 +65,7 @@ allow_tables_to_appear_in_same_query!(
     ignored_for_extension,
     ignored_for_path,
     ignored_for_project,
+    operations,
     projects,
     skipped_file_names,
     skipped_paths,

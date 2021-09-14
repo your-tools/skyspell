@@ -1,0 +1,5 @@
+CREATE TABLE operations (
+  id INTEGER PRIMARY KEY NOT NULL,
+  json TEXT NOT NULL,
+  date INTEGER NOT NULL
+);
