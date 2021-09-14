@@ -1,11 +1,12 @@
 use anyhow::{anyhow, Context, Result};
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
 pub type ProjectId = i32;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Project {
     path: ProjectPath,
     id: ProjectId,
@@ -25,7 +26,7 @@ impl Project {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProjectPath(PathBuf);
 impl ProjectPath {
     pub(crate) fn new(project_path: &Path) -> Result<Self> {
@@ -55,7 +56,7 @@ impl Display for ProjectPath {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RelativePath(PathBuf);
 
 impl RelativePath {

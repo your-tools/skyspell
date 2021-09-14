@@ -2,6 +2,7 @@ use anyhow::{anyhow, bail, ensure, Result};
 
 use std::collections::{HashMap, HashSet};
 
+use crate::repository::Operation;
 use crate::repository::ProjectInfo;
 use crate::Repository;
 use crate::{ProjectId, ProjectPath, RelativePath};
@@ -15,6 +16,7 @@ pub(crate) struct FakeRepository {
     projects: HashMap<String, ProjectId>,
     skip_file_names: HashSet<String>,
     skipped_paths: HashSet<(ProjectId, String)>,
+    operations: Vec<String>,
 }
 
 impl FakeRepository {
@@ -208,5 +210,21 @@ impl Repository for FakeRepository {
         let new_len = self.skipped_paths.len();
         ensure!(old_len != new_len, "this path was not skipped");
         Ok(())
+    }
+
+    fn insert_operation(&mut self, operation: &Operation) -> Result<()> {
+        let as_json = serde_json::to_string(operation).expect("failed to serialize operation");
+        self.operations.push(as_json);
+        Ok(())
+    }
+
+    fn pop_last_operation(&mut self) -> Result<Option<Operation>> {
+        let as_json = match self.operations.pop() {
+            None => return Ok(None),
+            Some(s) => s,
+        };
+        let res: Operation =
+            serde_json::from_str(&as_json).expect("failed to deserialize operation");
+        Ok(Some(res))
     }
 }

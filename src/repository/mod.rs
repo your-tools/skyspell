@@ -9,6 +9,9 @@ pub struct ProjectInfo {
     path: String,
 }
 
+mod handler;
+pub use handler::Operation;
+
 // Note: the crucial difference with Project is that
 // ProjectInfo does *not* contain the ProjectPath struct
 // which is a NewType to represent *existing* project paths
@@ -138,6 +141,11 @@ pub trait Repository {
 
         Ok(false)
     }
+
+    // Insert a new operation
+    fn insert_operation(&mut self, operation: &Operation) -> Result<()>;
+    // Get last operation
+    fn pop_last_operation(&mut self) -> Result<Option<Operation>>;
 
     // Should this word be ignored?
     // This is called when a word is *not* found in the spelling dictionary.
@@ -529,5 +537,19 @@ mod tests {
 
         assert!(repository.unskip_path(project_id, &foo_py).is_err());
 
+    });
+
+    make_tests!(pop_last_operation_returning_none, (repository) => {
+        let actual = repository.pop_last_operation().unwrap();
+        assert!(actual.is_none());
+    });
+
+    use crate::repository::handler::Ignore;
+    make_tests!(pop_last_operation_happy, (repository) => {
+        let ignore_foo = Operation::Ignore(Ignore { word: "foo".to_string() });
+        repository.insert_operation(&ignore_foo).unwrap();
+
+        let actual = repository.pop_last_operation().unwrap().unwrap();
+        assert_eq!(actual, ignore_foo);
     });
 }

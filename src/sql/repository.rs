@@ -1,7 +1,10 @@
 use anyhow::{anyhow, ensure, Context, Result};
+use chrono::prelude::*;
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use directories_next::ProjectDirs;
+
+use crate::repository::Operation;
 
 // Note: we store the paths in the DB using lossy string representation
 // because it's really convenient, although technically not correct
@@ -320,5 +323,41 @@ impl Repository for SQLRepository {
             .with_context(|| "Could not remove file path from skip list")?;
         ensure!(num_rows != 0, "this path was not skipped");
         Ok(())
+    }
+
+    fn insert_operation(&mut self, operation: &Operation) -> Result<()> {
+        let as_json = serde_json::to_string(operation).expect("Could not deserialize operation");
+        let now = Local::now();
+        let new_operation = NewOperation {
+            json: &as_json,
+            date: now.timestamp() as i32,
+        };
+        diesel::insert_into(operations::table)
+            .values(new_operation)
+            .execute(&self.connection)
+            .with_context(|| format!("Could not insert operation '{:?}'", operation))?;
+        Ok(())
+    }
+
+    fn pop_last_operation(&mut self) -> Result<Option<Operation>> {
+        let res = operations::table
+            .order_by(operations::date.desc())
+            .first::<OperationModel>(&self.connection)
+            .optional()
+            .with_context(|| "Could not fetch last operation")?;
+
+        let OperationModel { id, json, .. } = match res {
+            None => return Ok(None),
+            Some(v) => v,
+        };
+
+        diesel::delete(operations::table)
+            .filter(operations::id.eq(id))
+            .execute(&self.connection)
+            .with_context(|| "Could not delete last operation")?;
+
+        let operation: Operation = serde_json::from_str(&json)
+            .with_context(|| "Could not deserialize operation from db")?;
+        Ok(Some(operation))
     }
 }
