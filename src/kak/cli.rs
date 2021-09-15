@@ -8,6 +8,7 @@ use crate::kak::checker::SKYSPELL_PROJECT_OPT;
 use crate::kak::io::KakouneIO;
 use crate::kak::KakouneChecker;
 use crate::os_io::OperatingSystemIO;
+use crate::repository::RepositoryHandler;
 use crate::Checker;
 use crate::ProjectPath;
 use crate::RelativePath;
@@ -124,12 +125,17 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         &self.checker.kakoune_io
     }
 
-    fn repository(&mut self) -> &mut R {
-        &mut self.checker.repository
-    }
-
     fn dictionary(&mut self) -> &mut D {
         &mut self.checker.dictionary
+    }
+
+    fn repository_handler(&mut self) -> &mut RepositoryHandler<R> {
+        &mut self.checker.repository_handler
+    }
+
+    #[cfg(test)]
+    fn repository(&self) -> &dyn Repository {
+        self.checker.repository()
     }
 
     fn add_extension(&mut self) -> Result<()> {
@@ -137,7 +143,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         let (_, ext) = path
             .rsplit_once(".")
             .ok_or_else(|| anyhow!("File has no extension"))?;
-        self.repository().ignore_for_extension(word, ext)?;
+        self.repository_handler().ignore_for_extension(word, ext)?;
         self.recheck();
         self.kakoune_io().print(&format!(
             "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
@@ -151,7 +157,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         let path = &Path::new(path);
         let project = self.checker.project().clone();
         let relative_path = RelativePath::new(project.path(), path)?;
-        self.repository()
+        self.repository_handler()
             .ignore_for_path(word, project.id(), &relative_path)?;
         self.recheck();
         self.kakoune_io().print(&format!(
@@ -163,7 +169,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
 
     fn add_global(&mut self) -> Result<()> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
-        self.repository().ignore(word)?;
+        self.repository_handler().ignore(word)?;
         self.recheck();
         self.kakoune_io()
             .print(&format!("echo '\"{}\" added to global ignore list'", word));
@@ -173,7 +179,8 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
     fn add_project(&mut self) -> Result<()> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
         let project_id = self.checker.project().id();
-        self.repository().ignore_for_project(word, project_id)?;
+        self.repository_handler()
+            .ignore_for_project(word, project_id)?;
         self.recheck();
         self.kakoune_io().print(&format!(
             "echo '\"{}\" added to ignore list for the current project'",
@@ -291,7 +298,8 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         let project_id = project.id();
         let relative_path = RelativePath::new(project.path(), full_path)?;
 
-        self.repository().skip_path(project_id, &relative_path)?;
+        self.repository_handler()
+            .skip_path(project_id, &relative_path)?;
 
         self.recheck();
         println!("echo 'will now skip \"{}\"'", relative_path);
@@ -306,7 +314,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
             .with_context(|| "no file name")?
             .to_string_lossy();
 
-        self.repository().skip_file_name(&file_name)?;
+        self.repository_handler().skip_file_name(&file_name)?;
 
         self.recheck();
         self.kakoune_io().print(&format!(
@@ -362,7 +370,6 @@ mod tests {
     use crate::tests::FakeDictionary;
     use crate::tests::FakeIO;
     use crate::tests::FakeRepository;
-    use crate::Repository;
 
     use tempdir::TempDir;
 

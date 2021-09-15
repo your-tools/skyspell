@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 use crate::kak::io::KakouneIO;
 use crate::os_io::OperatingSystemIO;
+use crate::repository::RepositoryHandler;
 use crate::Checker;
 use crate::{Dictionary, Repository};
 use crate::{Project, ProjectPath, RelativePath};
@@ -22,7 +23,7 @@ pub(crate) struct KakouneChecker<D: Dictionary, R: Repository, S: OperatingSyste
     // borrow checker in KakCli
     pub(crate) project: Project,
     pub(crate) dictionary: D,
-    pub(crate) repository: R,
+    pub(crate) repository_handler: RepositoryHandler<R>,
     pub(crate) kakoune_io: KakouneIO<S>,
     errors: Vec<Error>,
 }
@@ -56,7 +57,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChec
     }
 
     fn repository(&self) -> &dyn Repository {
-        &self.repository
+        &self.repository_handler.repository
     }
 
     fn dictionary(&self) -> &dyn Dictionary {
@@ -76,11 +77,12 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
         kakoune_io: KakouneIO<S>,
     ) -> Result<Self> {
         let project = repository.ensure_project(&project_path)?;
+        let repository_handler = RepositoryHandler::new(repository);
         Ok(Self {
             project,
             dictionary,
             kakoune_io,
-            repository,
+            repository_handler,
             errors: vec![],
         })
     }
