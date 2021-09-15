@@ -228,6 +228,17 @@ def test_skip_file_path(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     assert run_query(tmp_path, "SELECT path FROM skipped_paths") == [("foo.txt",)]
 
 
+def test_undo(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
+    ensure_file(kak_checker, "foo.txt", r"I'm testing skyspell here")
+
+    kak_checker.send_command("skyspell-list")
+    kak_checker.send_keys("a")
+    kak_checker.send_keys("u")
+    kak_checker.send_command("quit")
+
+    assert run_query(tmp_path, "SELECT word FROM ignored") == []
+
+
 def test_skip_file_name(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     ensure_file(kak_checker, "foo.lock", "notaword=42")
 

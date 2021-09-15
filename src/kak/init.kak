@@ -28,6 +28,7 @@ define-command skyspell-hooks %{
   map buffer normal 'f'      ':<space>skyspell-action add-file<ret>'
   map buffer normal 'n'      ':<space>skyspell-action skip-name<ret>'
   map buffer normal 's'      ':<space>skyspell-action skip-file<ret>'
+  map buffer normal 'u'      ':<space>skyspell-undo<ret>'
 }
 
 define-command skyspell-disable %{
@@ -41,6 +42,16 @@ define-command skyspell-check -docstring "check the open buffers for spelling er
     : $kak_opt_skyspell_project
     skyspell --lang $kak_opt_skyspell_lang kak check $kak_buflist
   }
+}
+
+define-command skyspell-undo -docstring "undo last operation" %{
+  evaluate-commands %sh{
+    : $kak_opt_skyspell_lang
+    skyspell --lang $kak_opt_skyspell_lang undo
+  }
+  write-all
+  skyspell-check
+  skyspell-list
 }
 
 define-command -hidden -params 1.. skyspell-action %{
@@ -60,6 +71,7 @@ p : Add the word to the ignore list for the current project
 f : Add the word to the ignore list for this file
 n : Always skip this file name
 s : Always skip this file
+u : Undo last operation
 "
 }
 
