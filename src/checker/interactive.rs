@@ -94,7 +94,11 @@ q : Quit
         loop {
             let letter = self.interactor.input_letter(prompt, "aepfnsxq");
             match letter.as_ref() {
-                "a" => return self.on_global_ignore(error),
+                "a" => {
+                    if self.on_global_ignore(error)? {
+                        break;
+                    }
+                }
                 "e" => {
                     if self.on_extension(path, error)? {
                         break;
@@ -135,10 +139,12 @@ q : Quit
         Ok(())
     }
 
-    fn on_global_ignore(&mut self, error: &str) -> Result<()> {
-        self.repository.ignore(error)?;
+    // Note: this cannot fail, but it's convenient to have it return a
+    // boolean like the other on_* methods
+    fn on_global_ignore(&mut self, error: &str) -> Result<bool> {
+        self.repository_handler.ignore(error)?;
         info_2!("Added {} to the global ignore list", error);
-        Ok(())
+        Ok(true)
     }
 
     fn on_extension(&mut self, relative_path: &RelativePath, error: &str) -> Result<bool> {
