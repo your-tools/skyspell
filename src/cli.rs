@@ -6,6 +6,7 @@ use colored::*;
 
 use crate::kak;
 use crate::kak::io::KakouneIO;
+use crate::repository::RepositoryHandler;
 use crate::StandardIO;
 use crate::TokenProcessor;
 use crate::{Checker, InteractiveChecker, NonInteractiveChecker};
@@ -50,6 +51,7 @@ pub fn run<D: Dictionary, R: Repository>(opts: Opts, dictionary: D, repository: 
         Action::Suggest(opts) => suggest(dictionary, opts),
         Action::Skip(opts) => skip(repository, opts),
         Action::Unskip(opts) => unskip(repository, opts),
+        Action::Undo => undo(repository),
         Action::Kak(opts) => {
             let io = StandardIO;
             let kakoune_io = KakouneIO::new(io);
@@ -97,6 +99,8 @@ enum Action {
     Skip(SkipOpts),
     #[clap(about = "Remove path from the given skipped list")]
     Unskip(UnskipOpts),
+    #[clap(about = "Undo last operation")]
+    Undo,
 
     #[clap(about = "Kakoune actions")]
     Kak(kak::cli::Opts),
@@ -281,6 +285,11 @@ where
 
 fn clean(mut repository: impl Repository) -> Result<()> {
     repository.clean()
+}
+
+fn undo(repository: impl Repository) -> Result<()> {
+    let mut handler = RepositoryHandler::new(repository);
+    handler.undo()
 }
 
 fn import_personal_dict(
