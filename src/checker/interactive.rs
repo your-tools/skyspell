@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use anyhow::{bail, Result};
 use colored::*;
 
+use crate::repository::RepositoryHandler;
 use crate::Checker;
 use crate::Dictionary;
 use crate::Interactor;
@@ -14,7 +15,7 @@ pub(crate) struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository
     project: Project,
     interactor: I,
     dictionary: D,
-    repository: R,
+    repository_handler: RepositoryHandler<R>,
     skipped: HashSet<String>,
 }
 
@@ -38,7 +39,7 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
     }
 
     fn repository(&self) -> &dyn Repository {
-        &self.repository
+        &self.repository_handler.repository
     }
 
     fn handle_error(
@@ -67,11 +68,12 @@ impl<I: Interactor, D: Dictionary, R: Repository> InteractiveChecker<I, D, R> {
         mut repository: R,
     ) -> Result<Self> {
         let project = repository.ensure_project(&project_path)?;
+        let repository_handler = RepositoryHandler::new(repository);
         Ok(Self {
             project,
             dictionary,
             interactor,
-            repository,
+            repository_handler,
             skipped: HashSet::new(),
         })
     }
@@ -156,7 +158,8 @@ q : Quit
             Some(e) => e,
         };
 
-        self.repository.ignore_for_extension(error, &extension)?;
+        self.repository_handler
+            .ignore_for_extension(error, &extension)?;
         info_2!(
             "Added {} to the ignore list for extension '{}'",
             error,
@@ -166,14 +169,14 @@ q : Quit
     }
 
     fn on_project_ignore(&mut self, error: &str) -> Result<bool> {
-        self.repository
+        self.repository_handler
             .ignore_for_project(error, self.project.id())?;
         info_2!("Added {} to the ignore list for the current project", error);
         Ok(true)
     }
 
     fn on_file_ignore(&mut self, error: &str, relative_path: &RelativePath) -> Result<bool> {
-        self.repository
+        self.repository_handler
             .ignore_for_path(error, self.project.id(), relative_path)?;
         info_2!(
             "Added {} to the ignore list for path '{}'",
@@ -192,14 +195,14 @@ q : Quit
             Some(r) => r,
         };
 
-        self.repository.skip_file_name(&file_name)?;
+        self.repository_handler.skip_file_name(&file_name)?;
 
         info_2!("Added '{}' to the list of file names to skip", file_name,);
         Ok(true)
     }
 
     fn on_project_file_skip(&mut self, relative_path: &RelativePath) -> Result<bool> {
-        self.repository
+        self.repository_handler
             .skip_path(self.project().id(), relative_path)?;
         println!(
             "\n{}Added '{}' to the list of files to skip for project: '{}'\n",
@@ -265,12 +268,12 @@ mod tests {
         }
 
         fn is_ignored(&self, word: &str) -> bool {
-            self.checker.repository.is_ignored(word).unwrap()
+            self.checker.repository().is_ignored(word).unwrap()
         }
 
         fn is_skipped_file_name(&self, file_name: &str) -> bool {
             self.checker
-                .repository
+                .repository()
                 .is_skipped_file_name(file_name)
                 .unwrap()
         }
@@ -279,14 +282,14 @@ mod tests {
             let project_id = self.checker.project().id();
             let relative_path = self.to_relative_path(relative_name);
             self.checker
-                .repository
+                .repository()
                 .is_skipped_path(project_id, &relative_path)
                 .unwrap()
         }
 
         fn is_ignored_for_extension(&self, word: &str, extension: &str) -> bool {
             self.checker
-                .repository
+                .repository()
                 .is_ignored_for_extension(word, extension)
                 .unwrap()
         }
@@ -294,7 +297,7 @@ mod tests {
         fn is_ignored_for_project(&self, word: &str) -> bool {
             let project_id = self.checker.project().id();
             self.checker
-                .repository
+                .repository()
                 .is_ignored_for_project(word, project_id)
                 .unwrap()
         }
@@ -303,7 +306,7 @@ mod tests {
             let project_id = self.checker.project().id();
             let relative_path = self.to_relative_path(relative_name);
             self.checker
-                .repository
+                .repository()
                 .is_ignored_for_path(word, project_id, &relative_path)
                 .unwrap()
         }

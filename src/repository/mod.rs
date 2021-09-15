@@ -10,7 +10,7 @@ pub struct ProjectInfo {
 }
 
 mod handler;
-pub use handler::Operation;
+pub use handler::{Operation, RepositoryHandler};
 
 // Note: the crucial difference with Project is that
 // ProjectInfo does *not* contain the ProjectPath struct
