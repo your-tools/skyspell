@@ -12,7 +12,7 @@ keywords = ["spell", "cli", "kakoune"]
 [dependencies]
 anyhow = "1.0.40"
 chrono = "0.4.19"
-clap = "3.0.0-beta.2"
+clap = "3.0.0-beta.4"
 colored = "2.0.0"
 dialoguer = "0.8.0"
 diesel = { version = "1.4.6", features = ["sqlite"] }
