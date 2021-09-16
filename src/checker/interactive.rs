@@ -3,12 +3,12 @@ use std::collections::HashSet;
 use anyhow::{bail, Result};
 use colored::*;
 
+use crate::print_error;
 use crate::repository::RepositoryHandler;
 use crate::Checker;
 use crate::Dictionary;
 use crate::Interactor;
 use crate::Repository;
-use crate::{info_2, print_error};
 use crate::{Project, ProjectPath, RelativePath};
 
 pub(crate) struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository> {
@@ -145,7 +145,6 @@ q : Quit
     // boolean like the other on_* methods
     fn on_global_ignore(&mut self, error: &str) -> Result<bool> {
         self.repository_handler.ignore(error)?;
-        info_2!("Added {} to the global ignore list", error);
         Ok(true)
     }
 
@@ -160,29 +159,18 @@ q : Quit
 
         self.repository_handler
             .ignore_for_extension(error, &extension)?;
-        info_2!(
-            "Added {} to the ignore list for extension '{}'",
-            error,
-            extension
-        );
         Ok(true)
     }
 
     fn on_project_ignore(&mut self, error: &str) -> Result<bool> {
         self.repository_handler
             .ignore_for_project(error, self.project.id())?;
-        info_2!("Added {} to the ignore list for the current project", error);
         Ok(true)
     }
 
     fn on_file_ignore(&mut self, error: &str, relative_path: &RelativePath) -> Result<bool> {
         self.repository_handler
             .ignore_for_path(error, self.project.id(), relative_path)?;
-        info_2!(
-            "Added {} to the ignore list for path '{}'",
-            error,
-            relative_path
-        );
         Ok(true)
     }
 
@@ -197,7 +185,6 @@ q : Quit
 
         self.repository_handler.skip_file_name(&file_name)?;
 
-        info_2!("Added '{}' to the list of file names to skip", file_name,);
         Ok(true)
     }
 
