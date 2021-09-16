@@ -16,6 +16,7 @@ do
     cargo clippy --all-targets -- --deny warnings
     cargo test
     cargo run -- check --non-interactive --project-path . $(fd --type f -E "tests/*")
+    cargo install --path .
     (
       cd tests
       poetry run pytest -n auto
