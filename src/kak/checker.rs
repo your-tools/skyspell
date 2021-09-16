@@ -21,7 +21,7 @@ pub(crate) struct Error {
 pub(crate) struct KakouneChecker<D: Dictionary, R: Repository, S: OperatingSystemIO> {
     // Note: pub(crate) to avoid having to write getters and fight the
     // borrow checker in KakCli
-    pub(crate) project: Project,
+    project: Project,
     pub(crate) dictionary: D,
     pub(crate) repository_handler: RepositoryHandler<R>,
     pub(crate) kakoune_io: KakouneIO<S>,
