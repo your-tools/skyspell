@@ -19,12 +19,12 @@ pub(crate) struct Error {
 }
 
 pub(crate) struct KakouneChecker<D: Dictionary, R: Repository, S: OperatingSystemIO> {
-    // Note: pub(crate) to avoid having to write getters and fight the
-    // borrow checker in KakCli
+    // Note: pub(crate) because KakCli needs read and write access to those fields
+    pub(crate) kakoune_io: KakouneIO<S>,
+    pub(crate) repository_handler: RepositoryHandler<R>,
+
     project: Project,
     dictionary: D,
-    pub(crate) repository_handler: RepositoryHandler<R>,
-    pub(crate) kakoune_io: KakouneIO<S>,
     errors: Vec<Error>,
 }
 
