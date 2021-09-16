@@ -415,11 +415,11 @@ mod tests {
         }
 
         fn add_known(&mut self, word: &str) {
-            self.checker.dictionary.add_known(word);
+            self.checker.add_known(word);
         }
 
         fn add_suggestions(&mut self, word: &str, suggestions: &[String]) {
-            self.checker.dictionary.add_suggestions(word, suggestions);
+            self.checker.add_suggestions(word, suggestions);
         }
     }
 

@@ -22,7 +22,7 @@ pub(crate) struct KakouneChecker<D: Dictionary, R: Repository, S: OperatingSyste
     // Note: pub(crate) to avoid having to write getters and fight the
     // borrow checker in KakCli
     project: Project,
-    pub(crate) dictionary: D,
+    dictionary: D,
     pub(crate) repository_handler: RepositoryHandler<R>,
     pub(crate) kakoune_io: KakouneIO<S>,
     errors: Vec<Error>,
@@ -203,6 +203,14 @@ pub(crate) mod tests {
     impl FakeChecker {
         pub(crate) fn get_output(self) -> String {
             self.kakoune_io.get_output()
+        }
+
+        pub(crate) fn add_known(&mut self, word: &str) {
+            self.dictionary.add_known(word);
+        }
+
+        pub(crate) fn add_suggestions(&mut self, error: &str, suggestions: &[String]) {
+            self.dictionary.add_suggestions(error, suggestions);
         }
 
         pub(crate) fn ensure_path(&self, relative_name: &str) -> RelativePath {
