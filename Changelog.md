@@ -1,3 +1,7 @@
+# Next release
+
+* Add messages to most SQL operations
+
 # 0.5.0 (2021-09-16)
 
 * Implement "undo" for the interactive checker
