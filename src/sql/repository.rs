@@ -120,6 +120,7 @@ impl Repository for SQLRepository {
             .values(new_ignored_words)
             .execute(&self.connection)
             .with_context(|| "Could not insert ignored words")?;
+        info_2!("Inserted {} words the global ignore list", words.len());
         Ok(())
     }
 
@@ -176,7 +177,12 @@ impl Repository for SQLRepository {
             .values(NewIgnoredForProject { word, project_id })
             .execute(&self.connection)
             .with_context(|| "Could not insert ignored word for project")?;
-        info_2!("Added {} to the ignore list for the current project", word);
+        let project_path = self.get_project_path(project_id)?;
+        info_2!(
+            "Added '{}' to the ignore list for project '{}'",
+            word,
+            project_path
+        );
         Ok(())
     }
 
@@ -208,7 +214,7 @@ impl Repository for SQLRepository {
             .execute(&self.connection)
             .with_context(|| "Could not insert ignored word for path")?;
         info_2!(
-            "Added {} to the ignore list for path '{}'",
+            "Added '{}' to the ignore list for path '{}'",
             word,
             relative_path
         );
@@ -260,10 +266,7 @@ impl Repository for SQLRepository {
             })
             .execute(&self.connection)
             .with_context(|| "Could not insert file path to the list of skipped file paths")?;
-        info_2!(
-            "Added '{}' to the list of file paths to skip",
-            relative_path
-        );
+        info_2!("Added '{}' to the list of paths to skip", relative_path);
         Ok(())
     }
 
@@ -285,7 +288,7 @@ impl Repository for SQLRepository {
             .execute(&self.connection)
             .with_context(|| "Could not remove word from global ignored list")?;
         ensure!(num_rows != 0, "word was not globally ignored");
-        info_2!("Remove '{}' from the list of globally ignored words", word);
+        info_2!("Removed '{}' from the list of globally ignored words", word);
         Ok(())
     }
 
@@ -301,7 +304,7 @@ impl Repository for SQLRepository {
             "word was not in the ignore list for the given extension"
         );
         info_2!(
-            "Remove '{}' from the list of ignored words for extension '{}",
+            "Removed '{}' from the list of ignored words for extension '{}'",
             word,
             extension,
         );
@@ -326,7 +329,7 @@ impl Repository for SQLRepository {
             "word was not in the ignore list for the given project and path"
         );
         info_2!(
-            "Remove '{}' from the list of ignored words for path '{}",
+            "Remove '{}' from the list of ignored words for path '{}'",
             word,
             relative_path,
         );
@@ -342,7 +345,7 @@ impl Repository for SQLRepository {
             .with_context(|| "Could not remove word from ignore list for project")?;
         let project_path = self.get_project_path(project_id)?;
         info_2!(
-            "Remove '{}' from the list of ignored words for project '{}",
+            "Removed '{}' from the list of ignored words for project '{}'",
             word,
             project_path,
         );
