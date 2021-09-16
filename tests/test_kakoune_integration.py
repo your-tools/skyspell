@@ -128,10 +128,22 @@ def kak_checker(tmp_path: Path, kitty_window: KittyWindow) -> Iterator[RemoteKak
     kakoune = RemoteKakoune(kitty_window)
     kakoune.send_command("evaluate-commands", "%sh{ skyspell kak init }")
     kakoune.send_command("skyspell-enable", "en_US")
+    kakoune.send_command(
+        "hook",
+        "global",
+        "RuntimeError",
+        ".+",
+        "%{echo -to-file err.txt %val{hook_param}}",
+    )
 
     yield kakoune
 
     kakoune.send_command("quit!")
+    err_txt = tmp_path / "err.txt"
+    if err_txt.exists():
+        pytest.fail(
+            f"Some kakoune errors occurred during the test:\n{err_txt.read_text()}"
+        )
 
 
 def ensure_file(kak_checker: RemoteKakoune, name: str, text: str) -> None:
