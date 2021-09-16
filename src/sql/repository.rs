@@ -1,11 +1,9 @@
 use anyhow::{anyhow, ensure, Context, Result};
 use chrono::prelude::*;
-use colored::*;
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use directories_next::ProjectDirs;
 
-use crate::info_2;
 use crate::repository::Operation;
 
 // Note: we store the paths in the DB using lossy string representation
@@ -50,13 +48,6 @@ impl SQLRepository {
             .with_context(|| format!("Could not connect to {}", url))?;
         embedded_migrations::run(&connection).with_context(|| "Could not migrate db")?;
         Ok(Self { connection })
-    }
-
-    fn get_project_path(&self, project_id: ProjectId) -> Result<String> {
-        let project = projects::table
-            .filter(projects::id.eq(project_id))
-            .first::<ProjectModel>(&self.connection)?;
-        Ok(project.path)
     }
 }
 
@@ -120,7 +111,6 @@ impl Repository for SQLRepository {
             .values(new_ignored_words)
             .execute(&self.connection)
             .with_context(|| "Could not insert ignored words")?;
-        info_2!("Inserted {} words the global ignore list", words.len());
         Ok(())
     }
 
@@ -130,7 +120,6 @@ impl Repository for SQLRepository {
             .values(NewIgnored { word })
             .execute(&self.connection)
             .with_context(|| "Could not insert ignored word")?;
-        info_2!("Added {} to the global ignore list", word);
         Ok(())
     }
 
@@ -151,11 +140,6 @@ impl Repository for SQLRepository {
             .values(NewIgnoredForExtension { word, extension })
             .execute(&self.connection)
             .with_context(|| "Could not insert ignored word for extension")?;
-        info_2!(
-            "Added {} to the ignore list for extension '{}'",
-            word,
-            extension
-        );
         Ok(())
     }
 
@@ -177,12 +161,6 @@ impl Repository for SQLRepository {
             .values(NewIgnoredForProject { word, project_id })
             .execute(&self.connection)
             .with_context(|| "Could not insert ignored word for project")?;
-        let project_path = self.get_project_path(project_id)?;
-        info_2!(
-            "Added '{}' to the ignore list for project '{}'",
-            word,
-            project_path
-        );
         Ok(())
     }
 
@@ -213,11 +191,6 @@ impl Repository for SQLRepository {
             })
             .execute(&self.connection)
             .with_context(|| "Could not insert ignored word for path")?;
-        info_2!(
-            "Added '{}' to the ignore list for path '{}'",
-            word,
-            relative_path
-        );
         Ok(())
     }
 
@@ -244,7 +217,6 @@ impl Repository for SQLRepository {
             .values(NewSkippedFileName { file_name })
             .execute(&self.connection)
             .with_context(|| "Could not insert file name to the list of skipped file names")?;
-        info_2!("Added '{}' to the list of file names to skip", file_name);
         Ok(())
     }
 
@@ -266,7 +238,6 @@ impl Repository for SQLRepository {
             })
             .execute(&self.connection)
             .with_context(|| "Could not insert file path to the list of skipped file paths")?;
-        info_2!("Added '{}' to the list of paths to skip", relative_path);
         Ok(())
     }
 
@@ -282,18 +253,17 @@ impl Repository for SQLRepository {
     }
 
     fn remove_ignored(&mut self, word: &str) -> Result<()> {
-        let word = &word.to_lowercase();
+        let word = word.to_lowercase();
         let num_rows = diesel::delete(ignored::table)
             .filter(ignored::word.eq(word))
             .execute(&self.connection)
             .with_context(|| "Could not remove word from global ignored list")?;
         ensure!(num_rows != 0, "word was not globally ignored");
-        info_2!("Removed '{}' from the list of globally ignored words", word);
         Ok(())
     }
 
     fn remove_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
-        let word = &word.to_lowercase();
+        let word = word.to_lowercase();
         let num_rows = diesel::delete(ignored_for_extension::table)
             .filter(ignored_for_extension::extension.eq(extension))
             .filter(ignored_for_extension::word.eq(word))
@@ -302,11 +272,6 @@ impl Repository for SQLRepository {
         ensure!(
             num_rows != 0,
             "word was not in the ignore list for the given extension"
-        );
-        info_2!(
-            "Removed '{}' from the list of ignored words for extension '{}'",
-            word,
-            extension,
         );
         Ok(())
     }
@@ -317,7 +282,7 @@ impl Repository for SQLRepository {
         project_id: ProjectId,
         relative_path: &RelativePath,
     ) -> Result<()> {
-        let word = &word.to_lowercase();
+        let word = word.to_lowercase();
         let num_rows = diesel::delete(ignored_for_path::table)
             .filter(ignored_for_path::word.eq(word))
             .filter(ignored_for_path::project_id.eq(project_id))
@@ -328,27 +293,16 @@ impl Repository for SQLRepository {
             num_rows != 0,
             "word was not in the ignore list for the given project and path"
         );
-        info_2!(
-            "Remove '{}' from the list of ignored words for path '{}'",
-            word,
-            relative_path,
-        );
         Ok(())
     }
 
     fn remove_ignored_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()> {
-        let word = &word.to_lowercase();
+        let word = word.to_lowercase();
         diesel::delete(ignored_for_project::table)
             .filter(ignored_for_project::word.eq(word))
             .filter(ignored_for_project::project_id.eq(project_id))
             .execute(&self.connection)
             .with_context(|| "Could not remove word from ignore list for project")?;
-        let project_path = self.get_project_path(project_id)?;
-        info_2!(
-            "Removed '{}' from the list of ignored words for project '{}'",
-            word,
-            project_path,
-        );
         Ok(())
     }
 
@@ -358,7 +312,6 @@ impl Repository for SQLRepository {
             .execute(&self.connection)
             .with_context(|| "Could not remove file name from skip list")?;
         ensure!(num_rows != 0, "this file name was not skipped");
-        info_2!("File name '{}' will no longer be skipped", file_name);
         Ok(())
     }
 
@@ -369,7 +322,6 @@ impl Repository for SQLRepository {
             .execute(&self.connection)
             .with_context(|| "Could not remove file path from skip list")?;
         ensure!(num_rows != 0, "this path was not skipped");
-        info_2!("Path '{}' will no longer be skipped", relative_path);
         Ok(())
     }
 
