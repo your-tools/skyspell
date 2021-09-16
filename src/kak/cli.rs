@@ -125,8 +125,8 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         &self.checker.kakoune_io
     }
 
-    fn dictionary(&mut self) -> &mut D {
-        &mut self.checker.dictionary
+    fn dictionary(&self) -> &D {
+        &self.checker.dictionary
     }
 
     fn repository_handler(&mut self) -> &mut RepositoryHandler<R> {
