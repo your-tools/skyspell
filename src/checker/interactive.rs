@@ -145,7 +145,7 @@ q : Quit
     // boolean like the other on_* methods
     fn on_global_ignore(&mut self, error: &str) -> Result<bool> {
         self.repository_handler.ignore(error)?;
-        info_2!("Added {} to the global ignore list", error);
+        info_2!("Added '{}' to the global ignore list", error);
         Ok(true)
     }
 
@@ -161,7 +161,7 @@ q : Quit
         self.repository_handler
             .ignore_for_extension(error, &extension)?;
         info_2!(
-            "Added {} to the ignore list for extension '{}'",
+            "Added '{}' to the ignore list for extension '{}'",
             error,
             extension
         );
@@ -171,7 +171,10 @@ q : Quit
     fn on_project_ignore(&mut self, error: &str) -> Result<bool> {
         self.repository_handler
             .ignore_for_project(error, self.project.id())?;
-        info_2!("Added {} to the ignore list for the current project", error);
+        info_2!(
+            "Added '{}' to the ignore list for the current project",
+            error
+        );
         Ok(true)
     }
 
@@ -179,7 +182,7 @@ q : Quit
         self.repository_handler
             .ignore_for_path(error, self.project.id(), relative_path)?;
         info_2!(
-            "Added {} to the ignore list for path '{}'",
+            "Added '{}' to the ignore list for path '{}'",
             error,
             relative_path
         );
@@ -204,11 +207,9 @@ q : Quit
     fn on_project_file_skip(&mut self, relative_path: &RelativePath) -> Result<bool> {
         self.repository_handler
             .skip_path(self.project().id(), relative_path)?;
-        println!(
-            "\n{}Added '{}' to the list of files to skip for project: '{}'\n",
-            "=> ".blue(),
+        info_2!(
+            "Added '{}' to the list of files to skip for the current project",
             relative_path,
-            &self.project.path().as_str().bold(),
         );
         Ok(true)
     }
