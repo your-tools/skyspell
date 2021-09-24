@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, Lines};
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use regex::{Regex, RegexBuilder};
 
 const GIT_SCISSORS: &str = "# ------------------------ >8 ------------------------";
@@ -83,8 +83,7 @@ impl TokenProcessor {
             .with_context(|| format!("Could not open {} for reading", self.path.display()))?;
         let lines = RelevantLines::new(source, self.path.file_name());
         for (i, line) in lines.enumerate() {
-            let line =
-                line.with_context(|| format!("Error when reading {}", self.path.display()))?;
+            let line = line.map_err(|e| anyhow!("When reading line: {}", e))?;
             let tokenizer = Tokenizer::new(&line);
             for (word, pos) in tokenizer {
                 f(word, i + 1, pos)?
