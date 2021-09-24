@@ -1,6 +1,6 @@
 # Next release
 
-* Add messages to most SQL operations
+* Better error message when files contain invalid UTF-8 data
 
 # 0.5.0 (2021-09-16)
 
