@@ -7,5 +7,8 @@ How to use in CI scripts?
 
 Fix bug when bufname contains spaces
 
+Figure out what to do with the operations tables - which is just
+going to get larger and larger ...
+
 week-end in French is seen as a bad word - and I don't want to
 add both week and end to the global ignore list for French 🤔
