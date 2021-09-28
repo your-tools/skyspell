@@ -1,7 +1,6 @@
 Fix processing \newpage for Latex
 (it finds that 'ewpage' is an error)
 
-Undo?
 
 How to use in CI scripts?
 
