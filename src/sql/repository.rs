@@ -373,7 +373,7 @@ impl Repository for SQLRepository {
 
         if let Some(o) = oldest_operation {
             diesel::delete(operations::table)
-                .filter(operations::date.le(o.date))
+                .filter(operations::date.lt(o.date))
                 .execute(&self.connection)
                 .with_context(|| "Could not delete old operations")?;
         }
@@ -415,7 +415,7 @@ mod tests {
             .first(&sql_repository.connection)
             .unwrap();
 
-        assert_eq!(actual_count, 100);
+        assert_eq!(actual_count, 101);
     }
 
     #[test]
