@@ -9,7 +9,7 @@ pub struct ProjectInfo {
     path: String,
 }
 
-mod handler;
+pub(crate) mod handler;
 pub use handler::{Operation, RepositoryHandler};
 
 // Note: the crucial difference with Project is that
