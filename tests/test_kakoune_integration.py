@@ -27,6 +27,8 @@ class KittyWindow:
                 "kitty-tests",
                 "-o",
                 "allow_remote_control=yes",
+                "-o",
+                "enable_audio_bell=no",
                 "--listen-on",
                 f"unix:{self.socket_path}",
                 "sh",
