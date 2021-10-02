@@ -49,6 +49,11 @@ impl SQLRepository {
         embedded_migrations::run(&connection).with_context(|| "Could not migrate db")?;
         Ok(Self { connection })
     }
+
+    #[cfg(test)]
+    pub(crate) fn in_memory() -> Self {
+        Self::new(":memory:").unwrap()
+    }
 }
 
 impl Repository for SQLRepository {
@@ -388,7 +393,7 @@ mod tests {
 
     #[test]
     fn test_delete_old_operations_when_more_than_100_operations_are_stored() {
-        let mut sql_repository = SQLRepository::new(":memory:").unwrap();
+        let mut sql_repository = SQLRepository::in_memory();
         let values: Vec<_> = (1..=103)
             .map(|i| {
                 let word = format!("foo-{}", i);
@@ -415,7 +420,7 @@ mod tests {
 
     #[test]
     fn test_keep_old_operations_when_less_than_100_operations_are_stored() {
-        let mut sql_repository = SQLRepository::new(":memory:").unwrap();
+        let mut sql_repository = SQLRepository::in_memory();
         let values: Vec<_> = (1..=50)
             .map(|i| {
                 let word = format!("foo-{}", i);

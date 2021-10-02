@@ -312,7 +312,7 @@ mod tests {
 
             #[test]
             fn [<test_sql_repository_ $name>]() {
-                let repository = SQLRepository::new(":memory:").unwrap();
+                let repository = SQLRepository::in_memory();
                 $name(repository)
             }
 
