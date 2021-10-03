@@ -9,8 +9,6 @@ use crate::Checker;
 use crate::{Dictionary, Repository};
 use crate::{Project, ProjectPath, RelativePath};
 
-pub(crate) const SKYSPELL_PROJECT_OPT: &str = "skyspell_project";
-
 pub(crate) struct Error {
     pos: (usize, usize),
     buffer: String,
@@ -232,7 +230,9 @@ pub(crate) mod tests {
         let project = ProjectPath::new(temp_dir.path()).unwrap();
         let dictionary = FakeDictionary::new();
         let repository = FakeRepository::new();
-        let fake_io = new_fake_io();
+        let mut fake_io = new_fake_io();
+        fake_io.set_option("skyspell_project", &project.as_str());
+        fake_io.set_option("skyspell_underline_errors", "false");
         KakouneChecker::new(project, dictionary, repository, fake_io).unwrap()
     }
 

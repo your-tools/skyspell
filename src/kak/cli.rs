@@ -4,7 +4,6 @@ use anyhow::{anyhow, bail, Context, Result};
 use clap::Clap;
 use dirs_next::home_dir;
 
-use crate::kak::checker::SKYSPELL_PROJECT_OPT;
 use crate::kak::io::KakouneIO;
 use crate::kak::KakouneChecker;
 use crate::os_io::OperatingSystemIO;
@@ -89,7 +88,7 @@ pub(crate) fn run<S: OperatingSystemIO>(
         return Ok(());
     }
 
-    let as_str = kakoune_io.get_option(SKYSPELL_PROJECT_OPT)?;
+    let as_str = kakoune_io.get_option("skyspell_project")?;
     let path = PathBuf::from(as_str);
     let project = ProjectPath::new(&path)?;
     let checker = KakouneChecker::new(project, dictionary, repository, kakoune_io)?;
@@ -374,7 +373,6 @@ mod tests {
     fn new_cli(temp_dir: &TempDir) -> FakeCli {
         let fake_checker = new_fake_checker(temp_dir);
         let mut res = KakCli::new(fake_checker);
-        res.set_option("skyspell_project", &temp_dir.path().to_string_lossy());
         res.set_timestamp(42);
         res
     }
@@ -382,10 +380,6 @@ mod tests {
     impl FakeCli {
         fn get_output(self) -> String {
             self.checker.get_output()
-        }
-
-        fn set_option(&mut self, key: &str, value: &str) {
-            self.checker.kakoune_io.set_option(key, value)
         }
 
         fn set_selection(&mut self, selection: &str) {
