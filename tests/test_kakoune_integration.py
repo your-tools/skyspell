@@ -2,6 +2,7 @@ import os
 import re
 import sqlite3
 import subprocess
+import textwrap
 import time
 from pathlib import Path
 from typing import Any, Iterator, List
@@ -148,39 +149,47 @@ def kak_checker(tmp_path: Path, kitty_window: KittyWindow) -> Iterator[RemoteKak
         )
 
 
-def ensure_file(kak_checker: RemoteKakoune, name: str, text: str) -> None:
-    kak_checker.send_command("edit", name)
-    kak_checker.send_keys(rf"I{text}")
-    kak_checker.send_command("write")
+def open_file_with_contents(kak_checker: RemoteKakoune, path: Path, text: str) -> None:
+    path.write_text(text)
+    kak_checker.send_command("edit", str(path))
+    kak_checker.send_command("skyspell-check")
 
 
-def test_no_spelling_errors(kak_checker: RemoteKakoune) -> None:
-    ensure_file(kak_checker, "foo.txt", "There is no mistake there\n")
+def test_no_spelling_errors(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
+    open_file_with_contents(
+        kak_checker, tmp_path / "foo.txt", "There is no mistake there\n"
+    )
     actual = kak_checker.get_option("skyspell_error_count")
     assert actual == "0"
 
 
-def test_jump_to_first_error(kak_checker: RemoteKakoune) -> None:
-    ensure_file(
-        kak_checker, "foo.txt", r"There is a missstake here\nand an othhher one there"
+def test_jump_to_first_error(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
+    open_file_with_contents(
+        kak_checker,
+        tmp_path / "foo.txt",
+        "There is a missstake here\nand an othhher one there",
     )
     kak_checker.send_command("skyspell-list")
     kak_checker.send_keys(r"\n")
     assert kak_checker.get_selection() == "missstake"
 
 
-def test_goto_next(kak_checker: RemoteKakoune) -> None:
-    ensure_file(
-        kak_checker, "foo.txt", r"There is a missstake here\nand an othhher one there"
+def test_goto_next(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
+    open_file_with_contents(
+        kak_checker,
+        tmp_path / "foo.txt",
+        r"There is a missstake here\nand an othhher one there",
     )
     kak_checker.send_keys("gg22l")
     kak_checker.send_command("skyspell-next")
     assert kak_checker.get_selection() == "othhher"
 
 
-def test_goto_previous(kak_checker: RemoteKakoune) -> None:
-    ensure_file(
-        kak_checker, "foo.txt", r"There is a missstake here\nand an othhher one there"
+def test_goto_previous(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
+    open_file_with_contents(
+        kak_checker,
+        tmp_path / "foo.txt",
+        r"There is a missstake here\nand an othhher one there",
     )
     kak_checker.send_keys("gg22l")
     kak_checker.send_command("skyspell-previous")
@@ -188,7 +197,9 @@ def test_goto_previous(kak_checker: RemoteKakoune) -> None:
 
 
 def test_add_global(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
-    ensure_file(kak_checker, "foo.txt", r"I'm testing skyspell here")
+    open_file_with_contents(
+        kak_checker, tmp_path / "foo.txt", r"I'm testing skyspell here"
+    )
 
     kak_checker.send_command("skyspell-list")
     kak_checker.send_keys("a")
@@ -197,7 +208,9 @@ def test_add_global(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
 
 
 def test_add_to_project(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
-    ensure_file(kak_checker, "foo.txt", r"I'm testing skyspell here")
+    open_file_with_contents(
+        kak_checker, tmp_path / "foo.txt", r"I'm testing skyspell here"
+    )
 
     kak_checker.send_command("skyspell-list")
     kak_checker.send_keys("p")
@@ -209,7 +222,9 @@ def test_add_to_project(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
 
 
 def test_add_to_file(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
-    ensure_file(kak_checker, "foo.txt", r"I'm testing skyspell here")
+    open_file_with_contents(
+        kak_checker, tmp_path / "foo.txt", r"I'm testing skyspell here"
+    )
 
     kak_checker.send_command("skyspell-list")
     kak_checker.send_keys("f")
@@ -221,7 +236,9 @@ def test_add_to_file(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
 
 
 def test_add_to_extension(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
-    ensure_file(kak_checker, "foo.rs", "fn function(parameter: type) { body }")
+    open_file_with_contents(
+        kak_checker, tmp_path / "foo.rs", "fn function(parameter: type) { body }"
+    )
 
     kak_checker.send_command("skyspell-list")
     kak_checker.send_keys("e")
@@ -233,7 +250,9 @@ def test_add_to_extension(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
 
 
 def test_skip_file_path(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
-    ensure_file(kak_checker, "foo.txt", r"I'm testing skyspell here")
+    open_file_with_contents(
+        kak_checker, tmp_path / "foo.txt", r"I'm testing skyspell here"
+    )
 
     kak_checker.send_command("skyspell-list")
     kak_checker.send_keys("s")
@@ -243,7 +262,9 @@ def test_skip_file_path(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
 
 
 def test_undo(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
-    ensure_file(kak_checker, "foo.txt", r"I'm testing skyspell here")
+    open_file_with_contents(
+        kak_checker, tmp_path / "foo.txt", r"I'm testing skyspell here"
+    )
 
     kak_checker.send_command("skyspell-list")
     kak_checker.send_keys("a")
@@ -254,7 +275,7 @@ def test_undo(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
 
 
 def test_skip_file_name(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
-    ensure_file(kak_checker, "foo.lock", "notaword=42")
+    open_file_with_contents(kak_checker, tmp_path / "foo.lock", "notaword=42")
 
     kak_checker.send_command("skyspell-list")
     kak_checker.send_keys("n")
@@ -266,7 +287,9 @@ def test_skip_file_name(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
 
 
 def test_replace_with_suggestion(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
-    ensure_file(kak_checker, "foo.txt", "There is a missstake here")
+    open_file_with_contents(
+        kak_checker, tmp_path / "foo.txt", "There is a missstake here"
+    )
 
     kak_checker.send_command("skyspell-next")
     kak_checker.send_command("skyspell-replace")
