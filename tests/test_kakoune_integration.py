@@ -87,8 +87,8 @@ class RemoteKakoune:
         self.send_command("edit", "-existing", "*debug*")
         text = self.kitty_window.get_text()
         matching_lines = [x for x in text.splitlines() if x.startswith(prefix)]
-        assert len(matching_lines) == 1
-        line = matching_lines[0]
+        # If the value has changed, we want the latest
+        line = matching_lines[-1]
         res = line[len(prefix) :]
         self.send_command("buffer-previous")
         return res
