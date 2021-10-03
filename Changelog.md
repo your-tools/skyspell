@@ -1,6 +1,9 @@
 # Next release
 
 * Better error message when files contain invalid UTF-8 data
+* Add option `skyspell_underline_errors` : to use curly underline red
+  for spelling errors. Requires kakoune > 2021.08.28 (after
+  [this commit](https://github.com/mawww/kakoune/commit/3fc8e29d101b4f6eef2538cdbe799bab9859f4b3)
 
 # 0.5.0 (2021-09-16)
 
