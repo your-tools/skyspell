@@ -69,10 +69,10 @@ pub(crate) struct TokenProcessor {
 }
 
 impl TokenProcessor {
-    pub(crate) fn new(path: &Path) -> Result<Self> {
-        Ok(Self {
+    pub(crate) fn new(path: &Path) -> Self {
+        Self {
             path: path.to_path_buf(),
-        })
+        }
     }
 
     pub(crate) fn each_token<F>(&self, mut f: F) -> Result<()>

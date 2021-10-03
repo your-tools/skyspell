@@ -264,7 +264,7 @@ where
             continue;
         }
 
-        let token_processor = TokenProcessor::new(path)?;
+        let token_processor = TokenProcessor::new(path);
         token_processor.each_token(|word, line, column| {
             checker.handle_token(word, &relative_path, &(line, column))
         })?;

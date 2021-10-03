@@ -233,7 +233,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
                 continue;
             }
 
-            let token_processor = TokenProcessor::new(source_path)?;
+            let token_processor = TokenProcessor::new(source_path);
             token_processor.each_token(|word, line, column| {
                 self.checker.handle_token(
                     word,
