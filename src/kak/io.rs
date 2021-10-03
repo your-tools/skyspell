@@ -31,6 +31,10 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
         self.os_io.get_env_var(&key)
     }
 
+    pub(crate) fn get_boolean_option(&self, name: &str) -> Result<bool> {
+        self.get_option(name).map(|x| x == "true")
+    }
+
     pub(crate) fn parse_usize(&self, v: &str) -> Result<usize> {
         v.parse()
             .map_err(|_| anyhow!("could not parse '{}' as a positive number", v))

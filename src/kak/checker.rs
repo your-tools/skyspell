@@ -167,6 +167,13 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
 
     fn write_ranges(&self, timestamp: usize) {
         for (buffer, group) in &self.errors.iter().group_by(|e| &e.buffer) {
+            if self
+                .kakoune_io
+                .get_boolean_option("skyspell_underline_errors")
+                .expect("skyspell_underline_errors should always be set")
+            {
+                self.print(&format!("set-face buffer={} Error ,,red+c\n", buffer));
+            }
             self.print(&format!(
                 "set-option buffer={} spell_errors {} ",
                 buffer, timestamp

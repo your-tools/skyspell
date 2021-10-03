@@ -3,6 +3,7 @@ declare-option str skyspell_project
 declare-option range-specs spell_errors
 declare-option int skyspell_error_count
 declare-option str skyspell_word_to_add
+declare-option bool skyspell_underline_errors
 
 define-command -params 1 skyspell-enable %{
   evaluate-commands %sh{
@@ -40,6 +41,7 @@ define-command skyspell-check -docstring "check the open buffers for spelling er
   evaluate-commands %sh{
     : $kak_timestamp
     : $kak_opt_skyspell_project
+    : $kak_opt_skyspell_underline_errors
     skyspell --lang $kak_opt_skyspell_lang kak check $kak_buflist
   }
 }
