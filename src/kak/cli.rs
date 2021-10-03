@@ -11,7 +11,6 @@ use crate::os_io::OperatingSystemIO;
 use crate::repository::RepositoryHandler;
 use crate::Checker;
 use crate::ProjectPath;
-use crate::RelativePath;
 use crate::TokenProcessor;
 use crate::{Dictionary, Repository};
 
@@ -154,9 +153,8 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
 
     fn add_file(&mut self) -> Result<()> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
-        let path = &Path::new(path);
-        let project = self.checker.project().clone();
-        let relative_path = RelativePath::new(project.path(), path)?;
+        let project = &self.checker.project().clone();
+        let relative_path = project.as_relative_path(path)?;
         self.repository_handler()
             .ignore_for_path(word, project.id(), &relative_path)?;
         self.recheck();
@@ -292,14 +290,11 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
 
     fn skip_file(&mut self) -> Result<()> {
         let LineSelection { path, .. } = &self.parse_line_selection()?;
-        // We know it's a full path thanks to handle_error in KakouneChecker
-        let full_path = Path::new(path);
-        let project = self.checker.project();
-        let project_id = project.id();
-        let relative_path = RelativePath::new(project.path(), full_path)?;
+        let project = self.checker.project().clone();
+        let relative_path = project.as_relative_path(path)?;
 
         self.repository_handler()
-            .skip_path(project_id, &relative_path)?;
+            .skip_path(project.id(), &relative_path)?;
 
         self.recheck();
         println!("echo 'will now skip \"{}\"'", relative_path);
@@ -365,6 +360,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
 mod tests {
 
     use super::*;
+    use crate::project::RelativePath;
 
     use crate::kak::checker::tests::new_fake_checker;
     use crate::tests::FakeDictionary;

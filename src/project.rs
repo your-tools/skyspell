@@ -21,6 +21,10 @@ impl Project {
         &self.path
     }
 
+    pub(crate) fn as_relative_path(&self, path: &str) -> Result<RelativePath> {
+        RelativePath::new(self.path(), Path::new(path))
+    }
+
     pub(crate) fn id(&self) -> ProjectId {
         self.id
     }
