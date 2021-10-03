@@ -1,3 +1,9 @@
+// Note: we store the paths in the DB using lossy string representation
+// because it's really convenient, although technically not correct
+//
+// An other option would be to store the OsStr representation as binary
+// in the DB
+
 use anyhow::{anyhow, ensure, Context, Result};
 use chrono::prelude::*;
 use diesel::prelude::*;
@@ -5,13 +11,6 @@ use diesel::sqlite::SqliteConnection;
 use directories_next::ProjectDirs;
 
 use crate::repository::Operation;
-
-// Note: we store the paths in the DB using lossy string representation
-// because it's really convenient, although technically not correct
-//
-// An other option would be to store the OsStr representation as binary
-// in the DB
-
 use crate::repository::{ProjectInfo, Repository};
 use crate::sql::models::*;
 use crate::sql::schema::*;
