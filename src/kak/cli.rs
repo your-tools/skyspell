@@ -123,6 +123,10 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         &self.checker.kakoune_io
     }
 
+    fn print(&self, message: &str) {
+        self.kakoune_io().print(message)
+    }
+
     fn dictionary(&self) -> &dyn Dictionary {
         self.checker.dictionary()
     }
@@ -143,7 +147,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
             .ok_or_else(|| anyhow!("File has no extension"))?;
         self.repository_handler().ignore_for_extension(word, ext)?;
         self.recheck();
-        self.kakoune_io().print(&format!(
+        self.print(&format!(
             "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
             word, ext,
         ));
@@ -157,7 +161,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         self.repository_handler()
             .ignore_for_path(word, project.id(), &relative_path)?;
         self.recheck();
-        self.kakoune_io().print(&format!(
+        self.print(&format!(
             "echo '\"{}\" added to the ignore list for file: \"{}\"'",
             word, relative_path
         ));
@@ -168,8 +172,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
         self.repository_handler().ignore(word)?;
         self.recheck();
-        self.kakoune_io()
-            .print(&format!("echo '\"{}\" added to global ignore list'", word));
+        self.print(&format!("echo '\"{}\" added to global ignore list'", word));
         Ok(())
     }
 
@@ -179,7 +182,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         self.repository_handler()
             .ignore_for_project(word, project_id)?;
         self.recheck();
-        self.kakoune_io().print(&format!(
+        self.print(&format!(
             "echo '\"{}\" added to ignore list for the current project'",
             word
         ));
@@ -190,8 +193,8 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         let LineSelection {
             path, selection, ..
         } = self.parse_line_selection()?;
-        self.kakoune_io().print(&format!("edit {}\n", path));
-        self.kakoune_io().print(&format!("select {}\n", selection));
+        self.print(&format!("edit {}\n", path));
+        self.print(&format!("select {}\n", selection));
         Ok(())
     }
 
@@ -210,8 +213,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
             }
 
             // cleanup any errors that may have been set during last run
-            self.kakoune_io()
-                .print(&format!("unset-option buffer={} spell_errors\n", bufname));
+            self.print(&format!("unset-option buffer={} spell_errors\n", bufname));
 
             let full_path = bufname.replace("~", home_dir);
             let source_path = Path::new(&full_path);
@@ -270,7 +272,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
             None => return Ok(()),
             Some(x) => x,
         };
-        self.kakoune_io().print(&format!(
+        self.print(&format!(
             "select {line}.{start},{line}.{end}\n",
             line = line,
             start = start,
@@ -296,7 +298,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
             .skip_path(project.id(), &relative_path)?;
 
         self.recheck();
-        println!("echo 'will now skip \"{}\"'", relative_path);
+        self.print(&format!("echo 'will now skip \"{}\"\n'", relative_path));
         Ok(())
     }
 
@@ -311,7 +313,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         self.repository_handler().skip_file_name(&file_name)?;
 
         self.recheck();
-        self.kakoune_io().print(&format!(
+        self.print(&format!(
             "echo 'will now skip file named: \"{}\"'",
             file_name
         ));
@@ -333,25 +335,24 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
             bail!("No suggestions found");
         }
 
-        self.kakoune_io().print("menu ");
+        self.print("menu ");
         for suggestion in suggestions.iter() {
-            self.kakoune_io().print(&format!("%{{{}}} ", suggestion));
-            self.kakoune_io().print(&format!(
+            self.print(&format!("%{{{}}} ", suggestion));
+            self.print(&format!(
                 "%{{execute-keys -itersel %{{c{}<esc>be}} ",
                 suggestion
             ));
-            self.kakoune_io()
-                .print(":write <ret> :skyspell-check <ret>}");
-            self.kakoune_io().print(" ");
+            self.print(":write <ret> :skyspell-check <ret>}");
+            self.print(" ");
         }
 
         Ok(())
     }
 
     fn recheck(&self) {
-        self.kakoune_io().print("write-all\n");
-        self.kakoune_io().print("skyspell-check\n");
-        self.kakoune_io().print("skyspell-list\n");
+        self.print("write-all\n");
+        self.print("skyspell-check\n");
+        self.print("skyspell-list\n");
     }
 }
 
