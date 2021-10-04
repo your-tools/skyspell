@@ -220,7 +220,7 @@ mod tests {
 
     use super::*;
 
-    use tempdir::TempDir;
+    use tempfile::TempDir;
 
     use crate::tests::{FakeDictionary, FakeInteractor, FakeRepository};
 
@@ -321,7 +321,10 @@ mod tests {
 
     #[test]
     fn test_adding_token_to_global_ignore() {
-        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         app.add_known(&["hello", "world"]);
         app.push_text("a");
@@ -336,7 +339,10 @@ mod tests {
 
     #[test]
     fn test_adding_token_to_extension() {
-        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         app.add_known(&["hello", "world"]);
         app.push_text("e");
@@ -351,7 +357,10 @@ mod tests {
 
     #[test]
     fn test_adding_token_to_project() {
-        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         app.push_text("p");
 
@@ -365,7 +374,10 @@ mod tests {
 
     #[test]
     fn test_ignore_token_to_project_file() {
-        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         app.push_text("f");
 
@@ -379,7 +391,10 @@ mod tests {
 
     #[test]
     fn test_adding_to_skipped_file_names() {
-        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         app.add_known(&["hello", "world"]);
         app.push_text("n");
@@ -394,7 +409,10 @@ mod tests {
 
     #[test]
     fn test_adding_to_skipped_paths() {
-        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         app.push_text("s");
 
@@ -408,7 +426,10 @@ mod tests {
 
     #[test]
     fn test_remember_skipped_tokens() {
-        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         app.add_known(&["hello", "world"]);
         app.push_text("x");

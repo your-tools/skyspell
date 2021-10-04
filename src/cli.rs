@@ -356,7 +356,7 @@ mod tests {
     use crate::tests::FakeDictionary;
     use crate::{ProjectPath, RelativePath};
 
-    use tempdir::TempDir;
+    use tempfile::TempDir;
 
     fn open_repository(temp_dir: &TempDir) -> SQLRepository {
         SQLRepository::new(&TestApp::db_path(temp_dir)).unwrap()
@@ -420,7 +420,10 @@ mod tests {
 
     #[test]
     fn test_add_global() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let app = TestApp::new(&temp_dir);
 
         app.run(&["add", "foo"]).unwrap();
@@ -431,7 +434,10 @@ mod tests {
 
     #[test]
     fn test_add_for_project_happy() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         let project = app.new_project_path(&temp_dir, "project");
 
@@ -447,7 +453,10 @@ mod tests {
 
     #[test]
     fn test_add_for_extension() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let app = TestApp::new(&temp_dir);
         TestApp::ensure_file(&temp_dir, "project", "foo.py");
 
@@ -459,7 +468,10 @@ mod tests {
 
     #[test]
     fn test_add_for_relative_path() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
         let project = app.new_project_path(&temp_dir, "project");
@@ -483,7 +495,10 @@ mod tests {
 
     #[test]
     fn test_remove_global() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         app.repository.ignore("foo").unwrap();
 
@@ -495,7 +510,10 @@ mod tests {
 
     #[test]
     fn test_remove_for_project() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         let project = app.new_project_path(&temp_dir, "project");
         app.repository.new_project(&project).unwrap();
@@ -516,7 +534,10 @@ mod tests {
 
     #[test]
     fn test_remove_for_relative_path() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
         let project = app.new_project_path(&temp_dir, "project");
@@ -544,7 +565,10 @@ mod tests {
 
     #[test]
     fn test_remove_for_extension() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         TestApp::ensure_file(&temp_dir, "project", "foo.py");
         app.repository.ignore_for_extension("foo", "py").unwrap();
@@ -557,7 +581,10 @@ mod tests {
 
     #[test]
     fn test_check_errors_in_two_files() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         let project = app.new_project_path(&temp_dir, "project");
         let (foo_full, _) = TestApp::ensure_file(&temp_dir, "project", "foo.md");
@@ -584,7 +611,10 @@ mod tests {
 
     #[test]
     fn test_check_happy() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         let project = app.new_project_path(&temp_dir, "project");
         let (foo_full, _) = TestApp::ensure_file(&temp_dir, "project", "foo.md");
@@ -608,7 +638,10 @@ mod tests {
 
     #[test]
     fn test_skip_relative_path() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
         let project = app.new_project_path(&temp_dir, "project");
@@ -629,7 +662,10 @@ mod tests {
 
     #[test]
     fn test_skip_file_name() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let app = TestApp::new(&temp_dir);
 
         app.run(&["skip", "--file-name", "Cargo.lock"]).unwrap();
@@ -640,7 +676,10 @@ mod tests {
 
     #[test]
     fn test_unskip_relative_path() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
         let project = app.new_project_path(&temp_dir, "project");
@@ -662,7 +701,10 @@ mod tests {
 
     #[test]
     fn test_unskip_file_name() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         app.repository.skip_file_name("Cargo.lock").unwrap();
 
@@ -674,7 +716,10 @@ mod tests {
 
     #[test]
     fn test_suggest() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         app.dictionary
             .add_suggestions("hel", &["hello".to_string(), "hell".to_string()]);
@@ -684,7 +729,10 @@ mod tests {
 
     #[test]
     fn test_clean() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut app = TestApp::new(&temp_dir);
         let project1 = app.new_project_path(&temp_dir, "project1");
         app.repository.new_project(&project1).unwrap();

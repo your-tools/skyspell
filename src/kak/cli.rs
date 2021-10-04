@@ -367,7 +367,7 @@ mod tests {
     use crate::tests::FakeIO;
     use crate::tests::FakeRepository;
 
-    use tempdir::TempDir;
+    use tempfile::TempDir;
 
     type FakeCli = KakCli<FakeDictionary, FakeRepository, FakeIO>;
 
@@ -416,7 +416,10 @@ mod tests {
 
     #[test]
     fn test_parse_line_selection() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut cli = new_cli(&temp_dir);
         cli.ensure_path("foo.py");
         let full_path = format!("{}/foo.py", temp_dir.path().display());
@@ -436,7 +439,10 @@ mod tests {
 
     #[test]
     fn test_recheck() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let cli = new_cli(&temp_dir);
         cli.recheck();
         assert_eq!(
@@ -451,7 +457,10 @@ skyspell-list
 
     #[test]
     fn test_get_project() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let cli = new_cli(&temp_dir);
         let actual = cli.checker.project().path();
         assert_eq!(actual.as_ref(), temp_dir.path());
@@ -459,7 +468,10 @@ skyspell-list
 
     #[test]
     fn test_add_extension() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut cli = new_cli(&temp_dir);
         cli.ensure_path("foo.py");
         let full_path = format!("{}/foo.py", temp_dir.path().display());
@@ -475,7 +487,10 @@ skyspell-list
 
     #[test]
     fn test_add_file() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut cli = new_cli(&temp_dir);
         let foo_py = cli.ensure_path("foo.py");
         let full_path = format!("{}/foo.py", temp_dir.path().display());
@@ -492,7 +507,10 @@ skyspell-list
 
     #[test]
     fn test_add_global() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut cli = new_cli(&temp_dir);
         cli.ensure_path("foo.py");
         let full_path = format!("{}/foo.py", temp_dir.path().display());
@@ -505,7 +523,10 @@ skyspell-list
 
     #[test]
     fn test_add_project() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut cli = new_cli(&temp_dir);
         let project_id = cli.checker.project().id();
         cli.ensure_path("foo.py");
@@ -522,7 +543,10 @@ skyspell-list
 
     #[test]
     fn test_jump() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut cli = new_cli(&temp_dir);
         cli.ensure_path("foo.py");
         let full_path = format!("{}/foo.py", temp_dir.path().display());
@@ -545,7 +569,10 @@ select 1.3,1.5
 
     #[test]
     fn test_check_no_errors() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let project_path = temp_dir.path().to_string_lossy();
         let mut cli = new_cli(&temp_dir);
         cli.ensure_path("foo.py");
@@ -577,7 +604,10 @@ echo -markup {project_path}: {{green}}No spelling errors
 
     #[test]
     fn test_check_errors_in_two_buffers() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let project_path = temp_dir.path().to_string_lossy();
         let mut cli = new_cli(&temp_dir);
         cli.ensure_path("foo.md");
@@ -619,7 +649,10 @@ echo -markup {project_path}: {{red}}3 spelling errors
 
     #[test]
     fn test_goto_next_error() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut cli = new_cli(&temp_dir);
         let move_opts = MoveOpts {
             range_spec: "42 1.9,1.11|Error".to_string(),
@@ -633,7 +666,10 @@ echo -markup {project_path}: {{red}}3 spelling errors
 
     #[test]
     fn test_goto_previous_error() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut cli = new_cli(&temp_dir);
         let move_opts = MoveOpts {
             range_spec: "42 1.9,1.11|Error".to_string(),
@@ -647,7 +683,10 @@ echo -markup {project_path}: {{red}}3 spelling errors
 
     #[test]
     fn test_skip_file() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut cli = new_cli(&temp_dir);
         let project_id = cli.checker.project().id();
         let foo_py = cli.ensure_path("foo.py");
@@ -664,7 +703,10 @@ echo -markup {project_path}: {{red}}3 spelling errors
 
     #[test]
     fn test_skip_name() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut cli = new_cli(&temp_dir);
         cli.ensure_path("Cargo.lock");
         let lock_path = format!("{}/Cargo.lock", temp_dir.path().display());
@@ -677,7 +719,10 @@ echo -markup {project_path}: {{red}}3 spelling errors
 
     #[test]
     fn test_suggest_on_error() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut cli = new_cli(&temp_dir);
         cli.add_suggestions("hllo", &["hell".to_string(), "hello".to_string()]);
         cli.set_selection("hllo");
@@ -695,7 +740,10 @@ menu \
 
     #[test]
     fn test_suggest_on_new_line_selection() {
-        let temp_dir = TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut cli = new_cli(&temp_dir);
         cli.set_selection("\n");
 

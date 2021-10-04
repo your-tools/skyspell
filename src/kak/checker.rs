@@ -196,7 +196,7 @@ pub(crate) mod tests {
 
     use super::*;
 
-    use tempdir::TempDir;
+    use tempfile::TempDir;
 
     use crate::kak::io::tests::new_fake_io;
     use crate::tests::FakeIO;
@@ -238,7 +238,10 @@ pub(crate) mod tests {
 
     #[test]
     fn test_write_errors_in_spelling_buffer() {
-        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut checker = new_fake_checker(&temp_dir);
         let hello_js = checker.ensure_path("hello.js");
         checker.ensure_path("hello.js");
@@ -258,7 +261,10 @@ execute-keys \\% <ret> d i %{{{}/hello.js: 2.5,2.7 foo<ret>}} <esc> gg
 
     #[test]
     fn test_write_errors_as_buffer_options() {
-        let temp_dir = tempdir::TempDir::new("test-skyspell").unwrap();
+        let temp_dir = tempfile::Builder::new()
+            .prefix("test-skyspell")
+            .tempdir()
+            .unwrap();
         let mut checker = new_fake_checker(&temp_dir);
         let foo_js = checker.ensure_path("foo.js");
         let bar_js = checker.ensure_path("bar.js");
