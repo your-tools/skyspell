@@ -123,14 +123,10 @@ def kitty_window(tmp_path: Path) -> Iterator[KittyWindow]:
 
 @pytest.fixture
 def kak_checker(tmp_path: Path, kitty_window: KittyWindow) -> Iterator[RemoteKakoune]:
-    # Set db path
     db_path = tmp_path / "tests.db"
     kitty_window.send_text(fr"cd {tmp_path} \n")
-    kitty_window.send_text(fr"export SKYSPELL_DB_PATH={db_path}\n")
 
     kakoune = RemoteKakoune(kitty_window)
-    kakoune.send_command("evaluate-commands", "%sh{ skyspell kak init }")
-    kakoune.send_command("skyspell-enable", "en_US")
     kakoune.send_command(
         "hook",
         "global",
@@ -138,6 +134,9 @@ def kak_checker(tmp_path: Path, kitty_window: KittyWindow) -> Iterator[RemoteKak
         ".+",
         "%{echo -to-file err.txt %val{hook_param}}",
     )
+    kakoune.send_command("evaluate-commands", "%sh{ skyspell-kak init }")
+    kakoune.send_command("set-option", "global", "skyspell_db_path", str(db_path))
+    kakoune.send_command("skyspell-enable", "en_US")
 
     yield kakoune
 

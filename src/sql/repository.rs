@@ -23,10 +23,6 @@ pub struct SQLRepository {
 }
 
 pub fn get_default_db_path(lang: &str) -> Result<String> {
-    if let Ok(from_env) = std::env::var("SKYSPELL_DB_PATH") {
-        return Ok(from_env);
-    }
-
     let project_dirs = ProjectDirs::from("info", "dmerej", "skyspell").ok_or_else(|| {
         anyhow!("Need a home directory to get application directories for skyspell")
     })?;

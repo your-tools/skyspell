@@ -4,10 +4,10 @@ use anyhow::{bail, Result};
 use clap::Clap;
 use colored::*;
 
-use crate::kak;
-use crate::kak::io::KakouneIO;
+use crate::print_error;
 use crate::repository::RepositoryHandler;
-use crate::StandardIO;
+use crate::sql::{get_default_db_path, SQLRepository};
+use crate::EnchantDictionary;
 use crate::TokenProcessor;
 use crate::{Checker, InteractiveChecker, NonInteractiveChecker};
 use crate::{ConsoleInteractor, Dictionary, Repository};
@@ -41,7 +41,30 @@ macro_rules! print_error {
     })
 }
 
-pub fn run<D: Dictionary, R: Repository>(opts: Opts, dictionary: D, repository: R) -> Result<()> {
+pub fn main() -> Result<()> {
+    let opts: Opts = Opts::parse();
+    let lang = match &opts.lang {
+        Some(s) => s,
+        None => "en_US",
+    };
+
+    let db_path = match opts.db_path.as_ref() {
+        Some(s) => Ok(s.to_string()),
+        None => get_default_db_path(lang),
+    }?;
+
+    let repository = SQLRepository::new(&db_path)?;
+    let mut broker = enchant::Broker::new();
+    let dictionary = EnchantDictionary::new(&mut broker, lang)?;
+    if let Err(e) = run(opts, dictionary, repository) {
+        print_error!("{}", e);
+        std::process::exit(1);
+    }
+    Ok(())
+}
+
+// NOTE: we keep this generic function to test the non-interactive cli
+fn run<D: Dictionary, R: Repository>(opts: Opts, dictionary: D, repository: R) -> Result<()> {
     match opts.action {
         Action::Add(opts) => add(repository, opts),
         Action::Remove(opts) => remove(repository, opts),
@@ -52,15 +75,6 @@ pub fn run<D: Dictionary, R: Repository>(opts: Opts, dictionary: D, repository: 
         Action::Skip(opts) => skip(repository, opts),
         Action::Unskip(opts) => unskip(repository, opts),
         Action::Undo => undo(repository),
-        Action::Kak(opts) => {
-            let io = StandardIO;
-            let kakoune_io = KakouneIO::new(io);
-            if let Err(e) = kak::cli::run(repository, dictionary, kakoune_io, opts) {
-                println!("echo -markup {{Error}}{}", e);
-                return Err(e);
-            }
-            Ok(())
-        }
     }
 }
 
@@ -101,9 +115,6 @@ enum Action {
     Unskip(UnskipOpts),
     #[clap(about = "Undo last operation")]
     Undo,
-
-    #[clap(about = "Kakoune actions")]
-    Kak(kak::cli::Opts),
 }
 
 #[derive(Clap)]

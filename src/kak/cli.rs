@@ -5,10 +5,13 @@ use clap::Clap;
 use dirs_next::home_dir;
 
 use crate::kak::io::KakouneIO;
+use crate::kak::new_kakoune_io;
 use crate::kak::KakouneChecker;
 use crate::os_io::OperatingSystemIO;
 use crate::repository::RepositoryHandler;
+use crate::sql::{get_default_db_path, SQLRepository};
 use crate::Checker;
+use crate::EnchantDictionary;
 use crate::ProjectPath;
 use crate::TokenProcessor;
 use crate::{Dictionary, Repository};
@@ -18,7 +21,14 @@ use crate::{Dictionary, Repository};
 // function in crate::kak::io for debugging instead of dbg! or println!
 
 #[derive(Clap)]
-pub(crate) struct Opts {
+pub struct Opts {
+    #[clap(
+        long,
+        about = "Language to use",
+        long_about = "Language to use - must match an installed dictionary for one of Enchant's providers"
+    )]
+    pub lang: Option<String>,
+
     #[clap(subcommand)]
     action: Action,
 }
@@ -52,6 +62,9 @@ enum Action {
     PreviousError(MoveOpts),
     #[clap(about = "Jump to the next error")]
     NextError(MoveOpts),
+
+    #[clap(about = "Undo last operation")]
+    Undo,
 }
 
 #[derive(Clap)]
@@ -76,25 +89,37 @@ enum Direction {
     Backward,
 }
 
-pub(crate) fn run<S: OperatingSystemIO>(
-    repository: impl Repository,
-    dictionary: impl Dictionary,
-    kakoune_io: KakouneIO<S>,
-    opts: Opts,
-) -> Result<()> {
+pub fn main() -> Result<()> {
+    let opts: Opts = Opts::parse();
     // Note: init is the only command that does not require a KakouneChecker
     if matches!(opts.action, Action::Init) {
         print!("{}", include_str!("init.kak"));
         return Ok(());
     }
 
-    let as_str = kakoune_io.get_option("skyspell_project")?;
-    let path = PathBuf::from(as_str);
-    let project = ProjectPath::new(&path)?;
+    let kakoune_io = new_kakoune_io();
+
+    let lang = &kakoune_io.get_option("skyspell_lang")?;
+
+    let db_path_option = kakoune_io.get_option("skyspell_db_path")?;
+    let db_path = if db_path_option.is_empty() {
+        get_default_db_path(lang)?
+    } else {
+        db_path_option
+    };
+
+    kakoune_io.debug(&format!("Using db path: {}", db_path));
+
+    let repository = SQLRepository::new(&db_path)?;
+    let mut broker = enchant::Broker::new();
+    let dictionary = EnchantDictionary::new(&mut broker, lang)?;
+    let project_as_str = kakoune_io.get_option("skyspell_project")?;
+    let project_path = PathBuf::from(project_as_str);
+    let project = ProjectPath::new(&project_path)?;
     let checker = KakouneChecker::new(project, dictionary, repository, kakoune_io)?;
     let mut cli = KakCli::new(checker);
 
-    match opts.action {
+    let outcome = match opts.action {
         Action::AddExtension => cli.add_extension(),
         Action::AddFile => cli.add_file(),
         Action::AddGlobal => cli.add_global(),
@@ -106,8 +131,15 @@ pub(crate) fn run<S: OperatingSystemIO>(
         Action::SkipFile => cli.skip_file(),
         Action::SkipName => cli.skip_name(),
         Action::Suggest => cli.suggest(),
+        Action::Undo => cli.undo(),
         _ => unreachable!(),
+    };
+
+    if let Err(e) = outcome {
+        println!("echo -markup {{Error}}{}", e);
+        return Err(e);
     }
+    Ok(())
 }
 
 struct KakCli<D: Dictionary, R: Repository, S: OperatingSystemIO> {
@@ -347,6 +379,10 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         }
 
         Ok(())
+    }
+
+    fn undo(&mut self) -> Result<()> {
+        self.repository_handler().undo()
     }
 
     fn recheck(&self) {

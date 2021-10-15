@@ -26,7 +26,7 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
         self.os_io.get_env_var(key)
     }
 
-    pub(crate) fn get_option(&self, name: &str) -> Result<String> {
+    pub fn get_option(&self, name: &str) -> Result<String> {
         let key = format!("kak_opt_{}", name);
         self.os_io.get_env_var(&key)
     }

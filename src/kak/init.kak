@@ -4,6 +4,7 @@ declare-option range-specs spell_errors
 declare-option int skyspell_error_count
 declare-option str skyspell_word_to_add
 declare-option bool skyspell_underline_errors
+declare-option str skyspell_db_path
 
 define-command -params 1 skyspell-enable %{
   evaluate-commands %sh{
@@ -42,14 +43,17 @@ define-command skyspell-check -docstring "check the open buffers for spelling er
     : $kak_timestamp
     : $kak_opt_skyspell_project
     : $kak_opt_skyspell_underline_errors
-    skyspell --lang $kak_opt_skyspell_lang kak check $kak_buflist
+    : $kak_opt_skyspell_db_path
+    skyspell-kak --lang $kak_opt_skyspell_lang check $kak_buflist
   }
 }
 
 define-command skyspell-undo -docstring "undo last operation" %{
   evaluate-commands %sh{
     : $kak_opt_skyspell_lang
-    skyspell --lang $kak_opt_skyspell_lang undo
+    : $kak_opt_skyspell_project
+    : $kak_opt_skyspell_db_path
+    skyspell-kak --lang $kak_opt_skyspell_lang undo
   }
   write-all
   skyspell-check
@@ -61,7 +65,8 @@ define-command -hidden -params 1.. skyspell-action %{
   evaluate-commands %sh{
     : $kak_selection
     : $kak_opt_skyspell_project
-    skyspell --lang $kak_opt_skyspell_lang kak $*
+    : $kak_opt_skyspell_db_path
+    skyspell-kak --lang $kak_opt_skyspell_lang $*
   }
 }
 
@@ -87,18 +92,20 @@ define-command skyspell-list -docstring "list spelling errors" %{
 define-command skyspell-next -docstring "go to the next spelling error" %{
    evaluate-commands %sh{
      : $kak_opt_skyspell_project
+     : $kak_opt_skyspell_db_path
      : $kak_cursor_line
      : $kak_cursor_column
-     skyspell --lang $kak_opt_skyspell_lang kak next-error "${kak_opt_spell_errors}"
+     skyspell-kak --lang $kak_opt_skyspell_lang next-error "${kak_opt_spell_errors}"
    }
 }
 
 define-command skyspell-previous -docstring "go to the previous spelling error" %{
    evaluate-commands %sh{
      : $kak_opt_skyspell_project
+     : $kak_opt_skyspell_db_path
      : $kak_cursor_line
      : $kak_cursor_column
-     skyspell --lang $kak_opt_skyspell_lang kak previous-error "${kak_opt_spell_errors}"
+     skyspell-kak --lang $kak_opt_skyspell_lang previous-error "${kak_opt_spell_errors}"
    }
 }
 
@@ -118,8 +125,9 @@ define-command skyspell-replace -docstring "replace the selection with a suggest
 
   evaluate-commands %sh{
     : $kak_opt_skyspell_project
+    : $kak_opt_skyspell_db_path
     : $kak_selection
-    skyspell --lang $kak_opt_skyspell_lang kak suggest
+    skyspell-kak --lang $kak_opt_skyspell_lang suggest
   }
 
 }
