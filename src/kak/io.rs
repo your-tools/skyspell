@@ -19,7 +19,7 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
 
     #[allow(dead_code)]
     pub(crate) fn debug(&self, message: &str) {
-        self.os_io.print(&format!("echo -debug {}", message));
+        self.os_io.print(&format!("echo -debug {}\n", message));
     }
 
     pub(crate) fn get_variable(&self, key: &str) -> Result<String> {

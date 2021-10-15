@@ -41,7 +41,7 @@ fn test_debug() {
     let kakoune_io = new_fake_io();
     kakoune_io.debug("This is a debug message");
     let actual = kakoune_io.get_output();
-    assert_eq!(actual, "echo -debug This is a debug message");
+    assert_eq!(actual, "echo -debug This is a debug message\n");
 }
 
 #[test]
