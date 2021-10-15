@@ -1,4 +1,14 @@
-# Next release
+# 0.6.0 (2021-10-15)
+
+* **Breaking**: The `SKYSPELL_DB_PATH` environment variable is no longer taken into account
+* **Breaking**: Change syntax for kakoune integration:
+
+```diff
+  evaluate-commands %sh{
+- skyspell kak init
++ skyspell-kak init  # < note the '-' instead of the space
+  }
+```
 
 * Better error message when files contain invalid UTF-8 data
 * Add option `skyspell_underline_errors` : to use curly underline red
