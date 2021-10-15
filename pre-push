@@ -19,6 +19,7 @@ do
     cargo install --path .
     (
       cd tests
+      poetry install
       poetry run pytest -n auto
      )
   fi
