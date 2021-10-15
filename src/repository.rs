@@ -32,6 +32,7 @@ impl ProjectInfo {
         &self.path
     }
 }
+
 pub trait Repository {
     // Add the list of words to the global ignore list
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()>;
