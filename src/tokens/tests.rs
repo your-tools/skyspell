@@ -101,6 +101,13 @@ fn test_backslash_3() {
 }
 
 #[test]
+fn test_c_escapes() {
+    let text = r"one\ntwo\rthree\tfour";
+    let actual = get_tokens(text);
+    assert_eq!(&actual, &["one", "two", "three", "four"]);
+}
+
+#[test]
 fn test_latex() {
     let text = r"\section{First chapter}";
     let actual = get_tokens(text);

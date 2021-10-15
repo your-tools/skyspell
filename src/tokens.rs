@@ -55,11 +55,11 @@ lazy_static! {
         # A word is just a bunch of unicode characters matching
         # the Alphabetic group, possibly inside space escapes like
         # \n or \t, and possibly containing exactly one apostrophe
-        (\\[nt])*
+        (\\[nrt])*
         (
             \p{Alphabetic}+ ' \p{Alphabetic}+ | (\p{Alphabetic}+)
         )
-        (\\[nt])*
+        (\\[nrt])*
         "
     ).ignore_whitespace(true).build().expect("syntax error in static regex");
 }
