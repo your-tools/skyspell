@@ -50,7 +50,7 @@ lazy_static! {
 
     // One we've skipped tokens, we want to match any word
     // inside
-    static ref IDENT_RE: Regex = RegexBuilder::new(
+    static ref IDENT_RE_DEFAULT: Regex = RegexBuilder::new(
         r"
         # A word is just a bunch of unicode characters matching
         # the Alphabetic group, possibly inside space escapes like
@@ -62,16 +62,43 @@ lazy_static! {
         (\\[nrt])*
         "
     ).ignore_whitespace(true).build().expect("syntax error in static regex");
+
+
+    static ref IDENT_RE_NO_C_ESCAPE: Regex = RegexBuilder::new(
+        r"
+        # Same as IDENT_RE, without handling \n, \r or \t
+        \p{Alphabetic}+ ' \p{Alphabetic}+ | (\p{Alphabetic}+)
+        "
+    ).ignore_whitespace(true).build().expect("syntax error in static regex");
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ExtractMode {
+    Default,
+    NoCEscape,
+}
+
+impl ExtractMode {
+    fn from_path_ext(p: &Path) -> Self {
+        if let Some(e) = p.extension() {
+            if e == "tex" {
+                return ExtractMode::NoCEscape;
+            }
+        }
+        ExtractMode::Default
+    }
 }
 
 pub(crate) struct TokenProcessor {
     path: PathBuf,
+    extract_mode: ExtractMode,
 }
 
 impl TokenProcessor {
     pub(crate) fn new(path: &Path) -> Self {
         Self {
             path: path.to_path_buf(),
+            extract_mode: ExtractMode::from_path_ext(path),
         }
     }
 
@@ -84,7 +111,7 @@ impl TokenProcessor {
         let lines = RelevantLines::new(source, self.path.file_name());
         for (i, line) in lines.enumerate() {
             let line = line.map_err(|e| anyhow!("When reading line: {}", e))?;
-            let tokenizer = Tokenizer::new(&line);
+            let tokenizer = Tokenizer::new(&line, self.extract_mode);
             for (word, pos) in tokenizer {
                 f(word, i + 1, pos)?
             }
@@ -126,11 +153,16 @@ impl Iterator for RelevantLines {
 struct Tokenizer<'a> {
     input: &'a str,
     pos: usize,
+    extract_mode: ExtractMode,
 }
 
 impl<'a> Tokenizer<'a> {
-    fn new(input: &'a str) -> Self {
-        Self { input, pos: 0 }
+    fn new(input: &'a str, extract_mode: ExtractMode) -> Self {
+        Self {
+            input,
+            pos: 0,
+            extract_mode,
+        }
     }
 }
 
@@ -147,7 +179,7 @@ impl<'a> Iterator for Tokenizer<'a> {
             let token_match = captures.get(0).unwrap();
             let token = token_match.as_str();
             let start = token_match.range().start;
-            let next_word = extract_word(token);
+            let next_word = extract_word(token, self.extract_mode);
             if let Some((w, pos)) = next_word {
                 let res = (w, self.pos + start + pos);
                 self.pos += start + pos + w.len();
@@ -159,7 +191,7 @@ impl<'a> Iterator for Tokenizer<'a> {
     }
 }
 
-fn extract_word(token: &str) -> Option<(&str, usize)> {
+fn extract_word(token: &str, extract_mode: ExtractMode) -> Option<(&str, usize)> {
     // Plural constants
     if token == "s" {
         return None;
@@ -179,8 +211,13 @@ fn extract_word(token: &str) -> Option<(&str, usize)> {
         return None;
     }
 
-    if let Some(captures) = IDENT_RE.captures(token) {
-        let ident_match = captures.get(2).unwrap();
+    let (captures, index) = match extract_mode {
+        ExtractMode::NoCEscape => (IDENT_RE_NO_C_ESCAPE.captures(token), 0),
+        ExtractMode::Default => (IDENT_RE_DEFAULT.captures(token), 2),
+    };
+
+    if let Some(captures) = captures {
+        let ident_match = captures.get(index).unwrap();
         let pos = ident_match.start();
         let ident = ident_match.as_str();
         return word_from_ident(ident, pos);
