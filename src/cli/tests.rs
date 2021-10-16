@@ -2,7 +2,6 @@ use super::*;
 
 use crate::sql::SQLRepository;
 use crate::tests::FakeDictionary;
-use crate::Ignore;
 use crate::{ProjectPath, RelativePath};
 
 use tempfile::TempDir;

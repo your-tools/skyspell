@@ -3,7 +3,6 @@ use tempfile::TempDir;
 
 use crate::sql::SQLRepository;
 use crate::tests::FakeRepository;
-use crate::Ignore;
 
 use super::*;
 
@@ -406,9 +405,9 @@ make_tests!(pop_last_operation_returning_none, (repository) => {
     assert!(actual.is_none());
 });
 
-use crate::repository::handler::Ignore as IgnoreOperation;
+use crate::repository::handler::Ignore;
 make_tests!(pop_last_operation_happy, (repository) => {
-    let ignore_foo = Operation::Ignore(IgnoreOperation { word: "foo".to_string() });
+    let ignore_foo = Operation::Ignore(Ignore { word: "foo".to_string() });
     repository.insert_operation(&ignore_foo).unwrap();
 
     let actual = repository.pop_last_operation().unwrap().unwrap();

@@ -14,7 +14,6 @@ use crate::repository::Operation;
 use crate::repository::{ProjectInfo, Repository};
 use crate::sql::models::*;
 use crate::sql::schema::*;
-use crate::Ignore;
 use crate::{ProjectId, ProjectPath, RelativePath};
 
 diesel_migrations::embed_migrations!("migrations");
@@ -49,82 +48,6 @@ impl SQLRepository {
     #[cfg(test)]
     pub(crate) fn in_memory() -> Self {
         Self::new(":memory:").unwrap()
-    }
-}
-
-impl Ignore for SQLRepository {
-    fn is_ignored(&self, word: &str) -> Result<bool> {
-        let word = word.to_lowercase();
-        Ok(ignored::table
-            .filter(ignored::word.eq(word))
-            .select(ignored::id)
-            .first::<i32>(&self.connection)
-            .optional()
-            .with_context(|| "Error when checking if word is ignored")?
-            .is_some())
-    }
-
-    fn is_ignored_for_extension(&self, word: &str, extension: &str) -> Result<bool> {
-        let word = &word.to_lowercase();
-        Ok(ignored_for_extension::table
-            .filter(ignored_for_extension::word.eq(word))
-            .filter(ignored_for_extension::extension.eq(extension))
-            .select(ignored_for_extension::id)
-            .first::<i32>(&self.connection)
-            .optional()
-            .with_context(|| "Error when checking if word is ignored for extension")?
-            .is_some())
-    }
-
-    fn is_ignored_for_project(&self, word: &str, project_id: ProjectId) -> Result<bool> {
-        let word = &word.to_lowercase();
-        Ok(ignored_for_project::table
-            .filter(ignored_for_project::project_id.eq(project_id))
-            .filter(ignored_for_project::word.eq(word))
-            .select(ignored_for_project::id)
-            .first::<i32>(&self.connection)
-            .optional()
-            .with_context(|| "Error when checking if word is ignored for project")?
-            .is_some())
-    }
-
-    fn is_ignored_for_path(
-        &self,
-        word: &str,
-        project_id: ProjectId,
-        relative_path: &RelativePath,
-    ) -> Result<bool> {
-        let word = &word.to_lowercase();
-        Ok(ignored_for_path::table
-            .filter(ignored_for_path::project_id.eq(project_id))
-            .filter(ignored_for_path::word.eq(word))
-            .filter(ignored_for_path::path.eq(relative_path.as_str()))
-            .select(ignored_for_path::id)
-            .first::<i32>(&self.connection)
-            .optional()
-            .with_context(|| "Error when checking if word is ignored for given path")?
-            .is_some())
-    }
-
-    fn is_skipped_file_name(&self, file_name: &str) -> Result<bool> {
-        Ok(skipped_file_names::table
-            .filter(skipped_file_names::file_name.eq(file_name))
-            .select(skipped_file_names::id)
-            .first::<i32>(&self.connection)
-            .optional()
-            .with_context(|| "Error when checking if file name should be skipped")?
-            .is_some())
-    }
-
-    fn is_skipped_path(&self, project_id: ProjectId, relative_path: &RelativePath) -> Result<bool> {
-        Ok(skipped_paths::table
-            .filter(skipped_paths::project_id.eq(project_id))
-            .filter(skipped_paths::path.eq(relative_path.as_str()))
-            .select(skipped_paths::id)
-            .first::<i32>(&self.connection)
-            .optional()
-            .with_context(|| "Error when checking if path is skipped")?
-            .is_some())
     }
 }
 
@@ -200,6 +123,17 @@ impl Repository for SQLRepository {
         Ok(())
     }
 
+    fn is_ignored(&self, word: &str) -> Result<bool> {
+        let word = word.to_lowercase();
+        Ok(ignored::table
+            .filter(ignored::word.eq(word))
+            .select(ignored::id)
+            .first::<i32>(&self.connection)
+            .optional()
+            .with_context(|| "Error when checking if word is ignored")?
+            .is_some())
+    }
+
     fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
         let word = &word.to_lowercase();
         diesel::insert_or_ignore_into(ignored_for_extension::table)
@@ -209,6 +143,18 @@ impl Repository for SQLRepository {
         Ok(())
     }
 
+    fn is_ignored_for_extension(&self, word: &str, extension: &str) -> Result<bool> {
+        let word = &word.to_lowercase();
+        Ok(ignored_for_extension::table
+            .filter(ignored_for_extension::word.eq(word))
+            .filter(ignored_for_extension::extension.eq(extension))
+            .select(ignored_for_extension::id)
+            .first::<i32>(&self.connection)
+            .optional()
+            .with_context(|| "Error when checking if word is ignored for extension")?
+            .is_some())
+    }
+
     fn ignore_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()> {
         let word = &word.to_lowercase();
         diesel::insert_or_ignore_into(ignored_for_project::table)
@@ -216,6 +162,18 @@ impl Repository for SQLRepository {
             .execute(&self.connection)
             .with_context(|| "Could not insert ignored word for project")?;
         Ok(())
+    }
+
+    fn is_ignored_for_project(&self, word: &str, project_id: ProjectId) -> Result<bool> {
+        let word = &word.to_lowercase();
+        Ok(ignored_for_project::table
+            .filter(ignored_for_project::project_id.eq(project_id))
+            .filter(ignored_for_project::word.eq(word))
+            .select(ignored_for_project::id)
+            .first::<i32>(&self.connection)
+            .optional()
+            .with_context(|| "Error when checking if word is ignored for project")?
+            .is_some())
     }
 
     fn ignore_for_path(
@@ -236,6 +194,24 @@ impl Repository for SQLRepository {
         Ok(())
     }
 
+    fn is_ignored_for_path(
+        &self,
+        word: &str,
+        project_id: ProjectId,
+        relative_path: &RelativePath,
+    ) -> Result<bool> {
+        let word = &word.to_lowercase();
+        Ok(ignored_for_path::table
+            .filter(ignored_for_path::project_id.eq(project_id))
+            .filter(ignored_for_path::word.eq(word))
+            .filter(ignored_for_path::path.eq(relative_path.as_str()))
+            .select(ignored_for_path::id)
+            .first::<i32>(&self.connection)
+            .optional()
+            .with_context(|| "Error when checking if word is ignored for given path")?
+            .is_some())
+    }
+
     fn skip_file_name(&mut self, file_name: &str) -> Result<()> {
         diesel::insert_or_ignore_into(skipped_file_names::table)
             .values(NewSkippedFileName { file_name })
@@ -243,6 +219,17 @@ impl Repository for SQLRepository {
             .with_context(|| "Could not insert file name to the list of skipped file names")?;
         Ok(())
     }
+
+    fn is_skipped_file_name(&self, file_name: &str) -> Result<bool> {
+        Ok(skipped_file_names::table
+            .filter(skipped_file_names::file_name.eq(file_name))
+            .select(skipped_file_names::id)
+            .first::<i32>(&self.connection)
+            .optional()
+            .with_context(|| "Error when checking if file name should be skipped")?
+            .is_some())
+    }
+
     fn skip_path(&mut self, project_id: ProjectId, relative_path: &RelativePath) -> Result<()> {
         diesel::insert_or_ignore_into(skipped_paths::table)
             .values(NewSkippedPath {
@@ -252,6 +239,17 @@ impl Repository for SQLRepository {
             .execute(&self.connection)
             .with_context(|| "Could not insert file path to the list of skipped file paths")?;
         Ok(())
+    }
+
+    fn is_skipped_path(&self, project_id: ProjectId, relative_path: &RelativePath) -> Result<bool> {
+        Ok(skipped_paths::table
+            .filter(skipped_paths::project_id.eq(project_id))
+            .filter(skipped_paths::path.eq(relative_path.as_str()))
+            .select(skipped_paths::id)
+            .first::<i32>(&self.connection)
+            .optional()
+            .with_context(|| "Error when checking if path is skipped")?
+            .is_some())
     }
 
     fn remove_ignored(&mut self, word: &str) -> Result<()> {
