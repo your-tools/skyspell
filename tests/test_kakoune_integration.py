@@ -177,7 +177,7 @@ def test_goto_next(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     open_file_with_contents(
         kak_checker,
         tmp_path / "foo.txt",
-        r"There is a missstake here\nand an othhher one there",
+        "There is a missstake here\nand an othhher one there",
     )
     kak_checker.send_keys("gg22l")
     kak_checker.send_command("skyspell-next")
