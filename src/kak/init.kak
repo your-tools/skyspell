@@ -61,7 +61,7 @@ define-command skyspell-undo -docstring "undo last operation" %{
 }
 
 define-command -hidden -params 1.. skyspell-action %{
-  execute-keys gi GL
+  execute-keys gi Gl
   evaluate-commands %sh{
     : $kak_selection
     : $kak_opt_skyspell_project
