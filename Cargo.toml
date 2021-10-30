@@ -2,7 +2,7 @@
 name = "skyspell"
 version = "0.6.0"
 authors = ["Dimitri Merejkowsky <dimitri@dmerej.info>"]
-edition = "2018"
+edition = "2021"
 readme = "README.md"
 description = "Command line spell checker with Kakoune integration"
 repository = "https://git.sr.ht/~dmerej/skyspell"
