@@ -108,10 +108,11 @@ impl TokenProcessor {
         F: FnMut(&str, usize, usize) -> Result<()>,
     {
         let source = File::open(&self.path)
-            .with_context(|| format!("Could not open {} for reading", self.path.display()))?;
+            .with_context(|| format!("Could not open '{}' for reading", self.path.display()))?;
         let lines = RelevantLines::new(source, self.path.file_name());
         for (i, line) in lines.enumerate() {
-            let line = line.map_err(|e| anyhow!("When reading line: {}", e))?;
+            let line = line
+                .map_err(|e| anyhow!("When reading line from '{}': {}", self.path.display(), e))?;
             let tokenizer = Tokenizer::new(&line, self.extract_mode);
             for (word, pos) in tokenizer {
                 f(word, i + 1, pos)?
