@@ -24,6 +24,7 @@ lazy_static! {
     // We want to match HTTP in HTTPError
     static ref ABBREV_RE: Regex = RegexBuilder::new(
         r"
+            ^
             (\p{Lu}+)   # Some upper case letters
             \p{Lu}      # An uppercase letter
             \p{Ll}      # A lower case letter

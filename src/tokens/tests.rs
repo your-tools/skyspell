@@ -164,6 +164,13 @@ fn test_split_abbrev_3() {
 }
 
 #[test]
+fn test_split_abbrev_4() {
+    let text = "ArchivedHTMLTweet";
+    let actual = get_tokens_default(text);
+    assert_eq!(&actual, &["Archived", "HTML", "Tweet"]);
+}
+
+#[test]
 fn test_single_upper_case_letter() {
     let text = "I am";
     let actual = get_tokens_default(text);
