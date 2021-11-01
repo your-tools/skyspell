@@ -1,3 +1,11 @@
+# 0.6.1 (2021-11-01)
+
+* Bump to Rust 2021 edition
+* Fix splitting text in tokens when an abbreviation is in the middle of
+  the identifier
+* Fix when using latest Kakoune
+* Improve error message when trying to spell check binary files
+
 # 0.6.0 (2021-10-15)
 
 * **Breaking**: The `SKYSPELL_DB_PATH` environment variable is no longer taken into account
