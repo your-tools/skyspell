@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::{bail, Result};
-use clap::Clap;
+use clap::Parser;
 use colored::*;
 
 use crate::print_error;
@@ -78,7 +78,7 @@ fn run<D: Dictionary, R: Repository>(opts: Opts, dictionary: D, repository: R) -
     }
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 #[clap(version = env!("CARGO_PKG_VERSION"))]
 pub struct Opts {
     #[clap(
@@ -95,7 +95,7 @@ pub struct Opts {
     action: Action,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 enum Action {
     #[clap(about = "Add word to one of the ignore lists")]
     Add(AddOpts),
@@ -117,7 +117,7 @@ enum Action {
     Undo,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct AddOpts {
     #[clap(long, about = "Project path")]
     project_path: Option<PathBuf>,
@@ -131,7 +131,7 @@ struct AddOpts {
     relative_path: Option<PathBuf>,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct CheckOpts {
     #[clap(long, about = "Project path")]
     project_path: PathBuf,
@@ -143,13 +143,13 @@ struct CheckOpts {
     sources: Vec<PathBuf>,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct ImportPersonalDictOpts {
     #[clap(long)]
     personal_dict_path: PathBuf,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct SkipOpts {
     #[clap(long, about = "Project path")]
     project_path: Option<PathBuf>,
@@ -161,7 +161,7 @@ struct SkipOpts {
     file_name: Option<String>,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct UnskipOpts {
     #[clap(long, about = "Project path")]
     project_path: Option<PathBuf>,
@@ -173,12 +173,12 @@ struct UnskipOpts {
     file_name: Option<String>,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct SuggestOpts {
     word: String,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct RemoveOpts {
     #[clap(long, about = "Project path")]
     project_path: Option<PathBuf>,

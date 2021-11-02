@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail, Context, Result};
-use clap::Clap;
+use clap::Parser;
 use dirs_next::home_dir;
 
 use crate::kak::io::KakouneIO;
@@ -20,7 +20,7 @@ use crate::{Dictionary, Repository};
 // called will be interpreted as a Kakoune command. Use the debug()
 // function in crate::kak::io for debugging instead of dbg! or println!
 
-#[derive(Clap)]
+#[derive(Parser)]
 pub struct Opts {
     #[clap(
         long,
@@ -33,7 +33,7 @@ pub struct Opts {
     action: Action,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 enum Action {
     #[clap(about = "Add selection to the global ignore list")]
     AddGlobal,
@@ -67,12 +67,12 @@ enum Action {
     Undo,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct CheckOpts {
     buflist: Vec<String>,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct MoveOpts {
     range_spec: String,
 }
