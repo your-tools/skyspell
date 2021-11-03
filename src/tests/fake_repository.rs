@@ -45,7 +45,7 @@ impl Repository for FakeRepository {
         let res = self
             .projects
             .get(&project_path.to_string())
-            .ok_or_else(|| anyhow!("Could not get project ID for {}, project"))?;
+            .ok_or_else(|| anyhow!("Could not get project ID for {}", project_path))?;
         Ok(*res)
     }
 
