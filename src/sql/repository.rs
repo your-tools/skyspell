@@ -5,7 +5,6 @@
 // in the DB
 
 use anyhow::{anyhow, ensure, Context, Result};
-use chrono::prelude::*;
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use directories_next::ProjectDirs;
@@ -327,10 +326,12 @@ impl Repository for SQLRepository {
 
     fn insert_operation(&mut self, operation: &Operation) -> Result<()> {
         let as_json = serde_json::to_string(operation).expect("Could not deserialize operation");
-        let now = Local::now();
+        let now = time::OffsetDateTime::now_utc();
+        // TODO: potential bug - yes!
+        let timestamp = now.unix_timestamp() as i32;
         let new_operation = NewOperation {
             json: &as_json,
-            date: now.timestamp() as i32,
+            date: timestamp,
         };
         diesel::insert_into(operations::table)
             .values(new_operation)
