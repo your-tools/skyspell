@@ -34,7 +34,7 @@ table! {
     operations (id) {
         id -> Integer,
         json -> Text,
-        date -> Integer,
+        timestamp -> BigInt,
     }
 }
 
