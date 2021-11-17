@@ -1,9 +1,8 @@
-Fix processing \newpage for Latex
-(it finds that 'ewpage' is an error)
-
 Get rid of the Repository trait ?
 
 How to use in CI scripts?
+
+kak: try to use an other face for errors
 
 week-end in French is seen as a bad word - and I don't want to
 add both week and end to the global ignore list for French 🤔
