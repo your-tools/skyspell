@@ -15,8 +15,9 @@ do
     cargo clippy -- -D clippy::unwrap_used
     cargo clippy --all-targets -- --deny warnings
     cargo test
-    cargo run -- check --non-interactive --project-path . $(fd --type f -E "tests/*")
-    cargo install --path . --locked
+    cargo run --bin skyspell -- check --non-interactive --project-path . $(fd --type f -E "tests/*")
+    cargo install --locked --path crates/cli/
+    cargo install --locked --path crates/kak/
     (
       cd tests
       poetry install

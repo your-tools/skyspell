@@ -572,7 +572,6 @@ dependencies = [
  "clap",
  "dialoguer",
  "enchant",
- "itertools",
  "lazy_static",
  "paste",
  "pathdiff",
@@ -584,6 +583,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "skyspell_kak"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "dirs-next",
+ "enchant",
+ "itertools",
+ "skyspell_core",
+ "skyspell_sql",
+]
+
+[[package]]
 name = "skyspell_sql"
 version = "0.1.0"
 dependencies = [
@@ -592,7 +604,6 @@ dependencies = [
  "diesel",
  "diesel_migrations",
  "directories-next",
- "dirs-next",
  "serde",
  "serde_json",
  "skyspell_core",

@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.40"
 directories-next = "2.0.0"
-dirs-next = "2.0.0"
 chrono = "0.4.19"
 diesel_migrations = "1.4.0"
 diesel = { version = "1.4.8", features = ["sqlite"] }
