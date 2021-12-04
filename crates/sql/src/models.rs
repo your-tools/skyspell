@@ -57,12 +57,12 @@ pub struct ProjectModel {
 #[table_name = "operations"]
 pub(crate) struct NewOperation<'a> {
     pub json: &'a str,
-    pub date: i32,
+    pub timestamp: i64,
 }
 
 #[derive(Queryable)]
 pub struct OperationModel {
     pub id: i32,
     pub json: String,
-    pub date: i32,
+    pub timestamp: i64,
 }

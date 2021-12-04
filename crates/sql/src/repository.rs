@@ -5,7 +5,6 @@
 // in the DB
 
 use anyhow::{anyhow, ensure, Context, Result};
-use chrono::prelude::*;
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use directories_next::ProjectDirs;
@@ -326,10 +325,11 @@ impl Repository for SQLRepository {
 
     fn insert_operation(&mut self, operation: &Operation) -> Result<()> {
         let as_json = serde_json::to_string(operation).expect("Could not deserialize operation");
-        let now = Local::now();
+        let now = time::OffsetDateTime::now_utc();
+        let timestamp = now.unix_timestamp() as i64;
         let new_operation = NewOperation {
             json: &as_json,
-            date: now.timestamp() as i32,
+            timestamp,
         };
         diesel::insert_into(operations::table)
             .values(new_operation)
@@ -343,7 +343,7 @@ impl Repository for SQLRepository {
         // we might as well delete old entries, making sure to only
         // keep the most recent values
         let res = operations::table
-            .order_by(operations::date.desc())
+            .order_by(operations::timestamp.desc())
             .first::<OperationModel>(&self.connection)
             .optional()
             .with_context(|| "Could not fetch last operation")?;
@@ -359,7 +359,7 @@ impl Repository for SQLRepository {
             .with_context(|| "Could not delete last operation")?;
 
         let oldest_operation = operations::table
-            .order_by(operations::date.desc())
+            .order_by(operations::timestamp.desc())
             .offset(100)
             .first::<OperationModel>(&self.connection)
             .optional()
@@ -367,7 +367,7 @@ impl Repository for SQLRepository {
 
         if let Some(o) = oldest_operation {
             diesel::delete(operations::table)
-                .filter(operations::date.lt(o.date))
+                .filter(operations::timestamp.lt(o.timestamp))
                 .execute(&self.connection)
                 .with_context(|| "Could not delete old operations")?;
         }
