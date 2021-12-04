@@ -553,12 +553,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "skyspell"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "colored",
+ "enchant",
+ "skyspell_core",
+ "skyspell_sql",
+]
+
+[[package]]
 name = "skyspell_core"
 version = "0.6.1"
 dependencies = [
  "anyhow",
  "clap",
- "colored",
  "dialoguer",
  "enchant",
  "itertools",

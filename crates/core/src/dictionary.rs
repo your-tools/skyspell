@@ -40,4 +40,3 @@ impl Dictionary for EnchantDictionary {
         &self.lang
     }
 }
-

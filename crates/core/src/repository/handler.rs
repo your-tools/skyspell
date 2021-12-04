@@ -8,11 +8,11 @@ use crate::RelativePath;
 use crate::Repository;
 
 pub struct RepositoryHandler<R: Repository> {
-    pub(crate) repository: R,
+    pub repository: R,
 }
 
 impl<R: Repository> RepositoryHandler<R> {
-    pub(crate) fn new(repository: R) -> Self {
+    pub fn new(repository: R) -> Self {
         Self { repository }
     }
 
@@ -21,33 +21,33 @@ impl<R: Repository> RepositoryHandler<R> {
         self.repository.insert_operation(&operation)
     }
 
-    pub(crate) fn undo(&mut self) -> Result<()> {
+    pub fn undo(&mut self) -> Result<()> {
         let last_operation = self.repository.pop_last_operation()?;
         let mut last_operation = last_operation.ok_or_else(|| anyhow!("Nothing to undo"))?;
         last_operation.undo(&mut self.repository)
     }
 
-    pub(crate) fn ignore(&mut self, word: &str) -> Result<()> {
+    pub fn ignore(&mut self, word: &str) -> Result<()> {
         self.run(Operation::Ignore(Ignore {
             word: word.to_string(),
         }))
     }
 
-    pub(crate) fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
+    pub fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
         self.run(Operation::IgnoreForExtension(IgnoreForExtension {
             word: word.to_string(),
             extension: extension.to_string(),
         }))
     }
 
-    pub(crate) fn ignore_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()> {
+    pub fn ignore_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()> {
         self.run(Operation::IgnoreForProject(IgnoreForProject {
             word: word.to_string(),
             project_id,
         }))
     }
 
-    pub(crate) fn ignore_for_path(
+    pub fn ignore_for_path(
         &mut self,
         word: &str,
         project_id: ProjectId,
@@ -60,13 +60,13 @@ impl<R: Repository> RepositoryHandler<R> {
         }))
     }
 
-    pub(crate) fn skip_file_name(&mut self, file_name: &str) -> Result<()> {
+    pub fn skip_file_name(&mut self, file_name: &str) -> Result<()> {
         self.run(Operation::SkipFileName(SkipFileName {
             file_name: file_name.to_string(),
         }))
     }
 
-    pub(crate) fn skip_path(&mut self, project_id: ProjectId, path: &RelativePath) -> Result<()> {
+    pub fn skip_path(&mut self, project_id: ProjectId, path: &RelativePath) -> Result<()> {
         self.run(Operation::SkipPath(SkipPath {
             project_id,
             path: path.clone(),
@@ -74,7 +74,7 @@ impl<R: Repository> RepositoryHandler<R> {
     }
 
     #[cfg(test)]
-    pub(crate) fn is_skipped_file_name(&mut self, file_name: &str) -> Result<bool> {
+    pub fn is_skipped_file_name(&mut self, file_name: &str) -> Result<bool> {
         self.repository.is_skipped_file_name(file_name)
     }
 }

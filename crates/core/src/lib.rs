@@ -2,7 +2,7 @@
 extern crate lazy_static;
 
 pub use checker::Checker;
-use dictionary::Dictionary;
+pub use dictionary::Dictionary;
 pub use dictionary::EnchantDictionary;
 pub use interactor::{ConsoleInteractor, Interactor};
 pub use os_io::StandardIO;
