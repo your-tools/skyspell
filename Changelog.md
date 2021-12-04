@@ -1,7 +1,9 @@
 # 0.7.0
 
-* Split code into separate crates. This means you now need to install `skyspell_kak` in
+* **Breaking** Split code into separate crates. This means you now need to install `skyspell_kak` in
   order to use the Kakoune integration.
+* **Breaking** Remove `skyspell_underline_errors` option. We now use a specific SellingError face
+  and users can change the default value if needed.
 
 # 0.6.1 (2021-11-01)
 
