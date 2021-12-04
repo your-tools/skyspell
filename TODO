@@ -1,11 +1,5 @@
-Get rid of the Repository trait ?
-
-How to use in CI scripts?
-
-Use cargo workspaces so that re-compiling kakoune wrapper
-is faster
-
-kak: try to use an other face for errors
+Add support for usage in CI (where the ignore db would be
+for instance a plain yaml file)
 
 week-end in French is seen as a bad word - and I don't want to
 add both week and end to the global ignore list for French 🤔
