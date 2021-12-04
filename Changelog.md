@@ -1,3 +1,8 @@
+# 0.7.0
+
+* Split code into separate crates. This means you now need to install `skyspell_kak` in
+  order to use the Kakoune integration.
+
 # 0.6.1 (2021-11-01)
 
 * Bump to Rust 2021 edition
