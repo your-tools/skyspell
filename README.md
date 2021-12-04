@@ -61,7 +61,16 @@ What to do?
 
 ## Kakoune integration
 
-Just call `skyspell-kak init` in your `kakrc` file:
+Install `skyspell_kak`:
+
+```
+cargo install skyspell_kak
+```
+
+Make sure that `skyspell-kak` is in your `PATH`.
+
+
+Call `skyspell-kak init` in your `kakrc` file:
 
 ```
 skyspell-kak init
