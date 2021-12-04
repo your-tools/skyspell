@@ -599,20 +599,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "skyspell_sql_tests"
-version = "0.1.0"
-dependencies = [
- "diesel",
- "paste",
- "serde",
- "serde_json",
- "skyspell_core",
- "skyspell_sql",
- "skyspell_tests",
- "tempfile",
-]
-
-[[package]]
 name = "skyspell_tests"
 version = "0.1.0"
 dependencies = [

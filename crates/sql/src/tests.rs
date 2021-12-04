@@ -3,9 +3,10 @@ use diesel::prelude::*;
 use skyspell_core::repository::handler::Ignore;
 use skyspell_core::repository::Operation;
 use skyspell_core::Repository;
-use skyspell_sql::schema::operations;
-use skyspell_sql::SQLRepository;
 use skyspell_tests::test_repository_impl;
+
+use crate::schema::operations;
+use crate::SQLRepository;
 
 test_repository_impl!(SQLRepository);
 
