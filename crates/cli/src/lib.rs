@@ -359,3 +359,6 @@ fn suggest(dictionary: impl Dictionary, opts: SuggestOpts) -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests;
