@@ -292,11 +292,7 @@ where
         _ => (),
     }
 
-    checker.success()?;
-
-    info_1!("Success. No spelling errors found");
-
-    Ok(())
+    checker.success()
 }
 
 fn clean(mut repository: impl Repository) -> Result<()> {

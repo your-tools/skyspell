@@ -8,7 +8,7 @@ pub struct NonInteractiveChecker<D: Dictionary, I: IgnoreStore> {
     project: Project,
     dictionary: D,
     ignore_store: I,
-    errors_found: bool,
+    num_errors: usize,
 }
 
 impl<D: Dictionary, I: IgnoreStore> NonInteractiveChecker<D, I> {
@@ -17,7 +17,7 @@ impl<D: Dictionary, I: IgnoreStore> NonInteractiveChecker<D, I> {
             project,
             dictionary,
             ignore_store,
-            errors_found: false,
+            num_errors: 0,
         })
     }
 }
@@ -37,17 +37,21 @@ impl<D: Dictionary, I: IgnoreStore> Checker for NonInteractiveChecker<D, I> {
         context: &Self::Context,
     ) -> Result<()> {
         let &(line, column) = context;
-        self.errors_found = true;
+        self.num_errors += 1;
         let prefix = format!("{}:{}:{}", path, line, column);
         println!("{} {}", prefix, token.red());
         Ok(())
     }
 
     fn success(&self) -> Result<()> {
-        if self.errors_found {
-            bail!("Found spelling errors");
+        match self.num_errors {
+            0 => {
+                println!("Success! No spelling errors found");
+                Ok(())
+            }
+            1 => bail!("Found just one tiny spelling error"),
+            n => bail!("Found {} spelling errors", n),
         }
-        Ok(())
     }
 
     fn project(&self) -> &Project {
