@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 use skyspell_core::repository::Operation;
 use skyspell_core::repository::ProjectInfo;
-use skyspell_core::Repository;
+use skyspell_core::{Ignore, Repository};
 use skyspell_core::{ProjectId, ProjectPath, RelativePath};
 
 use crate::test_repository_impl;
@@ -28,6 +28,52 @@ impl FakeRepository {
 
     pub fn new_for_tests() -> Result<Self> {
         Ok(Default::default())
+    }
+}
+
+impl Ignore for FakeRepository {
+    fn is_ignored(&self, word: &str) -> Result<bool> {
+        Ok(self.global.contains(word))
+    }
+
+    fn is_ignored_for_extension(&self, word: &str, extension: &str) -> Result<bool> {
+        if let Some(words) = self.by_extension.get(extension) {
+            Ok(words.contains(&word.to_string()))
+        } else {
+            Ok(false)
+        }
+    }
+
+    fn is_ignored_for_project(&self, word: &str, project_id: ProjectId) -> Result<bool> {
+        if let Some(words) = self.by_project.get(&project_id) {
+            Ok(words.contains(&word.to_string()))
+        } else {
+            Ok(false)
+        }
+    }
+
+    fn is_ignored_for_path(
+        &self,
+        word: &str,
+        project_id: ProjectId,
+        path: &RelativePath,
+    ) -> Result<bool> {
+        if let Some(words) = self
+            .by_project_and_path
+            .get(&(project_id, path.to_string()))
+        {
+            Ok(words.contains(&word.to_string()))
+        } else {
+            Ok(false)
+        }
+    }
+
+    fn is_skipped_path(&self, project_id: ProjectId, path: &RelativePath) -> Result<bool> {
+        Ok(self.skipped_paths.contains(&(project_id, path.to_string())))
+    }
+
+    fn is_skipped_file_name(&self, file_name: &str) -> Result<bool> {
+        Ok(self.skip_file_names.contains(file_name))
     }
 }
 
@@ -80,17 +126,9 @@ impl Repository for FakeRepository {
         Ok(())
     }
 
-    fn is_ignored(&self, word: &str) -> Result<bool> {
-        Ok(self.global.contains(word))
-    }
-
     fn skip_file_name(&mut self, file_name: &str) -> Result<()> {
         self.skip_file_names.insert(file_name.to_string());
         Ok(())
-    }
-
-    fn is_skipped_file_name(&self, file_name: &str) -> Result<bool> {
-        Ok(self.skip_file_names.contains(file_name))
     }
 
     fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
@@ -102,26 +140,10 @@ impl Repository for FakeRepository {
         Ok(())
     }
 
-    fn is_ignored_for_extension(&self, word: &str, extension: &str) -> Result<bool> {
-        if let Some(words) = self.by_extension.get(extension) {
-            Ok(words.contains(&word.to_string()))
-        } else {
-            Ok(false)
-        }
-    }
-
     fn ignore_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()> {
         let entry = &mut self.by_project.entry(project_id).or_insert_with(Vec::new);
         entry.push(word.to_string());
         Ok(())
-    }
-
-    fn is_ignored_for_project(&self, word: &str, project_id: ProjectId) -> Result<bool> {
-        if let Some(words) = self.by_project.get(&project_id) {
-            Ok(words.contains(&word.to_string()))
-        } else {
-            Ok(false)
-        }
     }
 
     fn ignore_for_path(
@@ -138,29 +160,9 @@ impl Repository for FakeRepository {
         Ok(())
     }
 
-    fn is_ignored_for_path(
-        &self,
-        word: &str,
-        project_id: ProjectId,
-        path: &RelativePath,
-    ) -> Result<bool> {
-        if let Some(words) = self
-            .by_project_and_path
-            .get(&(project_id, path.to_string()))
-        {
-            Ok(words.contains(&word.to_string()))
-        } else {
-            Ok(false)
-        }
-    }
-
     fn skip_path(&mut self, project_id: ProjectId, path: &RelativePath) -> Result<()> {
         self.skipped_paths.insert((project_id, path.to_string()));
         Ok(())
-    }
-
-    fn is_skipped_path(&self, project_id: ProjectId, path: &RelativePath) -> Result<bool> {
-        Ok(self.skipped_paths.contains(&(project_id, path.to_string())))
     }
 
     fn remove_ignored(&mut self, word: &str) -> Result<()> {

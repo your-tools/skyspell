@@ -1,8 +1,8 @@
 use diesel::dsl::count_star;
 use diesel::prelude::*;
-use skyspell_core::repository::handler::Ignore;
+use skyspell_core::repository::handler::Ignore as IgnoreOperation;
 use skyspell_core::repository::Operation;
-use skyspell_core::Repository;
+use skyspell_core::{Ignore, Repository};
 use skyspell_tests::test_repository_impl;
 
 use crate::schema::operations;
@@ -16,7 +16,7 @@ fn test_delete_old_operations_when_more_than_100_operations_are_stored() {
     let values: Vec<_> = (1..=103)
         .map(|i| {
             let word = format!("foo-{}", i);
-            let operation = Operation::Ignore(Ignore { word });
+            let operation = Operation::Ignore(IgnoreOperation { word });
             let json = serde_json::to_string(&operation).unwrap();
             (
                 operations::json.eq(json),
@@ -46,7 +46,7 @@ fn test_keep_old_operations_when_less_than_100_operations_are_stored() {
     let values: Vec<_> = (1..=50)
         .map(|i| {
             let word = format!("foo-{}", i);
-            let operation = Operation::Ignore(Ignore { word });
+            let operation = Operation::Ignore(IgnoreOperation { word });
             let json = serde_json::to_string(&operation).unwrap();
             (
                 operations::json.eq(json),
