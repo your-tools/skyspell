@@ -10,6 +10,12 @@ pub struct FakeIO {
     stdout: RefCell<String>,
 }
 
+impl Default for FakeIO {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FakeIO {
     pub fn new() -> Self {
         Self {

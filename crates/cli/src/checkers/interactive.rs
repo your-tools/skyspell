@@ -214,3 +214,6 @@ q : Quit
         Ok(true)
     }
 }
+
+#[cfg(test)]
+mod tests;
