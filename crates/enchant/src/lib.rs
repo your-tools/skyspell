@@ -35,3 +35,6 @@ impl Dictionary for EnchantDictionary {
         &self.lang
     }
 }
+
+#[cfg(test)]
+mod tests;
