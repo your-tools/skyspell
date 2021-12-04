@@ -562,6 +562,8 @@ dependencies = [
  "skyspell_core",
  "skyspell_enchant",
  "skyspell_sql",
+ "skyspell_tests",
+ "tempfile",
 ]
 
 [[package]]

@@ -191,3 +191,6 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
         self.print(&format!("{}.{}+{}|Error", line, start + 1, token.len()));
     }
 }
+
+#[cfg(test)]
+pub(crate) mod tests;

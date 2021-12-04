@@ -392,3 +392,6 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         self.print("skyspell-list\n");
     }
 }
+
+#[cfg(test)]
+mod tests;

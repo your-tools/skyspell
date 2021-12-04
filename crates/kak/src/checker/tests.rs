@@ -2,10 +2,10 @@ use super::*;
 
 use tempfile::TempDir;
 
-use crate::kak::io::tests::new_fake_io;
-use crate::tests::FakeIO;
-use crate::tests::{FakeDictionary, FakeRepository};
-use crate::{ProjectPath, RelativePath};
+use crate::io::tests::new_fake_io;
+use skyspell_core::{ProjectPath, RelativePath};
+use skyspell_tests::FakeIO;
+use skyspell_tests::{FakeDictionary, FakeRepository};
 
 pub(crate) type FakeChecker = KakouneChecker<FakeDictionary, FakeRepository, FakeIO>;
 

@@ -146,3 +146,6 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
         ranges.iter().next()
     }
 }
+
+#[cfg(test)]
+pub(crate) mod tests;
