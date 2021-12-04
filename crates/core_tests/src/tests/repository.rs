@@ -1,21 +1,6 @@
 use skyspell_core::Repository;
-use skyspell_core::{ProjectPath, RelativePath};
 use skyspell_tests::FakeRepository;
-
-use tempfile::TempDir;
-
-fn new_project_path(temp_dir: &TempDir, name: &'static str) -> ProjectPath {
-    let temp_path = temp_dir.path();
-    let project_path = temp_path.join(name);
-    std::fs::create_dir(&project_path).unwrap();
-    ProjectPath::new(&project_path).unwrap()
-}
-
-fn new_relative_path(project_path: &ProjectPath, name: &'static str) -> RelativePath {
-    let rel_path = project_path.as_ref().join(name);
-    std::fs::write(&rel_path, "").unwrap();
-    RelativePath::new(project_path, &rel_path).unwrap()
-}
+use skyspell_tests::{new_project_path, new_relative_path};
 
 #[test]
 fn test_should_ignore_when_in_global_list() {

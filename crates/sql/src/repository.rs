@@ -43,8 +43,8 @@ impl SQLRepository {
         Ok(Self { connection })
     }
 
-    pub fn in_memory() -> Self {
-        Self::new(":memory:").unwrap()
+    pub fn in_memory() -> Result<Self> {
+        Self::new(":memory:")
     }
 }
 

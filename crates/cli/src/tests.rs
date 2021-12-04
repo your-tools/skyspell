@@ -2,18 +2,13 @@ use super::*;
 
 use skyspell_core::{ProjectPath, RelativePath};
 use skyspell_sql::SQLRepository;
+use skyspell_tests::new_project_path;
 use skyspell_tests::FakeDictionary;
 
 use tempfile::TempDir;
 
 fn open_repository(temp_dir: &TempDir) -> SQLRepository {
     SQLRepository::new(&TestApp::db_path(temp_dir)).unwrap()
-}
-
-fn new_project_path(temp_dir: &TempDir, name: &str) -> ProjectPath {
-    let path = temp_dir.path().join(name);
-    std::fs::create_dir_all(&path).unwrap();
-    ProjectPath::new(&path).unwrap()
 }
 
 struct TestApp {

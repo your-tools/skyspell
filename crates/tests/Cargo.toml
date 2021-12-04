@@ -9,3 +9,4 @@ anyhow = "1.0.40"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 skyspell_core = { path = "../core" }
+tempfile = "3.2.0"

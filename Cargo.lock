@@ -620,6 +620,7 @@ dependencies = [
  "serde",
  "serde_json",
  "skyspell_core",
+ "tempfile",
 ]
 
 [[package]]
