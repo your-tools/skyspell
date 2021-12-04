@@ -6,4 +6,4 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.40"
 enchant = "0.3.0"
-skyspell_core = { path = "../core/" }
+skyspell_core = { path = "../core" }
