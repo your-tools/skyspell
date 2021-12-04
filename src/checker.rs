@@ -2,15 +2,9 @@ use std::path::Path;
 
 use anyhow::Result;
 
+use crate::{Project, RelativePath};
 use crate::Dictionary;
 use crate::Repository;
-use crate::{Project, RelativePath};
-
-mod interactive;
-mod non_interactive;
-
-pub(crate) use interactive::InteractiveChecker;
-pub(crate) use non_interactive::NonInteractiveChecker;
 
 pub(crate) trait Checker {
     type Context;

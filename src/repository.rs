@@ -2,6 +2,8 @@ use std::path::Path;
 
 use anyhow::Result;
 
+pub use handler::{Operation, RepositoryHandler};
+
 use crate::{Project, ProjectId, ProjectPath, RelativePath};
 
 pub struct ProjectInfo {
@@ -10,7 +12,6 @@ pub struct ProjectInfo {
 }
 
 pub(crate) mod handler;
-pub use handler::{Operation, RepositoryHandler};
 
 // Note: the crucial difference with Project is that
 // ProjectInfo does *not* contain the ProjectPath struct
@@ -183,6 +184,3 @@ pub trait Repository {
         self.is_ignored_for_path(word, project_id, relative_path)
     }
 }
-
-#[cfg(test)]
-mod tests;

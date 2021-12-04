@@ -41,5 +41,3 @@ impl Dictionary for EnchantDictionary {
     }
 }
 
-#[cfg(test)]
-mod tests;

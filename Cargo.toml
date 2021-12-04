@@ -8,7 +8,6 @@ description = "Command line spell checker with Kakoune integration"
 repository = "https://git.sr.ht/~dmerej/skyspell"
 license = "BSD-3-Clause"
 keywords = ["spell", "cli", "kakoune"]
-default-run = "skyspell"
 
 [dependencies]
 anyhow = "1.0.40"
