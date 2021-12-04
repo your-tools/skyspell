@@ -559,8 +559,8 @@ dependencies = [
  "anyhow",
  "clap",
  "colored",
- "enchant",
  "skyspell_core",
+ "skyspell_enchant",
  "skyspell_sql",
 ]
 
@@ -583,6 +583,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "skyspell_enchant"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "enchant",
+ "skyspell_core",
+]
+
+[[package]]
 name = "skyspell_kak"
 version = "0.1.0"
 dependencies = [
@@ -592,6 +601,7 @@ dependencies = [
  "enchant",
  "itertools",
  "skyspell_core",
+ "skyspell_enchant",
  "skyspell_sql",
 ]
 

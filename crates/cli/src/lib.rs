@@ -6,10 +6,10 @@ use colored::*;
 
 use skyspell_core::repository::RepositoryHandler;
 use skyspell_core::Checker;
-use skyspell_core::EnchantDictionary;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{ConsoleInteractor, Dictionary, Repository};
 use skyspell_core::{ProjectPath, RelativePath};
+use skyspell_enchant::EnchantDictionary;
 use skyspell_sql::{get_default_db_path, SQLRepository};
 
 mod interactive_checker;
@@ -59,8 +59,7 @@ pub fn main() -> Result<()> {
     }?;
 
     let repository = SQLRepository::new(&db_path)?;
-    let mut broker = enchant::Broker::new();
-    let dictionary = EnchantDictionary::new(&mut broker, lang)?;
+    let dictionary = EnchantDictionary::new(lang)?;
     if let Err(e) = run(opts, dictionary, repository) {
         print_error!("{}", e);
         std::process::exit(1);

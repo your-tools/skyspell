@@ -6,11 +6,11 @@ use dirs_next::home_dir;
 
 use skyspell_core::repository::RepositoryHandler;
 use skyspell_core::Checker;
-use skyspell_core::EnchantDictionary;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::ProjectPath;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{Dictionary, Repository};
+use skyspell_enchant::EnchantDictionary;
 use skyspell_sql::{get_default_db_path, SQLRepository};
 
 use crate::io::KakouneIO;
@@ -112,8 +112,7 @@ pub fn main() -> Result<()> {
     kakoune_io.debug(&format!("Using db path: {}", db_path));
 
     let repository = SQLRepository::new(&db_path)?;
-    let mut broker = enchant::Broker::new();
-    let dictionary = EnchantDictionary::new(&mut broker, lang)?;
+    let dictionary = EnchantDictionary::new(lang)?;
     let project_as_str = kakoune_io.get_option("skyspell_project")?;
     let project_path = PathBuf::from(project_as_str);
     let project = ProjectPath::new(&project_path)?;

@@ -1,0 +1,9 @@
+[package]
+name = "skyspell_enchant"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.40"
+enchant = "0.3.0"
+skyspell_core = { path = "../core/" }

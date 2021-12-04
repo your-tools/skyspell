@@ -11,4 +11,5 @@ dirs-next = "2.0.0"
 enchant = "0.3.0"
 itertools = "0.10.0"
 skyspell_core = { path = "../core/" }
+skyspell_enchant = { path = "../enchant/" }
 skyspell_sql = { path = "../sql" }
