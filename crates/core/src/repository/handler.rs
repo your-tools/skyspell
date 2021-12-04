@@ -119,7 +119,7 @@ impl Operation {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Ignore {
-    pub(crate) word: String,
+    pub word: String,
 }
 
 impl Ignore {
@@ -211,4 +211,3 @@ impl SkipPath {
         repo.unskip_path(self.project_id, &self.path)
     }
 }
-

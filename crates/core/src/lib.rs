@@ -6,15 +6,15 @@ use dictionary::Dictionary;
 pub use dictionary::EnchantDictionary;
 pub use interactor::{ConsoleInteractor, Interactor};
 pub use os_io::StandardIO;
-use project::{Project, ProjectId, ProjectPath, RelativePath};
-use repository::Repository;
+pub use project::{Project, ProjectId, ProjectPath, RelativePath};
+pub use repository::Repository;
 pub use tokens::TokenProcessor;
 
 pub(crate) mod checker;
 
 mod dictionary;
+pub mod interactor;
 mod os_io;
-pub(crate) mod project;
-pub(crate) mod interactor;
-pub(crate) mod repository;
-pub(crate) mod tokens;
+pub mod project;
+pub mod repository;
+pub mod tokens;

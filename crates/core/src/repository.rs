@@ -11,7 +11,7 @@ pub struct ProjectInfo {
     path: String,
 }
 
-pub(crate) mod handler;
+pub mod handler;
 
 // Note: the crucial difference with Project is that
 // ProjectInfo does *not* contain the ProjectPath struct
@@ -25,11 +25,11 @@ impl ProjectInfo {
             path: path.to_string(),
         }
     }
-    pub(crate) fn id(&self) -> ProjectId {
+    pub fn id(&self) -> ProjectId {
         self.id
     }
 
-    pub(crate) fn path(&self) -> &str {
+    pub fn path(&self) -> &str {
         &self.path
     }
 }
