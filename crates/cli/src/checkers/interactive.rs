@@ -5,11 +5,8 @@ use colored::*;
 
 use crate::{info_2, print_error};
 use skyspell_core::repository::RepositoryHandler;
-use skyspell_core::Checker;
-use skyspell_core::Dictionary;
-use skyspell_core::Interactor;
-use skyspell_core::Repository;
-use skyspell_core::{Project, ProjectPath, RelativePath};
+use skyspell_core::{Checker, Dictionary, Ignore, Interactor, Repository};
+use skyspell_core::{Project, RelativePath};
 
 pub struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository> {
     project: Project,
@@ -38,7 +35,8 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
         &self.dictionary
     }
 
-    fn repository(&self) -> &dyn Repository {
+    fn ignore(&self) -> &dyn Ignore {
+        // TODO
         &self.repository_handler.repository
     }
 
@@ -61,13 +59,7 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
 }
 
 impl<I: Interactor, D: Dictionary, R: Repository> InteractiveChecker<I, D, R> {
-    pub fn new(
-        project_path: ProjectPath,
-        interactor: I,
-        dictionary: D,
-        mut repository: R,
-    ) -> Result<Self> {
-        let project = repository.ensure_project(&project_path)?;
+    pub fn new(project: Project, interactor: I, dictionary: D, repository: R) -> Result<Self> {
         let repository_handler = RepositoryHandler::new(repository);
         Ok(Self {
             project,
@@ -212,6 +204,11 @@ q : Quit
             relative_path,
         );
         Ok(true)
+    }
+
+    pub fn ignore(&self) -> &dyn Ignore {
+        // TODO
+        &self.repository_handler.repository
     }
 }
 

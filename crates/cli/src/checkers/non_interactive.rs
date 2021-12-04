@@ -1,31 +1,28 @@
 use anyhow::{bail, Result};
 use colored::*;
 
-use skyspell_core::Checker;
-use skyspell_core::Dictionary;
-use skyspell_core::Repository;
-use skyspell_core::{Project, ProjectPath, RelativePath};
+use skyspell_core::{Checker, Dictionary, Ignore};
+use skyspell_core::{Project, RelativePath};
 
-pub struct NonInteractiveChecker<D: Dictionary, R: Repository> {
+pub struct NonInteractiveChecker<D: Dictionary, I: Ignore> {
     project: Project,
     dictionary: D,
-    repository: R,
+    ignore: I,
     errors_found: bool,
 }
 
-impl<D: Dictionary, R: Repository> NonInteractiveChecker<D, R> {
-    pub fn new(project_path: ProjectPath, dictionary: D, mut repository: R) -> Result<Self> {
-        let project = repository.ensure_project(&project_path)?;
+impl<D: Dictionary, I: Ignore> NonInteractiveChecker<D, I> {
+    pub fn new(project: Project, dictionary: D, ignore: I) -> Result<Self> {
         Ok(Self {
             project,
             dictionary,
-            repository,
+            ignore,
             errors_found: false,
         })
     }
 }
 
-impl<D: Dictionary, R: Repository> Checker for NonInteractiveChecker<D, R> {
+impl<D: Dictionary, I: Ignore> Checker for NonInteractiveChecker<D, I> {
     // line, column
     type Context = (usize, usize);
 
@@ -57,7 +54,7 @@ impl<D: Dictionary, R: Repository> Checker for NonInteractiveChecker<D, R> {
         &self.project
     }
 
-    fn repository(&self) -> &dyn Repository {
-        &self.repository
+    fn ignore(&self) -> &dyn Ignore {
+        &self.ignore
     }
 }

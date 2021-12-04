@@ -1,7 +1,7 @@
 use tempfile::TempDir;
 
 use super::InteractiveChecker;
-use skyspell_core::{Checker, ProjectPath, RelativePath};
+use skyspell_core::{Checker, ProjectPath, RelativePath, Repository};
 use skyspell_tests::{FakeDictionary, FakeInteractor, FakeRepository};
 
 type TestChecker = InteractiveChecker<FakeInteractor, FakeDictionary, FakeRepository>;
@@ -14,9 +14,10 @@ impl TestApp {
     fn new(temp_dir: &TempDir) -> Self {
         let interactor = FakeInteractor::new();
         let dictionary = FakeDictionary::new();
-        let repository = FakeRepository::new();
+        let mut repository = FakeRepository::new();
         let project_path = ProjectPath::new(temp_dir.path()).unwrap();
-        let checker = TestChecker::new(project_path, interactor, dictionary, repository).unwrap();
+        let project = repository.ensure_project(&project_path).unwrap();
+        let checker = TestChecker::new(project, interactor, dictionary, repository).unwrap();
         Self { checker }
     }
 
@@ -48,12 +49,12 @@ impl TestApp {
     }
 
     fn is_ignored(&self, word: &str) -> bool {
-        self.checker.repository().is_ignored(word).unwrap()
+        self.checker.ignore().is_ignored(word).unwrap()
     }
 
     fn is_skipped_file_name(&self, file_name: &str) -> bool {
         self.checker
-            .repository()
+            .ignore()
             .is_skipped_file_name(file_name)
             .unwrap()
     }
@@ -62,14 +63,14 @@ impl TestApp {
         let project_id = self.checker.project().id();
         let relative_path = self.to_relative_path(relative_name);
         self.checker
-            .repository()
+            .ignore()
             .is_skipped_path(project_id, &relative_path)
             .unwrap()
     }
 
     fn is_ignored_for_extension(&self, word: &str, extension: &str) -> bool {
         self.checker
-            .repository()
+            .ignore()
             .is_ignored_for_extension(word, extension)
             .unwrap()
     }
@@ -77,7 +78,7 @@ impl TestApp {
     fn is_ignored_for_project(&self, word: &str) -> bool {
         let project_id = self.checker.project().id();
         self.checker
-            .repository()
+            .ignore()
             .is_ignored_for_project(word, project_id)
             .unwrap()
     }
@@ -86,7 +87,7 @@ impl TestApp {
         let project_id = self.checker.project().id();
         let relative_path = self.to_relative_path(relative_name);
         self.checker
-            .repository()
+            .ignore()
             .is_ignored_for_path(word, project_id, &relative_path)
             .unwrap()
     }

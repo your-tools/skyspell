@@ -237,7 +237,11 @@ fn remove(mut repository: impl Repository, opts: RemoveOpts) -> Result<()> {
     }
 }
 
-fn check(repository: impl Repository, dictionary: impl Dictionary, opts: CheckOpts) -> Result<()> {
+fn check(
+    mut repository: impl Repository,
+    dictionary: impl Dictionary,
+    opts: CheckOpts,
+) -> Result<()> {
     let project_path = ProjectPath::new(&opts.project_path)?;
     info_1!(
         "Checking project {} for spelling errors",
@@ -245,16 +249,16 @@ fn check(repository: impl Repository, dictionary: impl Dictionary, opts: CheckOp
     );
 
     let interactive = !opts.non_interactive;
+    let project = repository.ensure_project(&project_path)?;
 
     match interactive {
         false => {
-            let mut checker = NonInteractiveChecker::new(project_path, dictionary, repository)?;
+            let mut checker = NonInteractiveChecker::new(project, dictionary, repository)?;
             check_with(&mut checker, opts)
         }
         true => {
             let interactor = ConsoleInteractor;
-            let mut checker =
-                InteractiveChecker::new(project_path, interactor, dictionary, repository)?;
+            let mut checker = InteractiveChecker::new(project, interactor, dictionary, repository)?;
             check_with(&mut checker, opts)
         }
     }

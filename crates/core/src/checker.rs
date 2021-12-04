@@ -2,9 +2,8 @@ use std::path::Path;
 
 use anyhow::Result;
 
+use crate::{Dictionary, Ignore};
 use crate::{Project, RelativePath};
-use crate::Dictionary;
-use crate::Repository;
 
 pub trait Checker {
     type Context;
@@ -18,15 +17,17 @@ pub trait Checker {
 
     // Were all the errors handled properly?
     fn success(&self) -> Result<()>;
-    fn repository(&self) -> &dyn Repository;
+
+    fn ignore(&self) -> &dyn Ignore;
+
     fn dictionary(&self) -> &dyn Dictionary;
 
     fn project(&self) -> &Project;
 
     fn should_skip(&self, path: &RelativePath) -> Result<bool> {
-        let repository = self.repository();
+        let ignore = self.ignore();
         let project_id = self.project().id();
-        repository.should_skip(project_id, path)
+        ignore.should_skip(project_id, path)
     }
 
     fn to_relative_path(&self, path: &Path) -> Result<RelativePath> {
@@ -45,9 +46,9 @@ pub trait Checker {
         if in_dict {
             return Ok(());
         }
-        let repository = self.repository();
+        let ignore = self.ignore();
         let project_id = self.project().id();
-        let should_ignore = repository.should_ignore(token, project_id, relative_path)?;
+        let should_ignore = ignore.should_ignore(token, project_id, relative_path)?;
         if !should_ignore {
             self.handle_error(token, relative_path, context)?
         }

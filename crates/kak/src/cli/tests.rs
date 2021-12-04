@@ -119,10 +119,7 @@ fn test_add_extension() {
 
     cli.add_extension().unwrap();
 
-    assert!(cli
-        .repository()
-        .is_ignored_for_extension("foo", "py")
-        .unwrap());
+    assert!(cli.ignore().is_ignored_for_extension("foo", "py").unwrap());
 }
 
 #[test]
@@ -140,7 +137,7 @@ fn test_add_file() {
     let project_id = cli.checker.project().id();
 
     assert!(cli
-        .repository()
+        .ignore()
         .is_ignored_for_path("foo", project_id, &foo_py)
         .unwrap());
 }
@@ -158,7 +155,7 @@ fn test_add_global() {
 
     cli.add_global().unwrap();
 
-    assert!(cli.repository().is_ignored("foo").unwrap());
+    assert!(cli.ignore().is_ignored("foo").unwrap());
 }
 
 #[test]
@@ -176,7 +173,7 @@ fn test_add_project() {
     cli.add_project().unwrap();
 
     assert!(cli
-        .repository()
+        .ignore()
         .is_ignored_for_project("foo", project_id)
         .unwrap());
 }
@@ -335,10 +332,7 @@ fn test_skip_file() {
 
     cli.skip_file().unwrap();
 
-    assert!(cli
-        .repository()
-        .is_skipped_path(project_id, &foo_py)
-        .unwrap());
+    assert!(cli.ignore().is_skipped_path(project_id, &foo_py).unwrap());
 }
 
 #[test]
@@ -354,7 +348,7 @@ fn test_skip_name() {
 
     cli.skip_name().unwrap();
 
-    assert!(cli.repository().is_skipped_file_name("Cargo.lock").unwrap());
+    assert!(cli.ignore().is_skipped_file_name("Cargo.lock").unwrap());
 }
 
 #[test]

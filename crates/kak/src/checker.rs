@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use skyspell_core::repository::RepositoryHandler;
 use skyspell_core::Checker;
 use skyspell_core::OperatingSystemIO;
-use skyspell_core::{Dictionary, Repository};
+use skyspell_core::{Dictionary, Ignore, Repository};
 use skyspell_core::{Project, ProjectPath, RelativePath};
 
 use crate::io::KakouneIO;
@@ -55,7 +55,8 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChec
         Ok(())
     }
 
-    fn repository(&self) -> &dyn Repository {
+    fn ignore(&self) -> &dyn Ignore {
+        // TODO
         &self.repository_handler.repository
     }
 
