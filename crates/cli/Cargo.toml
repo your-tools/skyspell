@@ -1,7 +1,13 @@
 [package]
 name = "skyspell"
-version = "0.1.0"
+version = "0.7.0"
+authors = ["Dimitri Merejkowsky <dimitri@dmerej.info>"]
+description = "Command line spell checker"
 edition = "2021"
+keywords = ["spell", "cli"]
+license = "BSD-3-Clause"
+readme = "README.md"
+repository = "https://git.sr.ht/~dmerej/skyspell"
 
 [dependencies]
 anyhow = "1.0.40"

@@ -2,6 +2,8 @@
 name = "skyspell_kak"
 version = "0.1.0"
 edition = "2021"
+description = "skyspell kakoune integration"
+keywords = ["kakoune", "skyspell"]
 
 [dependencies]
 anyhow = "1.0.40"

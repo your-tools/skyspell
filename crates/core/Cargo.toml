@@ -1,13 +1,7 @@
 [package]
 name = "skyspell_core"
-version = "0.6.1"
-authors = ["Dimitri Merejkowsky <dimitri@dmerej.info>"]
+version = "0.1.0"
 edition = "2021"
-readme = "README.md"
-description = "Command line spell checker with Kakoune integration"
-repository = "https://git.sr.ht/~dmerej/skyspell"
-license = "BSD-3-Clause"
-keywords = ["spell", "cli", "kakoune"]
 
 [dependencies]
 anyhow = "1.0.40"
