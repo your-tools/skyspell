@@ -1,0 +1,262 @@
+enchant:
+  provider: aspell
+  lang: en_US
+
+ignore:
+  global:
+    - ada
+    - api
+    - arg
+    - args
+    - ascii
+    - asciicast
+    - asciinema
+    - aspell
+    - backend
+    - backends
+    - baz
+    - bigint
+    - bool
+    - buflist
+    - bufname
+    - canonicalize
+    - chrono
+    - ci
+    - cli
+    - clippy
+    - cmd
+    - config
+    - config
+    - configs
+    - defs
+    - desc
+    - dev
+    - dialoguer
+    - dimitri
+    - dir
+    - dirs
+    - dmerej
+    - docstring
+    - dsl
+    - enchant
+    - "enchant's"
+    - env
+    - environ
+    - esc
+    - extern
+    - formatter
+    - goto
+    - hexa
+    - hunspell
+    - http
+    - ident
+    - init
+    - io
+    - isort
+    - itertools
+    - js
+    - js
+    - json
+    - kak
+    - kakoune
+    - lang
+    - len
+    - lineno
+    - linters
+    - lossy
+    - md
+    - merchantability
+    - merejkowsky
+    - mypy
+    - num
+    - nuspell
+    - os
+    - param
+    - params
+    - pathdiff
+    - pos
+    - py
+    - pytest
+    - readme
+    - redistributions
+    - repo
+    - ret
+    - serde
+    - sha
+    - skyspell
+    - sql
+    - sqlite
+    - src
+    - stdout
+    - stdout
+    - subclassing
+    - subcommand
+    - svg
+    - tempfile
+    - tex
+    - todo
+    - tokenizer
+    - toml
+    - txt
+    - utc
+    - unicode
+    - unix
+    - unskip
+    - untyped
+    - url
+    - urls
+    - utf
+    - uuid
+    - whitespace
+    - xdist
+    - yaml
+    - yml
+    - youtube
+
+  extensions:
+
+    kak:
+      - buf
+      - fi
+      - gi
+      - gl
+      - printf
+      - pwd
+      - str
+
+    py:
+      - fetchall
+      - pathlib
+      - popen
+      - rf
+      - splitlines
+      - startswith
+      - stout
+      - str
+      - subprocess
+      - textwrap
+      - tmp
+      - txt
+
+    rs:
+      - buf
+      - buflist
+      - cfg
+      - const
+      - dbg
+      - deque
+      - deserialize
+      - dialoguer
+      - dyn
+      - enum
+      - eprintln
+      - eq
+      - fmt
+      - fn
+      - fs
+      - impl
+      - insertable
+      - interactor
+      - iter
+      - itersel
+      - lt
+      - mut
+      - ok
+      - pathdiff
+      - println
+      - pytest
+      - queryable
+      - rsplit
+      - str
+      - struct
+      - tempdir
+      - tt  # for macro_rules!
+      - ty  # for macro_rules!
+      - usize
+      - vec
+
+
+  paths:
+    Changelog.md:
+      - ga
+
+    LICENSE:
+      - redistributions
+
+    README.md:
+      - fn
+      - kakrc
+      - scspell
+
+    crates/cli/src/checkers/interactive.rs:
+      - aepfnsxq
+
+    crates/cli/src/checkers/interactive/tests.rs:
+      - defaultdict
+
+    crates/cli/src/tests.rs:
+      - hel
+
+    crates/core/src/tokens.rs:
+      - editmsg
+      - ffi
+      - nrt
+
+    crates/core/src/tokens/tests.rs:
+      - ewpage
+      - iny
+      - newpage
+      - rthree
+      - xy
+
+    crates/enchant/src/tests.rs:
+      - missstake
+
+    crates/kak/src/checker.rs:
+      - gg
+
+    crates/kak/src/checker/tests.rs:
+      - gg
+
+    crates/kak/src/io.rs:
+      - ga
+
+    crates/kak/src/io/tests.rs:
+      - ga
+
+    crates/kak/src/cli/tests.rs:
+      - chell
+      - chello
+      - ga
+      - gg
+      - hllo
+      - md
+
+    crates/tests/src/fake_interactor.rs:
+      - qyn
+
+    crates/tests/src/fake_dictionary.rs:
+      - asntoehsauh
+      - missstake
+
+    tests/tasks.py:
+      - isort
+      - pre
+
+    tests/test_kakoune_integration.py:
+      - cd
+      - fn
+      - gg
+      - missstake
+      - notaword
+      - othhher
+
+    pre-push:
+      - cd
+      - fd
+      - fi
+
+skip:
+  names:
+    - Cargo.lock
+    - poetry.lock
