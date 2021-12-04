@@ -36,7 +36,6 @@ pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
     let repository = FakeRepository::new();
     let mut fake_io = new_fake_io();
     fake_io.set_option("skyspell_project", &project.as_str());
-    fake_io.set_option("skyspell_underline_errors", "false");
     KakouneChecker::new(project, dictionary, repository, fake_io).unwrap()
 }
 
@@ -89,7 +88,7 @@ fn test_write_errors_as_buffer_options() {
 
     let actual = checker.get_output();
     let expected = "\
-    set-option buffer=foo.js spell_errors 42 2.5+3|Error 3.7+3|Error \n\
-    set-option buffer=bar.js spell_errors 42 1.6+4|Error \n";
+    set-option buffer=foo.js spell_errors 42 2.5+3|SpellingError 3.7+3|SpellingError \n\
+    set-option buffer=bar.js spell_errors 42 1.6+4|SpellingError \n";
     assert_eq!(actual, expected);
 }

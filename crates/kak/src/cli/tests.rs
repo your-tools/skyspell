@@ -275,8 +275,8 @@ unset-option buffer={bar_path} spell_errors
 edit -scratch *spelling*
 execute-keys \\% <ret> d i %{{{foo_path}: 1.9,1.11 foo<ret>{bar_path}: 1.9,1.11 bar<ret>{bar_path}: 1.29,1.31 baz<ret>}} <esc> gg
 execute-keys ga
-set-option buffer={foo_path} spell_errors 42 1.9+3|Error \n\
-set-option buffer={bar_path} spell_errors 42 1.9+3|Error 1.29+3|Error \n\
+set-option buffer={foo_path} spell_errors 42 1.9+3|SpellingError \n\
+set-option buffer={bar_path} spell_errors 42 1.9+3|SpellingError 1.29+3|SpellingError \n\
 set global skyspell_error_count 3
 echo -markup {project_path}: {{red}}3 spelling errors
 ",
@@ -295,7 +295,7 @@ fn test_goto_next_error() {
         .unwrap();
     let mut cli = new_cli(&temp_dir);
     let move_opts = MoveOpts {
-        range_spec: "42 1.9,1.11|Error".to_string(),
+        range_spec: "42 1.9,1.11|SpellingError".to_string(),
     };
 
     cli.set_cursor(1, 2);
@@ -312,7 +312,7 @@ fn test_goto_previous_error() {
         .unwrap();
     let mut cli = new_cli(&temp_dir);
     let move_opts = MoveOpts {
-        range_spec: "42 1.9,1.11|Error".to_string(),
+        range_spec: "42 1.9,1.11|SpellingError".to_string(),
     };
 
     cli.set_cursor(1, 22);

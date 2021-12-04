@@ -76,14 +76,6 @@ Call `skyspell-kak init` in your `kakrc` file:
 skyspell-kak init
 ```
 
-If you're using a recent enough kakoune, you may add
-
-```
-set global skyspell_underline_errors true
-```
-
-so that errors are underlined.
-
 Now you can call the various `:skyspell-` commands, as
 demonstrated in the following video on asciinema:
 

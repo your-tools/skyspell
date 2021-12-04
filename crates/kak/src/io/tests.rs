@@ -123,7 +123,7 @@ fn test_parse_range_spec_empty() {
 fn test_parse_range_spec_not_empty() {
     let kakoune_io = new_fake_io();
     let actual = kakoune_io
-        .parse_range_spec("42 1.4,1.13|Error 1.15,1.23|Error")
+        .parse_range_spec("42 1.4,1.13|SpellingError 1.15,1.23|SpellingError")
         .unwrap();
     assert_eq!(actual, vec![(1, 4, 13), (1, 15, 23)]);
 }
