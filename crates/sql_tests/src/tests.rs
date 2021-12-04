@@ -1,12 +1,16 @@
 use diesel::dsl::count_star;
+use diesel::prelude::*;
 use skyspell_core::repository::handler::Ignore;
+use skyspell_core::repository::Operation;
+use skyspell_core::Repository;
+use skyspell_core::{ProjectPath, RelativePath};
+use skyspell_sql::schema::operations;
+use skyspell_sql::SQLRepository;
 use skyspell_tests::FakeRepository;
 
 use paste::paste;
 
 use tempfile::TempDir;
-
-use super::*;
 
 fn new_project_path(temp_dir: &TempDir, name: &'static str) -> ProjectPath {
     let temp_path = temp_dir.path();

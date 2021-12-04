@@ -17,7 +17,7 @@ use skyspell_core::{ProjectId, ProjectPath, RelativePath};
 diesel_migrations::embed_migrations!("migrations");
 
 pub struct SQLRepository {
-    connection: SqliteConnection,
+    pub connection: SqliteConnection,
 }
 
 pub fn get_default_db_path(lang: &str) -> Result<String> {
@@ -43,8 +43,7 @@ impl SQLRepository {
         Ok(Self { connection })
     }
 
-    #[cfg(test)]
-    pub(crate) fn in_memory() -> Self {
+    pub fn in_memory() -> Self {
         Self::new(":memory:").unwrap()
     }
 }
@@ -377,6 +376,3 @@ impl Repository for SQLRepository {
         Ok(Some(operation))
     }
 }
-
-#[cfg(test)]
-mod tests;
