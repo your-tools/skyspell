@@ -3,6 +3,7 @@ name = "skyspell_sql"
 version = "0.1.0"
 edition = "2021"
 description = "Implementation of the skyspell Repository trait using sqlite"
+publish = false
 
 [dependencies]
 anyhow = "1.0.40"

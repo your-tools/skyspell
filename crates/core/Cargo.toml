@@ -5,6 +5,7 @@ version = "0.0.0"
 edition = "2021"
 license = "BSD-3-Clause"
 repository = "https://git.sr.ht/~dmerej/skyspell"
+publish = false
 
 [dependencies]
 anyhow = "1.0.40"

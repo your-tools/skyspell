@@ -8,6 +8,7 @@ keywords = ["spell", "cli"]
 license = "BSD-3-Clause"
 readme = "README.md"
 repository = "https://git.sr.ht/~dmerej/skyspell"
+publish = false
 
 [dependencies]
 anyhow = "1.0.40"

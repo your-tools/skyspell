@@ -3,6 +3,7 @@ name = "skyspell_enchant"
 version = "0.1.0"
 edition = "2021"
 description = "Implementation of the skyspell Checker trait using enchant-rs"
+publish = false
 
 [dependencies]
 anyhow = "1.0.40"

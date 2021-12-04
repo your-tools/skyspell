@@ -4,6 +4,7 @@ version = "0.7.0"
 edition = "2018"
 description = "Using skyspell for continuous integration"
 keywords = ["spell", "cli", "ci"]
+publish = false
 
 [dependencies]
 anyhow = "1.0.40"
