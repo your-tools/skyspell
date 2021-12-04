@@ -549,6 +549,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "skyspell_core_tests"
+version = "0.1.0"
+dependencies = [
+ "skyspell_core",
+ "skyspell_tests",
+]
+
+[[package]]
 name = "skyspell_enchant"
 version = "0.1.0"
 dependencies = [

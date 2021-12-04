@@ -1,6 +1,5 @@
 use skyspell_core::repository::RepositoryHandler;
-
-use crate::FakeRepository;
+use skyspell_tests::FakeRepository;
 
 #[test]
 fn test_can_undo_file_name_skip() {
