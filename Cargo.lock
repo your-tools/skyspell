@@ -554,6 +554,7 @@ version = "0.1.0"
 dependencies = [
  "skyspell_core",
  "skyspell_tests",
+ "tempfile",
 ]
 
 [[package]]

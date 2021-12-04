@@ -7,3 +7,4 @@ publish = false
 [dependencies]
 skyspell_core = { path = "../core" }
 skyspell_tests = { path = "../tests" }
+tempfile = "3.2.0"
