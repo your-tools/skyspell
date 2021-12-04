@@ -36,6 +36,10 @@ impl Dictionary for FakeDictionary {
     fn lang(&self) -> &str {
         "en_US"
     }
+
+    fn provider(&self) -> &str {
+        "fake"
+    }
 }
 
 #[test]

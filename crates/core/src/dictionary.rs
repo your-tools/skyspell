@@ -6,4 +6,5 @@ pub trait Dictionary {
     // Suggest replacement for error string
     fn suggest(&self, error: &str) -> Vec<String>;
     fn lang(&self) -> &str;
+    fn provider(&self) -> &str;
 }

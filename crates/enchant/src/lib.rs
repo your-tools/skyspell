@@ -34,6 +34,10 @@ impl Dictionary for EnchantDictionary {
     fn lang(&self) -> &str {
         &self.lang
     }
+
+    fn provider(&self) -> &str {
+        self.dict.get_provider_name()
+    }
 }
 
 #[cfg(test)]
