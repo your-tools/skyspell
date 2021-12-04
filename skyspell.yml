@@ -184,6 +184,7 @@ ignore:
       - redistributions
 
     README.md:
+      - cd
       - fn
       - kakrc
       - scspell

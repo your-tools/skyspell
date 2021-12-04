@@ -24,15 +24,17 @@ A fast and handy spell checker for the command line.
 You will need:
 
 * The C Enchant library installed, with its development headers
+* The sqlite3 library installed, which its development headers
 * One of Enchant's backends (aspell, hunspell, nuspell)
 * A dictionary for the language you'll be using matching one of
   the above backends (like `aspell-en` or `hunspell-fr`).
 * `cargo`
 
-Then run:
+Then get the sources and build the binary:
 
 ```
-$ cargo install skyspell
+$ cd skyspell
+$ cargo install --locked --path crates/cli/
 ```
 
 and make sure `skyspell` is in your `PATH`.
@@ -64,7 +66,8 @@ What to do?
 Install `skyspell_kak`:
 
 ```
-cargo install skyspell_kak
+$ cd skyspell
+$ cargo install --locked --path crates/kak/
 ```
 
 Make sure that `skyspell-kak` is in your `PATH`.
