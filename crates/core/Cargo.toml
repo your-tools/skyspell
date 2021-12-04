@@ -1,5 +1,5 @@
 [package]
-name = "skyspell"
+name = "skyspell_core"
 version = "0.6.1"
 authors = ["Dimitri Merejkowsky <dimitri@dmerej.info>"]
 edition = "2021"
