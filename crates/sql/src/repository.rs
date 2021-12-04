@@ -16,10 +16,6 @@ use skyspell_core::{ProjectId, ProjectPath, RelativePath};
 
 diesel_migrations::embed_migrations!("migrations");
 
-pub struct SQLRepository {
-    pub connection: SqliteConnection,
-}
-
 pub fn get_default_db_path(lang: &str) -> Result<String> {
     let project_dirs = ProjectDirs::from("info", "dmerej", "skyspell").ok_or_else(|| {
         anyhow!("Need a home directory to get application directories for skyspell")
@@ -35,6 +31,10 @@ pub fn get_default_db_path(lang: &str) -> Result<String> {
     Ok(url.to_string())
 }
 
+pub struct SQLRepository {
+    pub connection: SqliteConnection,
+}
+
 impl SQLRepository {
     pub fn new(url: &str) -> Result<Self> {
         let connection = SqliteConnection::establish(url)
@@ -43,7 +43,7 @@ impl SQLRepository {
         Ok(Self { connection })
     }
 
-    pub fn in_memory() -> Result<Self> {
+    pub fn new_for_tests() -> Result<Self> {
         Self::new(":memory:")
     }
 }

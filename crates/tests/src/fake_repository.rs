@@ -7,6 +7,8 @@ use skyspell_core::repository::ProjectInfo;
 use skyspell_core::Repository;
 use skyspell_core::{ProjectId, ProjectPath, RelativePath};
 
+use crate::test_repository_impl;
+
 #[derive(Default, Debug)]
 pub struct FakeRepository {
     global: HashSet<String>,
@@ -22,6 +24,10 @@ pub struct FakeRepository {
 impl FakeRepository {
     pub fn new() -> Self {
         Default::default()
+    }
+
+    pub fn new_for_tests() -> Result<Self> {
+        Ok(Default::default())
     }
 }
 
@@ -228,3 +234,5 @@ impl Repository for FakeRepository {
         Ok(Some(res))
     }
 }
+
+test_repository_impl!(FakeRepository);
