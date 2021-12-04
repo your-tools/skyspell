@@ -12,11 +12,8 @@ use skyspell_core::{ProjectPath, RelativePath};
 use skyspell_enchant::EnchantDictionary;
 use skyspell_sql::{get_default_db_path, SQLRepository};
 
-mod interactive_checker;
-mod non_interactive_checker;
-
-pub use interactive_checker::InteractiveChecker;
-pub use non_interactive_checker::NonInteractiveChecker;
+mod checkers;
+pub use checkers::{InteractiveChecker, NonInteractiveChecker};
 
 #[macro_export]
 macro_rules! info_1 {
