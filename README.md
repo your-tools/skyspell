@@ -19,6 +19,24 @@ A fast and handy spell checker for the command line.
 * Skip list per file names (like always skipping files named `Cargo.lock`)
 * Skip list per relative path inside a project (like `image.svg`)
 
+## Installation
+
+You will need:
+
+* The C Enchant library installed, with its development headers
+* One of Enchant's backends (aspell, hunspell, nuspell)
+* A dictionary for the language you'll be using matching one of
+  the above backends (like `aspell-en` or `hunspell-fr`).
+* `cargo`
+
+Then run:
+
+```
+$ cargo install skyspell
+```
+
+and make sure `skyspell` is in your `PATH`.
+
 ## skyspell in action
 
 Basically, you give `skyspell` a project path and a list of files to check,
@@ -43,7 +61,22 @@ What to do?
 
 ## Kakoune integration
 
-You can watch a demo of the Kakoune integration on asciinema:
+Just call `skyspell-kak init` in your `kakrc` file:
+
+```
+skyspell-kak init
+```
+
+If you're using a recent enough kakoune, you may add
+
+```
+set global skyspell_underline_errors true
+```
+
+so that errors are underlined.
+
+Now you can call the various `:skyspell-` commands, as
+demonstrated in the following video on asciinema:
 
 [![asciicast](https://asciinema.org/a/427100.svg)](https://asciinema.org/a/427100)
 
