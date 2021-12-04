@@ -1,9 +1,9 @@
 [package]
 name = "skyspell_kak"
-version = "0.1.0"
+version = "0.7.0"
 edition = "2021"
 description = "skyspell kakoune integration"
-keywords = ["kakoune", "skyspell"]
+keywords = ["kakoune", "skyspell", "spell"]
 
 [dependencies]
 anyhow = "1.0.40"

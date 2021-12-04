@@ -1,7 +1,10 @@
 [package]
 name = "skyspell_core"
-version = "0.1.0"
+description = "skyspell core library"
+version = "0.0.0"
 edition = "2021"
+license = "BSD-3-Clause"
+repository = "https://git.sr.ht/~dmerej/skyspell"
 
 [dependencies]
 anyhow = "1.0.40"

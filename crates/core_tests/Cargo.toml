@@ -3,6 +3,10 @@ name = "skyspell_core_tests"
 version = "0.1.0"
 edition = "2021"
 publish = false
+# Note: skyspell_core tests must be in a separate crate in order to
+# avoid a circular dependency (skyspell_core_tests depends on
+# skyspell_tests which depends on skyspell_core)
+description = "Tests for skyspell_core"
 
 [dependencies]
 skyspell_core = { path = "../core" }
