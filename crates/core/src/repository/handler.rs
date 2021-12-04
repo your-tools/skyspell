@@ -73,7 +73,8 @@ impl<R: Repository> RepositoryHandler<R> {
         }))
     }
 
-    #[cfg(test)]
+    // Note: used for core tests
+    #[allow(dead_code)]
     pub fn is_skipped_file_name(&mut self, file_name: &str) -> Result<bool> {
         self.repository.is_skipped_file_name(file_name)
     }

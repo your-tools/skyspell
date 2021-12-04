@@ -1,3 +1,8 @@
+# Note: this crates contains both:
+# * Some useful helpers for testing skyspell, like FakeDictionary
+# * Tests for the 'core' crate (which can't go inside the core
+#   crate because it would create circular dependencies)
+#
 [package]
 name = "skyspell_tests"
 version = "0.1.0"
