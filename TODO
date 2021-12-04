@@ -1,5 +1,8 @@
-Add support for usage in CI (where the ignore db would be
-for instance a plain yaml file)
+The ci crate never uses the project_id and we have a nasty TODO because
+of it.
 
-week-end in French is seen as a bad word - and I don't want to
+    // TODO
+    let project_id = 42;
+
+Week-end in French is seen as a bad word - and I don't want to
 add both week and end to the global ignore list for French 🤔
