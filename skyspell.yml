@@ -16,6 +16,7 @@ ignore:
     - backends
     - baz
     - bigint
+    - bindgen
     - bool
     - buflist
     - bufname
@@ -38,6 +39,7 @@ ignore:
     - dmerej
     - docstring
     - dsl
+    - dylib
     - enchant
     - "enchant's"
     - env
@@ -81,6 +83,7 @@ ignore:
     - redistributions
     - repo
     - ret
+    - rustc
     - serde
     - sha
     - skyspell
@@ -142,6 +145,7 @@ ignore:
       - buf
       - buflist
       - cfg
+      - concat
       - const
       - dbg
       - deque
@@ -151,9 +155,12 @@ ignore:
       - enum
       - eprintln
       - eq
+      - ffi
       - fmt
       - fn
       - fs
+      - global
+      - globals
       - impl
       - insertable
       - interactor
@@ -164,6 +171,7 @@ ignore:
       - ok
       - pathdiff
       - println
+      - ptr
       - pytest
       - queryable
       - rsplit
@@ -188,6 +196,12 @@ ignore:
       - fn
       - kakrc
       - scspell
+
+    crates/aspell/src/tests.rs:
+      - missstake
+
+    crates/aspell/src/wrapper/tests.rs:
+      - missstake
 
     crates/cli/src/checkers/interactive.rs:
       - aepfnsxq
