@@ -1,0 +1,32 @@
+[package]
+name = "skyspell"
+version = "0.6.1"
+authors = ["Dimitri Merejkowsky <dimitri@dmerej.info>"]
+edition = "2021"
+readme = "README.md"
+description = "Command line spell checker with Kakoune integration"
+repository = "https://git.sr.ht/~dmerej/skyspell"
+license = "BSD-3-Clause"
+keywords = ["spell", "cli", "kakoune"]
+
+[dependencies]
+anyhow = "1.0.40"
+clap = "3.0.0-beta.5"
+colored = "2.0.0"
+dialoguer = "0.8.0"
+diesel = { version = "1.4.8", features = ["sqlite"] }
+diesel_migrations = "1.4.0"
+directories-next = "2.0.0"
+dirs-next = "2.0.0"
+enchant = "0.3.0"
+itertools = "0.10.0"
+lazy_static = "1.4.0"
+pathdiff = "0.2.0"
+regex = "1.5.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+time = { version = "0.3.5", features = ["std"] }
+
+[dev-dependencies]
+paste = "1.0.5"
+tempfile = "3.2.0"

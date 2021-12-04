@@ -6,7 +6,7 @@ use crate::{Project, RelativePath};
 use crate::Dictionary;
 use crate::Repository;
 
-pub(crate) trait Checker {
+pub trait Checker {
     type Context;
 
     fn handle_error(

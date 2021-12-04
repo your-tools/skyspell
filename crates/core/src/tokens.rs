@@ -74,7 +74,7 @@ lazy_static! {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum ExtractMode {
+pub enum ExtractMode {
     Default,
     NoCEscape,
 }
@@ -90,22 +90,22 @@ impl ExtractMode {
     }
 }
 
-pub(crate) struct TokenProcessor {
+pub struct TokenProcessor {
     path: PathBuf,
     extract_mode: ExtractMode,
 }
 
 impl TokenProcessor {
-    pub(crate) fn new(path: &Path) -> Self {
+    pub fn new(path: &Path) -> Self {
         Self {
             path: path.to_path_buf(),
             extract_mode: ExtractMode::from_path_ext(path),
         }
     }
 
-    pub(crate) fn each_token<F>(&self, mut f: F) -> Result<()>
-    where
-        F: FnMut(&str, usize, usize) -> Result<()>,
+    pub fn each_token<F>(&self, mut f: F) -> Result<()>
+        where
+            F: FnMut(&str, usize, usize) -> Result<()>,
     {
         let source = File::open(&self.path)
             .with_context(|| format!("Could not open '{}' for reading", self.path.display()))?;

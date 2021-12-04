@@ -6,3 +6,5 @@ perf.data
 perf.data.old
 callgrind.*
 *.html
+
+.idea

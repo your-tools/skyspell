@@ -1,8 +1,9 @@
-use anyhow::{anyhow, Context, Result};
-use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
+
+use anyhow::{anyhow, Context, Result};
+use serde::{Deserialize, Serialize};
 
 pub type ProjectId = i32;
 
@@ -13,27 +14,28 @@ pub struct Project {
 }
 
 impl Project {
-    pub(crate) fn new(id: ProjectId, path: ProjectPath) -> Self {
+    pub fn new(id: ProjectId, path: ProjectPath) -> Self {
         Self { id, path }
     }
 
-    pub(crate) fn path(&self) -> &ProjectPath {
+    pub fn path(&self) -> &ProjectPath {
         &self.path
     }
 
-    pub(crate) fn as_relative_path(&self, path: &str) -> Result<RelativePath> {
+    pub fn as_relative_path(&self, path: &str) -> Result<RelativePath> {
         RelativePath::new(self.path(), Path::new(path))
     }
 
-    pub(crate) fn id(&self) -> ProjectId {
+    pub fn id(&self) -> ProjectId {
         self.id
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProjectPath(PathBuf);
+
 impl ProjectPath {
-    pub(crate) fn new(project_path: &Path) -> Result<Self> {
+    pub fn new(project_path: &Path) -> Result<Self> {
         let path = std::fs::canonicalize(project_path).with_context(|| {
             anyhow!(
                 "Could not canonicalize project path: {}",
@@ -43,7 +45,7 @@ impl ProjectPath {
         Ok(ProjectPath(path))
     }
 
-    pub(crate) fn as_str(&self) -> Cow<str> {
+    pub fn as_str(&self) -> Cow<str> {
         self.0.to_string_lossy()
     }
 }
@@ -64,7 +66,7 @@ impl Display for ProjectPath {
 pub struct RelativePath(PathBuf);
 
 impl RelativePath {
-    pub(crate) fn new(project_path: &ProjectPath, source_path: &Path) -> Result<Self> {
+    pub fn new(project_path: &ProjectPath, source_path: &Path) -> Result<Self> {
         let source_path = std::fs::canonicalize(source_path).with_context(|| {
             anyhow!(
                 "Could not canonicalize relative path: {}",
@@ -81,15 +83,15 @@ impl RelativePath {
         Ok(Self(path))
     }
 
-    pub(crate) fn as_str(&self) -> Cow<str> {
+    pub fn as_str(&self) -> Cow<str> {
         self.0.to_string_lossy()
     }
 
-    pub(crate) fn file_name(&self) -> Option<Cow<str>> {
+    pub fn file_name(&self) -> Option<Cow<str>> {
         self.0.file_name().map(|x| x.to_string_lossy())
     }
 
-    pub(crate) fn extension(&self) -> Option<Cow<str>> {
+    pub fn extension(&self) -> Option<Cow<str>> {
         self.0.extension().map(|x| x.to_string_lossy())
     }
 }

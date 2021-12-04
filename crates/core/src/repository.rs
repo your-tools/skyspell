@@ -19,7 +19,7 @@ pub(crate) mod handler;
 //
 // This is why this struct is only used in Repository::clean()
 impl ProjectInfo {
-    pub(crate) fn new(id: ProjectId, path: &str) -> Self {
+    pub fn new(id: ProjectId, path: &str) -> Self {
         Self {
             id,
             path: path.to_string(),
