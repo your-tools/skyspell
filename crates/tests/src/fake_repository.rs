@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 use skyspell_core::repository::Operation;
 use skyspell_core::repository::ProjectInfo;
-use skyspell_core::{Ignore, Repository};
+use skyspell_core::{IgnoreStore, Repository};
 use skyspell_core::{ProjectId, ProjectPath, RelativePath};
 
 use crate::test_repository_impl;
@@ -31,7 +31,7 @@ impl FakeRepository {
     }
 }
 
-impl Ignore for FakeRepository {
+impl IgnoreStore for FakeRepository {
     fn is_ignored(&self, word: &str) -> Result<bool> {
         Ok(self.global.contains(word))
     }

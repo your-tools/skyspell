@@ -2,7 +2,7 @@ use diesel::dsl::count_star;
 use diesel::prelude::*;
 use skyspell_core::repository::handler::Ignore as IgnoreOperation;
 use skyspell_core::repository::Operation;
-use skyspell_core::{Ignore, Repository};
+use skyspell_core::{IgnoreStore, Repository};
 use skyspell_tests::test_repository_impl;
 
 use crate::schema::operations;

@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use crate::{ProjectId, RelativePath};
 
-pub trait Ignore {
+pub trait IgnoreStore {
     // Is the word in the global ignore list?
     fn is_ignored(&self, word: &str) -> Result<bool>;
 

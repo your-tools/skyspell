@@ -3,6 +3,7 @@
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 
+use crate::IgnoreStore;
 use crate::ProjectId;
 use crate::RelativePath;
 use crate::Repository;
@@ -14,6 +15,10 @@ pub struct RepositoryHandler<R: Repository> {
 impl<R: Repository> RepositoryHandler<R> {
     pub fn new(repository: R) -> Self {
         Self { repository }
+    }
+
+    pub fn as_ignore_store(&self) -> &dyn IgnoreStore {
+        &self.repository
     }
 
     fn run(&mut self, mut operation: Operation) -> Result<()> {

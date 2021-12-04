@@ -9,7 +9,7 @@ use skyspell_core::Checker;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::ProjectPath;
 use skyspell_core::TokenProcessor;
-use skyspell_core::{Dictionary, Ignore, Repository};
+use skyspell_core::{Dictionary, IgnoreStore, Repository};
 use skyspell_enchant::EnchantDictionary;
 use skyspell_sql::{get_default_db_path, SQLRepository};
 
@@ -168,8 +168,8 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
     }
 
     #[allow(dead_code)]
-    pub fn ignore(&self) -> &dyn Ignore {
-        self.checker.ignore()
+    pub fn ignore_store(&self) -> &dyn IgnoreStore {
+        self.checker.ignore_store()
     }
 
     fn add_extension(&mut self) -> Result<()> {

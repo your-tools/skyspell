@@ -12,7 +12,7 @@ use directories_next::ProjectDirs;
 use crate::models::*;
 use crate::schema::*;
 use skyspell_core::repository::{Operation, ProjectInfo};
-use skyspell_core::{Ignore, ProjectId, ProjectPath, RelativePath, Repository};
+use skyspell_core::{IgnoreStore, ProjectId, ProjectPath, RelativePath, Repository};
 
 diesel_migrations::embed_migrations!("migrations");
 
@@ -48,7 +48,7 @@ impl SQLRepository {
     }
 }
 
-impl Ignore for SQLRepository {
+impl IgnoreStore for SQLRepository {
     fn is_ignored(&self, word: &str) -> Result<bool> {
         let word = word.to_lowercase();
         Ok(ignored::table

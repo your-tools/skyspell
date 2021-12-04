@@ -5,7 +5,7 @@ use colored::*;
 
 use crate::{info_2, print_error};
 use skyspell_core::repository::RepositoryHandler;
-use skyspell_core::{Checker, Dictionary, Ignore, Interactor, Repository};
+use skyspell_core::{Checker, Dictionary, IgnoreStore, Interactor, Repository};
 use skyspell_core::{Project, RelativePath};
 
 pub struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository> {
@@ -35,9 +35,8 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
         &self.dictionary
     }
 
-    fn ignore(&self) -> &dyn Ignore {
-        // TODO
-        &self.repository_handler.repository
+    fn ignore_store(&self) -> &dyn IgnoreStore {
+        self.repository_handler.as_ignore_store()
     }
 
     fn handle_error(
@@ -206,9 +205,8 @@ q : Quit
         Ok(true)
     }
 
-    pub fn ignore(&self) -> &dyn Ignore {
-        // TODO
-        &self.repository_handler.repository
+    pub fn ignore_store(&self) -> &dyn IgnoreStore {
+        self.repository_handler.as_ignore_store()
     }
 }
 

@@ -49,12 +49,12 @@ impl TestApp {
     }
 
     fn is_ignored(&self, word: &str) -> bool {
-        self.checker.ignore().is_ignored(word).unwrap()
+        self.checker.ignore_store().is_ignored(word).unwrap()
     }
 
     fn is_skipped_file_name(&self, file_name: &str) -> bool {
         self.checker
-            .ignore()
+            .ignore_store()
             .is_skipped_file_name(file_name)
             .unwrap()
     }
@@ -63,14 +63,14 @@ impl TestApp {
         let project_id = self.checker.project().id();
         let relative_path = self.to_relative_path(relative_name);
         self.checker
-            .ignore()
+            .ignore_store()
             .is_skipped_path(project_id, &relative_path)
             .unwrap()
     }
 
     fn is_ignored_for_extension(&self, word: &str, extension: &str) -> bool {
         self.checker
-            .ignore()
+            .ignore_store()
             .is_ignored_for_extension(word, extension)
             .unwrap()
     }
@@ -78,7 +78,7 @@ impl TestApp {
     fn is_ignored_for_project(&self, word: &str) -> bool {
         let project_id = self.checker.project().id();
         self.checker
-            .ignore()
+            .ignore_store()
             .is_ignored_for_project(word, project_id)
             .unwrap()
     }
@@ -87,7 +87,7 @@ impl TestApp {
         let project_id = self.checker.project().id();
         let relative_path = self.to_relative_path(relative_name);
         self.checker
-            .ignore()
+            .ignore_store()
             .is_ignored_for_path(word, project_id, &relative_path)
             .unwrap()
     }

@@ -4,7 +4,7 @@ use anyhow::Result;
 
 pub use handler::{Operation, RepositoryHandler};
 
-use crate::Ignore;
+use crate::IgnoreStore;
 use crate::{Project, ProjectId, ProjectPath, RelativePath};
 
 pub struct ProjectInfo {
@@ -35,7 +35,7 @@ impl ProjectInfo {
     }
 }
 
-pub trait Repository: Ignore {
+pub trait Repository: IgnoreStore {
     // Add the list of words to the global ignore list
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()>;
 

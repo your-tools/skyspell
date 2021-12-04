@@ -2,7 +2,7 @@ use std::path::Path;
 
 use anyhow::Result;
 
-use crate::{Dictionary, Ignore};
+use crate::{Dictionary, IgnoreStore};
 use crate::{Project, RelativePath};
 
 pub trait Checker {
@@ -18,16 +18,16 @@ pub trait Checker {
     // Were all the errors handled properly?
     fn success(&self) -> Result<()>;
 
-    fn ignore(&self) -> &dyn Ignore;
+    fn ignore_store(&self) -> &dyn IgnoreStore;
 
     fn dictionary(&self) -> &dyn Dictionary;
 
     fn project(&self) -> &Project;
 
     fn should_skip(&self, path: &RelativePath) -> Result<bool> {
-        let ignore = self.ignore();
+        let ignore_store = self.ignore_store();
         let project_id = self.project().id();
-        ignore.should_skip(project_id, path)
+        ignore_store.should_skip(project_id, path)
     }
 
     fn to_relative_path(&self, path: &Path) -> Result<RelativePath> {
@@ -46,9 +46,9 @@ pub trait Checker {
         if in_dict {
             return Ok(());
         }
-        let ignore = self.ignore();
+        let ignore_store = self.ignore_store();
         let project_id = self.project().id();
-        let should_ignore = ignore.should_ignore(token, project_id, relative_path)?;
+        let should_ignore = ignore_store.should_ignore(token, project_id, relative_path)?;
         if !should_ignore {
             self.handle_error(token, relative_path, context)?
         }

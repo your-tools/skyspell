@@ -1,4 +1,4 @@
-use skyspell_core::{Ignore, Repository};
+use skyspell_core::{IgnoreStore, Repository};
 use skyspell_tests::FakeRepository;
 use skyspell_tests::{new_project_path, new_relative_path};
 

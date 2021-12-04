@@ -2,7 +2,7 @@
 extern crate lazy_static;
 
 mod dictionary;
-pub mod ignore;
+pub mod ignore_store;
 pub mod interactor;
 pub mod os_io;
 pub mod project;
@@ -11,7 +11,7 @@ pub mod tokens;
 
 pub use checker::Checker;
 pub use dictionary::Dictionary;
-pub use ignore::Ignore;
+pub use ignore_store::IgnoreStore;
 pub use interactor::{ConsoleInteractor, Interactor};
 pub use os_io::{OperatingSystemIO, StandardIO};
 pub use project::{Project, ProjectId, ProjectPath, RelativePath};

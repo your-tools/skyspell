@@ -1,6 +1,6 @@
 use super::*;
 
-use skyspell_core::Ignore;
+use skyspell_core::IgnoreStore;
 use skyspell_core::{ProjectPath, RelativePath};
 use skyspell_sql::SQLRepository;
 use skyspell_tests::{new_project_path, FakeDictionary};
