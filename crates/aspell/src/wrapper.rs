@@ -48,7 +48,7 @@ extern "C" {
     fn to_aspell_speller(c: *mut AspellCanHaveError) -> *mut AspellSpeller;
     fn delete_aspell_config(c: *mut AspellConfig);
 
-    fn delete_aspell_can_have_error(ths: *mut AspellCanHaveError);
+    fn delete_aspell_can_have_error(this: *mut AspellCanHaveError);
 
     fn aspell_speller_check(
         this: *mut AspellSpeller,

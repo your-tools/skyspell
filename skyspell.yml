@@ -173,12 +173,14 @@ ignore:
       - ptr
       - pytest
       - queryable
+      - repr
       - rsplit
       - str
       - struct
       - tempdir
       - tt  # for macro_rules!
       - ty  # for macro_rules!
+      - uint
       - usize
       - vec
 
@@ -250,6 +252,10 @@ ignore:
       - qyn
 
     crates/tests/src/fake_dictionary.rs:
+      - asntoehsauh
+      - missstake
+
+    crates/tests/src/test_dictionary.rs:
       - asntoehsauh
       - missstake
 
