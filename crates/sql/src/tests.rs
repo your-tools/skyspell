@@ -3,12 +3,12 @@ use diesel::prelude::*;
 use skyspell_core::repository::handler::Ignore as IgnoreOperation;
 use skyspell_core::repository::Operation;
 use skyspell_core::{IgnoreStore, Repository};
-use skyspell_tests::test_repository_impl;
+use skyspell_tests::test_repository;
 
 use crate::schema::operations;
 use crate::SQLRepository;
 
-test_repository_impl!(SQLRepository);
+test_repository!(SQLRepository);
 
 #[test]
 fn test_delete_old_operations_when_more_than_100_operations_are_stored() {

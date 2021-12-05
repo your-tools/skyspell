@@ -7,7 +7,7 @@ use skyspell_core::repository::ProjectInfo;
 use skyspell_core::{IgnoreStore, Repository};
 use skyspell_core::{ProjectId, ProjectPath, RelativePath};
 
-use crate::test_repository_impl;
+use crate::test_repository;
 
 #[derive(Default, Debug)]
 pub struct FakeRepository {
@@ -237,4 +237,4 @@ impl Repository for FakeRepository {
     }
 }
 
-test_repository_impl!(FakeRepository);
+test_repository!(FakeRepository);
