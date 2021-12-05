@@ -68,6 +68,43 @@ extern "C" {
     fn delete_aspell_string_enumeration(this: *mut AspellStringEnumeration);
 }
 
+struct SpellerCanHaveError {
+    ptr: *mut AspellCanHaveError,
+}
+
+impl SpellerCanHaveError {
+    fn new(config: *mut AspellConfig) -> Self {
+        unsafe {
+            Self {
+                ptr: new_aspell_speller(config),
+            }
+        }
+    }
+
+    fn error(&self) -> c_uint {
+        unsafe { aspell_error_number(self.ptr) }
+    }
+
+    fn error_message(&self) -> String {
+        unsafe {
+            let c_message = aspell_error_message(self.ptr);
+            let slice = CStr::from_ptr(c_message);
+            let message = slice.to_string_lossy();
+            message.to_string()
+        }
+    }
+
+    fn to_speller(&self) -> Speller {
+        unsafe { Speller::new(to_aspell_speller(self.ptr)) }
+    }
+
+    // This is not a drop, because the SpellerCanHaveError must
+    // live as long as the Speller itself
+    fn delete(self) {
+        unsafe { delete_aspell_can_have_error(self.ptr) }
+    }
+}
+
 pub(crate) struct Config {
     ptr: *mut AspellConfig,
 }
@@ -89,16 +126,15 @@ impl Config {
         }
     }
 
-    pub(crate) fn speller(self) -> Result<Speller> {
-        unsafe {
-            let possible_err = new_aspell_speller(self.ptr);
-            if aspell_error_number(possible_err) != 0 {
-                let message = CStr::from_ptr(aspell_error_message(possible_err));
-                delete_aspell_can_have_error(possible_err);
-                bail!("Could not create speller: {}", message.to_string_lossy());
-            }
-            let speller = to_aspell_speller(possible_err);
-            Ok(Speller { ptr: speller })
+    pub(crate) fn speller(&self) -> Result<Speller> {
+        let speller_can_have_error = SpellerCanHaveError::new(self.ptr);
+        let error = speller_can_have_error.error();
+        if error != 0 {
+            let message = speller_can_have_error.error_message();
+            speller_can_have_error.delete();
+            bail!("Could not create speller: {}", message);
+        } else {
+            Ok(speller_can_have_error.to_speller())
         }
     }
 }
