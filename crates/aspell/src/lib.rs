@@ -10,7 +10,7 @@ pub struct AspellDictionary {
 impl AspellDictionary {
     pub fn new(lang: &str) -> Result<Self> {
         let mut config = wrapper::Config::new();
-        config.set_lang(lang);
+        config.set_lang(lang)?;
         let speller = config.speller()?;
         Ok(Self {
             speller,
@@ -21,7 +21,7 @@ impl AspellDictionary {
 
 impl skyspell_core::Dictionary for AspellDictionary {
     fn check(&self, word: &str) -> Result<bool> {
-        Ok(self.speller.check(word))
+        self.speller.check(word)
     }
 
     fn suggest(&self, error: &str) -> Vec<String> {

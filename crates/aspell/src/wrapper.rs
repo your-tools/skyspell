@@ -3,7 +3,7 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_int, c_uint};
 
@@ -118,11 +118,13 @@ impl Config {
         }
     }
 
-    pub(crate) fn set_lang(&mut self, lang: &str) {
+    pub(crate) fn set_lang(&mut self, lang: &str) -> Result<()> {
         unsafe {
-            let name = CString::new("lang").unwrap();
-            let value = CString::new(lang).unwrap();
+            let name = CString::new("lang").expect("hard-coded option name contains a null byte");
+            let value =
+                CString::new(lang).map_err(|_| anyhow!("{} contained a null byte", lang))?;
             aspell_config_replace(self.ptr, name.as_ptr(), value.as_ptr());
+            Ok(())
         }
     }
 
@@ -155,15 +157,17 @@ impl Speller {
         Self { ptr }
     }
 
-    pub(crate) fn check(&self, word: &str) -> bool {
-        let word = CString::new(word).unwrap();
+    pub(crate) fn check(&self, word: &str) -> Result<bool> {
+        let word =
+            CString::new(word).map_err(|_| anyhow!("word to check contained a null byte"))?;
         let n = word.as_bytes().len();
         let c_res = unsafe { aspell_speller_check(self.ptr, word.as_ptr(), n as i32) };
-        c_res != 0
+        Ok(c_res != 0)
     }
 
     pub(crate) fn suggest(&self, word: &str) -> Vec<String> {
-        let word = CString::new(word).unwrap();
+        let word =
+            CString::new(word).expect("words passed to suggest() should not contain null bytes");
         let size = word.as_bytes().len();
         let mut res = vec![];
         unsafe {
