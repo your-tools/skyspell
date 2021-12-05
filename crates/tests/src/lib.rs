@@ -7,6 +7,7 @@ mod fake_dictionary;
 mod fake_interactor;
 mod fake_io;
 mod fake_repository;
+mod test_dictionary;
 mod test_repository;
 
 pub use fake_dictionary::FakeDictionary;

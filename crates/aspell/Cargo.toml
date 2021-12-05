@@ -8,3 +8,6 @@ publish = false
 [dependencies]
 anyhow = "1.0.40"
 skyspell_core = { path = "../core" }
+
+[dev-dependencies]
+skyspell_tests = { path = "../tests" }

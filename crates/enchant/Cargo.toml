@@ -9,3 +9,6 @@ publish = false
 anyhow = "1.0.40"
 enchant = "0.3.0"
 skyspell_core = { path = "../core" }
+
+[dev-dependencies]
+skyspell_tests = { path = "../tests" }
