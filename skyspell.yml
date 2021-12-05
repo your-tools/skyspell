@@ -1,6 +1,5 @@
-enchant:
-  provider: aspell
-  lang: en_US
+provider: aspell
+lang: en_US
 
 ignore:
   global:

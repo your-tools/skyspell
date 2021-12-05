@@ -5,7 +5,13 @@
 use super::*;
 
 #[test]
-fn test_check() {
+fn test_check_valid_word() {
+    let dict = EnchantDictionary::new("en_US").unwrap();
+    assert!(!dict.check("missstake").unwrap());
+}
+
+#[test]
+fn test_check_invalid_word() {
     let dict = EnchantDictionary::new("en_US").unwrap();
     assert!(!dict.check("missstake").unwrap());
 }
@@ -13,5 +19,6 @@ fn test_check() {
 #[test]
 fn test_suggest() {
     let dict = EnchantDictionary::new("en_US").unwrap();
-    assert!(!dict.check("missstake").unwrap());
+    let suggestions = dict.suggest("missstake");
+    assert!(suggestions.contains(&"mistake".to_string()));
 }

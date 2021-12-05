@@ -41,7 +41,8 @@ fn validate_config(config: &Config) -> Vec<String> {
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
-    enchant: EnchantConfig,
+    lang: String,
+    provider: String,
     #[serde(default)]
     ignore: IgnoreConfig,
     #[serde(default)]
@@ -49,19 +50,13 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn enchant_lang(&self) -> &str {
-        &self.enchant.lang
+    pub fn lang(&self) -> &str {
+        &self.lang
     }
 
-    pub fn enchant_provider(&self) -> &str {
-        &self.enchant.provider
+    pub fn provider(&self) -> &str {
+        &self.provider
     }
-}
-
-#[derive(Deserialize, Debug, Default)]
-pub struct EnchantConfig {
-    provider: String,
-    lang: String,
 }
 
 #[derive(Deserialize, Debug, Default)]
