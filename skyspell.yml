@@ -17,6 +17,7 @@ ignore:
     - bigint
     - bindgen
     - bool
+    - boolean
     - buflist
     - bufname
     - canonicalize
@@ -82,6 +83,7 @@ ignore:
     - redistributions
     - repo
     - ret
+    - runtime
     - rustc
     - serde
     - sha
