@@ -46,6 +46,7 @@ ignore:
     - environ
     - esc
     - extern
+    - "f'input"
     - formatter
     - goto
     - hexa
@@ -100,6 +101,7 @@ ignore:
     - tex
     - todo
     - tokenizer
+    - tokenizing
     - toml
     - txt
     - utc
@@ -190,6 +192,13 @@ ignore:
   paths:
     Changelog.md:
       - ga
+
+    Dockerfile:
+      - libaspell
+      - libenchant
+      - usr
+      - workdir
+
 
     LICENSE:
       - redistributions
