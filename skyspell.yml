@@ -10,39 +10,30 @@ ignore:
     - ascii
     - asciicast
     - asciinema
-    - aspell
     - backend
     - backends
     - baz
     - bigint
-    - bindgen
     - bool
     - boolean
     - buflist
     - bufname
     - canonicalize
     - chrono
-    - ci
     - cli
     - clippy
     - cmd
-    - config
     - config
     - configs
     - debian
     - defs
     - desc
     - dev
-    - dialoguer
-    - dimitri
     - dir
     - dirs
-    - dmerej
     - docstring
     - dsl
     - dylib
-    - enchant
-    - "enchant's"
     - env
     - environ
     - esc
@@ -50,7 +41,6 @@ ignore:
     - formatter
     - goto
     - hexa
-    - hunspell
     - http
     - ident
     - init
@@ -60,8 +50,6 @@ ignore:
     - js
     - js
     - json
-    - kak
-    - kakoune
     - lang
     - len
     - lineno
@@ -69,10 +57,8 @@ ignore:
     - lossy
     - md
     - merchantability
-    - merejkowsky
     - mypy
     - num
-    - nuspell
     - os
     - param
     - params
@@ -85,12 +71,7 @@ ignore:
     - repo
     - ret
     - runtime
-    - rustc
-    - serde
     - sha
-    - skyspell
-    - sql
-    - sqlite
     - src
     - stdout
     - stdout
@@ -98,7 +79,6 @@ ignore:
     - subcommand
     - svg
     - tempfile
-    - tex
     - todo
     - tokenizer
     - tokenizing
@@ -107,7 +87,6 @@ ignore:
     - utc
     - unicode
     - unix
-    - unskip
     - untyped
     - url
     - urls
@@ -120,11 +99,30 @@ ignore:
     - youtube
 
   project:
+    - aspell
+    - bindgen
+    - ci
+    - dialoguer
     - dicts
+    - dimitri
+    - dmerej
+    - enchant
+    - "enchant's"
+    - hunspell
+    - kak
+    - kakoune
+    - merejkowsky
+    - nuspell
     - pws
+    - rustc
+    - serde
+    - skyspell
+    - sql
+    - sqlite
+    - tex
+    - unskip
 
   extensions:
-
     kak:
       - buf
       - fi
@@ -193,7 +191,6 @@ ignore:
       - usize
       - vec
 
-
   paths:
     Changelog.md:
       - ga
@@ -203,7 +200,6 @@ ignore:
       - libenchant
       - usr
       - workdir
-
 
     LICENSE:
       - redistributions
