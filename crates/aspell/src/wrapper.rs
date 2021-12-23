@@ -32,18 +32,24 @@ struct AspellStringEnumeration {
     _unused: [u8; 0],
 }
 
-extern "C" {
-    fn new_aspell_config() -> *mut AspellConfig;
-    fn new_aspell_speller(config: *mut AspellConfig) -> *mut AspellCanHaveError;
+// Yes, this is that kind of library ...
+const TRUE: c_int = 1;
 
+extern "C" {
+
+    fn new_aspell_speller(config: *mut AspellConfig) -> *mut AspellCanHaveError;
+    fn aspell_error_number(c: *const AspellCanHaveError) -> c_uint;
+    fn aspell_error_message(c: *const AspellCanHaveError) -> *const c_char;
+
+    fn new_aspell_config() -> *mut AspellConfig;
+    #[must_use]
     fn aspell_config_replace(
         this: *mut AspellConfig,
         key: *const c_char,
         value: *const c_char,
     ) -> c_int;
 
-    fn aspell_error_number(c: *const AspellCanHaveError) -> c_uint;
-    fn aspell_error_message(c: *const AspellCanHaveError) -> *const c_char;
+    fn aspell_config_error_message(this: *const AspellConfig) -> *const c_char;
 
     fn to_aspell_speller(c: *mut AspellCanHaveError) -> *mut AspellSpeller;
     fn delete_aspell_config(c: *mut AspellConfig);
@@ -119,13 +125,32 @@ impl Config {
     }
 
     pub(crate) fn set_lang(&mut self, lang: &str) -> Result<()> {
+        self.replace("lang", lang)
+    }
+
+    pub(crate) fn use_other_dicts(&mut self, value: bool) -> Result<()> {
+        let value = if value { "true" } else { "false" };
+        self.replace("use-other-dicts", value)
+    }
+
+    fn replace(&mut self, key: &str, value: &str) -> Result<()> {
+        let c_key = CString::new(key).map_err(|_| anyhow!("key contained a null byte"))?;
+        let c_value = CString::new(value).map_err(|_| anyhow!("value contained a null byte"))?;
         unsafe {
-            let name = CString::new("lang").expect("hard-coded option name contains a null byte");
-            let value =
-                CString::new(lang).map_err(|_| anyhow!("{} contained a null byte", lang))?;
-            aspell_config_replace(self.ptr, name.as_ptr(), value.as_ptr());
-            Ok(())
+            let code = aspell_config_replace(self.ptr, c_key.as_ptr(), c_value.as_ptr());
+            if code != TRUE {
+                let c_message = aspell_config_error_message(self.ptr);
+                let slice = CStr::from_ptr(c_message);
+                let message = slice.to_string_lossy();
+                bail!(
+                    "Could not set config value : {} to {} : {}",
+                    key,
+                    value,
+                    message,
+                );
+            }
         }
+        Ok(())
     }
 
     pub(crate) fn speller(&self) -> Result<Speller> {

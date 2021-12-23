@@ -12,6 +12,18 @@ fn test_config_set_lang_ok() {
 }
 
 #[test]
+fn test_config_do_not_use_other_dicts() {
+    let mut config = Config::new();
+    config.use_other_dicts(false).unwrap();
+}
+
+#[test]
+fn test_handle_config_error() {
+    let mut config = Config::new();
+    config.replace("no-such-opt", "value").unwrap_err();
+}
+
+#[test]
 fn test_config_set_lang_null_byte() {
     let mut config = Config::new();
     let lang = "foo\0bar";
@@ -27,7 +39,7 @@ fn test_error_when_invalid_lang() {
 }
 
 #[test]
-fn test_check_valid_word() {
+fn test_check_correct_word() {
     let mut config = Config::new();
     config.set_lang("en_US").unwrap();
     let speller = config.speller().unwrap();
@@ -35,7 +47,7 @@ fn test_check_valid_word() {
 }
 
 #[test]
-fn test_check_invalid_word() {
+fn test_check_incorrect_word() {
     let mut config = Config::new();
     config.set_lang("en_US").unwrap();
     let speller = config.speller().unwrap();

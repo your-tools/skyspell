@@ -11,6 +11,9 @@ impl AspellDictionary {
     pub fn new(lang: &str) -> Result<Self> {
         let mut config = wrapper::Config::new();
         config.set_lang(lang)?;
+        // We don't want our CI to use the "personal" dictionaries that
+        // may be present in the home directory (like  ~/.aspell.en.pws)
+        config.use_other_dicts(false)?;
         let speller = config.speller()?;
         Ok(Self {
             speller,
