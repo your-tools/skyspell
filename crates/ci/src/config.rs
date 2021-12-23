@@ -187,7 +187,8 @@ impl Repository for Config {
     }
 
     fn ignore_for_project(&mut self, word: &str, _project_id: ProjectId) -> Result<()> {
-        self.ignore(word)
+        self.ignore.project.push(word.to_string());
+        Ok(())
     }
 
     fn ignore_for_path(
