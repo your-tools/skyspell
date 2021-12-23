@@ -138,6 +138,7 @@ impl IgnoreStore for Config {
     }
 }
 
+// TODO: we have a ISP problem here
 impl Repository for Config {
     fn insert_ignored_words(&mut self, _words: &[&str]) -> Result<()> {
         eprintln!("insert_ignored_words is not implemented");
