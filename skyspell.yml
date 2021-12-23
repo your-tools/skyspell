@@ -47,7 +47,6 @@ ignore:
     - environ
     - esc
     - extern
-    - "f'input"
     - formatter
     - goto
     - hexa
@@ -154,6 +153,7 @@ ignore:
       - dbg
       - deque
       - deserialize
+      - deref
       - dialoguer
       - dyn
       - enum
@@ -209,6 +209,10 @@ ignore:
       - fn
       - kakrc
       - scspell
+
+    TODO:
+      - "f'input"
+      - "b'word"
 
     crates/aspell/src/tests.rs:
       - missstake
