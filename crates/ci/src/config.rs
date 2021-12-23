@@ -143,8 +143,6 @@ impl IgnoreStore for Config {
 // TODO: we have a ISP problem here
 impl Repository for Config {
     fn insert_ignored_words(&mut self, _words: &[&str]) -> Result<()> {
-        eprintln!("insert_ignored_words is not implemented");
-
         Ok(())
     }
 
@@ -162,7 +160,6 @@ impl Repository for Config {
     }
 
     fn remove_project(&mut self, _project_id: ProjectId) -> Result<()> {
-        eprintln!("remove_project is not implemented");
         Ok(())
     }
 
@@ -209,12 +206,10 @@ impl Repository for Config {
     }
 
     fn remove_ignored(&mut self, _word: &str) -> Result<()> {
-        eprintln!("remove_ignored is not implemented");
         Ok(())
     }
 
     fn remove_ignored_for_extension(&mut self, _word: &str, _extension: &str) -> Result<()> {
-        eprintln!("remove_ignored_for_extension is not implemented");
         Ok(())
     }
 
@@ -224,12 +219,10 @@ impl Repository for Config {
         _project_id: ProjectId,
         _relative_path: &RelativePath,
     ) -> Result<()> {
-        eprintln!("remove_ignored_for_path is not implemented");
         Ok(())
     }
 
     fn remove_ignored_for_project(&mut self, _word: &str, _project_id: ProjectId) -> Result<()> {
-        eprintln!("remove_ignored_for_project is not implemented");
         Ok(())
     }
 
@@ -239,12 +232,10 @@ impl Repository for Config {
     }
 
     fn unskip_file_name(&mut self, _file_name: &str) -> Result<()> {
-        eprintln!("unskip_file_name is not implemented");
         Ok(())
     }
 
     fn unskip_path(&mut self, _project_id: ProjectId, _relative_path: &RelativePath) -> Result<()> {
-        eprintln!("unskip_path is not implemented");
         Ok(())
     }
 
@@ -252,7 +243,6 @@ impl Repository for Config {
         &mut self,
         _operation: &skyspell_core::repository::Operation,
     ) -> Result<()> {
-        eprintln!("insert_operation not implemented");
         Ok(())
     }
 
