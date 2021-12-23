@@ -130,10 +130,10 @@ fn init(opts: InitOpts) -> Result<()> {
 struct InitChecker<D: Dictionary>(InteractiveChecker<ConsoleInteractor, D, Config>);
 
 impl<D: Dictionary> InitChecker<D> {
-    fn new(project: Project, dictionary: D, config: Config) -> Self {
+    fn new(project: Project, dictionary: D, config: Config) -> Result<Self> {
         let interactor = ConsoleInteractor;
-        let checker = InteractiveChecker::new(project, interactor, dictionary, config).unwrap();
-        Self(checker)
+        let checker = InteractiveChecker::new(project, interactor, dictionary, config)?;
+        Ok(Self(checker))
     }
 
     fn dump_config(&mut self) -> Result<()> {
@@ -179,7 +179,7 @@ impl<D: Dictionary> Checker for InitChecker<D> {
 fn init_with<D: Dictionary>(config: Config, dictionary: D) -> Result<()> {
     let project_path = ProjectPath::new(Path::new("."))?;
     let project = Project::new(PROJECT_ID, project_path);
-    let mut checker = InitChecker::new(project, dictionary, config);
+    let mut checker = InitChecker::new(project, dictionary, config)?;
     for result in Walk::new("./") {
         let entry = result.with_context(|| "Error when walking project sources")?;
         let path = entry.path();
