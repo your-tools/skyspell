@@ -73,6 +73,8 @@ struct IgnoreConfig {
     #[serde(default)]
     global: Vec<String>,
     #[serde(default)]
+    project: Vec<String>,
+    #[serde(default)]
     extensions: BTreeMap<String, Vec<String>>,
     #[serde(default)]
     paths: BTreeMap<String, Vec<String>>,
@@ -107,7 +109,7 @@ impl IgnoreStore for Config {
 
     fn is_ignored_for_project(&self, word: &str, _project_id: ProjectId) -> Result<bool> {
         let word = word.to_lowercase();
-        self.is_ignored(&word)
+        Ok(self.ignore.project.contains(&word))
     }
 
     fn is_ignored_for_path(
