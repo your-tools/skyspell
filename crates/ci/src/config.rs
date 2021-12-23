@@ -59,7 +59,7 @@ impl Config {
         &self.provider
     }
 
-    pub fn default_for(lang: &str, provider: &str) -> Self {
+    pub fn init(lang: &str, provider: &str) -> Self {
         Self {
             lang: lang.to_string(),
             provider: provider.to_string(),

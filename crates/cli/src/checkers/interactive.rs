@@ -16,6 +16,12 @@ pub struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository> {
     skipped: HashSet<String>,
 }
 
+impl<I: Interactor, D: Dictionary, R: Repository> InteractiveChecker<I, D, R> {
+    pub fn repository(&mut self) -> &mut R {
+        self.repository_handler.repository()
+    }
+}
+
 impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker<I, D, R> {
     // line, column
     type Context = (usize, usize);

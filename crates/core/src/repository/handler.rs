@@ -9,7 +9,7 @@ use crate::RelativePath;
 use crate::Repository;
 
 pub struct RepositoryHandler<R: Repository> {
-    pub repository: R,
+    repository: R,
 }
 
 impl<R: Repository> RepositoryHandler<R> {
@@ -19,6 +19,10 @@ impl<R: Repository> RepositoryHandler<R> {
 
     pub fn as_ignore_store(&self) -> &dyn IgnoreStore {
         &self.repository
+    }
+
+    pub fn repository(&mut self) -> &mut R {
+        &mut self.repository
     }
 
     fn run(&mut self, mut operation: Operation) -> Result<()> {
