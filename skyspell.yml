@@ -119,6 +119,10 @@ ignore:
     - yml
     - youtube
 
+  project:
+    - dicts
+    - pws
+
   extensions:
 
     kak:
@@ -216,6 +220,9 @@ ignore:
 
     crates/aspell/src/tests.rs:
       - missstake
+
+    crates/aspell/src/wrapper.rs:
+      - pws
 
     crates/aspell/src/wrapper/tests.rs:
       - missstake
