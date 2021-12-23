@@ -140,7 +140,8 @@ impl IgnoreStore for Config {
 
 impl Repository for Config {
     fn insert_ignored_words(&mut self, _words: &[&str]) -> Result<()> {
-        eprintln!("not implemented");
+        eprintln!("insert_ignored_words is not implemented");
+
         Ok(())
     }
 
@@ -158,7 +159,7 @@ impl Repository for Config {
     }
 
     fn remove_project(&mut self, _project_id: ProjectId) -> Result<()> {
-        eprintln!("not implemented");
+        eprintln!("remove_project is not implemented");
         Ok(())
     }
 
@@ -205,12 +206,12 @@ impl Repository for Config {
     }
 
     fn remove_ignored(&mut self, _word: &str) -> Result<()> {
-        eprintln!("not implemented");
+        eprintln!("remove_ignored is not implemented");
         Ok(())
     }
 
     fn remove_ignored_for_extension(&mut self, _word: &str, _extension: &str) -> Result<()> {
-        eprintln!("not implemented");
+        eprintln!("remove_ignored_for_extension is not implemented");
         Ok(())
     }
 
@@ -220,12 +221,12 @@ impl Repository for Config {
         _project_id: ProjectId,
         _relative_path: &RelativePath,
     ) -> Result<()> {
-        eprintln!("not implemented");
+        eprintln!("remove_ignored_for_path is not implemented");
         Ok(())
     }
 
     fn remove_ignored_for_project(&mut self, _word: &str, _project_id: ProjectId) -> Result<()> {
-        eprintln!("not implemented");
+        eprintln!("remove_ignored_for_project is not implemented");
         Ok(())
     }
 
@@ -235,12 +236,12 @@ impl Repository for Config {
     }
 
     fn unskip_file_name(&mut self, _file_name: &str) -> Result<()> {
-        eprintln!("not implemented");
+        eprintln!("unskip_file_name is not implemented");
         Ok(())
     }
 
     fn unskip_path(&mut self, _project_id: ProjectId, _relative_path: &RelativePath) -> Result<()> {
-        eprintln!("not implemented");
+        eprintln!("unskip_path is not implemented");
         Ok(())
     }
 
@@ -248,11 +249,11 @@ impl Repository for Config {
         &mut self,
         _operation: &skyspell_core::repository::Operation,
     ) -> Result<()> {
-        eprintln!("not implemented");
+        eprintln!("insert_operation not implemented");
         Ok(())
     }
 
     fn pop_last_operation(&mut self) -> Result<Option<skyspell_core::repository::Operation>> {
-        bail!("not implemented");
+        bail!("pop_last_operation is not implemented");
     }
 }
