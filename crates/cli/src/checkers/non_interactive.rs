@@ -39,7 +39,13 @@ impl<D: Dictionary, I: IgnoreStore> Checker for NonInteractiveChecker<D, I> {
         let &(line, column) = context;
         self.num_errors += 1;
         let prefix = format!("{}:{}:{}", path, line, column);
-        println!("{} {}", prefix, token.red());
+        println!(
+            "{}: {}: {}: {}",
+            prefix,
+            "error".red(),
+            "unknown word".clear(),
+            token
+        );
         Ok(())
     }
 
