@@ -38,7 +38,7 @@ impl<D: Dictionary, I: IgnoreStore> Checker for NonInteractiveChecker<D, I> {
     ) -> Result<()> {
         let &(line, column) = context;
         self.num_errors += 1;
-        let prefix = format!("{}:{}:{}", path, line, column);
+        let prefix = format!("{}:{}:{}", path, line, column + 1);
         println!(
             "{}: {}: {}: {}",
             prefix,
