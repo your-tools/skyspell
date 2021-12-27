@@ -131,3 +131,17 @@ define-command skyspell-replace -docstring "replace the selection with a suggest
   }
 
 }
+
+
+define-command skyspell-ci-enable %{
+  evaluate-commands %sh{
+    echo "set global skyspell_project $(pwd)"
+    : "kak_opt_skyspell_project"
+    # This need to be in Rust because we need to parse the language from
+    # skyspell.yml ...
+    skyspell-ci kak init
+  }
+  make
+  hook -group skyspell global BufWritePost .* make
+}
+

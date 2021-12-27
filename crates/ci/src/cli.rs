@@ -24,6 +24,8 @@ struct Opts {
 
 #[derive(Parser)]
 enum Action {
+    #[clap(about = "Kakoune commands")]
+    Kak(KakOpts),
     #[clap(about = "Check all project files")]
     Run,
     #[clap(about = "Init config file")]
@@ -38,11 +40,24 @@ struct InitOpts {
     provider: Option<String>,
 }
 
+#[derive(Parser)]
+struct KakOpts {
+    #[clap(subcommand)]
+    action: KakAction,
+}
+
+#[derive(Parser)]
+enum KakAction {
+    #[clap(about = "Dump kakoune script")]
+    Init,
+}
+
 pub fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
     match opts.action {
         Action::Init(opts) => init(opts),
         Action::Run => run(),
+        Action::Kak(opts) => kak(opts),
     }
 }
 
@@ -200,4 +215,21 @@ fn init_with<D: Dictionary>(config: Config, dictionary: D) -> Result<()> {
     checker.success()?;
 
     checker.dump_config()
+}
+
+fn kak(opts: KakOpts) -> Result<()> {
+    match opts.action {
+        KakAction::Init => kak_init(),
+    }
+}
+
+fn kak_init() -> Result<()> {
+    let project_path =
+        std::env::var("kak_opt_skyspell_project").expect("skyspell_project should be set");
+    let config_path = Path::new(&project_path).join(CONFIG_FILE_NAME);
+    let config = parse_config(&config_path)?;
+    println!("set global skyspell_lang {}", config.lang());
+    let kakrc = include_str!("init.kak");
+    println!("{}", kakrc);
+    Ok(())
 }
