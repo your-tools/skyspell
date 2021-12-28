@@ -15,6 +15,8 @@ anyhow = "1.0.40"
 clap = "3.0.0-beta.5"
 colored = "2.0.0"
 dirs-next = "2.0.0"
+ignore = "0.4.18"
+serde_yaml = "0.8"  # < this is a smell
 skyspell_aspell = { path = "../aspell" }
 skyspell_core = { path = "../core" }
 skyspell_enchant = { path = "../enchant" }

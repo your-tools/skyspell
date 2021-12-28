@@ -9,11 +9,11 @@ use skyspell_core::ProjectId;
 use skyspell_core::RelativePath;
 use skyspell_core::Repository;
 
-const CONFIG_FILE_NAME: &str = "skyspell.yml";
+pub const CONFIG_FILE_NAME: &str = "skyspell.yml";
 
 // TODO: We need a project_id (it's used in the Repository and IgnoreStore trait),
 // but we only run with one project at a time.
-const PROJECT_ID: ProjectId = 42;
+pub const PROJECT_ID: ProjectId = 42;
 
 pub fn parse_config(config_path: &Path) -> Result<Config> {
     let config_text = std::fs::read_to_string(config_path)
