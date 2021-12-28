@@ -10,17 +10,17 @@ use skyspell_core::{Project, ProjectPath, RelativePath};
 
 use crate::io::KakouneIO;
 
-pub(crate) struct Error {
-    pos: (usize, usize),
-    buffer: String,
-    full_path: PathBuf,
-    token: String,
+pub struct Error {
+    pub pos: (usize, usize),
+    pub buffer: String,
+    pub full_path: PathBuf,
+    pub token: String,
 }
 
-pub(crate) struct KakouneChecker<D: Dictionary, R: Repository, S: OperatingSystemIO> {
-    // Note: pub(crate) because KakCli needs read and write access to those fields
-    pub(crate) kakoune_io: KakouneIO<S>,
-    pub(crate) repository_handler: RepositoryHandler<R>,
+pub struct KakouneChecker<D: Dictionary, R: Repository, S: OperatingSystemIO> {
+    // TODO: pub because KakCli needs read and write access to those fields
+    pub kakoune_io: KakouneIO<S>,
+    pub repository_handler: RepositoryHandler<R>,
 
     project: Project,
     dictionary: D,
@@ -69,7 +69,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChec
 }
 
 impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S> {
-    pub(crate) fn new(
+    pub fn new(
         project_path: ProjectPath,
         dictionary: D,
         mut repository: R,
@@ -86,11 +86,11 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
         })
     }
 
-    fn print(&self, command: &str) {
+    pub fn print(&self, command: &str) {
         self.kakoune_io.print(command)
     }
 
-    pub(crate) fn write_code(&self) -> Result<()> {
+    pub fn write_code(&self) -> Result<()> {
         let kak_timestamp = self.kakoune_io.get_timestamp()?;
         self.write_spelling_buffer();
         self.kakoune_io.goto_previous_buffer();
@@ -100,7 +100,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
         Ok(())
     }
 
-    fn write_status(&self) {
+    pub fn write_status(&self) {
         let project_path = &self.project.path();
         let errors_count = self.errors.len();
         self.print(&format!(

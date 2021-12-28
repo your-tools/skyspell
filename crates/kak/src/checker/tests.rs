@@ -14,11 +14,11 @@ impl FakeChecker {
         self.kakoune_io.get_output()
     }
 
-    pub(crate) fn add_known(&mut self, word: &str) {
+    pub fn add_known(&mut self, word: &str) {
         self.dictionary.add_known(word);
     }
 
-    pub(crate) fn add_suggestions(&mut self, error: &str, suggestions: &[String]) {
+    pub fn add_suggestions(&mut self, error: &str, suggestions: &[String]) {
         self.dictionary.add_suggestions(error, suggestions);
     }
 

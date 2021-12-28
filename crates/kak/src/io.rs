@@ -22,7 +22,7 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
         self.os_io.print(&format!("echo -debug {}\n", message));
     }
 
-    pub(crate) fn get_variable(&self, key: &str) -> Result<String> {
+    pub fn get_variable(&self, key: &str) -> Result<String> {
         self.os_io.get_env_var(key)
     }
 
@@ -36,26 +36,26 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
             .map_err(|_| anyhow!("could not parse '{}' as a positive number", v))
     }
 
-    pub(crate) fn get_cursor(&self) -> Result<(usize, usize)> {
+    pub fn get_cursor(&self) -> Result<(usize, usize)> {
         let line = self.get_variable("kak_cursor_line")?;
         let column = self.get_variable("kak_cursor_column")?;
         Ok((self.parse_usize(&line)?, self.parse_usize(&column)?))
     }
 
-    pub(crate) fn get_selection(&self) -> Result<String> {
+    pub fn get_selection(&self) -> Result<String> {
         self.get_variable("kak_selection")
     }
 
-    pub(crate) fn get_timestamp(&self) -> Result<usize> {
+    pub fn get_timestamp(&self) -> Result<usize> {
         let timestamp = self.os_io.get_env_var("kak_timestamp")?;
         self.parse_usize(&timestamp)
     }
 
-    pub(crate) fn goto_previous_buffer(&self) {
+    pub fn goto_previous_buffer(&self) {
         self.os_io.print("execute-keys ga\n")
     }
 
-    pub(crate) fn parse_cursor(&self, pos: &str) -> Result<(usize, usize)> {
+    pub fn parse_cursor(&self, pos: &str) -> Result<(usize, usize)> {
         let (start, end) = pos.split_once('.').context("cursor should contain '.'")?;
         let start = start
             .parse::<usize>()
@@ -66,7 +66,7 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
         Ok((start, end))
     }
 
-    pub(crate) fn parse_range_spec(&self, range_spec: &str) -> Result<Vec<(usize, usize, usize)>> {
+    pub fn parse_range_spec(&self, range_spec: &str) -> Result<Vec<(usize, usize, usize)>> {
         // range-spec is empty
         if range_spec == "0" {
             return Ok(vec![]);
@@ -97,7 +97,7 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
         Ok((start_line, start_col, end_col))
     }
 
-    pub(crate) fn get_previous_selection<'a>(
+    pub fn get_previous_selection<'a>(
         &self,
         cursor: (usize, usize),
         ranges: &'a [(usize, usize, usize)],
@@ -119,7 +119,7 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
         ranges.iter().last()
     }
 
-    pub(crate) fn get_next_selection<'a>(
+    pub fn get_next_selection<'a>(
         &self,
         cursor: (usize, usize),
         ranges: &'a [(usize, usize, usize)],
