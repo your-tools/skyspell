@@ -110,6 +110,7 @@ ignore:
     - "enchant's"
     - hunspell
     - kak
+    - kakrc
     - kakoune
     - merejkowsky
     - nuspell
@@ -125,6 +126,7 @@ ignore:
   extensions:
     kak:
       - buf
+      - makecmd
       - fi
       - gi
       - gl
