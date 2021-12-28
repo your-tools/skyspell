@@ -16,9 +16,7 @@ do
     cargo clippy --all-targets -- --deny warnings
     cargo test
     cargo run --bin skyspell-ci run
-    cargo install --locked --path crates/ci/
     cargo install --locked --path crates/cli/
-    cargo install --locked --path crates/kak/
     (
       cd tests
       poetry install
