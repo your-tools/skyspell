@@ -1,5 +1,5 @@
 [package]
-name = "skyspell_toml"
+name = "skyspell_yaml"
 version = "0.7.0"
 publish = false
 edition = "2021"

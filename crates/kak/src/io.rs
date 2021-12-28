@@ -17,8 +17,7 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
         Self { os_io }
     }
 
-    #[allow(dead_code)]
-    pub(crate) fn debug(&self, message: &str) {
+    pub fn debug(&self, message: &str) {
         self.os_io.print(&format!("echo -debug {}\n", message));
     }
 
@@ -79,7 +78,7 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
         split.into_iter().map(|x| self.parse_range(x)).collect()
     }
 
-    pub(crate) fn print(&self, command: &str) {
+    pub fn print(&self, command: &str) {
         self.os_io.print(command);
     }
 

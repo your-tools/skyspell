@@ -14,10 +14,13 @@ publish = false
 anyhow = "1.0.40"
 clap = "3.0.0-beta.5"
 colored = "2.0.0"
+dirs-next = "2.0.0"
 skyspell_aspell = { path = "../aspell" }
 skyspell_core = { path = "../core" }
 skyspell_enchant = { path = "../enchant" }
+skyspell_kak = { path = "../kak" }
 skyspell_sql = { path = "../sql" }
+skyspell_yaml = { path = "../yaml" }
 
 
 [dev-dependencies]

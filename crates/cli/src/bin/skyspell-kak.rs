@@ -11,11 +11,8 @@ use skyspell_core::ProjectPath;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{Dictionary, IgnoreStore, Repository};
 use skyspell_enchant::EnchantDictionary;
+use skyspell_kak::{new_kakoune_io, KakouneChecker, KakouneIO};
 use skyspell_sql::{get_default_db_path, SQLRepository};
-
-use crate::io::KakouneIO;
-use crate::new_kakoune_io;
-use crate::KakouneChecker;
 
 // Warning: most of the things written to stdout while this code is
 // called will be interpreted as a Kakoune command. Use the debug()
@@ -94,7 +91,7 @@ pub fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
     // Note: init is the only command that does not require a KakouneChecker
     if matches!(opts.action, Action::Init) {
-        print!("{}", include_str!("init.kak"));
+        print!("{}", include_str!("../init.kak"));
         return Ok(());
     }
 
@@ -391,6 +388,3 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         self.print("skyspell-list\n");
     }
 }
-
-#[cfg(test)]
-mod tests;

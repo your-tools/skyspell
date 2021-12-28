@@ -545,11 +545,14 @@ dependencies = [
  "anyhow",
  "clap",
  "colored",
+ "dirs-next",
  "skyspell_aspell",
  "skyspell_core",
  "skyspell_enchant",
+ "skyspell_kak",
  "skyspell_sql",
  "skyspell_tests",
+ "skyspell_yaml",
  "tempfile",
 ]
 
@@ -601,7 +604,6 @@ version = "0.7.0"
 dependencies = [
  "anyhow",
  "clap",
- "dirs-next",
  "itertools",
  "skyspell_core",
  "skyspell_tests",
@@ -637,7 +639,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "skyspell_toml"
+name = "skyspell_yaml"
 version = "0.7.0"
 dependencies = [
  "anyhow",
