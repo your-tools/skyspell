@@ -70,6 +70,13 @@ impl Config {
             ..Default::default()
         }
     }
+
+    pub fn save(&self, config_path: &Path) -> Result<()> {
+        let as_str = serde_yaml::to_string(self)?;
+        std::fs::write(config_path, as_str)
+            .with_context(|| format!("When saving config to {}", config_path.display()))?;
+        Ok(())
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]

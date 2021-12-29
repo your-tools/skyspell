@@ -627,7 +627,6 @@ dependencies = [
  "colored",
  "dirs-next",
  "ignore",
- "serde_yaml",
  "skyspell_aspell",
  "skyspell_core",
  "skyspell_enchant",

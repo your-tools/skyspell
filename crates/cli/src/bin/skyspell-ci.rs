@@ -136,11 +136,9 @@ impl<D: Dictionary> InitChecker<D> {
     }
 
     fn dump_config(&mut self) -> Result<()> {
-        let config = &self.0.repository();
-        let as_str = serde_yaml::to_string(&config)?;
+        let config = self.0.repository();
         let config_path = Path::new(CONFIG_FILE_NAME);
-        std::fs::write(&config_path, as_str)?;
-        Ok(())
+        config.save(config_path)
     }
 }
 
