@@ -31,9 +31,9 @@ enum Action {
 
 #[derive(Parser)]
 struct InitOpts {
-    #[clap(long, about = "language")]
+    #[clap(long, help = "language")]
     lang: Option<String>,
-    #[clap(long, about = "provider")]
+    #[clap(long, help = "provider")]
     provider: Option<String>,
 }
 

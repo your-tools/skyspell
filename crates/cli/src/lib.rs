@@ -89,17 +89,13 @@ fn run<D: Dictionary, R: Repository>(opts: Opts, dictionary: D, repository: R) -
 #[derive(Parser)]
 #[clap(version = env!("CARGO_PKG_VERSION"))]
 pub struct Opts {
-    #[clap(
-        long,
-        about = "Language to use",
-        long_about = "Language to use - must match an installed dictionary for one of Enchant's providers"
-    )]
+    #[clap(long, help = "Language to use")]
     pub lang: Option<String>,
 
-    #[clap(long, about = "Path of the ignore repository")]
+    #[clap(long, help = "Path of the ignore repository")]
     pub db_path: Option<String>,
 
-    #[clap(long, about = "Use aspell instead of enchant")]
+    #[clap(long, help = "Use aspell instead of enchant")]
     pub aspell: bool,
 
     #[clap(subcommand)]
@@ -130,27 +126,27 @@ enum Action {
 
 #[derive(Parser)]
 struct AddOpts {
-    #[clap(long, about = "Project path")]
+    #[clap(long, help = "Project path")]
     project_path: Option<PathBuf>,
 
     word: String,
 
-    #[clap(long, about = "Add word to the ignore list for the given extension")]
+    #[clap(long, help = "Add word to the ignore list for the given extension")]
     extension: Option<String>,
 
-    #[clap(long, about = "Add word to the ignore list for the given path")]
+    #[clap(long, help = "Add word to the ignore list for the given path")]
     relative_path: Option<PathBuf>,
 }
 
 #[derive(Parser)]
 struct CheckOpts {
-    #[clap(long, about = "Project path")]
+    #[clap(long, help = "Project path")]
     project_path: PathBuf,
 
     #[clap(long)]
     non_interactive: bool,
 
-    #[clap(about = "List of paths to check")]
+    #[clap(help = "List of paths to check")]
     sources: Vec<PathBuf>,
 }
 
@@ -162,25 +158,25 @@ struct ImportPersonalDictOpts {
 
 #[derive(Parser)]
 struct SkipOpts {
-    #[clap(long, about = "Project path")]
+    #[clap(long, help = "Project path")]
     project_path: Option<PathBuf>,
 
-    #[clap(long, about = "File path to skip")]
+    #[clap(long, help = "File path to skip")]
     relative_path: Option<PathBuf>,
 
-    #[clap(long, about = "File name to skip")]
+    #[clap(long, help = "File name to skip")]
     file_name: Option<String>,
 }
 
 #[derive(Parser)]
 struct UnskipOpts {
-    #[clap(long, about = "Project path")]
+    #[clap(long, help = "Project path")]
     project_path: Option<PathBuf>,
 
-    #[clap(long, about = "File path to unskip")]
+    #[clap(long, help = "File path to unskip")]
     relative_path: Option<PathBuf>,
 
-    #[clap(long, about = "File name to unskip")]
+    #[clap(long, help = "File name to unskip")]
     file_name: Option<String>,
 }
 
@@ -191,15 +187,15 @@ struct SuggestOpts {
 
 #[derive(Parser)]
 struct RemoveOpts {
-    #[clap(long, about = "Project path")]
+    #[clap(long, help = "Project path")]
     project_path: Option<PathBuf>,
 
     #[clap(
         long,
-        about = "Remove word from the ignore list for the given extension"
+        help = "Remove word from the ignore list for the given extension"
     )]
     extension: Option<String>,
-    #[clap(long, about = "Remove word from the ignore list for the given path")]
+    #[clap(long, help = "Remove word from the ignore list for the given path")]
     relative_path: Option<PathBuf>,
 
     word: String,

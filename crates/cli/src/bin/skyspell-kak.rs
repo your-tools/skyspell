@@ -20,11 +20,7 @@ use skyspell_sql::{get_default_db_path, SQLRepository};
 
 #[derive(Parser)]
 pub struct Opts {
-    #[clap(
-        long,
-        about = "Language to use",
-        long_about = "Language to use - must match an installed dictionary for one of Enchant's providers"
-    )]
+    #[clap(long, help = "Language to use")]
     pub lang: Option<String>,
 
     #[clap(subcommand)]
