@@ -699,6 +699,7 @@ dependencies = [
  "serde_json",
  "skyspell_core",
  "skyspell_tests",
+ "skyspell_yaml",
  "tempfile",
  "time",
 ]

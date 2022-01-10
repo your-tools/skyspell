@@ -13,6 +13,7 @@ use crate::models::*;
 use crate::schema::*;
 use skyspell_core::repository::{Operation, ProjectInfo};
 use skyspell_core::{IgnoreStore, ProjectId, ProjectPath, RelativePath, Repository};
+use skyspell_yaml::Config;
 
 diesel_migrations::embed_migrations!("migrations");
 
@@ -45,6 +46,84 @@ impl SQLRepository {
 
     pub fn new_for_tests() -> Result<Self> {
         Self::new(":memory:")
+    }
+
+    pub fn import_config(&mut self, project_id: ProjectId, config: &Config) -> Result<()> {
+        let rows: Vec<_> = config
+            .ignored()
+            .iter()
+            .map(|x| NewIgnored { word: x })
+            .collect();
+        diesel::insert_or_ignore_into(ignored::table)
+            .values(&rows)
+            .execute(&self.connection)
+            .with_context(|| "Could not insert ignored words")?;
+
+        let rows: Vec<_> = config
+            .ignored_for_project()
+            .iter()
+            .map(|x| NewIgnoredForProject {
+                word: x,
+                project_id,
+            })
+            .collect();
+        diesel::insert_or_ignore_into(ignored_for_project::table)
+            .values(&rows)
+            .execute(&self.connection)
+            .with_context(|| "Could not insert words ignored for project")?;
+
+        for (extension, words) in config.by_extension().iter() {
+            let rows: Vec<_> = words
+                .iter()
+                .map(|word| NewIgnoredForExtension { word, extension })
+                .collect();
+            diesel::insert_or_ignore_into(ignored_for_extension::table)
+                .values(rows)
+                .execute(&self.connection)
+                .with_context(|| {
+                    format!("Could not insert word ignored for extensions {}", extension)
+                })?;
+        }
+
+        for (path, words) in config.by_path().iter() {
+            let rows: Vec<_> = words
+                .iter()
+                .map(|word| NewIgnoredForPath {
+                    project_id,
+                    word,
+                    path,
+                })
+                .collect();
+            diesel::insert_or_ignore_into(ignored_for_path::table)
+                .values(rows)
+                .execute(&self.connection)
+                .with_context(|| format!("Could not insert word ignored for path {}", path))?;
+        }
+
+        let rows: Vec<_> = config
+            .skipped_file_names()
+            .iter()
+            .map(|x| NewSkippedFileName { file_name: x })
+            .collect();
+        diesel::insert_or_ignore_into(skipped_file_names::table)
+            .values(&rows)
+            .execute(&self.connection)
+            .with_context(|| "Could not insert skipped file names")?;
+
+        let rows: Vec<_> = config
+            .skipped_paths()
+            .iter()
+            .map(|x| NewSkippedPath {
+                path: x,
+                project_id,
+            })
+            .collect();
+        diesel::insert_or_ignore_into(skipped_paths::table)
+            .values(&rows)
+            .execute(&self.connection)
+            .with_context(|| "Could not insert skipped file paths")?;
+
+        Ok(())
     }
 }
 

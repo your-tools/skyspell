@@ -3,7 +3,7 @@ name = "skyspell_yaml"
 version = "0.7.0"
 publish = false
 edition = "2021"
-description = "toml implementation of skyspell_core::Repository"
+description = "store skyspell config in a yaml file"
 keywords = ["kakoune", "skyspell", "spell"]
 
 [dependencies]

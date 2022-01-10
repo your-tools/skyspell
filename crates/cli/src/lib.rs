@@ -57,6 +57,7 @@ pub fn main() -> Result<()> {
     }?;
 
     let repository = SQLRepository::new(&db_path)?;
+
     let outcome = if opts.aspell {
         let dictionary = AspellDictionary::new(lang)?;
         run(opts, dictionary, repository)
@@ -71,19 +72,33 @@ pub fn main() -> Result<()> {
     Ok(())
 }
 
-// NOTE: we keep this generic function to test the non-interactive cli
-fn run<D: Dictionary, R: Repository>(opts: Opts, dictionary: D, repository: R) -> Result<()> {
+// NOTE: we use this function to test the cli using a FakeDictionary
+fn run<D: Dictionary>(opts: Opts, dictionary: D, repository: SQLRepository) -> Result<()> {
     match opts.action {
         Action::Add(opts) => add(repository, opts),
         Action::Remove(opts) => remove(repository, opts),
         Action::Check(opts) => check(repository, dictionary, opts),
-        Action::Clean => clean(repository),
-        Action::ImportPersonalDict(opts) => import_personal_dict(repository, opts),
         Action::Suggest(opts) => suggest(dictionary, opts),
         Action::Skip(opts) => skip(repository, opts),
         Action::Unskip(opts) => unskip(repository, opts),
         Action::Undo => undo(repository),
+        Action::Clean => clean(repository),
+        Action::ImportConfig(opts) => import_config(repository, opts),
     }
+}
+
+fn clean(mut repository: SQLRepository) -> Result<()> {
+    repository.clean()
+}
+
+fn import_config(mut repository: SQLRepository, opts: ImportConfigOpts) -> Result<()> {
+    let project_path = &opts.project_path;
+    let project_path = ProjectPath::new(project_path)?;
+    let project_id = repository.get_project_id(&project_path)?;
+    let cfg_path = &opts.config_path;
+    let config = skyspell_yaml::parse_config(cfg_path)?;
+    repository.import_config(project_id, &config)?;
+    Ok(())
 }
 
 #[derive(Parser)]
@@ -112,8 +127,8 @@ enum Action {
     Check(CheckOpts),
     #[clap(about = "Clean repository")]
     Clean,
-    #[clap(about = "Import a personal dictionary")]
-    ImportPersonalDict(ImportPersonalDictOpts),
+    #[clap(about = "Import settings from a config file")]
+    ImportConfig(ImportConfigOpts),
     #[clap(about = "Suggest replacements for the given error")]
     Suggest(SuggestOpts),
     #[clap(about = "Add path tho the given skipped list")]
@@ -151,9 +166,11 @@ struct CheckOpts {
 }
 
 #[derive(Parser)]
-struct ImportPersonalDictOpts {
+struct ImportConfigOpts {
     #[clap(long)]
-    personal_dict_path: PathBuf,
+    project_path: PathBuf,
+
+    config_path: PathBuf,
 }
 
 #[derive(Parser)]
@@ -301,24 +318,9 @@ where
     checker.success()
 }
 
-fn clean(mut repository: impl Repository) -> Result<()> {
-    repository.clean()
-}
-
 fn undo(repository: impl Repository) -> Result<()> {
     let mut handler = RepositoryHandler::new(repository);
     handler.undo()
-}
-
-fn import_personal_dict(
-    mut repository: impl Repository,
-    opts: ImportPersonalDictOpts,
-) -> Result<()> {
-    let dict = std::fs::read_to_string(&opts.personal_dict_path)?;
-    let words: Vec<&str> = dict.split_ascii_whitespace().collect();
-    repository.insert_ignored_words(&words)?;
-
-    Ok(())
 }
 
 fn skip(mut repository: impl Repository, opts: SkipOpts) -> Result<()> {
