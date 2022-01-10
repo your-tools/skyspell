@@ -1,9 +1,9 @@
 [package]
-name = "skyspell_yaml"
+name = "skyspell_config"
 version = "0.7.0"
 publish = false
 edition = "2021"
-description = "store skyspell config in a yaml file"
+description = "store repository info config in a config file"
 keywords = ["kakoune", "skyspell", "spell"]
 
 [dependencies]

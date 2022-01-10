@@ -5,6 +5,7 @@ use clap::Parser;
 use colored::*;
 
 use skyspell_aspell::AspellDictionary;
+use skyspell_config::parse_config;
 use skyspell_core::repository::RepositoryHandler;
 use skyspell_core::Checker;
 use skyspell_core::TokenProcessor;
@@ -96,7 +97,7 @@ fn import_config(mut repository: SQLRepository, opts: ImportConfigOpts) -> Resul
     let project_path = ProjectPath::new(project_path)?;
     let project_id = repository.get_project_id(&project_path)?;
     let cfg_path = &opts.config_path;
-    let config = skyspell_yaml::parse_config(cfg_path)?;
+    let config = parse_config(cfg_path)?;
     repository.import_config(project_id, &config)?;
     Ok(())
 }

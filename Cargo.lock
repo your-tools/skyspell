@@ -624,12 +624,12 @@ dependencies = [
  "dirs-next",
  "ignore",
  "skyspell_aspell",
+ "skyspell_config",
  "skyspell_core",
  "skyspell_enchant",
  "skyspell_kak",
  "skyspell_sql",
  "skyspell_tests",
- "skyspell_yaml",
  "tempfile",
 ]
 
@@ -640,6 +640,18 @@ dependencies = [
  "anyhow",
  "skyspell_core",
  "skyspell_tests",
+]
+
+[[package]]
+name = "skyspell_config"
+version = "0.7.0"
+dependencies = [
+ "anyhow",
+ "dirs-next",
+ "itertools",
+ "serde",
+ "serde_yaml",
+ "skyspell_core",
 ]
 
 [[package]]
@@ -697,9 +709,9 @@ dependencies = [
  "paste",
  "serde",
  "serde_json",
+ "skyspell_config",
  "skyspell_core",
  "skyspell_tests",
- "skyspell_yaml",
  "tempfile",
  "time",
 ]
@@ -713,18 +725,6 @@ dependencies = [
  "serde_json",
  "skyspell_core",
  "tempfile",
-]
-
-[[package]]
-name = "skyspell_yaml"
-version = "0.7.0"
-dependencies = [
- "anyhow",
- "dirs-next",
- "itertools",
- "serde",
- "serde_yaml",
- "skyspell_core",
 ]
 
 [[package]]

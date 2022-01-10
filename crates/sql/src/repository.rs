@@ -11,9 +11,9 @@ use directories_next::ProjectDirs;
 
 use crate::models::*;
 use crate::schema::*;
+use skyspell_config::Config;
 use skyspell_core::repository::{Operation, ProjectInfo};
 use skyspell_core::{IgnoreStore, ProjectId, ProjectPath, RelativePath, Repository};
-use skyspell_yaml::Config;
 
 diesel_migrations::embed_migrations!("migrations");
 
