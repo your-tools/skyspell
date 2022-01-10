@@ -52,22 +52,34 @@ impl Config {
         &self.provider
     }
 
-    pub fn ignored(&self) -> &[String] {
-        &self.ignore.global
+    pub fn ignored(&self) -> impl Iterator<Item = &str> {
+        self.ignore.global.iter().map(|x| x.as_ref())
     }
 
-    pub fn ignored_for_project(&self) -> &[String] {
-        &self.ignore.project
+    pub fn ignored_for_project(&self) -> impl Iterator<Item = &str> {
+        self.ignore.project.iter().map(|x| x.as_ref())
     }
 
-    // TODO: better type?
-    pub fn by_extension(&self) -> &BTreeMap<String, Vec<String>> {
-        &self.ignore.extensions
+    pub fn extensions(&self) -> impl Iterator<Item = &str> {
+        self.ignore.extensions.keys().map(|x| x.as_ref())
     }
 
-    // TODO: better type?
-    pub fn by_path(&self) -> &BTreeMap<String, Vec<String>> {
-        &self.ignore.paths
+    // Note: you should call this on an extension returned by self::extensions(),
+    // otherwise the code will panic
+    pub fn by_extension(&self, extension: &str) -> impl Iterator<Item = &str> {
+        let values = &self.ignore.extensions[extension];
+        values.iter().map(|x| x.as_ref())
+    }
+
+    pub fn paths(&self) -> impl Iterator<Item = &str> {
+        self.ignore.paths.keys().map(|x| x.as_ref())
+    }
+
+    // Note: you should call this on an extension returned by self::extensions(),
+    // otherwise the code will panic
+    pub fn by_path(&self, path: &str) -> impl Iterator<Item = &str> {
+        let values = &self.ignore.paths[path];
+        values.iter().map(|x| x.as_ref())
     }
 
     pub fn skipped_file_names(&self) -> &[String] {

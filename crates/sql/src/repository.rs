@@ -49,11 +49,7 @@ impl SQLRepository {
     }
 
     pub fn import_config(&mut self, project_id: ProjectId, config: &Config) -> Result<()> {
-        let rows: Vec<_> = config
-            .ignored()
-            .iter()
-            .map(|x| NewIgnored { word: x })
-            .collect();
+        let rows: Vec<_> = config.ignored().map(|x| NewIgnored { word: x }).collect();
         diesel::insert_or_ignore_into(ignored::table)
             .values(&rows)
             .execute(&self.connection)
@@ -61,7 +57,6 @@ impl SQLRepository {
 
         let rows: Vec<_> = config
             .ignored_for_project()
-            .iter()
             .map(|x| NewIgnoredForProject {
                 word: x,
                 project_id,
@@ -72,9 +67,10 @@ impl SQLRepository {
             .execute(&self.connection)
             .with_context(|| "Could not insert words ignored for project")?;
 
-        for (extension, words) in config.by_extension().iter() {
+        let extensions = config.extensions();
+        for extension in extensions {
+            let words = config.by_extension(extension);
             let rows: Vec<_> = words
-                .iter()
                 .map(|word| NewIgnoredForExtension { word, extension })
                 .collect();
             diesel::insert_or_ignore_into(ignored_for_extension::table)
@@ -85,9 +81,10 @@ impl SQLRepository {
                 })?;
         }
 
-        for (path, words) in config.by_path().iter() {
+        let paths = config.paths();
+        for path in paths {
+            let words = config.by_path(path);
             let rows: Vec<_> = words
-                .iter()
                 .map(|word| NewIgnoredForPath {
                     project_id,
                     word,
