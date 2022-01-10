@@ -17,6 +17,8 @@ use skyspell_sql::{get_default_db_path, SQLRepository};
 mod checkers;
 pub use checkers::{InteractiveChecker, NonInteractiveChecker};
 
+const SKYSPELL_CONFIG_FILE_NAME: &str = "skyspell.yml";
+
 #[macro_export]
 macro_rules! info_1 {
     ($($arg:tt)*) => ({
@@ -94,12 +96,13 @@ fn clean(mut repository: SQLRepository) -> Result<()> {
 
 fn import_config(mut repository: SQLRepository, opts: ImportConfigOpts) -> Result<()> {
     let project_path = &opts.project_path;
+    let cfg_path = project_path.join(SKYSPELL_CONFIG_FILE_NAME);
     let project_path = ProjectPath::new(project_path)?;
     let project_id = repository.get_project_id(&project_path)?;
-    let cfg_path = &opts.config_path;
-    let config = parse_config(cfg_path)?;
+    let config = parse_config(&cfg_path)?;
     repository.import_config(project_id, &config)?;
-    Ok(())
+    // Always skip our own config fie
+    repository.skip_file_name(SKYSPELL_CONFIG_FILE_NAME)
 }
 
 #[derive(Parser)]
@@ -170,8 +173,6 @@ struct CheckOpts {
 struct ImportConfigOpts {
     #[clap(long)]
     project_path: PathBuf,
-
-    config_path: PathBuf,
 }
 
 #[derive(Parser)]
