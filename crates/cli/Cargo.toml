@@ -17,7 +17,6 @@ colored = "2.0.0"
 dirs-next = "2.0.0"
 ignore = "0.4.18"
 skyspell_aspell = { path = "../aspell" }
-skyspell_config = { path = "../config" }
 skyspell_core = { path = "../core" }
 skyspell_enchant = { path = "../enchant" }
 skyspell_kak = { path = "../kak" }

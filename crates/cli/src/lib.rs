@@ -5,7 +5,6 @@ use clap::Parser;
 use colored::*;
 
 use skyspell_aspell::AspellDictionary;
-use skyspell_config::parse_config;
 use skyspell_core::repository::RepositoryHandler;
 use skyspell_core::Checker;
 use skyspell_core::TokenProcessor;
@@ -16,8 +15,6 @@ use skyspell_sql::{get_default_db_path, SQLRepository};
 
 mod checkers;
 pub use checkers::{InteractiveChecker, NonInteractiveChecker};
-
-const SKYSPELL_CONFIG_FILE_NAME: &str = "skyspell.yml";
 
 #[macro_export]
 macro_rules! info_1 {
@@ -86,23 +83,11 @@ fn run<D: Dictionary>(opts: Opts, dictionary: D, repository: SQLRepository) -> R
         Action::Unskip(opts) => unskip(repository, opts),
         Action::Undo => undo(repository),
         Action::Clean => clean(repository),
-        Action::ImportConfig(opts) => import_config(repository, opts),
     }
 }
 
 fn clean(mut repository: SQLRepository) -> Result<()> {
     repository.clean()
-}
-
-fn import_config(mut repository: SQLRepository, opts: ImportConfigOpts) -> Result<()> {
-    let project_path = &opts.project_path;
-    let cfg_path = project_path.join(SKYSPELL_CONFIG_FILE_NAME);
-    let project_path = ProjectPath::new(project_path)?;
-    let project_id = repository.get_project_id(&project_path)?;
-    let config = parse_config(&cfg_path)?;
-    repository.import_config(project_id, &config)?;
-    // Always skip our own config fie
-    repository.skip_file_name(SKYSPELL_CONFIG_FILE_NAME)
 }
 
 #[derive(Parser)]
@@ -131,8 +116,6 @@ enum Action {
     Check(CheckOpts),
     #[clap(about = "Clean repository")]
     Clean,
-    #[clap(about = "Import settings from a config file")]
-    ImportConfig(ImportConfigOpts),
     #[clap(about = "Suggest replacements for the given error")]
     Suggest(SuggestOpts),
     #[clap(about = "Add path tho the given skipped list")]
@@ -167,12 +150,6 @@ struct CheckOpts {
 
     #[clap(help = "List of paths to check")]
     sources: Vec<PathBuf>,
-}
-
-#[derive(Parser)]
-struct ImportConfigOpts {
-    #[clap(long)]
-    project_path: PathBuf,
 }
 
 #[derive(Parser)]
