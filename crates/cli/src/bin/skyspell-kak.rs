@@ -237,6 +237,13 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
                 continue;
             }
 
+            // When a file named debug.log exist in the working directory,
+            // it gets added to the buflist by default.
+            // Why? I have no clue :(
+            if bufname == "debug.log" {
+                continue;
+            }
+
             // cleanup any errors that may have been set during last run
             self.print(&format!("unset-option buffer={} spell_errors\n", bufname));
 
