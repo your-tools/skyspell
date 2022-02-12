@@ -4,7 +4,6 @@ A fast and handy spell checker for the command line.
 
 ## Features
 
-* Distributed as a single binary
 * Handy command line interface
 * Leverages the excellent [enchant](https://abiword.github.io/enchant/) library,
   so compatible with existing providers and dictionaries
