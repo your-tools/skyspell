@@ -2,13 +2,12 @@
 name = "skyspell"
 version = "0.7.0"
 authors = ["Dimitri Merejkowsky <dimitri@dmerej.info>"]
-description = "Command line spell checker"
+description = "Fast and handy spell checker for the command line"
 edition = "2021"
 keywords = ["spell", "cli"]
 license = "BSD-3-Clause"
 readme = "README.md"
 repository = "https://git.sr.ht/~dmerej/skyspell"
-publish = false
 
 [dependencies]
 anyhow = "1.0.40"
