@@ -5,7 +5,6 @@ use clap::Parser;
 use colored::*;
 
 use skyspell_core::repository::RepositoryHandler;
-use skyspell_core::AspellDictionary;
 use skyspell_core::Checker;
 use skyspell_core::EnchantDictionary;
 use skyspell_core::TokenProcessor;
@@ -57,14 +56,9 @@ pub fn main() -> Result<()> {
     }?;
 
     let repository = SQLRepository::new(&db_path)?;
+    let dictionary = EnchantDictionary::new(lang)?;
 
-    let outcome = if opts.aspell {
-        let dictionary = AspellDictionary::new(lang)?;
-        run(opts, dictionary, repository)
-    } else {
-        let dictionary = EnchantDictionary::new(lang)?;
-        run(opts, dictionary, repository)
-    };
+    let outcome = run(opts, dictionary, repository);
     if let Err(e) = outcome {
         print_error!("{}", e);
         std::process::exit(1);
@@ -98,9 +92,6 @@ pub struct Opts {
 
     #[clap(long, help = "Path of the ignore repository")]
     pub db_path: Option<String>,
-
-    #[clap(long, help = "Use aspell instead of enchant")]
-    pub aspell: bool,
 
     #[clap(subcommand)]
     action: Action,

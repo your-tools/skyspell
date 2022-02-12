@@ -5,7 +5,6 @@ extern crate diesel_migrations;
 #[macro_use]
 extern crate lazy_static;
 
-pub mod aspell;
 mod dictionary;
 pub mod enchant;
 pub mod ignore_store;
@@ -18,7 +17,6 @@ pub mod tests;
 pub mod tokens;
 
 pub use crate::enchant::EnchantDictionary;
-pub use aspell::AspellDictionary;
 pub use checker::Checker;
 pub use dictionary::Dictionary;
 pub use ignore_store::IgnoreStore;
