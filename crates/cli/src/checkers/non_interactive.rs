@@ -4,6 +4,8 @@ use colored::*;
 use skyspell_core::{Checker, Dictionary, IgnoreStore};
 use skyspell_core::{Project, RelativePath};
 
+use crate::info_2;
+
 pub struct NonInteractiveChecker<D: Dictionary, I: IgnoreStore> {
     project: Project,
     dictionary: D,
@@ -52,7 +54,7 @@ impl<D: Dictionary, I: IgnoreStore> Checker for NonInteractiveChecker<D, I> {
     fn success(&self) -> Result<()> {
         match self.num_errors {
             0 => {
-                println!("Success! No spelling errors found");
+                info_2!("Success! No spelling errors found");
                 Ok(())
             }
             1 => bail!("Found just one tiny spelling error"),

@@ -29,8 +29,10 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
     fn success(&self) -> Result<()> {
         if !self.skipped.is_empty() {
             bail!("Some errors were skipped")
+        } else {
+            info_2!("No errors found");
+            Ok(())
         }
-        Ok(())
     }
 
     fn project(&self) -> &Project {
