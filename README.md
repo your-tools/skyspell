@@ -18,6 +18,7 @@ A fast and handy spell checker for the command line.
   relative path inside projects
 * Skip list per file names (like always skipping files named `Cargo.lock`)
 * Skip list per relative path inside a project (like `image.svg`)
+* [Kakoune integration](https://git.sr.ht/~dmerej/skyspell/tree/main/item/crates/kak)
 
 ## Installation
 
