@@ -1,6 +1,5 @@
 # Kakoune integration for skyspell
 
-[![asciicast](https://asciinema.org/a/427100.svg)](https://asciinema.org/a/427100)
 
 ## Installation
 
@@ -40,3 +39,6 @@ Typical workflow:
 Note that instead of using `skyspell-list` you can also use `skyspell-next` and
 `skyspell-previous`.
 
+See also:
+
+[![asciicast](https://asciinema.org/a/427100.svg)](https://asciinema.org/a/427100)
