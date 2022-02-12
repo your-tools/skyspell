@@ -18,9 +18,8 @@ pub struct Error {
 }
 
 pub struct KakouneChecker<D: Dictionary, R: Repository, S: OperatingSystemIO> {
-    // TODO: pub because KakCli needs read and write access to those fields
-    pub kakoune_io: KakouneIO<S>,
-    pub repository_handler: RepositoryHandler<R>,
+    kakoune_io: KakouneIO<S>,
+    repository_handler: RepositoryHandler<R>,
 
     project: Project,
     dictionary: D,
@@ -84,6 +83,14 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
             repository_handler,
             errors: vec![],
         })
+    }
+
+    pub fn io(&self) -> &KakouneIO<S> {
+        &self.kakoune_io
+    }
+
+    pub fn repo_mut(&mut self) -> &mut RepositoryHandler<R> {
+        &mut self.repository_handler
     }
 
     pub fn print(&self, command: &str) {

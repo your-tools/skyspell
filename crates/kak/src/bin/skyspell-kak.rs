@@ -145,7 +145,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
     }
 
     fn kakoune_io(&self) -> &KakouneIO<S> {
-        &self.checker.kakoune_io
+        self.checker.io()
     }
 
     fn print(&self, message: &str) {
@@ -157,7 +157,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
     }
 
     fn repository_handler(&mut self) -> &mut RepositoryHandler<R> {
-        &mut self.checker.repository_handler
+        self.checker.repo_mut()
     }
 
     #[allow(dead_code)]
