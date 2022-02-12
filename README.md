@@ -30,11 +30,10 @@ You will need:
   the above backends (like `aspell-en` or `hunspell-fr`).
 * `cargo`
 
-Then get the sources and build the binary:
+Then run:
 
 ```
-$ cd skyspell
-$ cargo install --locked --path crates/cli/
+$ cargo install skyspell
 ```
 
 and make sure `skyspell` is in your `PATH`.
@@ -61,28 +60,7 @@ What to do?
 => Added 'fn' to the ignore list for '.rs' files
 ```
 
-## Kakoune integration
 
-Install `skyspell_kak`:
-
-```
-$ cd skyspell
-$ cargo install --locked --path crates/kak/
-```
-
-Make sure that `skyspell-kak` is in your `PATH`.
-
-
-Call `skyspell-kak init` in your `kakrc` file:
-
-```
-skyspell-kak init
-```
-
-Now you can call the various `:skyspell-` commands, as
-demonstrated in the following video on asciinema:
-
-[![asciicast](https://asciinema.org/a/427100.svg)](https://asciinema.org/a/427100)
 
 ## Comparison with scspell
 
