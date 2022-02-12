@@ -150,7 +150,7 @@ def kak_checker(tmp_path: Path, kitty_window: KittyWindow) -> Iterator[RemoteKak
 
 def open_file_with_contents(kak_checker: RemoteKakoune, path: Path, text: str) -> None:
     path.write_text(text)
-    kak_checker.send_command("edit", str(path))
+    kak_checker.send_command(f"edit %{{{path}}}")
     kak_checker.send_command("skyspell-check")
 
 

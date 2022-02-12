@@ -44,7 +44,7 @@ define-command skyspell-check -docstring "check the open buffers for spelling er
     : $kak_timestamp
     : $kak_opt_skyspell_project
     : $kak_opt_skyspell_db_path
-    skyspell-kak --lang $kak_opt_skyspell_lang check $kak_buflist
+    skyspell-kak --lang $kak_opt_skyspell_lang check $kak_quoted_buflist
   }
 }
 

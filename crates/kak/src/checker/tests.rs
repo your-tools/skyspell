@@ -88,7 +88,7 @@ fn test_write_errors_as_buffer_options() {
 
     let actual = checker.get_output();
     let expected = "\
-    set-option buffer=foo.js spell_errors 42 2.5+3|SpellingError 3.7+3|SpellingError \n\
-    set-option buffer=bar.js spell_errors 42 1.6+4|SpellingError \n";
+    set-option %{buffer=foo.js} spell_errors 42 2.5+3|SpellingError 3.7+3|SpellingError \n\
+    set-option %{buffer=bar.js} spell_errors 42 1.6+4|SpellingError \n";
     assert_eq!(actual, expected);
 }

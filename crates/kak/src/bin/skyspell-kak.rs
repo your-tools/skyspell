@@ -223,6 +223,13 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         Ok(())
     }
 
+    fn unescape(&self, input: &str) -> String {
+        match snailquote::unescape(input) {
+            Err(_) => input.to_string(),
+            Ok(s) => s,
+        }
+    }
+
     fn check(&mut self, opts: &CheckOpts) -> Result<()> {
         // Note:
         // kak_buflist may:
@@ -234,19 +241,17 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
             .to_str()
             .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
         for bufname in &opts.buflist {
+            let bufname = self.unescape(bufname);
+
             if bufname.starts_with('*') && bufname.ends_with('*') {
                 continue;
             }
 
-            // When a file named debug.log exist in the working directory,
-            // it gets added to the buflist by default.
-            // Why? I have no clue :(
-            if bufname == "debug.log" {
-                continue;
-            }
-
             // cleanup any errors that may have been set during last run
-            self.print(&format!("unset-option buffer={} spell_errors\n", bufname));
+            self.print(&format!(
+                "unset-option %{{buffer={}}} spell_errors\n",
+                bufname
+            ));
 
             let full_path = bufname.replace("~", home_dir);
             let source_path = Path::new(&full_path);

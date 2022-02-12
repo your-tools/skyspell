@@ -11,6 +11,7 @@ anyhow = "1.0.40"
 clap = { version = "3.0.0", features = ["derive"] }
 directories-next = "2.0.0"
 itertools = "0.10.0"
+snailquote = "0.3"
 
 skyspell_core = { path = "../core" }
 
