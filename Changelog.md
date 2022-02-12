@@ -1,9 +1,21 @@
+# 0.7.1
+
+* Remove `--aspell` option and `aspell` support. Additional complexity to avoid
+  going through Enchant does not seems worth it.
+* Tweak skyspell cli output
+
 # 0.7.0
 
 * **Breaking** Split code into separate crates. This means you now need to install `skyspell_kak` in
   order to use the Kakoune integration.
 * **Breaking** Remove `skyspell_underline_errors` option. We now use a specific SellingError face
   and users can change the default value if needed.
+
+## Internal
+
+* Use `kak_quoted_buflist` instead of `kak_buflist`
+* Bump to clap 3.0
+* Switch from `chrono` to `time`
 
 # 0.6.1 (2021-11-01)
 
