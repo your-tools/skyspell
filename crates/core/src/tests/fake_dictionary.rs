@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::Result;
-use skyspell_core::Dictionary;
+use crate::Dictionary;
 
 #[derive(Default)]
 pub struct FakeDictionary {

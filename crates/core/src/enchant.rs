@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 
-use skyspell_core::Dictionary;
+use crate::Dictionary;
 
 pub struct EnchantDictionary {
     dict: enchant::Dict,

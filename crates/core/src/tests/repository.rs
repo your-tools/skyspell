@@ -1,6 +1,6 @@
-use skyspell_core::{IgnoreStore, Repository};
-use skyspell_tests::FakeRepository;
-use skyspell_tests::{new_project_path, new_relative_path};
+use crate::FakeRepository;
+use crate::{new_project_path, new_relative_path};
+use crate::{IgnoreStore, Repository};
 
 #[test]
 fn test_should_ignore_when_in_global_list() {

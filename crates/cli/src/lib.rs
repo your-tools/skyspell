@@ -4,14 +4,14 @@ use anyhow::{bail, Result};
 use clap::Parser;
 use colored::*;
 
-use skyspell_aspell::AspellDictionary;
 use skyspell_core::repository::RepositoryHandler;
+use skyspell_core::AspellDictionary;
 use skyspell_core::Checker;
+use skyspell_core::EnchantDictionary;
 use skyspell_core::TokenProcessor;
+use skyspell_core::{get_default_db_path, SQLRepository};
 use skyspell_core::{ConsoleInteractor, Dictionary, Repository};
 use skyspell_core::{ProjectPath, RelativePath};
-use skyspell_enchant::EnchantDictionary;
-use skyspell_sql::{get_default_db_path, SQLRepository};
 
 mod checkers;
 pub use checkers::{InteractiveChecker, NonInteractiveChecker};

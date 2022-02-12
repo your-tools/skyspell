@@ -1,9 +1,9 @@
 use super::*;
 
+use skyspell_core::FakeDictionary;
+use skyspell_core::FakeIO;
+use skyspell_core::FakeRepository;
 use skyspell_core::RelativePath;
-use skyspell_tests::FakeDictionary;
-use skyspell_tests::FakeIO;
-use skyspell_tests::FakeRepository;
 
 use crate::checker::tests::new_fake_checker;
 
@@ -119,7 +119,10 @@ fn test_add_extension() {
 
     cli.add_extension().unwrap();
 
-    assert!(cli.ignore_store().is_ignored_for_extension("foo", "py").unwrap());
+    assert!(cli
+        .ignore_store()
+        .is_ignored_for_extension("foo", "py")
+        .unwrap());
 }
 
 #[test]
@@ -332,7 +335,10 @@ fn test_skip_file() {
 
     cli.skip_file().unwrap();
 
-    assert!(cli.ignore_store().is_skipped_path(project_id, &foo_py).unwrap());
+    assert!(cli
+        .ignore_store()
+        .is_skipped_path(project_id, &foo_py)
+        .unwrap());
 }
 
 #[test]
@@ -348,7 +354,10 @@ fn test_skip_name() {
 
     cli.skip_name().unwrap();
 
-    assert!(cli.ignore_store().is_skipped_file_name("Cargo.lock").unwrap());
+    assert!(cli
+        .ignore_store()
+        .is_skipped_file_name("Cargo.lock")
+        .unwrap());
 }
 
 #[test]

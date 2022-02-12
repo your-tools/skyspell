@@ -9,10 +9,10 @@ use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use directories_next::ProjectDirs;
 
-use crate::models::*;
-use crate::schema::*;
-use skyspell_core::repository::{Operation, ProjectInfo};
-use skyspell_core::{IgnoreStore, ProjectId, ProjectPath, RelativePath, Repository};
+use crate::repository::{Operation, ProjectInfo};
+use crate::sql::models::*;
+use crate::sql::schema::*;
+use crate::{IgnoreStore, ProjectId, ProjectPath, RelativePath, Repository};
 
 diesel_migrations::embed_migrations!("migrations");
 

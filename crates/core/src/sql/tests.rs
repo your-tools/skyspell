@@ -1,12 +1,12 @@
+use crate::repository::handler::Ignore as IgnoreOperation;
+use crate::repository::Operation;
 use diesel::dsl::count_star;
 use diesel::prelude::*;
-use skyspell_core::repository::handler::Ignore as IgnoreOperation;
-use skyspell_core::repository::Operation;
-use skyspell_core::{IgnoreStore, Repository};
-use skyspell_tests::test_repository;
 
-use crate::schema::operations;
+use crate::sql::schema::operations;
+use crate::test_repository;
 use crate::SQLRepository;
+use crate::{IgnoreStore, Repository};
 
 test_repository!(SQLRepository);
 

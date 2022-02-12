@@ -1,14 +1,14 @@
 #![allow(clippy::unwrap_used)] // this is test code, it's ok to unwrap
 use tempfile::TempDir;
 
-use skyspell_core::{ProjectPath, RelativePath};
+use crate::{ProjectPath, RelativePath};
 
-mod fake_dictionary;
-mod fake_interactor;
-mod fake_io;
-mod fake_repository;
-mod test_dictionary;
-mod test_repository;
+pub mod fake_dictionary;
+pub mod fake_interactor;
+pub mod fake_io;
+pub mod fake_repository;
+pub mod test_dictionary;
+pub mod test_repository;
 
 pub use fake_dictionary::FakeDictionary;
 pub use fake_interactor::FakeInteractor;

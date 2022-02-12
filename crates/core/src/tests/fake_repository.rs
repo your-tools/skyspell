@@ -2,10 +2,10 @@ use anyhow::{anyhow, bail, ensure, Result};
 
 use std::collections::{HashMap, HashSet};
 
-use skyspell_core::repository::Operation;
-use skyspell_core::repository::ProjectInfo;
-use skyspell_core::{IgnoreStore, Repository};
-use skyspell_core::{ProjectId, ProjectPath, RelativePath};
+use crate::repository::Operation;
+use crate::repository::ProjectInfo;
+use crate::{IgnoreStore, Repository};
+use crate::{ProjectId, ProjectPath, RelativePath};
 
 use crate::test_repository;
 

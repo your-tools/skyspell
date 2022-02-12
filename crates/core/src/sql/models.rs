@@ -1,4 +1,4 @@
-use crate::schema::*;
+use crate::sql::schema::*;
 
 #[derive(Insertable)]
 #[table_name = "ignored"]

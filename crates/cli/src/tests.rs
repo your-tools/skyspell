@@ -1,9 +1,9 @@
 use super::*;
 
+use skyspell_core::tests::{new_project_path, FakeDictionary};
 use skyspell_core::IgnoreStore;
+use skyspell_core::SQLRepository;
 use skyspell_core::{ProjectPath, RelativePath};
-use skyspell_sql::SQLRepository;
-use skyspell_tests::{new_project_path, FakeDictionary};
 
 use tempfile::TempDir;
 

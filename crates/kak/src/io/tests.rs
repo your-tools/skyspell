@@ -1,4 +1,4 @@
-use skyspell_tests::FakeIO;
+use skyspell_core::tests::FakeIO;
 
 use super::*;
 

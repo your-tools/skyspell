@@ -400,12 +400,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "paste"
-version = "1.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0744126afe1a6dd7f394cb50a716dbe086cb06e255e53d8d0185d82828358fb5"
-
-[[package]]
 name = "pathdiff"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -413,9 +407,9 @@ checksum = "8835116a5c179084a830efb3adc117ab007512b535bc1a21c991d3b32a6b44dd"
 
 [[package]]
 name = "pkg-config"
-version = "0.3.22"
+version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12295df4f294471248581bc09bef3c38a5e46f1e36d6a37353621a0c6c357e1f"
+checksum = "58893f751c9b0412871a09abd62ecd2a00298c6c83befa223ef98c52aef40cbe"
 
 [[package]]
 name = "ppv-lite86"
@@ -605,22 +599,8 @@ dependencies = [
  "colored",
  "dirs-next",
  "ignore",
- "skyspell_aspell",
  "skyspell_core",
- "skyspell_enchant",
- "skyspell_kak",
- "skyspell_sql",
- "skyspell_tests",
  "tempfile",
-]
-
-[[package]]
-name = "skyspell_aspell"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "skyspell_core",
- "skyspell_tests",
 ]
 
 [[package]]
@@ -629,31 +609,17 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "dialoguer",
+ "diesel",
+ "diesel_migrations",
+ "directories-next",
+ "enchant",
  "lazy_static",
  "pathdiff",
  "regex",
  "serde",
  "serde_json",
- "time",
-]
-
-[[package]]
-name = "skyspell_core_tests"
-version = "0.1.0"
-dependencies = [
- "skyspell_core",
- "skyspell_tests",
  "tempfile",
-]
-
-[[package]]
-name = "skyspell_enchant"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "enchant",
- "skyspell_core",
- "skyspell_tests",
+ "time",
 ]
 
 [[package]]
@@ -661,36 +627,9 @@ name = "skyspell_kak"
 version = "0.7.0"
 dependencies = [
  "anyhow",
- "itertools",
- "skyspell_core",
- "skyspell_tests",
- "tempfile",
-]
-
-[[package]]
-name = "skyspell_sql"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "diesel",
- "diesel_migrations",
+ "clap",
  "directories-next",
- "paste",
- "serde",
- "serde_json",
- "skyspell_core",
- "skyspell_tests",
- "tempfile",
- "time",
-]
-
-[[package]]
-name = "skyspell_tests"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "serde",
- "serde_json",
+ "itertools",
  "skyspell_core",
  "tempfile",
 ]

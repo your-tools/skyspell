@@ -2,17 +2,17 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
-use dirs_next::home_dir;
+use directories_next::BaseDirs;
 
 use skyspell_core::repository::RepositoryHandler;
 use skyspell_core::Checker;
+use skyspell_core::EnchantDictionary;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::ProjectPath;
 use skyspell_core::TokenProcessor;
+use skyspell_core::{get_default_db_path, SQLRepository};
 use skyspell_core::{Dictionary, IgnoreStore, Repository};
-use skyspell_enchant::EnchantDictionary;
 use skyspell_kak::{new_kakoune_io, KakouneChecker, KakouneIO};
-use skyspell_sql::{get_default_db_path, SQLRepository};
 
 // Warning: most of the things written to stdout while this code is
 // called will be interpreted as a Kakoune command. Use the debug()
@@ -228,8 +228,9 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         // kak_buflist may:
         //  * contain special buffers, like *debug*
         //  * use ~ for home dir
-        let home_dir = home_dir().ok_or_else(|| anyhow!("Could not get home directory"))?;
-        let home_dir = home_dir
+        let base_dirs = BaseDirs::new().ok_or_else(|| anyhow!("Could not get home directory"))?;
+        let home_dir = base_dirs
+            .home_dir()
             .to_str()
             .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
         for bufname in &opts.buflist {

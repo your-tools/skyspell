@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
 
-use skyspell_core::OperatingSystemIO;
+use crate::OperatingSystemIO;
 
 pub struct FakeIO {
     env: HashMap<String, String>,

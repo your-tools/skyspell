@@ -8,9 +8,11 @@ keywords = ["kakoune", "skyspell", "spell"]
 
 [dependencies]
 anyhow = "1.0.40"
+clap = { version = "3.0.0", features = ["derive"] }
+directories-next = "2.0.0"
 itertools = "0.10.0"
+
 skyspell_core = { path = "../core" }
 
 [dev-dependencies]
 tempfile = "3.2.0"
-skyspell_tests = { path = "../tests" }

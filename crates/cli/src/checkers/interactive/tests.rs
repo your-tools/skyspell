@@ -1,8 +1,8 @@
 use tempfile::TempDir;
 
 use super::InteractiveChecker;
+use skyspell_core::tests::{FakeDictionary, FakeInteractor, FakeRepository};
 use skyspell_core::{Checker, ProjectPath, RelativePath, Repository};
-use skyspell_tests::{FakeDictionary, FakeInteractor, FakeRepository};
 
 type TestChecker = InteractiveChecker<FakeInteractor, FakeDictionary, FakeRepository>;
 

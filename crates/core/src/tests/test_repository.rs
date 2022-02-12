@@ -2,9 +2,9 @@
 macro_rules! test_repository {
     ($repo:ty) => {
         #[allow(unused_imports)]
-        use $crate::new_project_path;
+        use $crate::tests::new_project_path;
         #[allow(unused_imports)]
-        use $crate::new_relative_path;
+        use $crate::tests::new_relative_path;
 
         #[test]
         fn test_insert_ignore() {
@@ -332,8 +332,8 @@ macro_rules! test_repository {
 
         #[test]
         fn test_pop_last_operation_happy() {
-            use skyspell_core::repository::handler::Ignore;
-            use skyspell_core::repository::Operation;
+            use crate::repository::handler::Ignore;
+            use crate::repository::Operation;
             let mut repository = <$repo>::new_for_tests().unwrap();
             let ignore_foo = Operation::Ignore(Ignore {
                 word: "foo".to_string(),

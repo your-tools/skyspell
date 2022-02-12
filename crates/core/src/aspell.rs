@@ -22,7 +22,7 @@ impl AspellDictionary {
     }
 }
 
-impl skyspell_core::Dictionary for AspellDictionary {
+impl crate::Dictionary for AspellDictionary {
     fn check(&self, word: &str) -> Result<bool> {
         self.speller.check(word)
     }

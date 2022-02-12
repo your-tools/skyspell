@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::collections::VecDeque;
 
-use skyspell_core::Interactor;
+use crate::Interactor;
 
 #[derive(Debug)]
 enum Answer {
