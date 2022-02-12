@@ -1,12 +1,12 @@
 [package]
 name = "skyspell_kak"
-version = "0.7.0"
+version = "0.7.1"
 
 description = "skyspell - kakoune integration"
 edition = "2021"
 keywords = ["kakoune", "skyspell", "spell"]
 license = "BSD-3-Clause"
-readme = "../../README.md"
+readme = "README.md"
 repository = "https://git.sr.ht/~dmerej/skyspell"
 
 [dependencies]
