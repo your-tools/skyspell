@@ -83,8 +83,6 @@ define-command skyspell-list -docstring "list spelling errors" %{
    skyspell-help
 }
 
-
-
 define-command skyspell-next -docstring "go to the next spelling error" %{
    evaluate-commands %sh{
      : $kak_opt_skyspell_project
@@ -105,7 +103,6 @@ define-command skyspell-previous -docstring "go to the previous spelling error" 
    }
 }
 
-
 define-command skyspell-replace -docstring "replace the selection with a suggestion " %{
   evaluate-commands %sh{
     if [ -z "${kak_opt_skyspell_lang}" ]; then
@@ -125,6 +122,4 @@ define-command skyspell-replace -docstring "replace the selection with a suggest
     : $kak_selection
     skyspell-kak --lang $kak_opt_skyspell_lang suggest
   }
-
 }
-
