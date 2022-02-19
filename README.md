@@ -48,16 +48,24 @@ project files:
 $ skyspell check
 LICENSE:9:2 Redistributions
 What to do?
-...
-> g
-
+a : Add word to global ignore list
+e : Add word to ignore list for this extension
+p : Add word to ignore list for the current project
+f : Add word to ignore list for the current file
+x : Skip this error
+q : Quit
+> : g
 => Added 'Redistributions' to the global ignore list
 
 foo.rs:32:2 fn
 What to do?
-...
-> e
-
+a : Add word to global ignore list
+e : Add word to ignore list for this extension
+p : Add word to ignore list for the current project
+f : Add word to ignore list for the current file
+x : Skip this error
+q : Quit
+> : e
 => Added 'fn' to the ignore list for '.rs' files
 ```
 
