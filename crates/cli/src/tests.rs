@@ -56,7 +56,7 @@ impl TestApp {
     fn run(self, args: &[&str]) -> Result<()> {
         let mut with_arg0 = vec!["skyspell"];
         with_arg0.extend(args);
-        let opts = Opts::parse_from(with_arg0);
+        let opts = Opts::try_parse_from(with_arg0)?;
         super::run(opts, self.dictionary, self.repository)
     }
 }
