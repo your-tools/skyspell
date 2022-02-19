@@ -29,19 +29,6 @@ pub(crate) struct NewIgnoredForPath<'a> {
 }
 
 #[derive(Insertable)]
-#[table_name = "skipped_file_names"]
-pub(crate) struct NewSkippedFileName<'a> {
-    pub file_name: &'a str,
-}
-
-#[derive(Insertable)]
-#[table_name = "skipped_paths"]
-pub(crate) struct NewSkippedPath<'a> {
-    pub path: &'a str,
-    pub project_id: i32,
-}
-
-#[derive(Insertable)]
 #[table_name = "projects"]
 pub(crate) struct NewProject<'a> {
     pub path: &'a str,

@@ -45,21 +45,6 @@ table! {
     }
 }
 
-table! {
-    skipped_file_names (id) {
-        id -> Integer,
-        file_name -> Text,
-    }
-}
-
-table! {
-    skipped_paths (id) {
-        id -> Integer,
-        project_id -> Integer,
-        path -> Text,
-    }
-}
-
 allow_tables_to_appear_in_same_query!(
     ignored,
     ignored_for_extension,
@@ -67,6 +52,4 @@ allow_tables_to_appear_in_same_query!(
     ignored_for_project,
     operations,
     projects,
-    skipped_file_names,
-    skipped_paths,
 );
