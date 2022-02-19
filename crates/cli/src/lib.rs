@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use clap::Parser;
 use colored::*;
 use ignore::WalkBuilder;
@@ -129,7 +129,7 @@ struct AddOpts {
 #[derive(Parser)]
 struct CheckOpts {
     #[clap(long, help = "Project path")]
-    project_path: PathBuf,
+    project_path: Option<PathBuf>,
 
     #[clap(long)]
     non_interactive: bool,
@@ -203,7 +203,11 @@ fn check(
     dictionary: impl Dictionary,
     opts: CheckOpts,
 ) -> Result<()> {
-    let project_path = ProjectPath::new(&opts.project_path)?;
+    let project_path = match opts.project_path {
+        Some(p) => p,
+        None => std::env::current_dir().context("Could not get current working directory")?,
+    };
+    let project_path = ProjectPath::new(&project_path)?;
     info_1!(
         "Checking project {} for spelling errors",
         project_path.as_str().bold()
@@ -215,21 +219,22 @@ fn check(
     match interactive {
         false => {
             let mut checker = NonInteractiveChecker::new(project, dictionary, repository)?;
-            check_with(&mut checker, opts)
+            check_with(&mut checker)
         }
         true => {
             let interactor = ConsoleInteractor;
             let mut checker = InteractiveChecker::new(project, interactor, dictionary, repository)?;
-            check_with(&mut checker, opts)
+            check_with(&mut checker)
         }
     }
 }
 
-fn check_with<C>(checker: &mut C, opts: CheckOpts) -> Result<()>
+fn check_with<C>(checker: &mut C) -> Result<()>
 where
     C: Checker<Context = (usize, usize)>,
 {
-    let walker = WalkBuilder::new(opts.project_path)
+    let project = checker.project();
+    let walker = WalkBuilder::new(project.path().as_ref())
         .add_custom_ignore_filename(".skyspell-ignore")
         .build();
 
