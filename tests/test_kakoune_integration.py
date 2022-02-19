@@ -206,6 +206,18 @@ def test_add_global(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     assert run_query(tmp_path, "SELECT word FROM ignored") == [("skyspell",)]
 
 
+def test_honor_skyspell_ignore(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
+    ignore = tmp_path / ".skyspell-ignore"
+    ignore.write_text("foo.lock")
+    open_file_with_contents(
+        kak_checker, tmp_path / "foo.lock", r"I'm testing skyspell here"
+    )
+
+    kak_checker.send_command("skyspell-list")
+    actual = kak_checker.get_option("skyspell_error_count")
+    assert actual == "0"
+
+
 def test_add_to_project(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     open_file_with_contents(
         kak_checker, tmp_path / "foo.txt", r"I'm testing skyspell here"

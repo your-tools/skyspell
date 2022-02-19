@@ -3,6 +3,8 @@ use std::path::{Path, PathBuf};
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
 use directories_next::BaseDirs;
+use ignore::gitignore::Gitignore;
+use ignore::Match;
 
 use skyspell_core::repository::RepositoryHandler;
 use skyspell_core::Checker;
@@ -238,6 +240,12 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
             .home_dir()
             .to_str()
             .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
+
+        let ignore_path = ".skyspell-ignore";
+        let (skyspell_ignore, _error) = Gitignore::new(ignore_path);
+        // Note: _error will be Some(Err) if there's a invalid glob in .skyspell-ignore
+        // for instance, but we don't care about that.
+
         for bufname in &opts.buflist {
             let bufname = self.unescape(bufname);
 
@@ -265,6 +273,11 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
             if relative_path.as_str().starts_with("..") {
                 // Buffer is outside the current project
                 continue;
+            }
+
+            match skyspell_ignore.matched(&relative_path, /*is-dir*/ false) {
+                Match::Ignore(_) => continue,
+                Match::None | Match::Whitelist(_) => (),
             }
 
             let token_processor = TokenProcessor::new(source_path);
