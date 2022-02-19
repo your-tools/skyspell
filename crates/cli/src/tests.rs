@@ -37,7 +37,7 @@ impl TestApp {
         file_name: &str,
     ) -> (PathBuf, RelativePath) {
         let project = new_project_path(temp_dir, project_name);
-        let full_path = temp_dir.path().join(file_name);
+        let full_path = project.as_ref().join(file_name);
         std::fs::write(&full_path, "").unwrap();
         (
             full_path.clone(),
