@@ -1,3 +1,32 @@
+# 0.8.0
+
+## Breaking change: skip files using an ignore file
+
+Remove "skip" features from the SQL repository and from the command line.
+
+Instead of telling skyspell to skip `poetry.lock`, `Cargo.lock` and
+`favicon.ico`, you can just create a file named `.skyspell-ignore` containing:
+
+```
+*.lock
+favicon.ico
+```
+
+This makes the code much faster because we don't need to make a sql query for each
+file we check, just when we find a spelling error.
+
+This also means you can run `skyspell-check` without specifying the files to check:
+
+```
+# old:
+$ skyspell check --project-path . $(git ls-files)
+# new:
+$ skyspell check --project-path .
+```
+
+Or even without specifying `--project-path` at all, which defaults to the
+current working directory.
+
 # 0.7.1
 
 * Remove `--aspell` option and `aspell` support. Additional complexity to avoid

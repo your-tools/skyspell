@@ -40,11 +40,12 @@ and make sure `skyspell` is in your `PATH`.
 
 ## skyspell in action
 
-Basically, you give `skyspell` a project path and a list of files to check,
-then you choose how to handle the errors it finds:
+Usually, you will run `skyspell check` to start an interactive session,
+where you tell `skyspell` how to handle all the errors it finds in your
+project files:
 
 ```
-$ skyspell check --project-path . $(git ls-files)
+$ skyspell check
 LICENSE:9:2 Redistributions
 What to do?
 ...
@@ -60,7 +61,16 @@ What to do?
 => Added 'fn' to the ignore list for '.rs' files
 ```
 
+## Advanced usage
 
+If for some reason a file can't be checked, you can create a `.skyspell-ignore` file,
+like this:
+
+```
+Cargo.lock
+```
+
+See also `skyspell --help` for the various command and flags.
 
 ## Comparison with scspell
 
