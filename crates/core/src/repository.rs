@@ -74,10 +74,6 @@ pub trait Repository: IgnoreStore {
         Ok(())
     }
 
-    // Always skip this file name - to be used with Cargo.lock, yarn.lock
-    // and the like
-    fn skip_file_name(&mut self, file_name: &str) -> Result<()>;
-
     // Add word to the ignore list for the given extension
     fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()>;
 
@@ -105,13 +101,6 @@ pub trait Repository: IgnoreStore {
     ) -> Result<()>;
     // Remove word from the ignore list for the given project
     fn remove_ignored_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()>;
-
-    // Always skip the given file for the given project
-    fn skip_path(&mut self, project_id: ProjectId, relative_path: &RelativePath) -> Result<()>;
-    // Remove file name from the skip list
-    fn unskip_file_name(&mut self, file_name: &str) -> Result<()>;
-    // Remove relative file path from the skip list
-    fn unskip_path(&mut self, project_id: ProjectId, relative_path: &RelativePath) -> Result<()>;
 
     // Insert a new operation
     fn insert_operation(&mut self, operation: &Operation) -> Result<()>;

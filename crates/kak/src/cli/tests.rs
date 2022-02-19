@@ -322,45 +322,6 @@ fn test_goto_previous_error() {
 }
 
 #[test]
-fn test_skip_file() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut cli = new_cli(&temp_dir);
-    let project_id = cli.checker.project().id();
-    let foo_py = cli.ensure_path("foo.py");
-    let foo_path = format!("{}/foo.py", temp_dir.path().display());
-    cli.set_selection(&format!("{}: 1.3,1.5 foo", foo_path));
-
-    cli.skip_file().unwrap();
-
-    assert!(cli
-        .ignore_store()
-        .is_skipped_path(project_id, &foo_py)
-        .unwrap());
-}
-
-#[test]
-fn test_skip_name() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut cli = new_cli(&temp_dir);
-    cli.ensure_path("Cargo.lock");
-    let lock_path = format!("{}/Cargo.lock", temp_dir.path().display());
-    cli.set_selection(&format!("{}: 1.3,1.5 foo", lock_path));
-
-    cli.skip_name().unwrap();
-
-    assert!(cli
-        .ignore_store()
-        .is_skipped_file_name("Cargo.lock")
-        .unwrap());
-}
-
-#[test]
 fn test_suggest_on_error() {
     let temp_dir = tempfile::Builder::new()
         .prefix("test-skyspell")

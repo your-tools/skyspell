@@ -143,33 +143,6 @@ macro_rules! test_repository {
         }
 
         #[test]
-        fn test_skip_file_name() {
-            let mut repository = <$repo>::new_for_tests().unwrap();
-            assert!(!repository.is_skipped_file_name("Cargo.lock").unwrap());
-
-            repository.skip_file_name("Cargo.lock").unwrap();
-            assert!(repository.is_skipped_file_name("Cargo.lock").unwrap());
-        }
-
-        #[test]
-        fn test_skip_path() {
-            let mut repository = <$repo>::new_for_tests().unwrap();
-            let temp_dir = tempfile::Builder::new()
-                .prefix("test-skyspell")
-                .tempdir()
-                .unwrap();
-            let project = new_project_path(&temp_dir, "project");
-            let test_txt = new_relative_path(&project, "test.txt");
-
-            let project_id = repository.new_project(&project).unwrap();
-            assert!(!repository.is_skipped_path(project_id, &test_txt).unwrap());
-
-            repository.skip_path(project_id, &test_txt).unwrap();
-
-            assert!(repository.is_skipped_path(project_id, &test_txt).unwrap());
-        }
-
-        #[test]
         fn test_remove_ignored_happy() {
             let mut repository = <$repo>::new_for_tests().unwrap();
             repository.ignore("foo").unwrap();
@@ -271,56 +244,6 @@ macro_rules! test_repository {
             assert!(!repository
                 .is_ignored_for_project("foo", project_id)
                 .unwrap());
-        }
-
-        #[test]
-        fn test_unskip_file_name_happy() {
-            let mut repository = <$repo>::new_for_tests().unwrap();
-            repository.skip_file_name("Cargo.lock").unwrap();
-
-            repository.unskip_file_name("Cargo.lock").unwrap();
-
-            assert!(!repository.is_skipped_file_name("Cargo.lock").unwrap());
-        }
-
-        #[test]
-        fn test_unskip_file_name_not_skipped() {
-            let mut repository = <$repo>::new_for_tests().unwrap();
-            assert!(!repository.is_skipped_file_name("Cargo.lock").unwrap());
-
-            assert!(repository.unskip_file_name("Cargo.lock").is_err())
-        }
-
-        #[test]
-        fn test_unskip_path_happy() {
-            let mut repository = <$repo>::new_for_tests().unwrap();
-            let temp_dir = tempfile::Builder::new()
-                .prefix("test-skyspell")
-                .tempdir()
-                .unwrap();
-            let project = new_project_path(&temp_dir, "project");
-            let project_id = repository.new_project(&project).unwrap();
-            let foo_py = new_relative_path(&project, "foo.py");
-            repository.skip_path(project_id, &foo_py).unwrap();
-
-            repository.unskip_path(project_id, &foo_py).unwrap();
-
-            assert!(!repository.is_skipped_path(project_id, &foo_py).unwrap());
-        }
-
-        #[test]
-        fn test_unskip_path_not_skipped() {
-            let mut repository = <$repo>::new_for_tests().unwrap();
-            let temp_dir = tempfile::Builder::new()
-                .prefix("test-skyspell")
-                .tempdir()
-                .unwrap();
-            let project = new_project_path(&temp_dir, "project");
-            let project_id = repository.new_project(&project).unwrap();
-            let foo_py = new_relative_path(&project, "foo.py");
-            assert!(!repository.is_skipped_path(project_id, &foo_py).unwrap());
-
-            assert!(repository.unskip_path(project_id, &foo_py).is_err());
         }
 
         #[test]

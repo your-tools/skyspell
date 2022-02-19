@@ -29,8 +29,6 @@ define-command skyspell-hooks %{
   map buffer normal 'e'      ':<space>skyspell-action add-extension<ret>'
   map buffer normal 'p'      ':<space>skyspell-action add-project<ret>'
   map buffer normal 'f'      ':<space>skyspell-action add-file<ret>'
-  map buffer normal 'n'      ':<space>skyspell-action skip-name<ret>'
-  map buffer normal 's'      ':<space>skyspell-action skip-file<ret>'
   map buffer normal 'u'      ':<space>skyspell-undo<ret>'
 }
 
@@ -76,8 +74,6 @@ a : Add the word to the global ignore list
 e : Add the word to the ignore list for this extension
 p : Add the word to the ignore list for the current project
 f : Add the word to the ignore list for this file
-n : Always skip this file name
-s : Always skip this file
 u : Undo last operation
 "
 }

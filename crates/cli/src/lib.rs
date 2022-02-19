@@ -74,8 +74,6 @@ fn run<D: Dictionary>(opts: Opts, dictionary: D, repository: SQLRepository) -> R
         Action::Remove(opts) => remove(repository, opts),
         Action::Check(opts) => check(repository, dictionary, opts),
         Action::Suggest(opts) => suggest(dictionary, opts),
-        Action::Skip(opts) => skip(repository, opts),
-        Action::Unskip(opts) => unskip(repository, opts),
         Action::Undo => undo(repository),
         Action::Clean => clean(repository),
     }
@@ -110,10 +108,6 @@ enum Action {
     Clean,
     #[clap(about = "Suggest replacements for the given error")]
     Suggest(SuggestOpts),
-    #[clap(about = "Add path tho the given skipped list")]
-    Skip(SkipOpts),
-    #[clap(about = "Remove path from the given skipped list")]
-    Unskip(UnskipOpts),
     #[clap(about = "Undo last operation")]
     Undo,
 }
@@ -139,30 +133,6 @@ struct CheckOpts {
 
     #[clap(long)]
     non_interactive: bool,
-}
-
-#[derive(Parser)]
-struct SkipOpts {
-    #[clap(long, help = "Project path")]
-    project_path: Option<PathBuf>,
-
-    #[clap(long, help = "File path to skip")]
-    relative_path: Option<PathBuf>,
-
-    #[clap(long, help = "File name to skip")]
-    file_name: Option<String>,
-}
-
-#[derive(Parser)]
-struct UnskipOpts {
-    #[clap(long, help = "Project path")]
-    project_path: Option<PathBuf>,
-
-    #[clap(long, help = "File path to unskip")]
-    relative_path: Option<PathBuf>,
-
-    #[clap(long, help = "File name to unskip")]
-    file_name: Option<String>,
 }
 
 #[derive(Parser)]
@@ -263,7 +233,6 @@ where
         .add_custom_ignore_filename(".skyspell-ignore")
         .build();
 
-    let mut skipped = 0;
     let mut checked = 0;
     for dir_entry in walker {
         let dir_entry = dir_entry?;
@@ -273,11 +242,6 @@ where
         }
         let path = dir_entry.path();
         let relative_path = checker.to_relative_path(path)?;
-        if checker.should_skip(&relative_path)? {
-            skipped += 1;
-            continue;
-        }
-
         let token_processor = TokenProcessor::new(path);
         token_processor.each_token(|word, line, column| {
             checker.handle_token(word, &relative_path, &(line, column))
@@ -285,7 +249,7 @@ where
         checked += 1;
     }
 
-    info_3!("Checked {checked} files - {skipped} skipped");
+    info_3!("Checked {checked} files");
 
     checker.success()
 }
@@ -293,36 +257,6 @@ where
 fn undo(repository: impl Repository) -> Result<()> {
     let mut handler = RepositoryHandler::new(repository);
     handler.undo()
-}
-
-fn skip(mut repository: impl Repository, opts: SkipOpts) -> Result<()> {
-    match (opts.project_path, opts.relative_path, opts.file_name) {
-        (Some(project_path), Some(relative_path), None) => {
-            let project_path = ProjectPath::new(&project_path)?;
-            let project = repository.ensure_project(&project_path)?;
-            let relative_path = RelativePath::new(&project_path, &relative_path)?;
-            repository.skip_path(project.id(), &relative_path)
-        }
-        (_, None, Some(file_name)) => repository.skip_file_name(&file_name),
-        (_, _, _) => {
-            bail!("Either use --file-name OR --project-path and --relative-path")
-        }
-    }
-}
-
-fn unskip(mut repository: impl Repository, opts: UnskipOpts) -> Result<()> {
-    match (opts.project_path, opts.relative_path, opts.file_name) {
-        (Some(project_path), Some(relative_path), None) => {
-            let project = ProjectPath::new(&project_path)?;
-            let project_id = repository.get_project_id(&project)?;
-            let relative_path = RelativePath::new(&project, &relative_path)?;
-            repository.unskip_path(project_id, &relative_path)
-        }
-        (_, None, Some(file_name)) => repository.unskip_file_name(&file_name),
-        (_, _, _) => {
-            bail!("Either use --file-name OR --project-path and --relative-path")
-        }
-    }
 }
 
 fn suggest(dictionary: impl Dictionary, opts: SuggestOpts) -> Result<()> {

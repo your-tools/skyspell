@@ -6,9 +6,6 @@ pub trait IgnoreStore {
     // Is the word in the global ignore list?
     fn is_ignored(&self, word: &str) -> Result<bool>;
 
-    // Is this file name to be skipped ?
-    fn is_skipped_file_name(&self, file_name: &str) -> Result<bool>;
-
     // Is the word in the ignore list for the given extension?
     fn is_ignored_for_extension(&self, word: &str, extension: &str) -> Result<bool>;
 
@@ -22,24 +19,6 @@ pub trait IgnoreStore {
         project_id: ProjectId,
         relative_path: &RelativePath,
     ) -> Result<bool>;
-
-    // Is the given path in the given project to be skipped ?
-    fn is_skipped_path(&self, project: ProjectId, relative_path: &RelativePath) -> Result<bool>;
-
-    // Should this file be skipped ?
-    fn should_skip(&self, project_id: ProjectId, relative_path: &RelativePath) -> Result<bool> {
-        if let Some(f) = relative_path.file_name() {
-            if self.is_skipped_file_name(&f)? {
-                return Ok(true);
-            }
-        }
-
-        if self.is_skipped_path(project_id, relative_path)? {
-            return Ok(true);
-        }
-
-        Ok(false)
-    }
 
     // Should this word be ignored?
     // This is called when a word is *not* found in the spelling dictionary.

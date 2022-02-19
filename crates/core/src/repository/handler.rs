@@ -68,25 +68,6 @@ impl<R: Repository> RepositoryHandler<R> {
             path: path.clone(),
         }))
     }
-
-    pub fn skip_file_name(&mut self, file_name: &str) -> Result<()> {
-        self.run(Operation::SkipFileName(SkipFileName {
-            file_name: file_name.to_string(),
-        }))
-    }
-
-    pub fn skip_path(&mut self, project_id: ProjectId, path: &RelativePath) -> Result<()> {
-        self.run(Operation::SkipPath(SkipPath {
-            project_id,
-            path: path.clone(),
-        }))
-    }
-
-    // Note: used for core tests
-    #[allow(dead_code)]
-    pub fn is_skipped_file_name(&mut self, file_name: &str) -> Result<bool> {
-        self.repository.is_skipped_file_name(file_name)
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -95,8 +76,6 @@ pub enum Operation {
     IgnoreForExtension(IgnoreForExtension),
     IgnoreForPath(IgnoreForPath),
     IgnoreForProject(IgnoreForProject),
-    SkipFileName(SkipFileName),
-    SkipPath(SkipPath),
 }
 
 // Note: this is a bit verbose but less than coming up with a trait
@@ -109,8 +88,6 @@ impl Operation {
             IgnoreForExtension(o) => o.execute(repo),
             IgnoreForPath(o) => o.execute(repo),
             IgnoreForProject(o) => o.execute(repo),
-            SkipFileName(o) => o.execute(repo),
-            SkipPath(o) => o.execute(repo),
         }
     }
 
@@ -121,8 +98,6 @@ impl Operation {
             IgnoreForExtension(o) => o.undo(repo),
             IgnoreForPath(o) => o.undo(repo),
             IgnoreForProject(o) => o.undo(repo),
-            SkipFileName(o) => o.undo(repo),
-            SkipPath(o) => o.undo(repo),
         }
     }
 }
@@ -188,36 +163,5 @@ impl IgnoreForPath {
 
     fn undo<R: Repository>(&mut self, repo: &mut R) -> Result<()> {
         repo.remove_ignored_for_path(&self.word, self.project_id, &self.path)
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub struct SkipFileName {
-    file_name: String,
-}
-
-impl SkipFileName {
-    fn execute<R: Repository>(&mut self, repo: &mut R) -> Result<()> {
-        repo.skip_file_name(&self.file_name)
-    }
-
-    fn undo<R: Repository>(&mut self, repo: &mut R) -> Result<()> {
-        repo.unskip_file_name(&self.file_name)
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub struct SkipPath {
-    project_id: ProjectId,
-    path: RelativePath,
-}
-
-impl SkipPath {
-    fn execute<R: Repository>(&mut self, repo: &mut R) -> Result<()> {
-        repo.skip_path(self.project_id, &self.path)
-    }
-
-    fn undo<R: Repository>(&mut self, repo: &mut R) -> Result<()> {
-        repo.unskip_path(self.project_id, &self.path)
     }
 }

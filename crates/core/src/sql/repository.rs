@@ -101,27 +101,6 @@ impl IgnoreStore for SQLRepository {
             .with_context(|| "Error when checking if word is ignored for given path")?
             .is_some())
     }
-
-    fn is_skipped_path(&self, project_id: ProjectId, relative_path: &RelativePath) -> Result<bool> {
-        Ok(skipped_paths::table
-            .filter(skipped_paths::project_id.eq(project_id))
-            .filter(skipped_paths::path.eq(relative_path.as_str()))
-            .select(skipped_paths::id)
-            .first::<i32>(&self.connection)
-            .optional()
-            .with_context(|| "Error when checking if path is skipped")?
-            .is_some())
-    }
-
-    fn is_skipped_file_name(&self, file_name: &str) -> Result<bool> {
-        Ok(skipped_file_names::table
-            .filter(skipped_file_names::file_name.eq(file_name))
-            .select(skipped_file_names::id)
-            .first::<i32>(&self.connection)
-            .optional()
-            .with_context(|| "Error when checking if file name should be skipped")?
-            .is_some())
-    }
 }
 
 impl Repository for SQLRepository {
@@ -232,25 +211,6 @@ impl Repository for SQLRepository {
         Ok(())
     }
 
-    fn skip_file_name(&mut self, file_name: &str) -> Result<()> {
-        diesel::insert_or_ignore_into(skipped_file_names::table)
-            .values(NewSkippedFileName { file_name })
-            .execute(&self.connection)
-            .with_context(|| "Could not insert file name to the list of skipped file names")?;
-        Ok(())
-    }
-
-    fn skip_path(&mut self, project_id: ProjectId, relative_path: &RelativePath) -> Result<()> {
-        diesel::insert_or_ignore_into(skipped_paths::table)
-            .values(NewSkippedPath {
-                path: &relative_path.as_str(),
-                project_id,
-            })
-            .execute(&self.connection)
-            .with_context(|| "Could not insert file path to the list of skipped file paths")?;
-        Ok(())
-    }
-
     fn remove_ignored(&mut self, word: &str) -> Result<()> {
         let word = word.to_lowercase();
         let num_rows = diesel::delete(ignored::table)
@@ -302,25 +262,6 @@ impl Repository for SQLRepository {
             .filter(ignored_for_project::project_id.eq(project_id))
             .execute(&self.connection)
             .with_context(|| "Could not remove word from ignore list for project")?;
-        Ok(())
-    }
-
-    fn unskip_file_name(&mut self, file_name: &str) -> Result<()> {
-        let num_rows = diesel::delete(skipped_file_names::table)
-            .filter(skipped_file_names::file_name.eq(file_name))
-            .execute(&self.connection)
-            .with_context(|| "Could not remove file name from skip list")?;
-        ensure!(num_rows != 0, "this file name was not skipped");
-        Ok(())
-    }
-
-    fn unskip_path(&mut self, project_id: ProjectId, relative_path: &RelativePath) -> Result<()> {
-        let num_rows = diesel::delete(skipped_paths::table)
-            .filter(skipped_paths::path.eq(relative_path.as_str()))
-            .filter(skipped_paths::project_id.eq(project_id))
-            .execute(&self.connection)
-            .with_context(|| "Could not remove file path from skip list")?;
-        ensure!(num_rows != 0, "this path was not skipped");
         Ok(())
     }
 

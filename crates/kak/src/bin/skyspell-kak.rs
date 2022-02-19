@@ -121,8 +121,6 @@ pub fn main() -> Result<()> {
         Action::Jump => cli.jump(),
         Action::NextError(opts) => cli.goto_next_error(opts),
         Action::PreviousError(opts) => cli.goto_previous_error(opts),
-        Action::SkipFile => cli.skip_file(),
-        Action::SkipName => cli.skip_name(),
         Action::Suggest => cli.suggest(),
         Action::Undo => cli.undo(),
         _ => unreachable!(),
@@ -244,6 +242,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
             let bufname = self.unescape(bufname);
 
             if bufname.starts_with('*') && bufname.ends_with('*') {
+                // Probably a FIFO buffer, like *debug*, *grep* and the like
                 continue;
             }
 
@@ -257,16 +256,14 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
             let source_path = Path::new(&full_path);
 
             if !source_path.exists() {
+                // Buffer has not been written to a file yet
                 continue;
             }
 
             let relative_path = self.checker.to_relative_path(source_path)?;
 
-            if self.checker.should_skip(&relative_path)? {
-                continue;
-            }
-
             if relative_path.as_str().starts_with("..") {
+                // Buffer is outside the current project
                 continue;
             }
 
@@ -325,37 +322,6 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
 
     fn goto_previous_error(&self, opts: MoveOpts) -> Result<()> {
         self.goto_error(opts, Direction::Backward)
-    }
-
-    fn skip_file(&mut self) -> Result<()> {
-        let LineSelection { path, .. } = &self.parse_line_selection()?;
-        let project = self.checker.project().clone();
-        let relative_path = project.as_relative_path(path)?;
-
-        self.repository_handler()
-            .skip_path(project.id(), &relative_path)?;
-
-        self.recheck();
-        self.print(&format!("echo 'will now skip \"{}\"\n'", relative_path));
-        Ok(())
-    }
-
-    fn skip_name(&mut self) -> Result<()> {
-        let LineSelection { path, .. } = &self.parse_line_selection()?;
-        let path = Path::new(path);
-        let file_name = path
-            .file_name()
-            .with_context(|| "no file name")?
-            .to_string_lossy();
-
-        self.repository_handler().skip_file_name(&file_name)?;
-
-        self.recheck();
-        self.print(&format!(
-            "echo 'will now skip file named: \"{}\"'",
-            file_name
-        ));
-        Ok(())
     }
 
     fn suggest(&mut self) -> Result<()> {

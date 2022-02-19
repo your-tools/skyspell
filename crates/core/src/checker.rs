@@ -24,12 +24,6 @@ pub trait Checker {
 
     fn project(&self) -> &Project;
 
-    fn should_skip(&self, path: &RelativePath) -> Result<bool> {
-        let ignore_store = self.ignore_store();
-        let project_id = self.project().id();
-        ignore_store.should_skip(project_id, path)
-    }
-
     fn to_relative_path(&self, path: &Path) -> Result<RelativePath> {
         let project_path = self.project().path();
         RelativePath::new(project_path, path)

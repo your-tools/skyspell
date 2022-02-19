@@ -124,7 +124,7 @@ def kitty_window(tmp_path: Path) -> Iterator[KittyWindow]:
 @pytest.fixture
 def kak_checker(tmp_path: Path, kitty_window: KittyWindow) -> Iterator[RemoteKakoune]:
     db_path = tmp_path / "tests.db"
-    kitty_window.send_text(fr"cd {tmp_path} \n")
+    kitty_window.send_text(rf"cd {tmp_path} \n")
 
     kakoune = RemoteKakoune(kitty_window)
     kakoune.send_command(
@@ -248,18 +248,6 @@ def test_add_to_extension(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     ]
 
 
-def test_skip_file_path(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
-    open_file_with_contents(
-        kak_checker, tmp_path / "foo.txt", r"I'm testing skyspell here"
-    )
-
-    kak_checker.send_command("skyspell-list")
-    kak_checker.send_keys("s")
-    kak_checker.send_command("quit")
-
-    assert run_query(tmp_path, "SELECT path FROM skipped_paths") == [("foo.txt",)]
-
-
 def test_undo(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     open_file_with_contents(
         kak_checker, tmp_path / "foo.txt", r"I'm testing skyspell here"
@@ -271,18 +259,6 @@ def test_undo(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     kak_checker.send_command("quit")
 
     assert run_query(tmp_path, "SELECT word FROM ignored") == []
-
-
-def test_skip_file_name(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
-    open_file_with_contents(kak_checker, tmp_path / "foo.lock", "notaword=42")
-
-    kak_checker.send_command("skyspell-list")
-    kak_checker.send_keys("n")
-    kak_checker.send_command("quit")
-
-    assert run_query(tmp_path, "SELECT file_name FROM skipped_file_names") == [
-        ("foo.lock",)
-    ]
 
 
 def test_replace_with_suggestion(tmp_path: Path, kak_checker: RemoteKakoune) -> None:

@@ -16,8 +16,6 @@ pub struct FakeRepository {
     by_project: HashMap<ProjectId, Vec<String>>,
     by_project_and_path: HashMap<(ProjectId, String), Vec<String>>,
     projects: HashMap<String, ProjectId>,
-    skip_file_names: HashSet<String>,
-    skipped_paths: HashSet<(ProjectId, String)>,
     operations: Vec<String>,
 }
 
@@ -66,14 +64,6 @@ impl IgnoreStore for FakeRepository {
         } else {
             Ok(false)
         }
-    }
-
-    fn is_skipped_path(&self, project_id: ProjectId, path: &RelativePath) -> Result<bool> {
-        Ok(self.skipped_paths.contains(&(project_id, path.to_string())))
-    }
-
-    fn is_skipped_file_name(&self, file_name: &str) -> Result<bool> {
-        Ok(self.skip_file_names.contains(file_name))
     }
 }
 
@@ -126,11 +116,6 @@ impl Repository for FakeRepository {
         Ok(())
     }
 
-    fn skip_file_name(&mut self, file_name: &str) -> Result<()> {
-        self.skip_file_names.insert(file_name.to_string());
-        Ok(())
-    }
-
     fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
         let entry = &mut self
             .by_extension
@@ -157,11 +142,6 @@ impl Repository for FakeRepository {
             .entry((project_id, path.to_string()))
             .or_insert_with(Vec::new);
         entry.push(word.to_string());
-        Ok(())
-    }
-
-    fn skip_path(&mut self, project_id: ProjectId, path: &RelativePath) -> Result<()> {
-        self.skipped_paths.insert((project_id, path.to_string()));
         Ok(())
     }
 
@@ -200,23 +180,6 @@ impl Repository for FakeRepository {
             .get_mut(&project_id)
             .ok_or_else(|| anyhow!("no such key"))?;
         entry.retain(|w| w != word);
-        Ok(())
-    }
-
-    fn unskip_file_name(&mut self, file_name: &str) -> Result<()> {
-        let old_len = self.skip_file_names.len();
-        self.skip_file_names.retain(|x| x != file_name);
-        let new_len = self.skipped_paths.len();
-        ensure!(old_len != new_len, "this file name was not skipped");
-        Ok(())
-    }
-
-    fn unskip_path(&mut self, project_id: ProjectId, relative_path: &RelativePath) -> Result<()> {
-        let old_len = self.skipped_paths.len();
-        self.skipped_paths
-            .retain(|x| x != &(project_id, relative_path.to_string()));
-        let new_len = self.skipped_paths.len();
-        ensure!(old_len != new_len, "this path was not skipped");
         Ok(())
     }
 

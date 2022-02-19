@@ -54,10 +54,6 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
         context: &Self::Context,
     ) -> Result<()> {
         let &(line, column) = context;
-        // The list of skipped paths may have changed
-        if self.should_skip(path)? {
-            return Ok(());
-        }
         if self.skipped.contains(error) {
             return Ok(());
         }
@@ -86,8 +82,6 @@ a : Add word to global ignore list
 e : Add word to ignore list for this extension
 p : Add word to ignore list for the current project
 f : Add word to ignore list for the current file
-n : Always skip this file name
-s : Always skip this file path
 x : Skip this error
 q : Quit
 > "#;
@@ -112,16 +106,6 @@ q : Quit
                 }
                 "f" => {
                     if self.on_file_ignore(error, path)? {
-                        break;
-                    }
-                }
-                "n" => {
-                    if self.on_file_name_skip(path)? {
-                        break;
-                    }
-                }
-                "s" => {
-                    if self.on_project_file_skip(path)? {
                         break;
                     }
                 }
@@ -184,31 +168,6 @@ q : Quit
             "Added '{}' to the ignore list for path '{}'",
             error,
             relative_path
-        );
-        Ok(true)
-    }
-
-    fn on_file_name_skip(&mut self, relative_path: &RelativePath) -> Result<bool> {
-        let file_name = match relative_path.file_name() {
-            None => {
-                print_error!("{} has no file name", relative_path);
-                return Ok(false);
-            }
-            Some(r) => r,
-        };
-
-        self.repository_handler.skip_file_name(&file_name)?;
-
-        info_2!("Added '{}' to the list of file names to skip", file_name,);
-        Ok(true)
-    }
-
-    fn on_project_file_skip(&mut self, relative_path: &RelativePath) -> Result<bool> {
-        self.repository_handler
-            .skip_path(self.project().id(), relative_path)?;
-        info_2!(
-            "Added '{}' to the list of files to skip for the current project",
-            relative_path,
         );
         Ok(true)
     }

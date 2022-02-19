@@ -52,22 +52,6 @@ impl TestApp {
         self.checker.ignore_store().is_ignored(word).unwrap()
     }
 
-    fn is_skipped_file_name(&self, file_name: &str) -> bool {
-        self.checker
-            .ignore_store()
-            .is_skipped_file_name(file_name)
-            .unwrap()
-    }
-
-    fn is_skipped_path(&self, relative_name: &str) -> bool {
-        let project_id = self.checker.project().id();
-        let relative_path = self.to_relative_path(relative_name);
-        self.checker
-            .ignore_store()
-            .is_skipped_path(project_id, &relative_path)
-            .unwrap()
-    }
-
     fn is_ignored_for_extension(&self, word: &str, extension: &str) -> bool {
         self.checker
             .ignore_store()
@@ -167,41 +151,6 @@ fn test_ignore_token_to_project_file() {
     app.handle_token("foo", "foo.py");
 
     app.end()
-}
-
-#[test]
-fn test_adding_to_skipped_file_names() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    app.add_known(&["hello", "world"]);
-    app.push_text("n");
-
-    app.handle_token("foo", "yarn.lock");
-
-    assert!(app.is_skipped_file_name("yarn.lock"));
-    app.handle_token("bar", "yarn.lock");
-
-    app.end();
-}
-
-#[test]
-fn test_adding_to_skipped_paths() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    app.push_text("s");
-
-    app.handle_token("foo", "foo.py");
-
-    assert!(app.is_skipped_path("foo.py"));
-    app.handle_token("bar", "foo.py");
-
-    app.end();
 }
 
 #[test]
