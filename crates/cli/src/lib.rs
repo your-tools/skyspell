@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use anyhow::{bail, Result};
 use clap::Parser;
 use colored::*;
+use ignore::WalkBuilder;
 
 use skyspell_core::repository::RepositoryHandler;
 use skyspell_core::Checker;
@@ -138,9 +139,6 @@ struct CheckOpts {
 
     #[clap(long)]
     non_interactive: bool,
-
-    #[clap(help = "List of paths to check")]
-    sources: Vec<PathBuf>,
 }
 
 #[derive(Parser)]
@@ -261,13 +259,19 @@ fn check_with<C>(checker: &mut C, opts: CheckOpts) -> Result<()>
 where
     C: Checker<Context = (usize, usize)>,
 {
-    if opts.sources.is_empty() {
-        println!("No path given - nothing to do");
-    }
+    let walker = WalkBuilder::new(opts.project_path)
+        .add_custom_ignore_filename(".skyspell-ignore")
+        .build();
 
     let mut skipped = 0;
     let mut checked = 0;
-    for path in &opts.sources {
+    for dir_entry in walker {
+        let dir_entry = dir_entry?;
+        let file_type = dir_entry.file_type().expect("walker yielded stdin");
+        if !file_type.is_file() {
+            continue;
+        }
+        let path = dir_entry.path();
         let relative_path = checker.to_relative_path(path)?;
         if checker.should_skip(&relative_path)? {
             skipped += 1;

@@ -244,8 +244,6 @@ fn test_check_errors_in_two_files() {
             "--non-interactive",
             "--project-path",
             &project.as_str(),
-            &bar_full.to_string_lossy(),
-            &foo_full.to_string_lossy(),
         ])
         .unwrap_err();
 
@@ -273,8 +271,6 @@ fn test_check_happy() {
         "--non-interactive",
         "--project-path",
         &project.as_str(),
-        &bar_full.to_string_lossy(),
-        &foo_full.to_string_lossy(),
     ])
     .unwrap();
 }
