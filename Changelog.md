@@ -1,4 +1,4 @@
-# 0.8.0
+# 0.8.0 (2022-02-19)
 
 ## Breaking change: skip files using an ignore file
 
@@ -27,13 +27,13 @@ $ skyspell check --project-path .
 Or even without specifying `--project-path` at all, which defaults to the
 current working directory.
 
-# 0.7.1
+# 0.7.1 (2022-02-12)
 
 * Remove `--aspell` option and `aspell` support. Additional complexity to avoid
   going through Enchant does not seems worth it.
 * Tweak skyspell cli output
 
-# 0.7.0
+# 0.7.0 (2022-02-12)
 
 * **Breaking** Split code into separate crates. This means you now need to install `skyspell_kak` in
   order to use the Kakoune integration.
