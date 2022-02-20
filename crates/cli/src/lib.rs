@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use anyhow::{bail, Context, Result};
 use clap::Parser;
 use colored::*;
-use ignore::WalkBuilder;
 
+use skyspell_core::ignore_file::walk;
 use skyspell_core::repository::RepositoryHandler;
 use skyspell_core::Checker;
 use skyspell_core::EnchantDictionary;
@@ -234,10 +234,7 @@ where
     C: Checker<Context = (usize, usize)>,
 {
     let project = checker.project();
-    let walker = WalkBuilder::new(project.path().as_ref())
-        .add_custom_ignore_filename(".skyspell-ignore")
-        .build();
-
+    let walker = walk(project);
     let mut checked = 0;
     for dir_entry in walker {
         let dir_entry = dir_entry?;

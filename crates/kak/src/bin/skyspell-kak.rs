@@ -3,8 +3,6 @@ use std::path::{Path, PathBuf};
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
 use directories_next::BaseDirs;
-use ignore::gitignore::Gitignore;
-use ignore::Match;
 
 use skyspell_core::repository::RepositoryHandler;
 use skyspell_core::Checker;
@@ -13,7 +11,7 @@ use skyspell_core::OperatingSystemIO;
 use skyspell_core::ProjectPath;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{get_default_db_path, SQLRepository};
-use skyspell_core::{Dictionary, IgnoreStore, Repository};
+use skyspell_core::{Dictionary, IgnoreFile, IgnoreStore, Repository};
 use skyspell_kak::{new_kakoune_io, KakouneChecker, KakouneIO};
 
 // Warning: most of the things written to stdout while this code is
@@ -138,7 +136,7 @@ pub fn main() -> Result<()> {
 struct KakCli<D: Dictionary, R: Repository, S: OperatingSystemIO> {
     checker: KakouneChecker<D, R, S>,
     home_dir: String,
-    skyspell_ignore: Gitignore,
+    ignore_file: IgnoreFile,
 }
 
 impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
@@ -148,15 +146,12 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
             .home_dir()
             .to_str()
             .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
-        let project_path = checker.project().path();
-        let ignore_path = project_path.as_ref().join(".skyspell-ignore");
-        let (skyspell_ignore, _error) = Gitignore::new(ignore_path);
-        // Note: _error will be Some(Err) if there's a invalid glob in
-        // .skyspell-ignore for instance, but we don't care about that.
+        let project = checker.project();
+        let ignore_file = IgnoreFile::new(project);
         Ok(Self {
             home_dir: home_dir.to_string(),
             checker,
-            skyspell_ignore,
+            ignore_file,
         })
     }
 
@@ -281,12 +276,8 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
                 continue;
             }
 
-            match self
-                .skyspell_ignore
-                .matched(&relative_path, /*is-dir*/ false)
-            {
-                Match::Ignore(_) => continue,
-                Match::None | Match::Whitelist(_) => (),
+            if self.ignore_file.is_ignored(&relative_path) {
+                continue;
             }
 
             let token_processor = TokenProcessor::new(source_path);

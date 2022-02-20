@@ -579,7 +579,6 @@ dependencies = [
  "clap",
  "colored",
  "dirs-next",
- "ignore",
  "skyspell_core",
  "tempfile",
 ]
@@ -594,6 +593,7 @@ dependencies = [
  "diesel_migrations",
  "directories-next",
  "enchant",
+ "ignore",
  "lazy_static",
  "pathdiff",
  "regex",
@@ -610,7 +610,6 @@ dependencies = [
  "anyhow",
  "clap",
  "directories-next",
- "ignore",
  "itertools",
  "skyspell_core",
  "snailquote",

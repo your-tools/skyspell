@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 
 pub type ProjectId = i32;
 
+const SKYSPELL_IGNORE_FILE: &str = ".skyspell-ignore";
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Project {
     path: ProjectPath,
@@ -28,6 +30,11 @@ impl Project {
 
     pub fn id(&self) -> ProjectId {
         self.id
+    }
+
+    pub fn ignore_path(&self) -> PathBuf {
+        let path = self.path().as_ref();
+        path.join(SKYSPELL_IGNORE_FILE)
     }
 }
 

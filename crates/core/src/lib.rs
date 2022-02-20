@@ -7,6 +7,7 @@ extern crate lazy_static;
 
 mod dictionary;
 pub mod enchant;
+pub mod ignore_file;
 pub mod ignore_store;
 pub mod interactor;
 pub mod os_io;
@@ -19,6 +20,7 @@ pub mod tokens;
 pub use crate::enchant::EnchantDictionary;
 pub use checker::Checker;
 pub use dictionary::Dictionary;
+pub use ignore_file::IgnoreFile;
 pub use ignore_store::IgnoreStore;
 pub use interactor::{ConsoleInteractor, Interactor};
 pub use os_io::{OperatingSystemIO, StandardIO};
