@@ -112,7 +112,7 @@ pub fn main() -> Result<()> {
     let project_path = PathBuf::from(project_as_str);
     let project = ProjectPath::new(&project_path)?;
     let checker = KakouneChecker::new(project, dictionary, repository, kakoune_io)?;
-    let mut cli = KakCli::new(checker);
+    let mut cli = KakCli::new(checker)?;
 
     let outcome = match opts.action {
         Action::AddExtension => cli.add_extension(),
@@ -137,11 +137,20 @@ pub fn main() -> Result<()> {
 
 struct KakCli<D: Dictionary, R: Repository, S: OperatingSystemIO> {
     checker: KakouneChecker<D, R, S>,
+    home_dir: String,
 }
 
 impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
-    fn new(checker: KakouneChecker<D, R, S>) -> Self {
-        Self { checker }
+    fn new(checker: KakouneChecker<D, R, S>) -> Result<Self> {
+        let base_dirs = BaseDirs::new().ok_or_else(|| anyhow!("Could not get home directory"))?;
+        let home_dir = base_dirs
+            .home_dir()
+            .to_str()
+            .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
+        Ok(Self {
+            checker,
+            home_dir: home_dir.to_string(),
+        })
     }
 
     fn kakoune_io(&self) -> &KakouneIO<S> {
@@ -235,11 +244,6 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         // kak_buflist may:
         //  * contain special buffers, like *debug*
         //  * use ~ for home dir
-        let base_dirs = BaseDirs::new().ok_or_else(|| anyhow!("Could not get home directory"))?;
-        let home_dir = base_dirs
-            .home_dir()
-            .to_str()
-            .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
 
         let ignore_path = ".skyspell-ignore";
         let (skyspell_ignore, _error) = Gitignore::new(ignore_path);
@@ -260,7 +264,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
                 bufname
             ));
 
-            let full_path = bufname.replace("~", home_dir);
+            let full_path = bufname.replace("~", &self.home_dir);
             let source_path = Path::new(&full_path);
 
             if !source_path.exists() {
