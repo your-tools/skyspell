@@ -138,6 +138,7 @@ pub fn main() -> Result<()> {
 struct KakCli<D: Dictionary, R: Repository, S: OperatingSystemIO> {
     checker: KakouneChecker<D, R, S>,
     home_dir: String,
+    skyspell_ignore: Gitignore,
 }
 
 impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
@@ -147,9 +148,15 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
             .home_dir()
             .to_str()
             .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
+        let project_path = checker.project().path();
+        let ignore_path = project_path.as_ref().join(".skyspell-ignore");
+        let (skyspell_ignore, _error) = Gitignore::new(ignore_path);
+        // Note: _error will be Some(Err) if there's a invalid glob in
+        // .skyspell-ignore for instance, but we don't care about that.
         Ok(Self {
-            checker,
             home_dir: home_dir.to_string(),
+            checker,
+            skyspell_ignore,
         })
     }
 
@@ -240,17 +247,12 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
     }
 
     fn check(&mut self, opts: &CheckOpts) -> Result<()> {
-        // Note:
-        // kak_buflist may:
-        //  * contain special buffers, like *debug*
-        //  * use ~ for home dir
-
-        let ignore_path = ".skyspell-ignore";
-        let (skyspell_ignore, _error) = Gitignore::new(ignore_path);
-        // Note: _error will be Some(Err) if there's a invalid glob in .skyspell-ignore
-        // for instance, but we don't care about that.
-
         for bufname in &opts.buflist {
+            // Note:
+            // kak_buflist may:
+            //  * be escaped
+            //  * contain special buffers, like *debug*
+            //  * use ~ for home dir
             let bufname = self.unescape(bufname);
 
             if bufname.starts_with('*') && bufname.ends_with('*') {
@@ -279,7 +281,10 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
                 continue;
             }
 
-            match skyspell_ignore.matched(&relative_path, /*is-dir*/ false) {
+            match self
+                .skyspell_ignore
+                .matched(&relative_path, /*is-dir*/ false)
+            {
                 Match::Ignore(_) => continue,
                 Match::None | Match::Whitelist(_) => (),
             }
