@@ -95,7 +95,7 @@ impl Repository for FakeRepository {
         Ok(self
             .projects
             .iter()
-            .map(|(p, i)| ProjectInfo::new(*i, &p.to_string()))
+            .map(|(p, i)| ProjectInfo::new(*i, p))
             .collect())
     }
 

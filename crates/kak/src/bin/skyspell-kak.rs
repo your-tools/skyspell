@@ -179,7 +179,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
     fn add_extension(&mut self) -> Result<()> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
         let (_, ext) = path
-            .rsplit_once(".")
+            .rsplit_once('.')
             .ok_or_else(|| anyhow!("File has no extension"))?;
         self.repository_handler().ignore_for_extension(word, ext)?;
         self.recheck();
@@ -261,7 +261,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
                 bufname
             ));
 
-            let full_path = bufname.replace("~", &self.home_dir);
+            let full_path = bufname.replace('~', &self.home_dir);
             let source_path = Path::new(&full_path);
 
             if !source_path.exists() {
