@@ -1,4 +1,2 @@
 Week-end in French is seen as a bad word - and I don't want to
 add both week and end to the global ignore list for French 🤔
-
-skyspell can see `f'input` as been one token when tokenizing Python. Ditto with `b'word'`

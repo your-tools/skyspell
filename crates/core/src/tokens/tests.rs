@@ -1,7 +1,8 @@
 use super::*;
 
 fn extract_word_default(word: &str) -> Option<(&str, usize)> {
-    extract_word(word, ExtractMode::Default)
+    let tokenizer = Tokenizer::new(word, ExtractMode::Default);
+    tokenizer.extract_word(word)
 }
 
 #[test]
@@ -210,4 +211,16 @@ fn test_latex_escape() {
 fn test_extract_mode_for_tex_extension() {
     let p = Path::new("foo.tex");
     assert_eq!(ExtractMode::from_path_ext(p), ExtractMode::Latex);
+}
+
+fn get_tokens_python(text: &str) -> Vec<&str> {
+    let tokenizer = Tokenizer::new(text, ExtractMode::Python);
+    tokenizer.map(|(x, _index)| x).collect()
+}
+
+#[test]
+fn test_python_string_prefix() {
+    let text = "message = f'hello, {name}'";
+    let actual = get_tokens_python(text);
+    assert_eq!(&actual, &["message", "hello", "name"]);
 }

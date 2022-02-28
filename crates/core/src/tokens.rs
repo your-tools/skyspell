@@ -73,20 +73,31 @@ lazy_static! {
     ).ignore_whitespace(true).build().expect("syntax error in static regex");
 }
 
+#[rustfmt::skip]
+const PYTHON_STRING_PREFIXES: [&str; 24] = [
+    "r'", "u'", "R'", "U'", "f'", "F'",
+    "fr'", "Fr'", "fR'", "FR'", "rf'", "rF'", "Rf'", "RF'",
+    "b'", "B'", "br'", "Br'", "bR'", "BR'", "rb'", "rB'", "Rb'", "RB'",
+];
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExtractMode {
     Default,
     Latex,
+    Python,
 }
 
 impl ExtractMode {
     fn from_path_ext(p: &Path) -> Self {
-        if let Some(e) = p.extension() {
-            if e == "tex" {
-                return ExtractMode::Latex;
-            }
+        let ext = match p.extension() {
+            None => return ExtractMode::Default,
+            Some(e) => e,
+        };
+        match ext.to_string_lossy().as_ref() {
+            "tex" => ExtractMode::Latex,
+            "py" => ExtractMode::Python,
+            _ => ExtractMode::Default,
         }
-        ExtractMode::Default
     }
 }
 
@@ -166,6 +177,96 @@ impl<'a> Tokenizer<'a> {
             extract_mode,
         }
     }
+
+    fn extract_word(&self, token: &'a str) -> Option<(&'a str, usize)> {
+        // Plural constants
+        if token == "s" {
+            return None;
+        }
+
+        // Skip URLs
+        if token.contains("://") {
+            return None;
+        }
+
+        // Skip emails and @mentions
+        if token.contains('@') {
+            return None;
+        }
+
+        if HEXA_RE.find(token).is_some() {
+            return None;
+        }
+
+        let (captures, index) = match self.extract_mode {
+            ExtractMode::Latex => (IDENT_RE_LATEX.captures(token), 0),
+            ExtractMode::Default | ExtractMode::Python => (IDENT_RE_DEFAULT.captures(token), 2),
+        };
+
+        if let Some(captures) = captures {
+            let ident_match = captures.get(index).unwrap();
+            let ident = ident_match.as_str();
+            let pos = ident_match.start();
+            if self.extract_mode == ExtractMode::Python {
+                let prefix = self.get_python_string_prefix(token);
+                if let Some(p) = prefix {
+                    let ident = &ident[p.len()..];
+                    return self.word_from_ident(ident, p.len());
+                }
+            }
+            return self.word_from_ident(ident, pos);
+        }
+
+        None
+    }
+
+    fn word_from_ident(&self, ident: &'a str, pos: usize) -> Option<(&'a str, usize)> {
+        let mut iter = ident.char_indices();
+        // We know the ident cannot be empty because of IDENT_RE
+        let (_, first_char) = iter.next().expect("empty ident");
+        if first_char.is_lowercase() {
+            // camelCase -> camel
+            if let Some(p) = ident.find(char::is_uppercase) {
+                return Some((&ident[..p], pos));
+            }
+        }
+        if first_char.is_uppercase() {
+            // SCREAMING -> SCREAMING
+            if let Some(captures) = CONSTANT_RE.captures(ident) {
+                let res = captures.get(1).unwrap().as_str();
+                return Some((res, pos));
+            }
+
+            // HTTPError -> HTTP
+            if let Some(captures) = ABBREV_RE.captures(ident) {
+                let res = captures.get(1).unwrap().as_str();
+                return Some((res, pos));
+            }
+
+            let (second_pos, _) = match iter.next() {
+                // Single upper letter: return it
+                None => return Some((ident, pos)),
+                Some(x) => x,
+            };
+
+            // PascalCase -> Pascal
+            if let Some(next_upper) = (&ident[second_pos..]).find(char::is_uppercase) {
+                let res = &ident[..next_upper + second_pos];
+                return Some((res, pos));
+            }
+        }
+
+        Some((ident, pos))
+    }
+
+    fn get_python_string_prefix(&self, token: &str) -> Option<&str> {
+        for prefix in PYTHON_STRING_PREFIXES {
+            if token.starts_with(prefix) {
+                return Some(prefix);
+            }
+        }
+        None
+    }
 }
 
 impl<'a> Iterator for Tokenizer<'a> {
@@ -181,7 +282,7 @@ impl<'a> Iterator for Tokenizer<'a> {
             let token_match = captures.get(0).unwrap();
             let token = token_match.as_str();
             let start = token_match.range().start;
-            let next_word = extract_word(token, self.extract_mode);
+            let next_word = self.extract_word(token);
             if let Some((w, pos)) = next_word {
                 let res = (w, self.pos + start + pos);
                 self.pos += start + pos + w.len();
@@ -191,80 +292,6 @@ impl<'a> Iterator for Tokenizer<'a> {
             }
         }
     }
-}
-
-fn extract_word(token: &str, extract_mode: ExtractMode) -> Option<(&str, usize)> {
-    // Plural constants
-    if token == "s" {
-        return None;
-    }
-
-    // Skip URLs
-    if token.contains("://") {
-        return None;
-    }
-
-    // Skip emails and @mentions
-    if token.contains('@') {
-        return None;
-    }
-
-    if HEXA_RE.find(token).is_some() {
-        return None;
-    }
-
-    let (captures, index) = match extract_mode {
-        ExtractMode::Latex => (IDENT_RE_LATEX.captures(token), 0),
-        ExtractMode::Default => (IDENT_RE_DEFAULT.captures(token), 2),
-    };
-
-    if let Some(captures) = captures {
-        let ident_match = captures.get(index).unwrap();
-        let pos = ident_match.start();
-        let ident = ident_match.as_str();
-        return word_from_ident(ident, pos);
-    }
-
-    None
-}
-
-fn word_from_ident(ident: &str, pos: usize) -> Option<(&str, usize)> {
-    let mut iter = ident.char_indices();
-    // We know the ident cannot be empty because of IDENT_RE
-    let (_, first_char) = iter.next().expect("empty ident");
-    if first_char.is_lowercase() {
-        // camelCase -> camel
-        if let Some(p) = ident.find(char::is_uppercase) {
-            return Some((&ident[..p], pos));
-        }
-    }
-    if first_char.is_uppercase() {
-        // SCREAMING -> SCREAMING
-        if let Some(captures) = CONSTANT_RE.captures(ident) {
-            let res = captures.get(1).unwrap().as_str();
-            return Some((res, pos));
-        }
-
-        // HTTPError -> HTTP
-        if let Some(captures) = ABBREV_RE.captures(ident) {
-            let res = captures.get(1).unwrap().as_str();
-            return Some((res, pos));
-        }
-
-        let (second_pos, _) = match iter.next() {
-            // Single upper letter: return it
-            None => return Some((ident, pos)),
-            Some(x) => x,
-        };
-
-        // PascalCase -> Pascal
-        if let Some(next_upper) = (&ident[second_pos..]).find(char::is_uppercase) {
-            let res = &ident[..next_upper + second_pos];
-            return Some((res, pos));
-        }
-    }
-
-    Some((ident, pos))
 }
 
 #[cfg(test)]
