@@ -10,11 +10,13 @@ use skyspell_core::Checker;
 use skyspell_core::EnchantDictionary;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{get_default_db_path, SQLRepository};
-use skyspell_core::{ConsoleInteractor, Dictionary, Repository};
+use skyspell_core::{Dictionary, Repository};
 use skyspell_core::{ProjectPath, RelativePath};
 
 mod checkers;
+pub mod interactor;
 pub use checkers::{InteractiveChecker, NonInteractiveChecker};
+pub use interactor::{ConsoleInteractor, Interactor};
 
 #[macro_export]
 macro_rules! info_1 {

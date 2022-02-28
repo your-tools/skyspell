@@ -3,10 +3,12 @@ use std::collections::HashSet;
 use anyhow::{bail, Result};
 use colored::*;
 
-use crate::{info_2, print_error};
 use skyspell_core::repository::RepositoryHandler;
-use skyspell_core::{Checker, Dictionary, IgnoreStore, Interactor, Repository};
+use skyspell_core::{Checker, Dictionary, IgnoreStore, Repository};
 use skyspell_core::{Project, RelativePath};
+
+use crate::Interactor;
+use crate::{info_2, print_error};
 
 pub struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository> {
     project: Project,

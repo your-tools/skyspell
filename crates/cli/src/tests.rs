@@ -7,6 +7,9 @@ use skyspell_core::{ProjectPath, RelativePath};
 
 use tempfile::TempDir;
 
+mod fake_interactor;
+pub use fake_interactor::FakeInteractor;
+
 fn open_repository(temp_dir: &TempDir) -> SQLRepository {
     SQLRepository::new(&TestApp::db_path(temp_dir)).unwrap()
 }

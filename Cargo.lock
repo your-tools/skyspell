@@ -578,6 +578,7 @@ dependencies = [
  "anyhow",
  "clap",
  "colored",
+ "dialoguer",
  "dirs-next",
  "skyspell_core",
  "tempfile",

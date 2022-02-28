@@ -10,7 +10,6 @@ publish = true
 
 [dependencies]
 anyhow = "1.0.40"
-dialoguer = "0.8.0"
 diesel_migrations = "1.4.0"
 diesel = { version = "1.4.8", features = ["sqlite"] }
 directories-next = "2.0.0"
