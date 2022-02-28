@@ -76,14 +76,14 @@ lazy_static! {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExtractMode {
     Default,
-    NoCEscape,
+    Latex,
 }
 
 impl ExtractMode {
     fn from_path_ext(p: &Path) -> Self {
         if let Some(e) = p.extension() {
             if e == "tex" {
-                return ExtractMode::NoCEscape;
+                return ExtractMode::Latex;
             }
         }
         ExtractMode::Default
@@ -214,7 +214,7 @@ fn extract_word(token: &str, extract_mode: ExtractMode) -> Option<(&str, usize)>
     }
 
     let (captures, index) = match extract_mode {
-        ExtractMode::NoCEscape => (IDENT_RE_NO_C_ESCAPE.captures(token), 0),
+        ExtractMode::Latex => (IDENT_RE_NO_C_ESCAPE.captures(token), 0),
         ExtractMode::Default => (IDENT_RE_DEFAULT.captures(token), 2),
     };
 

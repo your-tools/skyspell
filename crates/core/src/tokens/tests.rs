@@ -195,7 +195,7 @@ fn test_use_sqlite() {
 }
 
 fn get_tokens_no_c_escape(text: &str) -> Vec<&str> {
-    let tokenizer = Tokenizer::new(text, ExtractMode::NoCEscape);
+    let tokenizer = Tokenizer::new(text, ExtractMode::Latex);
     tokenizer.map(|(x, _index)| x).collect()
 }
 
@@ -209,5 +209,5 @@ fn test_latex_escape() {
 #[test]
 fn test_extract_mode_for_tex_extension() {
     let p = Path::new("foo.tex");
-    assert_eq!(ExtractMode::from_path_ext(p), ExtractMode::NoCEscape);
+    assert_eq!(ExtractMode::from_path_ext(p), ExtractMode::Latex);
 }
