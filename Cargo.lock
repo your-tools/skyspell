@@ -118,6 +118,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "console"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a28b32d32ca44b70c3e4acd7db1babf555fa026e385fb95f18028f88848b3c31"
+dependencies = [
+ "encode_unicode",
+ "libc",
+ "once_cell",
+ "regex",
+ "terminal_size",
+ "unicode-width",
+ "winapi",
+]
+
+[[package]]
 name = "crossbeam-utils"
 version = "0.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -133,8 +148,19 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c9dd058f8b65922819fabb4a41e7d1964e56344042c26efbccd465202c23fa0c"
 dependencies = [
- "console",
+ "console 0.14.1",
  "lazy_static",
+ "tempfile",
+ "zeroize",
+]
+
+[[package]]
+name = "dialoguer"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "349d6b4fabcd9e97e1df1ae15395ac7e49fb144946a0d453959dc2696273b9da"
+dependencies = [
+ "console 0.15.0",
  "tempfile",
  "zeroize",
 ]
@@ -578,7 +604,7 @@ dependencies = [
  "anyhow",
  "clap",
  "colored",
- "dialoguer",
+ "dialoguer 0.10.0",
  "dirs-next",
  "skyspell_core",
  "tempfile",
@@ -589,7 +615,7 @@ name = "skyspell_core"
 version = "0.2.0"
 dependencies = [
  "anyhow",
- "dialoguer",
+ "dialoguer 0.8.0",
  "diesel",
  "diesel_migrations",
  "directories-next",
