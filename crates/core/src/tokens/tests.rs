@@ -194,7 +194,7 @@ fn test_use_sqlite() {
     );
 }
 
-fn get_tokens_no_c_escape(text: &str) -> Vec<&str> {
+fn get_tokens_latex(text: &str) -> Vec<&str> {
     let tokenizer = Tokenizer::new(text, ExtractMode::Latex);
     tokenizer.map(|(x, _index)| x).collect()
 }
@@ -202,7 +202,7 @@ fn get_tokens_no_c_escape(text: &str) -> Vec<&str> {
 #[test]
 fn test_latex_escape() {
     let text = r"\newpage \tiny";
-    let actual = get_tokens_no_c_escape(text);
+    let actual = get_tokens_latex(text);
     assert_eq!(&actual, &["newpage", "tiny"]);
 }
 
