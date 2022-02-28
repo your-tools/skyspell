@@ -65,7 +65,7 @@ lazy_static! {
     ).ignore_whitespace(true).build().expect("syntax error in static regex");
 
 
-    static ref IDENT_RE_NO_C_ESCAPE: Regex = RegexBuilder::new(
+    static ref IDENT_RE_LATEX: Regex = RegexBuilder::new(
         r"
         # Same as IDENT_RE, without handling \n, \r or \t
         \p{Alphabetic}+ ' \p{Alphabetic}+ | (\p{Alphabetic}+)
@@ -104,8 +104,8 @@ impl TokenProcessor {
     }
 
     pub fn each_token<F>(&self, mut f: F) -> Result<()>
-        where
-            F: FnMut(&str, usize, usize) -> Result<()>,
+    where
+        F: FnMut(&str, usize, usize) -> Result<()>,
     {
         let source = File::open(&self.path)
             .with_context(|| format!("Could not open '{}' for reading", self.path.display()))?;
@@ -214,7 +214,7 @@ fn extract_word(token: &str, extract_mode: ExtractMode) -> Option<(&str, usize)>
     }
 
     let (captures, index) = match extract_mode {
-        ExtractMode::Latex => (IDENT_RE_NO_C_ESCAPE.captures(token), 0),
+        ExtractMode::Latex => (IDENT_RE_LATEX.captures(token), 0),
         ExtractMode::Default => (IDENT_RE_DEFAULT.captures(token), 2),
     };
 
