@@ -1,3 +1,7 @@
+# 0.3.1 (2022-03-12)
+
+* Always skip `.skyspell-ignore`
+
 # 0.3.0 (2022-03-12)
 
 * Add `IgnoreFile`, `walker` (taken from `skyspell`)
