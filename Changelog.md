@@ -1,3 +1,7 @@
+# 0.8.1 (2022-03-12)
+
+* Handle Python string prefixes, like in `f'input`
+
 # 0.8.0 (2022-02-19)
 
 ## Breaking change: skip files using an ignore file
