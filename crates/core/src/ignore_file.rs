@@ -2,6 +2,7 @@ use ignore::gitignore::Gitignore;
 use ignore::Match;
 use ignore::{Walk, WalkBuilder};
 
+use crate::project::SKYSPELL_IGNORE_FILE;
 use crate::{Project, RelativePath};
 
 pub struct IgnoreFile(Gitignore);
@@ -16,6 +17,9 @@ impl IgnoreFile {
     }
 
     pub fn is_ignored(&self, relative_path: &RelativePath) -> bool {
+        if relative_path.as_str() == SKYSPELL_IGNORE_FILE {
+            return true;
+        }
         match self.0.matched(&relative_path, /*is-dir*/ false) {
             Match::Ignore(_) => true,
             Match::None | Match::Whitelist(_) => false,
