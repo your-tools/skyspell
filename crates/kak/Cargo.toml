@@ -1,6 +1,6 @@
 [package]
 name = "skyspell_kak"
-version = "0.8.0"
+version = "0.8.1"
 
 description = "skyspell - kakoune integration"
 edition = "2021"
