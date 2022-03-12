@@ -203,21 +203,23 @@ impl<'a> Tokenizer<'a> {
             ExtractMode::Default | ExtractMode::Python => (IDENT_RE_DEFAULT.captures(token), 2),
         };
 
-        if let Some(captures) = captures {
-            let ident_match = captures.get(index).unwrap();
-            let ident = ident_match.as_str();
-            let pos = ident_match.start();
-            if self.extract_mode == ExtractMode::Python {
-                let prefix = self.get_python_string_prefix(token);
-                if let Some(p) = prefix {
-                    let ident = &ident[p.len()..];
-                    return self.word_from_ident(ident, p.len());
-                }
+        let captures = match captures {
+            None => return None,
+            Some(c) => c,
+        };
+
+        let ident_match = captures.get(index).unwrap();
+        let ident = ident_match.as_str();
+        let pos = ident_match.start();
+        if self.extract_mode == ExtractMode::Python {
+            let prefix = self.get_python_string_prefix(token);
+            if let Some(p) = prefix {
+                let ident = &ident[p.len()..];
+                return self.word_from_ident(ident, p.len());
             }
-            return self.word_from_ident(ident, pos);
         }
 
-        None
+        self.word_from_ident(ident, pos)
     }
 
     fn word_from_ident(&self, ident: &'a str, pos: usize) -> Option<(&'a str, usize)> {
