@@ -15,7 +15,7 @@ clap = { version = "3.0.0", features = ["derive"] }
 colored = "2.0.0"
 dialoguer = { version = "0.10.0", features = [] }
 dirs-next = "2.0.0"
-skyspell_core = { version = "0.2.0", path = "../core" }
+skyspell_core = { version = "0.3.0", path = "../core" }
 
 
 [dev-dependencies]
