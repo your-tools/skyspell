@@ -219,8 +219,16 @@ fn get_tokens_python(text: &str) -> Vec<&str> {
 }
 
 #[test]
-fn test_python_string_prefix() {
+fn test_python_string_prefix_1() {
     let text = "message = f'hello, {name}'";
     let actual = get_tokens_python(text);
     assert_eq!(&actual, &["message", "hello", "name"]);
+}
+
+#[test]
+fn test_python_string_prefix_2() {
+    let text = "r'/path'";
+    let actual = get_tokens_python(text);
+    // TODO: this should be just ["path"]
+    assert_eq!(&actual, &["r", "path"]);
 }

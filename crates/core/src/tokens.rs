@@ -212,10 +212,13 @@ impl<'a> Tokenizer<'a> {
         let ident = ident_match.as_str();
         let pos = ident_match.start();
         if self.extract_mode == ExtractMode::Python {
+            // We want to skip string prefixes, like in  r'foo'
             let prefix = self.get_python_string_prefix(token);
             if let Some(p) = prefix {
-                let ident = &ident[p.len()..];
-                return self.word_from_ident(ident, p.len());
+                let ident = ident.get(p.len()..);
+                if let Some(i) = ident {
+                    return self.word_from_ident(i, p.len());
+                }
             }
         }
 
