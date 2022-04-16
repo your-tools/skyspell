@@ -1,3 +1,8 @@
+# 0.8.2 (2022-04-16)
+
+* Rename option `spell_errors` -> `skyspell_errors`
+* Reset skyspell options when using `skyspell-disable`
+
 # 0.8.1 (2022-03-12)
 
 * Handle Python string prefixes, like in `f'input`
