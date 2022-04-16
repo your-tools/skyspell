@@ -33,6 +33,8 @@ define-command skyspell-hooks %{
 }
 
 define-command skyspell-disable %{
+  set global skyspell_error_count 0
+  set global spell_errors 0
   remove-highlighter global/spell
   remove-hooks global skyspell
 }
