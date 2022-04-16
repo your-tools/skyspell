@@ -257,7 +257,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
 
             // cleanup any errors that may have been set during last run
             self.print(&format!(
-                "unset-option %{{buffer={}}} spell_errors\n",
+                "unset-option %{{buffer={}}} skyspell_errors\n",
                 bufname
             ));
 

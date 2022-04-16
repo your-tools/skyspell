@@ -1,6 +1,6 @@
 declare-option str skyspell_lang
 declare-option str skyspell_project
-declare-option range-specs spell_errors
+declare-option range-specs skyspell_errors
 declare-option int skyspell_error_count
 declare-option str skyspell_word_to_add
 declare-option str skyspell_db_path
@@ -12,7 +12,7 @@ define-command -params 1 skyspell-enable %{
     echo "set global skyspell_lang $1"
     echo "set global skyspell_project $(pwd)"
   }
-  add-highlighter global/spell ranges spell_errors
+  add-highlighter global/spell ranges skyspell_errors
   hook -group skyspell global BufWritePost .* skyspell-check
   hook -group skyspell global BufCreate \*spelling\* skyspell-hooks
   # If we've just enable spell checking *and* the current buffer is modified,
@@ -34,7 +34,7 @@ define-command skyspell-hooks %{
 
 define-command skyspell-disable %{
   set global skyspell_error_count 0
-  set global spell_errors 0
+  set global skyspell_errors 0
   remove-highlighter global/spell
   remove-hooks global skyspell
 }
@@ -91,7 +91,7 @@ define-command skyspell-next -docstring "go to the next spelling error" %{
      : $kak_opt_skyspell_db_path
      : $kak_cursor_line
      : $kak_cursor_column
-     skyspell-kak --lang $kak_opt_skyspell_lang next-error "${kak_opt_spell_errors}"
+     skyspell-kak --lang $kak_opt_skyspell_lang next-error "${kak_opt_skyspell_errors}"
    }
 }
 
@@ -101,7 +101,7 @@ define-command skyspell-previous -docstring "go to the previous spelling error" 
      : $kak_opt_skyspell_db_path
      : $kak_cursor_line
      : $kak_cursor_column
-     skyspell-kak --lang $kak_opt_skyspell_lang previous-error "${kak_opt_spell_errors}"
+     skyspell-kak --lang $kak_opt_skyspell_lang previous-error "${kak_opt_skyspell_errors}"
    }
 }
 

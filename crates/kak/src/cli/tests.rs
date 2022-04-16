@@ -229,7 +229,7 @@ fn test_check_no_errors() {
         actual,
         format!(
             "\
-unset-option ${buffer={full_path}} spell_errors
+unset-option ${buffer={full_path}} skyspell_errors
 edit -scratch *spelling*
 execute-keys \\% <ret> d i %{{}} <esc> gg
 execute-keys ga
@@ -270,13 +270,13 @@ fn test_check_errors_in_two_buffers() {
     let expected =
             format!(
                 "\
-unset-option ${{buffer={foo_path}} spell_errors
-unset-option ${{buffer={bar_path}} spell_errors
+unset-option ${{buffer={foo_path}} skyspell_errors
+unset-option ${{buffer={bar_path}} skyspell_errors
 edit -scratch *spelling*
 execute-keys \\% <ret> d i %{{{foo_path}: 1.9,1.11 foo<ret>{bar_path}: 1.9,1.11 bar<ret>{bar_path}: 1.29,1.31 baz<ret>}} <esc> gg
 execute-keys ga
-set-option %{buffer={foo_path}} spell_errors 42 1.9+3|SpellingError \n\
-set-option %{buffer={bar_path}} spell_errors 42 1.9+3|SpellingError 1.29+3|SpellingError \n\
+set-option %{buffer={foo_path}} skyspell_errors 42 1.9+3|SpellingError \n\
+set-option %{buffer={bar_path}} skyspell_errors 42 1.9+3|SpellingError 1.29+3|SpellingError \n\
 set global skyspell_error_count 3
 echo -markup {project_path}: {{red}}3 spelling errors
 ",
