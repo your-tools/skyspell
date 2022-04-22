@@ -5,7 +5,7 @@
 #[macro_export]
 macro_rules! test_dictionary {
     ($dictionary:ty) => {
-        use crate::Dictionary;
+        use $crate::Dictionary;
 
         #[test]
         fn test_check_valid_word() {
