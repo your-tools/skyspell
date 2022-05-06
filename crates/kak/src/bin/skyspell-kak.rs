@@ -19,6 +19,7 @@ use skyspell_kak::{new_kakoune_io, KakouneChecker, KakouneIO};
 // function in crate::kak::io for debugging instead of dbg! or println!
 
 #[derive(Parser)]
+#[clap(version)]
 pub struct Opts {
     #[clap(long, help = "Language to use")]
     pub lang: Option<String>,

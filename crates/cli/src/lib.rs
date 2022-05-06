@@ -86,7 +86,7 @@ fn clean(mut repository: SQLRepository) -> Result<()> {
 }
 
 #[derive(Parser)]
-#[clap(version = env!("CARGO_PKG_VERSION"))]
+#[clap(version)]
 pub struct Opts {
     #[clap(long, help = "Language to use")]
     pub lang: Option<String>,
