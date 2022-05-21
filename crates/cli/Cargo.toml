@@ -1,17 +1,17 @@
 [package]
 name = "skyspell"
 version = "1.0.0"
-authors = ["Dimitri Merejkowsky <dimitri@dmerej.info>"]
+
 description = "Fast and handy spell checker for the command line"
-edition = "2021"
+edition.workspace = true
 keywords = ["spell", "cli"]
-license = "BSD-3-Clause"
+license.workspace = true
 readme = "../../README.md"
-repository = "https://git.sr.ht/~dmerej/skyspell"
+repository.workspace = true
 
 [dependencies]
-anyhow = "1.0.40"
-clap = { version = "3.0.0", features = ["derive"] }
+anyhow.workspace = true
+clap.workspace = true
 colored = "2.0.0"
 dialoguer = { version = "0.10.0", features = [] }
 serde = { version = "1.0.140", features = ["derive"] }
@@ -19,4 +19,4 @@ serde_json = "1.0.82"
 skyspell_core = { version = "1.0.0", path = "../core" }
 
 [dev-dependencies]
-tempfile = "3.2.0"
+tempfile.workspace = true

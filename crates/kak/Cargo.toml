@@ -1,22 +1,23 @@
 [package]
 name = "skyspell_kak"
 version = "1.0.0"
-
 description = "skyspell - kakoune integration"
-edition = "2021"
 keywords = ["kakoune", "skyspell", "spell"]
-license = "BSD-3-Clause"
 readme = "README.md"
-repository = "https://git.sr.ht/~dmerej/skyspell"
+
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
 
 [dependencies]
-anyhow = "1.0.40"
-clap = { version = "3.0.0", features = ["derive"] }
+anyhow.workspace = true
+clap.workspace = true
 directories-next = "2.0.0"
 itertools = "0.10.0"
 snailquote = "0.3"
-
 skyspell_core = { version = "1.0.0", path = "../core" }
 
 [dev-dependencies]
-tempfile = "3.2.0"
+tempfile.workspace = true

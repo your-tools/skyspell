@@ -1,2 +1,13 @@
 [workspace]
 members = ["crates/*"]
+
+[workspace.package]
+authors = ["Dimitri Merejkowsky <dimitri@dmerej.info>"]
+edition = "2021"
+license = "BSD-3-Clause"
+repository = "https://git.sr.ht/~dmerej/skyspell"
+
+[workspace.dependencies]
+anyhow = "1.0.40"
+clap = { version = "3.0.0", features = ["derive"] }
+tempfile = "3.2.0"
