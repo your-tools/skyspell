@@ -7,4 +7,6 @@ perf.data.old
 callgrind.*
 *.html
 
+.cargo/
+
 .idea
