@@ -133,7 +133,10 @@ struct CheckOpts {
     #[clap(long, help = "Project path")]
     project_path: Option<PathBuf>,
 
-    #[clap(long)]
+    #[clap(
+        long,
+        help = "Don't ask what to do for each unknown word, instead just print the whole list - useful for continuous integration and other scripts"
+    )]
     non_interactive: bool,
 }
 
