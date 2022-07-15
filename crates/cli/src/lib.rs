@@ -5,12 +5,12 @@ use clap::Parser;
 use colored::*;
 
 use skyspell_core::ignore_file::walk;
-use skyspell_core::repository::RepositoryHandler;
 use skyspell_core::Checker;
+use skyspell_core::Dictionary;
 use skyspell_core::EnchantDictionary;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{get_default_db_path, SQLRepository};
-use skyspell_core::{Dictionary, Repository};
+use skyspell_core::{IgnoreStore, RepositoryHandler};
 use skyspell_core::{ProjectPath, RelativePath};
 
 mod checkers;
@@ -161,7 +161,7 @@ struct RemoveOpts {
     word: String,
 }
 
-fn add(mut repository: impl Repository, opts: AddOpts) -> Result<()> {
+fn add(mut repository: impl IgnoreStore, opts: AddOpts) -> Result<()> {
     let word = &opts.word;
     match (opts.project_path, opts.relative_path, opts.extension) {
         (None, None, None) => repository.ignore(word),
@@ -182,7 +182,7 @@ fn add(mut repository: impl Repository, opts: AddOpts) -> Result<()> {
     }
 }
 
-fn remove(mut repository: impl Repository, opts: RemoveOpts) -> Result<()> {
+fn remove(mut repository: impl IgnoreStore, opts: RemoveOpts) -> Result<()> {
     let word = &opts.word;
     match (opts.project_path, opts.relative_path, opts.extension) {
         (None, None, None) => repository.remove_ignored(word),
@@ -204,7 +204,7 @@ fn remove(mut repository: impl Repository, opts: RemoveOpts) -> Result<()> {
 }
 
 fn check(
-    mut repository: impl Repository,
+    mut repository: impl IgnoreStore,
     dictionary: impl Dictionary,
     opts: CheckOpts,
 ) -> Result<()> {
@@ -261,7 +261,7 @@ where
     checker.success()
 }
 
-fn undo(repository: impl Repository) -> Result<()> {
+fn undo(repository: impl IgnoreStore) -> Result<()> {
     let mut handler = RepositoryHandler::new(repository);
     handler.undo()
 }

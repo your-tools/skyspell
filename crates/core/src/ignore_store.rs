@@ -1,19 +1,34 @@
 use anyhow::Result;
 use std::path::Path;
 
-use anyhow::Result;
-
-pub use handler::{Operation, RepositoryHandler};
-
-use crate::IgnoreStore;
-use crate::{Project, ProjectId, ProjectPath, RelativePath};
+use crate::{Operation, Project, ProjectId, ProjectPath, RelativePath};
 
 pub struct ProjectInfo {
     id: ProjectId,
     path: String,
 }
 
-use crate::{ProjectId, RelativePath};
+// Note: the crucial difference with Project is that
+// ProjectInfo does *not* contain the ProjectPath struct
+// which is a NewType to represent *existing* project paths
+//
+// This is why this struct is only used in Repository::clean()
+impl ProjectInfo {
+    pub fn new(id: ProjectId, path: &str) -> Self {
+        Self {
+            id,
+            path: path.to_string(),
+        }
+    }
+
+    pub fn id(&self) -> ProjectId {
+        self.id
+    }
+
+    pub fn path(&self) -> &str {
+        &self.path
+    }
+}
 
 pub trait IgnoreStore {
     // Is the word in the global ignore list?

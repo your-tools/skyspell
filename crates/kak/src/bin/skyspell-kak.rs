@@ -4,14 +4,14 @@ use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
 use directories_next::BaseDirs;
 
-use skyspell_core::repository::RepositoryHandler;
 use skyspell_core::Checker;
 use skyspell_core::EnchantDictionary;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::ProjectPath;
+use skyspell_core::RepositoryHandler;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{get_default_db_path, SQLRepository};
-use skyspell_core::{Dictionary, IgnoreFile, IgnoreStore, Repository};
+use skyspell_core::{Dictionary, IgnoreFile, IgnoreStore};
 use skyspell_kak::{new_kakoune_io, KakouneChecker, KakouneIO};
 
 // Warning: most of the things written to stdout while this code is
@@ -134,14 +134,14 @@ pub fn main() -> Result<()> {
     Ok(())
 }
 
-struct KakCli<D: Dictionary, R: Repository, S: OperatingSystemIO> {
-    checker: KakouneChecker<D, R, S>,
+struct KakCli<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> {
+    checker: KakouneChecker<D, I, S>,
     home_dir: String,
     ignore_file: IgnoreFile,
 }
 
-impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
-    fn new(checker: KakouneChecker<D, R, S>) -> Result<Self> {
+impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakCli<D, I, S> {
+    fn new(checker: KakouneChecker<D, I, S>) -> Result<Self> {
         let base_dirs = BaseDirs::new().ok_or_else(|| anyhow!("Could not get home directory"))?;
         let home_dir = base_dirs
             .home_dir()
@@ -168,7 +168,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakCli<D, R, S> {
         self.checker.dictionary()
     }
 
-    fn repository_handler(&mut self) -> &mut RepositoryHandler<R> {
+    fn repository_handler(&mut self) -> &mut RepositoryHandler<I> {
         self.checker.repo_mut()
     }
 

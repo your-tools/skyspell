@@ -256,7 +256,7 @@ macro_rules! test_repository {
         #[test]
         fn test_pop_last_operation_happy() {
             use $crate::repository::handler::Ignore;
-            use $crate::repository::Operation;
+            use $crate::Operation;
             let mut repository = <$repo>::new_for_tests().unwrap();
             let ignore_foo = Operation::Ignore(Ignore {
                 word: "foo".to_string(),

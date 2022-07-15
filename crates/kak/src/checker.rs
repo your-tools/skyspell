@@ -2,10 +2,10 @@ use anyhow::Result;
 use itertools::Itertools;
 use std::path::PathBuf;
 
-use skyspell_core::repository::RepositoryHandler;
 use skyspell_core::Checker;
 use skyspell_core::OperatingSystemIO;
-use skyspell_core::{Dictionary, IgnoreStore, Repository};
+use skyspell_core::RepositoryHandler;
+use skyspell_core::{Dictionary, IgnoreStore};
 use skyspell_core::{Project, ProjectPath, RelativePath};
 
 use crate::io::KakouneIO;
@@ -17,16 +17,16 @@ pub struct Error {
     pub token: String,
 }
 
-pub struct KakouneChecker<D: Dictionary, R: Repository, S: OperatingSystemIO> {
+pub struct KakouneChecker<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> {
     kakoune_io: KakouneIO<S>,
-    repository_handler: RepositoryHandler<R>,
+    repository_handler: RepositoryHandler<I>,
 
     project: Project,
     dictionary: D,
     errors: Vec<Error>,
 }
 
-impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChecker<D, R, S> {
+impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> Checker for KakouneChecker<D, I, S> {
     // bufname, line, column
     type Context = (String, usize, usize);
 
@@ -67,11 +67,11 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> Checker for KakouneChec
     }
 }
 
-impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S> {
+impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakouneChecker<D, I, S> {
     pub fn new(
         project_path: ProjectPath,
         dictionary: D,
-        mut repository: R,
+        mut repository: I,
         kakoune_io: KakouneIO<S>,
     ) -> Result<Self> {
         let project = repository.ensure_project(&project_path)?;
@@ -89,7 +89,7 @@ impl<D: Dictionary, R: Repository, S: OperatingSystemIO> KakouneChecker<D, R, S>
         &self.kakoune_io
     }
 
-    pub fn repo_mut(&mut self) -> &mut RepositoryHandler<R> {
+    pub fn repo_mut(&mut self) -> &mut RepositoryHandler<I> {
         &mut self.repository_handler
     }
 

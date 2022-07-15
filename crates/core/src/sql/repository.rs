@@ -9,10 +9,10 @@ use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use directories_next::ProjectDirs;
 
-use crate::repository::{Operation, ProjectInfo};
 use crate::sql::models::*;
 use crate::sql::schema::*;
-use crate::{IgnoreStore, ProjectId, ProjectPath, RelativePath, Repository};
+use crate::{IgnoreStore, ProjectId, ProjectPath, RelativePath};
+use crate::{Operation, ProjectInfo};
 
 diesel_migrations::embed_migrations!("migrations");
 
@@ -101,9 +101,7 @@ impl IgnoreStore for SQLRepository {
             .with_context(|| "Error when checking if word is ignored for given path")?
             .is_some())
     }
-}
 
-impl Repository for SQLRepository {
     fn new_project(&mut self, project: &ProjectPath) -> Result<ProjectId> {
         let new_project = NewProject {
             path: &project.as_str(),

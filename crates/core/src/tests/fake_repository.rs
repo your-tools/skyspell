@@ -2,9 +2,9 @@ use anyhow::{anyhow, bail, ensure, Result};
 
 use std::collections::{HashMap, HashSet};
 
-use crate::repository::Operation;
-use crate::repository::ProjectInfo;
-use crate::{IgnoreStore, Repository};
+use crate::IgnoreStore;
+use crate::Operation;
+use crate::ProjectInfo;
 use crate::{ProjectId, ProjectPath, RelativePath};
 
 use crate::test_repository;
@@ -65,9 +65,7 @@ impl IgnoreStore for FakeRepository {
             Ok(false)
         }
     }
-}
 
-impl Repository for FakeRepository {
     fn project_exists(&self, project_path: &ProjectPath) -> Result<bool> {
         Ok(self.get_project_id(project_path).is_ok())
     }

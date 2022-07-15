@@ -3,28 +3,28 @@ use std::collections::HashSet;
 use anyhow::{bail, Result};
 use colored::*;
 
-use skyspell_core::repository::RepositoryHandler;
-use skyspell_core::{Checker, Dictionary, IgnoreStore, Repository};
+use skyspell_core::RepositoryHandler;
+use skyspell_core::{Checker, Dictionary, IgnoreStore};
 use skyspell_core::{Project, RelativePath};
 
 use crate::Interactor;
 use crate::{info_2, print_error};
 
-pub struct InteractiveChecker<I: Interactor, D: Dictionary, R: Repository> {
+pub struct InteractiveChecker<I: Interactor, D: Dictionary, S: IgnoreStore> {
     project: Project,
     interactor: I,
     dictionary: D,
-    repository_handler: RepositoryHandler<R>,
+    repository_handler: RepositoryHandler<S>,
     skipped: HashSet<String>,
 }
 
-impl<I: Interactor, D: Dictionary, R: Repository> InteractiveChecker<I, D, R> {
-    pub fn repository(&mut self) -> &mut R {
+impl<I: Interactor, D: Dictionary, S: IgnoreStore> InteractiveChecker<I, D, S> {
+    pub fn repository(&mut self) -> &mut S {
         self.repository_handler.repository()
     }
 }
 
-impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker<I, D, R> {
+impl<I: Interactor, D: Dictionary, S: IgnoreStore> Checker for InteractiveChecker<I, D, S> {
     // line, column
     type Context = (usize, usize);
 
@@ -63,8 +63,8 @@ impl<I: Interactor, D: Dictionary, R: Repository> Checker for InteractiveChecker
     }
 }
 
-impl<I: Interactor, D: Dictionary, R: Repository> InteractiveChecker<I, D, R> {
-    pub fn new(project: Project, interactor: I, dictionary: D, repository: R) -> Result<Self> {
+impl<I: Interactor, D: Dictionary, S: IgnoreStore> InteractiveChecker<I, D, S> {
+    pub fn new(project: Project, interactor: I, dictionary: D, repository: S) -> Result<Self> {
         let repository_handler = RepositoryHandler::new(repository);
         Ok(Self {
             project,

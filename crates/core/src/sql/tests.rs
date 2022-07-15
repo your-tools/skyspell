@@ -1,12 +1,12 @@
 use crate::repository::handler::Ignore as IgnoreOperation;
-use crate::repository::Operation;
+use crate::Operation;
 use diesel::dsl::count_star;
 use diesel::prelude::*;
 
 use crate::sql::schema::operations;
 use crate::test_repository;
+use crate::IgnoreStore;
 use crate::SQLRepository;
-use crate::{IgnoreStore, Repository};
 
 test_repository!(SQLRepository);
 

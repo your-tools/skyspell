@@ -6,34 +6,34 @@ use serde::{Deserialize, Serialize};
 use crate::IgnoreStore;
 use crate::ProjectId;
 use crate::RelativePath;
-use crate::Repository;
 
-pub struct RepositoryHandler<R: Repository> {
-    repository: R,
+pub struct RepositoryHandler<I: IgnoreStore> {
+    ignore_store: I,
 }
 
-impl<R: Repository> RepositoryHandler<R> {
-    pub fn new(repository: R) -> Self {
-        Self { repository }
+impl<I: IgnoreStore> RepositoryHandler<I> {
+    pub fn new(ignore_store: I) -> Self {
+        Self { ignore_store }
     }
 
+    // TODO: keep one of as_ignore_stero, repository
     pub fn as_ignore_store(&self) -> &dyn IgnoreStore {
-        &self.repository
+        &self.ignore_store
     }
 
-    pub fn repository(&mut self) -> &mut R {
-        &mut self.repository
+    pub fn repository(&mut self) -> &mut I {
+        &mut self.ignore_store
     }
 
     fn run(&mut self, mut operation: Operation) -> Result<()> {
-        operation.execute(&mut self.repository)?;
-        self.repository.insert_operation(&operation)
+        operation.execute(&mut self.ignore_store)?;
+        self.ignore_store.insert_operation(&operation)
     }
 
     pub fn undo(&mut self) -> Result<()> {
-        let last_operation = self.repository.pop_last_operation()?;
+        let last_operation = self.ignore_store.pop_last_operation()?;
         let mut last_operation = last_operation.ok_or_else(|| anyhow!("Nothing to undo"))?;
-        last_operation.undo(&mut self.repository)
+        last_operation.undo(&mut self.ignore_store)
     }
 
     pub fn ignore(&mut self, word: &str) -> Result<()> {
@@ -81,7 +81,7 @@ pub enum Operation {
 // Note: this is a bit verbose but less than coming up with a trait
 // that must be implemented for each variant
 impl Operation {
-    fn execute<R: Repository>(&mut self, repo: &mut R) -> Result<()> {
+    fn execute<I: IgnoreStore>(&mut self, repo: &mut I) -> Result<()> {
         use Operation::*;
         match self {
             Ignore(o) => o.execute(repo),
@@ -91,7 +91,7 @@ impl Operation {
         }
     }
 
-    fn undo<R: Repository>(&mut self, repo: &mut R) -> Result<()> {
+    fn undo<I: IgnoreStore>(&mut self, repo: &mut I) -> Result<()> {
         use Operation::*;
         match self {
             Ignore(o) => o.undo(repo),
@@ -108,11 +108,11 @@ pub struct Ignore {
 }
 
 impl Ignore {
-    fn execute<R: Repository>(&mut self, repo: &mut R) -> Result<()> {
+    fn execute<I: IgnoreStore>(&mut self, repo: &mut I) -> Result<()> {
         repo.ignore(&self.word)
     }
 
-    fn undo<R: Repository>(&mut self, repo: &mut R) -> Result<()> {
+    fn undo<I: IgnoreStore>(&mut self, repo: &mut I) -> Result<()> {
         repo.remove_ignored(&self.word)
     }
 }
@@ -124,11 +124,11 @@ pub struct IgnoreForExtension {
 }
 
 impl IgnoreForExtension {
-    fn execute<R: Repository>(&mut self, repo: &mut R) -> Result<()> {
+    fn execute<I: IgnoreStore>(&mut self, repo: &mut I) -> Result<()> {
         repo.ignore_for_extension(&self.word, &self.extension)
     }
 
-    fn undo<R: Repository>(&mut self, repo: &mut R) -> Result<()> {
+    fn undo<I: IgnoreStore>(&mut self, repo: &mut I) -> Result<()> {
         repo.remove_ignored_for_extension(&self.word, &self.extension)
     }
 }
@@ -140,11 +140,11 @@ pub struct IgnoreForProject {
 }
 
 impl IgnoreForProject {
-    fn execute<R: Repository>(&mut self, repo: &mut R) -> Result<()> {
+    fn execute<I: IgnoreStore>(&mut self, repo: &mut I) -> Result<()> {
         repo.ignore_for_project(&self.word, self.project_id)
     }
 
-    fn undo<R: Repository>(&mut self, repo: &mut R) -> Result<()> {
+    fn undo<I: IgnoreStore>(&mut self, repo: &mut I) -> Result<()> {
         repo.remove_ignored_for_project(&self.word, self.project_id)
     }
 }
@@ -157,11 +157,11 @@ pub struct IgnoreForPath {
 }
 
 impl IgnoreForPath {
-    fn execute<R: Repository>(&mut self, repo: &mut R) -> Result<()> {
+    fn execute<I: IgnoreStore>(&mut self, repo: &mut I) -> Result<()> {
         repo.ignore_for_path(&self.word, self.project_id, &self.path)
     }
 
-    fn undo<R: Repository>(&mut self, repo: &mut R) -> Result<()> {
+    fn undo<I: IgnoreStore>(&mut self, repo: &mut I) -> Result<()> {
         repo.remove_ignored_for_path(&self.word, self.project_id, &self.path)
     }
 }
