@@ -48,15 +48,18 @@ impl IgnoreConfig {
     }
 
     fn add_to_section(&mut self, section: &'static str, word: &str) {
-        let entries = self.doc.get_mut(section).unwrap();
-        let children = entries.children_mut().as_mut().unwrap();
+        let entries = self.doc.get_mut(section).expect("section should exist");
+        let children = entries.ensure_children();
         let word_node = Self::make_word_node(word);
         Self::insert_word_in_section(word_node, children, IndentLevel::One);
     }
 
     pub fn add_ignore_for_extension(&mut self, word: &str, ext: &str) {
         let mut extension_node = None;
-        let extensions = self.doc.get_mut("extensions").unwrap();
+        let extensions = self
+            .doc
+            .get_mut("extensions")
+            .expect("extensions should exist");
         let entries = extensions.children_mut();
         // Look for a section with a matching name
         for entry in entries {
@@ -74,7 +77,7 @@ impl IgnoreConfig {
         };
         // Found: insert the word in the section
         let word_node = Self::make_word_node(word);
-        let doc = node.children_mut().as_mut().unwrap();
+        let doc = node.ensure_children();
         Self::insert_word_in_section(word_node, doc, IndentLevel::Two);
     }
 
@@ -87,8 +90,11 @@ impl IgnoreConfig {
         extension_node.set_leading("\n  ");
         extension_node.set_trailing("");
 
-        let extensions = self.doc.get_mut("extensions").unwrap();
-        let children = extensions.children_mut().as_mut().unwrap();
+        let extensions = self
+            .doc
+            .get_mut("extensions")
+            .expect("extensions should always exist");
+        let children = extensions.ensure_children();
         let nodes = children.nodes_mut();
         nodes.push(extension_node);
     }
