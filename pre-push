@@ -12,7 +12,7 @@ do
   if [[ "${local_sha}" = $z40 ]]; then
     echo "Deleting stuff, nothing to do"
   else
-    cargo clippy -- -D clippy::unwrap_used
+    cargo clippy -- -A clippy::extra_unused_lifetimes -D clippy::unwrap_used
     cargo clippy --all-targets -- --deny warnings
     cargo test
     cargo run --bin skyspell -- check --non-interactive
