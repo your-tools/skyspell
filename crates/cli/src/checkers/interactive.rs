@@ -46,7 +46,7 @@ impl<I: Interactor, D: Dictionary, S: IgnoreStore> Checker for InteractiveChecke
     }
 
     fn ignore_store(&self) -> &dyn IgnoreStore {
-        self.undoer.as_ignore_store()
+        self.undoer.ignore_store()
     }
 
     fn handle_error(
@@ -173,7 +173,7 @@ q : Quit
     }
 
     pub fn ignore_store(&self) -> &dyn IgnoreStore {
-        self.undoer.as_ignore_store()
+        self.undoer.ignore_store()
     }
 }
 

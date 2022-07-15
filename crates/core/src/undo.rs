@@ -16,7 +16,7 @@ impl<I: IgnoreStore> Undoer<I> {
         Self { ignore_store }
     }
 
-    pub fn as_ignore_store(&self) -> &dyn IgnoreStore {
+    pub fn ignore_store(&self) -> &dyn IgnoreStore {
         &self.ignore_store
     }
 

@@ -55,7 +55,7 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> Checker for KakouneChe
     }
 
     fn ignore_store(&self) -> &dyn IgnoreStore {
-        self.undoer.as_ignore_store()
+        self.undoer.ignore_store()
     }
 
     fn dictionary(&self) -> &dyn Dictionary {
