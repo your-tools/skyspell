@@ -7,11 +7,11 @@ use crate::IgnoreStore;
 use crate::ProjectId;
 use crate::RelativePath;
 
-pub struct RepositoryHandler<I: IgnoreStore> {
+pub struct Undoer<I: IgnoreStore> {
     ignore_store: I,
 }
 
-impl<I: IgnoreStore> RepositoryHandler<I> {
+impl<I: IgnoreStore> Undoer<I> {
     pub fn new(ignore_store: I) -> Self {
         Self { ignore_store }
     }

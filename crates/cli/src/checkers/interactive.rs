@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use anyhow::{bail, Result};
 use colored::*;
 
-use skyspell_core::RepositoryHandler;
+use skyspell_core::Undoer;
 use skyspell_core::{Checker, Dictionary, IgnoreStore};
 use skyspell_core::{Project, RelativePath};
 
@@ -14,13 +14,13 @@ pub struct InteractiveChecker<I: Interactor, D: Dictionary, S: IgnoreStore> {
     project: Project,
     interactor: I,
     dictionary: D,
-    repository_handler: RepositoryHandler<S>,
+    undoer: Undoer<S>,
     skipped: HashSet<String>,
 }
 
 impl<I: Interactor, D: Dictionary, S: IgnoreStore> InteractiveChecker<I, D, S> {
     pub fn repository(&mut self) -> &mut S {
-        self.repository_handler.repository()
+        self.undoer.repository()
     }
 }
 
@@ -46,7 +46,7 @@ impl<I: Interactor, D: Dictionary, S: IgnoreStore> Checker for InteractiveChecke
     }
 
     fn ignore_store(&self) -> &dyn IgnoreStore {
-        self.repository_handler.as_ignore_store()
+        self.undoer.as_ignore_store()
     }
 
     fn handle_error(
@@ -65,12 +65,12 @@ impl<I: Interactor, D: Dictionary, S: IgnoreStore> Checker for InteractiveChecke
 
 impl<I: Interactor, D: Dictionary, S: IgnoreStore> InteractiveChecker<I, D, S> {
     pub fn new(project: Project, interactor: I, dictionary: D, repository: S) -> Result<Self> {
-        let repository_handler = RepositoryHandler::new(repository);
+        let undoer = Undoer::new(repository);
         Ok(Self {
             project,
             dictionary,
             interactor,
-            repository_handler,
+            undoer,
             skipped: HashSet::new(),
         })
     }
@@ -129,7 +129,7 @@ q : Quit
     // Note: this cannot fail, but it's convenient to have it return a
     // boolean like the other on_* methods
     fn on_global_ignore(&mut self, error: &str) -> Result<bool> {
-        self.repository_handler.ignore(error)?;
+        self.undoer.ignore(error)?;
         info_2!("Added '{}' to the global ignore list", error);
         Ok(true)
     }
@@ -143,7 +143,7 @@ q : Quit
             Some(e) => e,
         };
 
-        self.repository_handler
+        self.undoer
             .ignore_for_extension(error, &extension)?;
         info_2!(
             "Added '{}' to the ignore list for extension '{}'",
@@ -154,7 +154,7 @@ q : Quit
     }
 
     fn on_project_ignore(&mut self, error: &str) -> Result<bool> {
-        self.repository_handler
+        self.undoer
             .ignore_for_project(error, self.project.id())?;
         info_2!(
             "Added '{}' to the ignore list for the current project",
@@ -164,7 +164,7 @@ q : Quit
     }
 
     fn on_file_ignore(&mut self, error: &str, relative_path: &RelativePath) -> Result<bool> {
-        self.repository_handler
+        self.undoer
             .ignore_for_path(error, self.project.id(), relative_path)?;
         info_2!(
             "Added '{}' to the ignore list for path '{}'",
@@ -175,7 +175,7 @@ q : Quit
     }
 
     pub fn ignore_store(&self) -> &dyn IgnoreStore {
-        self.repository_handler.as_ignore_store()
+        self.undoer.as_ignore_store()
     }
 }
 

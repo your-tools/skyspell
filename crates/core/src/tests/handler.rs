@@ -1,10 +1,10 @@
-use crate::repository::RepositoryHandler;
+use crate::repository::Undoer;
 use crate::FakeRepository;
 
 #[test]
 fn test_can_undo_global_ignore() {
     let repository = FakeRepository::new();
-    let mut handler = RepositoryHandler::new(repository);
+    let mut handler = Undoer::new(repository);
 
     handler.ignore("foo").unwrap();
 
@@ -16,7 +16,7 @@ fn test_can_undo_global_ignore() {
 #[test]
 fn test_cannot_undo_twice() {
     let repository = FakeRepository::new();
-    let mut handler = RepositoryHandler::new(repository);
+    let mut handler = Undoer::new(repository);
     handler.ignore("foo").unwrap();
 
     handler.undo().unwrap();

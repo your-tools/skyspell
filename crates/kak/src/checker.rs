@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use skyspell_core::Checker;
 use skyspell_core::OperatingSystemIO;
-use skyspell_core::RepositoryHandler;
+use skyspell_core::Undoer;
 use skyspell_core::{Dictionary, IgnoreStore};
 use skyspell_core::{Project, ProjectPath, RelativePath};
 
@@ -19,7 +19,7 @@ pub struct Error {
 
 pub struct KakouneChecker<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> {
     kakoune_io: KakouneIO<S>,
-    repository_handler: RepositoryHandler<I>,
+    undoer: Undoer<I>,
 
     project: Project,
     dictionary: D,
@@ -55,7 +55,7 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> Checker for KakouneChe
     }
 
     fn ignore_store(&self) -> &dyn IgnoreStore {
-        self.repository_handler.as_ignore_store()
+        self.undoer.as_ignore_store()
     }
 
     fn dictionary(&self) -> &dyn Dictionary {
@@ -75,12 +75,12 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakouneChecker<D, I, S
         kakoune_io: KakouneIO<S>,
     ) -> Result<Self> {
         let project = repository.ensure_project(&project_path)?;
-        let repository_handler = RepositoryHandler::new(repository);
+        let undoer = Undoer::new(repository);
         Ok(Self {
             project,
             dictionary,
             kakoune_io,
-            repository_handler,
+            undoer,
             errors: vec![],
         })
     }
@@ -89,8 +89,8 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakouneChecker<D, I, S
         &self.kakoune_io
     }
 
-    pub fn repo_mut(&mut self) -> &mut RepositoryHandler<I> {
-        &mut self.repository_handler
+    pub fn repo_mut(&mut self) -> &mut Undoer<I> {
+        &mut self.undoer
     }
 
     pub fn print(&self, command: &str) {

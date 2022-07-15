@@ -10,7 +10,7 @@ use skyspell_core::Dictionary;
 use skyspell_core::EnchantDictionary;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{get_default_db_path, SQLRepository};
-use skyspell_core::{IgnoreStore, RepositoryHandler};
+use skyspell_core::{IgnoreStore, Undoer};
 use skyspell_core::{ProjectPath, RelativePath};
 
 mod checkers;
@@ -262,7 +262,7 @@ where
 }
 
 fn undo(repository: impl IgnoreStore) -> Result<()> {
-    let mut handler = RepositoryHandler::new(repository);
+    let mut handler = Undoer::new(repository);
     handler.undo()
 }
 

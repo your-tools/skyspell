@@ -8,7 +8,7 @@ use skyspell_core::Checker;
 use skyspell_core::EnchantDictionary;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::ProjectPath;
-use skyspell_core::RepositoryHandler;
+use skyspell_core::Undoer;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{get_default_db_path, SQLRepository};
 use skyspell_core::{Dictionary, IgnoreFile, IgnoreStore};
@@ -168,7 +168,7 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakCli<D, I, S> {
         self.checker.dictionary()
     }
 
-    fn repository_handler(&mut self) -> &mut RepositoryHandler<I> {
+    fn undoer(&mut self) -> &mut Undoer<I> {
         self.checker.repo_mut()
     }
 
@@ -182,7 +182,7 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakCli<D, I, S> {
         let (_, ext) = path
             .rsplit_once('.')
             .ok_or_else(|| anyhow!("File has no extension"))?;
-        self.repository_handler().ignore_for_extension(word, ext)?;
+        self.undoer().ignore_for_extension(word, ext)?;
         self.recheck();
         self.print(&format!(
             "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
@@ -195,7 +195,7 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakCli<D, I, S> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
         let project = &self.checker.project().clone();
         let relative_path = project.as_relative_path(path)?;
-        self.repository_handler()
+        self.undoer()
             .ignore_for_path(word, project.id(), &relative_path)?;
         self.recheck();
         self.print(&format!(
@@ -207,7 +207,7 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakCli<D, I, S> {
 
     fn add_global(&mut self) -> Result<()> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
-        self.repository_handler().ignore(word)?;
+        self.undoer().ignore(word)?;
         self.recheck();
         self.print(&format!("echo '\"{}\" added to global ignore list'", word));
         Ok(())
@@ -216,7 +216,7 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakCli<D, I, S> {
     fn add_project(&mut self) -> Result<()> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
         let project_id = self.checker.project().id();
-        self.repository_handler()
+        self.undoer()
             .ignore_for_project(word, project_id)?;
         self.recheck();
         self.print(&format!(
@@ -368,7 +368,7 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakCli<D, I, S> {
     }
 
     fn undo(&mut self) -> Result<()> {
-        self.repository_handler().undo()
+        self.undoer().undo()
     }
 
     fn recheck(&self) {
