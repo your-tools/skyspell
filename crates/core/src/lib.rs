@@ -15,7 +15,7 @@ pub mod project;
 pub mod sql;
 pub mod tests;
 pub mod tokens;
-pub mod undoer;
+pub mod undo;
 
 pub use crate::enchant::EnchantDictionary;
 pub use checker::Checker;
@@ -26,5 +26,5 @@ pub use os_io::{OperatingSystemIO, StandardIO};
 pub use project::{Project, ProjectId, ProjectPath, RelativePath};
 pub use sql::{get_default_db_path, SQLRepository};
 pub use tokens::TokenProcessor;
-pub use undoer::{Operation, Undoer};
+pub use undo::{Operation, Undoer};
 pub(crate) mod checker;

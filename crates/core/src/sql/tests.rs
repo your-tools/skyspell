@@ -1,4 +1,4 @@
-use crate::undoer::Ignore as IgnoreOperation;
+use crate::undo::Ignore as IgnoreOperation;
 use crate::Operation;
 use diesel::dsl::count_star;
 use diesel::prelude::*;

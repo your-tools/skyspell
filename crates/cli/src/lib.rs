@@ -262,8 +262,8 @@ where
 }
 
 fn undo(repository: impl IgnoreStore) -> Result<()> {
-    let mut handler = Undoer::new(repository);
-    handler.undo()
+    let mut undoer = Undoer::new(repository);
+    undoer.undo()
 }
 
 fn suggest(dictionary: impl Dictionary, opts: SuggestOpts) -> Result<()> {
