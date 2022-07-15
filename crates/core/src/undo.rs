@@ -16,12 +16,11 @@ impl<I: IgnoreStore> Undoer<I> {
         Self { ignore_store }
     }
 
-    // TODO: keep one of as_ignore_store, repository
     pub fn as_ignore_store(&self) -> &dyn IgnoreStore {
         &self.ignore_store
     }
 
-    pub fn repository(&mut self) -> &mut I {
+    pub fn ignore_store(&mut self) -> &mut I {
         &mut self.ignore_store
     }
 

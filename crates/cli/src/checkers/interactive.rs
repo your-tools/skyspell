@@ -20,7 +20,7 @@ pub struct InteractiveChecker<I: Interactor, D: Dictionary, S: IgnoreStore> {
 
 impl<I: Interactor, D: Dictionary, S: IgnoreStore> InteractiveChecker<I, D, S> {
     pub fn repository(&mut self) -> &mut S {
-        self.undoer.repository()
+        self.undoer.ignore_store()
     }
 }
 
@@ -143,8 +143,7 @@ q : Quit
             Some(e) => e,
         };
 
-        self.undoer
-            .ignore_for_extension(error, &extension)?;
+        self.undoer.ignore_for_extension(error, &extension)?;
         info_2!(
             "Added '{}' to the ignore list for extension '{}'",
             error,
@@ -154,8 +153,7 @@ q : Quit
     }
 
     fn on_project_ignore(&mut self, error: &str) -> Result<bool> {
-        self.undoer
-            .ignore_for_project(error, self.project.id())?;
+        self.undoer.ignore_for_project(error, self.project.id())?;
         info_2!(
             "Added '{}' to the ignore list for the current project",
             error
