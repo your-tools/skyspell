@@ -16,7 +16,7 @@ impl<I: IgnoreStore> Undoer<I> {
         Self { ignore_store }
     }
 
-    // TODO: keep one of as_ignore_stero, repository
+    // TODO: keep one of as_ignore_store, repository
     pub fn as_ignore_store(&self) -> &dyn IgnoreStore {
         &self.ignore_store
     }
