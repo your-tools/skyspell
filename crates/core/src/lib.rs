@@ -9,6 +9,7 @@ mod dictionary;
 pub mod enchant;
 pub mod ignore_file;
 pub mod ignore_store;
+pub mod kdl;
 pub mod os_io;
 pub mod project;
 pub mod repository;
