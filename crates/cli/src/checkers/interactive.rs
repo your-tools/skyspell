@@ -20,7 +20,7 @@ pub struct InteractiveChecker<I: Interactor, D: Dictionary, S: IgnoreStore> {
 
 impl<I: Interactor, D: Dictionary, S: IgnoreStore> InteractiveChecker<I, D, S> {
     pub fn repository(&mut self) -> &mut S {
-        self.undoer.ignore_store()
+        self.undoer.ignore_store_mut()
     }
 }
 

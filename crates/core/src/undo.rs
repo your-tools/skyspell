@@ -20,7 +20,7 @@ impl<I: IgnoreStore> Undoer<I> {
         &self.ignore_store
     }
 
-    pub fn ignore_store(&mut self) -> &mut I {
+    pub fn ignore_store_mut(&mut self) -> &mut I {
         &mut self.ignore_store
     }
 
