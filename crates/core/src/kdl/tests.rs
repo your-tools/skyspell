@@ -6,14 +6,16 @@ fn test_error_if_global_is_missing() {
     IgnoreConfig::parse("").unwrap_err();
 }
 
+// Note: this checks that automatic formatting of the
+// skyspell.kdl file is not too bad
 fn check<F>(action: F, input: &str, expected: &str)
 where
-    F: Fn(&mut IgnoreConfig),
+    F: Fn(&mut IgnoreConfig) -> anyhow::Result<()>,
 {
     let input = dedent(input);
     let mut ignore_config = IgnoreConfig::parse(&input).unwrap();
     let expected = dedent(expected);
-    action(&mut ignore_config);
+    action(&mut ignore_config).unwrap();
     let actual = ignore_config.to_string();
     assert_eq!(actual, expected, "{actual}");
 }
@@ -33,7 +35,7 @@ fn test_add_global_ignore_to_empty_config() {
             }
             "#;
 
-    let action = |x: &mut IgnoreConfig| x.add_global("hello");
+    let action = |x: &mut IgnoreConfig| x.ignore("hello");
 
     let expected = r#"
             global {
@@ -69,7 +71,7 @@ fn test_add_global_ignore_to_existing_config() {
             }
             "#;
 
-    let action = |x: &mut IgnoreConfig| x.add_global("def");
+    let action = |x: &mut IgnoreConfig| x.ignore("def");
 
     let expected = r#"
             global {
@@ -107,7 +109,7 @@ fn test_add_project_ignore() {
             }
             "#;
 
-    let action = |x: &mut IgnoreConfig| x.add_project("hello");
+    let action = |x: &mut IgnoreConfig| x.ignore_for_project("hello", PROJECT_ID);
 
     let expected = r#"
             global {
@@ -144,7 +146,7 @@ fn test_add_ignore_for_new_extension() {
             }
             "#;
 
-    let action = |x: &mut IgnoreConfig| x.add_ignore_for_extension("fn", "rs");
+    let action = |x: &mut IgnoreConfig| x.ignore_for_extension("fn", "rs");
 
     let expected = r#"
             global {
@@ -192,7 +194,7 @@ fn test_add_ignore_for_existing_extension() {
             }
             "#;
 
-    let action = |x: &mut IgnoreConfig| x.add_ignore_for_extension("hfill", "tex");
+    let action = |x: &mut IgnoreConfig| x.ignore_for_extension("hfill", "tex");
 
     let expected = r#"
             global {
@@ -220,3 +222,35 @@ fn test_add_ignore_for_existing_extension() {
 
     check(&action, input, expected);
 }
+
+#[test]
+fn test_is_ignored() {
+    let mut ignore_config = IgnoreConfig::new();
+    ignore_config.ignore("hello").unwrap();
+    let actual = ignore_config.is_ignored("hello").unwrap();
+    assert_eq!(actual, true);
+}
+
+#[test]
+fn test_is_ignored_for_project() {
+    let mut ignore_config = IgnoreConfig::new();
+    ignore_config
+        .ignore_for_project("hello", PROJECT_ID)
+        .unwrap();
+    let actual = ignore_config
+        .is_ignored_for_project("hello", PROJECT_ID)
+        .unwrap();
+    assert_eq!(actual, true);
+}
+
+#[test]
+fn test_is_ignored_for_extension() {
+    let mut ignore_config = IgnoreConfig::new();
+    ignore_config.ignore("hello").unwrap();
+    ignore_config.ignore_for_extension("fn", "rs").unwrap();
+    let actual = ignore_config.is_ignored_for_extension("fn", "rs").unwrap();
+    assert_eq!(actual, true);
+}
+
+use crate::test_repository;
+test_repository!(IgnoreConfig);
