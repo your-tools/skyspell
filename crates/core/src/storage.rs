@@ -9,23 +9,23 @@
 /// these.
 use crate::{IgnoreStore, Repository};
 
-pub enum Storage {
+pub enum StorageBackend {
     IgnoreStore(Box<dyn IgnoreStore>),
     Repository(Box<dyn Repository>),
 }
 
-impl Storage {
+impl StorageBackend {
     pub(crate) fn as_ignore_store(&mut self) -> &mut dyn IgnoreStore {
         match self {
-            Storage::IgnoreStore(i) => i.as_mut(),
-            Storage::Repository(r) => r.as_ignore_store(),
+            StorageBackend::IgnoreStore(i) => i.as_mut(),
+            StorageBackend::Repository(r) => r.as_ignore_store(),
         }
     }
 
     pub(crate) fn as_repository(&mut self) -> Option<&mut dyn Repository> {
         match self {
-            Storage::IgnoreStore(_) => None,
-            Storage::Repository(r) => Some(r.as_mut()),
+            StorageBackend::IgnoreStore(_) => None,
+            StorageBackend::Repository(r) => Some(r.as_mut()),
         }
     }
 }
