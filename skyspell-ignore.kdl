@@ -271,7 +271,7 @@ paths {
     hel
   }
 
-  "crates/core/src/kdl/tests.rs" {
+  "crates/core/src/config/tests.rs" {
     abc
     ghi
     hfill
