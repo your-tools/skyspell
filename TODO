@@ -1,3 +1,4 @@
 * Week-end in French is seen as a bad word - and I don't want to
   add both week and end to the global ignore list for French 🤔
 
+* skyspell-kak never uses the `use_db` setting in `./skyspell-ignore.kdl`
