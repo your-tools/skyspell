@@ -74,23 +74,23 @@ impl IgnoreConfig {
         self.doc.get("use_db").is_some()
     }
 
-    fn global_words(&self) -> Result<&KdlDocument> {
+    fn global_words(&self) -> Vec<String> {
         self.words_for_key("global")
     }
 
-    fn global_words_mut(&mut self) -> Result<&mut KdlDocument> {
+    fn global_words_mut(&mut self) -> Option<&mut KdlDocument> {
         self.words_for_key_mut("global")
     }
 
-    fn project_words(&self) -> Result<&KdlDocument> {
+    fn project_words(&self) -> Vec<String> {
         self.words_for_key("project")
     }
 
-    fn project_words_mut(&mut self) -> Result<&mut KdlDocument> {
+    fn project_words_mut(&mut self) -> Option<&mut KdlDocument> {
         self.words_for_key_mut("project")
     }
 
-    fn ignored_words_for_extension(&self, ext: &str) -> Result<Option<&KdlDocument>> {
+    fn ignored_words_for_extension(&self, ext: &str) -> Vec<String> {
         self.words_for_section("extensions", ext)
     }
 
@@ -98,7 +98,7 @@ impl IgnoreConfig {
         self.words_for_section_mut("extensions", ext)
     }
 
-    fn ignored_words_for_path(&self, path: &str) -> Result<Option<&KdlDocument>> {
+    fn ignored_words_for_path(&self, path: &str) -> Vec<String> {
         self.words_for_section("paths", path)
     }
 
@@ -106,40 +106,47 @@ impl IgnoreConfig {
         self.words_for_section_mut("paths", path)
     }
 
-    fn words_for_key(&self, key: &'static str) -> Result<&KdlDocument> {
-        self.doc
-            .get(key)
-            .ok_or_else(|| anyhow!("key '{key}' should be present"))?
-            .children()
-            .ok_or_else(|| anyhow!("key '{key}' should have children"))
+    fn words_for_key(&self, key: &'static str) -> Vec<String> {
+        let section = match self.doc.get(key) {
+            None => return vec![],
+            Some(s) => s,
+        };
+        let children = match section.children() {
+            None => return vec![],
+            Some(c) => c,
+        };
+        let nodes = children.nodes();
+        nodes.iter().map(|x| x.name().value().to_string()).collect()
     }
 
-    fn words_for_key_mut(&mut self, key: &'static str) -> Result<&mut KdlDocument> {
-        self.doc
-            .get_mut(key)
-            .ok_or_else(|| anyhow!("key '{key}' should be present"))?
-            .children_mut()
-            .as_mut()
-            .ok_or_else(|| anyhow!("key '{key}' should have children"))
+    fn words_for_key_mut(&mut self, key: &'static str) -> Option<&mut KdlDocument> {
+        let node = match self.doc.get_mut(key) {
+            None => return None,
+            Some(n) => n,
+        };
+        node.children_mut().as_mut()
     }
 
-    fn words_for_section(&self, key: &'static str, value: &str) -> Result<Option<&KdlDocument>> {
-        let section_node = self
-            .doc
-            .get(key)
-            .ok_or_else(|| anyhow!("key '{key}' should be present"))?;
-        let entries = section_node
-            .children()
-            .ok_or_else(|| anyhow!("key '{key}' should have children"))?;
+    fn words_for_section(&self, key: &'static str, value: &str) -> Vec<String> {
+        let section_node = match self.doc.get(key) {
+            None => return vec![],
+            Some(s) => s,
+        };
+        let entries = match section_node.children() {
+            None => return vec![],
+            Some(e) => e,
+        };
         for node in entries.nodes() {
             if node.name().value() == value {
-                let words = node
-                    .children()
-                    .ok_or_else(|| anyhow!("section '{key}' should have children"))?;
-                return Ok(Some(words));
+                let children = match node.children() {
+                    None => return vec![],
+                    Some(c) => c,
+                };
+                let nodes = children.nodes();
+                return nodes.iter().map(|x| x.name().value().to_string()).collect();
             }
         }
-        Ok(None)
+        vec![]
     }
 
     fn words_for_section_mut(
@@ -173,10 +180,14 @@ impl IgnoreConfig {
     }
 
     fn add_to_section(&mut self, section: &'static str, word: &str) -> Result<()> {
-        let entries = self
-            .doc
-            .get_mut(section)
-            .ok_or_else(|| anyhow!("section: '{section}' should exist"))?;
+        let entries = match self.doc.get_mut(section) {
+            Some(e) => e,
+            None => {
+                let new_node = KdlNode::new(KdlIdentifier::from(section));
+                self.doc.nodes_mut().push(new_node);
+                self.doc.get_mut(section).expect("just created")
+            }
+        };
         let children = entries.ensure_children();
         let word_node = Self::make_word_node(word);
         Self::insert_word_in_section(word_node, children, IndentLevel::One);
@@ -189,13 +200,18 @@ impl IgnoreConfig {
         section: &'static str,
         value: &str,
     ) -> anyhow::Result<()> {
-        let mut matching_node = None;
-        let section_node = self
-            .doc
-            .get_mut(section)
-            .expect("section '{section}' should exist");
+        let section_node = match self.doc.get_mut(section) {
+            Some(s) => s,
+            None => {
+                let new_node = KdlNode::new(KdlIdentifier::from(section));
+                self.doc.nodes_mut().push(new_node);
+                self.doc.get_mut(section).expect("")
+            }
+        };
         let entries = section_node.children_mut();
+
         // Look for a section with a matching name
+        let mut matching_node = None;
         for entry in entries {
             for node in entry.nodes_mut() {
                 if node.name().value() == value {
@@ -290,24 +306,22 @@ impl Display for IgnoreConfig {
 
 impl IgnoreStore for IgnoreConfig {
     fn is_ignored(&self, word: &str) -> Result<bool> {
-        let global_words = self.global_words()?;
-        Ok(global_words.get(word).is_some())
+        let global_words = self.global_words();
+        Ok(global_words.contains(&word.to_string()))
     }
 
     fn is_ignored_for_extension(&self, word: &str, extension: &str) -> Result<bool> {
-        let for_extension = match self.ignored_words_for_extension(extension)? {
-            None => return Ok(false),
-            Some(e) => e,
-        };
-        Ok(for_extension.get(word).is_some())
+        Ok(self
+            .ignored_words_for_extension(extension)
+            .contains(&word.to_string()))
     }
 
     fn is_ignored_for_project(&self, word: &str, project_id: crate::ProjectId) -> Result<bool> {
         if project_id != MAGIC_PROJECT_ID {
             return Ok(false);
         }
-        let project_words = self.project_words()?;
-        Ok(project_words.get(word).is_some())
+        let project_words = self.project_words();
+        Ok(project_words.contains(&word.to_string()))
     }
 
     fn is_ignored_for_path(
@@ -319,11 +333,8 @@ impl IgnoreStore for IgnoreConfig {
         if project_id != MAGIC_PROJECT_ID {
             return Ok(false);
         }
-        let for_path = match self.ignored_words_for_path(&relative_path.as_str())? {
-            None => return Ok(false),
-            Some(e) => e,
-        };
-        Ok(for_path.get(word).is_some())
+        let for_path = self.ignored_words_for_path(&relative_path.as_str());
+        Ok(for_path.contains(&word.to_string()))
     }
 
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()> {
@@ -362,7 +373,10 @@ impl IgnoreStore for IgnoreConfig {
     }
 
     fn remove_ignored(&mut self, word: &str) -> Result<()> {
-        let ignored = self.global_words_mut()?;
+        let ignored = match self.global_words_mut() {
+            Some(n) => n,
+            None => bail!("word was not globally ignored"),
+        };
         let nodes = ignored.nodes_mut();
         let before = nodes.len();
         nodes.retain(|x| x.name().value() != word);
@@ -408,7 +422,10 @@ impl IgnoreStore for IgnoreConfig {
         if project_id != MAGIC_PROJECT_ID {
             bail!("Should have called with MAGIC_PROJECT_ID");
         }
-        let ignored = self.project_words_mut()?;
+        let ignored = match self.project_words_mut() {
+            Some(i) => i,
+            None => return Ok(()),
+        };
         let nodes = ignored.nodes_mut();
         nodes.retain(|x| x.name().value() != word);
         self.save()

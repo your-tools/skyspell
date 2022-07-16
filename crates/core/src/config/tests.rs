@@ -5,8 +5,8 @@ use crate::test_ignore_store;
 use textwrap::dedent;
 
 #[test]
-fn test_error_if_global_is_missing() {
-    IgnoreConfig::parse(None, "").unwrap_err();
+fn test_empty_config_is_valid() {
+    IgnoreConfig::parse(None, "").unwrap();
 }
 
 // Note: this checks that automatic formatting of the
@@ -18,47 +18,22 @@ where
     let input = dedent(input);
     let mut ignore_config = IgnoreConfig::parse(None, &input).unwrap();
     let expected = dedent(expected);
+    let expected = expected.trim();
     action(&mut ignore_config).unwrap();
     let actual = ignore_config.to_string();
+    let actual = actual.trim();
     assert_eq!(actual, expected, "{actual}");
 }
 
 #[test]
 fn test_add_global_ignore_to_empty_config() {
-    let input = r#"
-            global {
-            }
-
-            project {
-
-            }
-
-            extensions {
-
-            }
-            
-            paths {
-
-            }
-            "#;
+    let input = "";
 
     let action = |x: &mut IgnoreConfig| x.ignore("hello");
 
     let expected = r#"
             global {
               hello
-            }
-
-            project {
-
-            }
-
-            extensions {
-
-            }
-
-            paths {
-
             }
             "#;
 

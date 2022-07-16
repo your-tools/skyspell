@@ -76,7 +76,7 @@ pub fn main() -> Result<()> {
     let use_db = ignore_config
         .as_ref()
         .and_then(|c| Some(c.use_db()))
-        .unwrap_or(false);
+        .unwrap_or(true);
     let storage_backend = if use_db {
         let db_path = match opts.db_path.as_ref() {
             Some(s) => Ok(s.to_string()),
@@ -87,7 +87,7 @@ pub fn main() -> Result<()> {
         StorageBackend::Repository(Box::new(repository))
     } else {
         let ignore_config =
-            ignore_config.expect("ignore_config should not be None when use_db is True");
+            ignore_config.expect("ignore_config should not be None when use_db is false");
         info_1!("Using {SKYSPELL_IGNORE_FILE} as storage");
         StorageBackend::IgnoreStore(Box::new(ignore_config))
     };
