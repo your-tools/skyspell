@@ -112,6 +112,50 @@ fn test_add_global_ignore_to_existing_config() {
 }
 
 #[test]
+fn test_remove_word_from_global() {
+    let input = r#"
+            global {
+              abc
+              def
+            }
+
+            project {
+
+            }
+
+            extensions {
+
+            }
+
+            paths {
+
+            }
+            "#;
+
+    let action = |x: &mut IgnoreConfig| x.remove_ignored("def");
+
+    let expected = r#"
+            global {
+              abc
+            }
+
+            project {
+
+            }
+
+            extensions {
+
+            }
+
+            paths {
+
+            }
+            "#;
+
+    check(&action, input, expected);
+}
+
+#[test]
 fn test_add_project_ignore() {
     let input = r#"
             global {
@@ -132,7 +176,7 @@ fn test_add_project_ignore() {
             }
             "#;
 
-    let action = |x: &mut IgnoreConfig| x.ignore_for_project("hello", PROJECT_ID);
+    let action = |x: &mut IgnoreConfig| x.ignore_for_project("hello", MAGIC_PROJECT_ID);
 
     let expected = r#"
             global {

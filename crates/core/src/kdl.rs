@@ -1,4 +1,6 @@
 use std::fmt::Display;
+
+use anyhow::{anyhow, bail};
 use textwrap;
 
 use kdl::{KdlDocument, KdlIdentifier, KdlNode};
@@ -9,7 +11,7 @@ use crate::ProjectId;
 const SECTIONS: [&str; 4] = ["global", "project", "extensions", "paths"];
 // We need a project_id because it's found in the arguments of some
 // methods of the trait, but we never use its value
-const PROJECT_ID: ProjectId = 42;
+const MAGIC_PROJECT_ID: ProjectId = 42;
 
 #[derive(Debug, Clone, Copy)]
 enum IndentLevel {
@@ -71,16 +73,32 @@ impl IgnoreConfig {
         self.words_for_key("global")
     }
 
+    fn global_words_mut(&mut self) -> &mut KdlDocument {
+        self.words_for_key_mut("global")
+    }
+
     fn project_words(&self) -> &KdlDocument {
         self.words_for_key("project")
+    }
+
+    fn project_words_mut(&mut self) -> &mut KdlDocument {
+        self.words_for_key_mut("project")
     }
 
     fn ignored_words_for_extension(&self, ext: &str) -> Option<&KdlDocument> {
         self.words_for_section("extensions", ext)
     }
 
+    fn ignored_words_for_extension_mut(&mut self, ext: &str) -> Option<&mut KdlDocument> {
+        self.words_for_section_mut("extensions", ext)
+    }
+
     fn ignored_words_for_path(&self, path: &str) -> Option<&KdlDocument> {
         self.words_for_section("paths", path)
+    }
+
+    fn ignored_words_for_path_mut(&mut self, path: &str) -> Option<&mut KdlDocument> {
+        self.words_for_section_mut("paths", path)
     }
 
     fn words_for_key(&self, key: &'static str) -> &KdlDocument {
@@ -88,6 +106,15 @@ impl IgnoreConfig {
             .get(key)
             .expect("key '{key}' should exist")
             .children()
+            .expect("key '{key}' should have children")
+    }
+
+    fn words_for_key_mut(&mut self, key: &'static str) -> &mut KdlDocument {
+        self.doc
+            .get_mut(key)
+            .expect("key '{key}' should exist")
+            .children_mut()
+            .as_mut()
             .expect("key '{key}' should have children")
     }
 
@@ -99,6 +126,27 @@ impl IgnoreConfig {
                 if node.name().value() == value {
                     let words = node
                         .children()
+                        .expect("section '{key}' should have children");
+                    return Some(words);
+                }
+            }
+        }
+        None
+    }
+
+    fn words_for_section_mut(
+        &mut self,
+        key: &'static str,
+        value: &str,
+    ) -> Option<&mut KdlDocument> {
+        let extensions = self.doc.get_mut(key).expect("section '{key}' should exist");
+        let entries = extensions.children_mut();
+        for entry in entries {
+            for node in entry.nodes_mut() {
+                if node.name().value() == value {
+                    let words = node
+                        .children_mut()
+                        .as_mut()
                         .expect("section '{key}' should have children");
                     return Some(words);
                 }
@@ -229,7 +277,7 @@ impl IgnoreStore for IgnoreConfig {
         word: &str,
         project_id: crate::ProjectId,
     ) -> anyhow::Result<bool> {
-        if project_id != PROJECT_ID {
+        if project_id != MAGIC_PROJECT_ID {
             return Ok(false);
         }
         let project_words = self.project_words();
@@ -242,7 +290,7 @@ impl IgnoreStore for IgnoreConfig {
         project_id: crate::ProjectId,
         relative_path: &crate::RelativePath,
     ) -> anyhow::Result<bool> {
-        if project_id != 42 {
+        if project_id != MAGIC_PROJECT_ID {
             return Ok(false);
         }
         let for_path = match self.ignored_words_for_path(&relative_path.as_str()) {
@@ -283,8 +331,8 @@ impl IgnoreStore for IgnoreConfig {
         project_id: crate::ProjectId,
         relative_path: &crate::RelativePath,
     ) -> anyhow::Result<()> {
-        if project_id != 42 {
-            return Ok(());
+        if project_id != MAGIC_PROJECT_ID {
+            bail!("Should have called with MAGIC_PROJECT_ID");
         }
         self.insert_in_section_with_value(word, "paths", &relative_path.as_str())?;
         println!("{}", self.doc.to_string());
@@ -292,11 +340,24 @@ impl IgnoreStore for IgnoreConfig {
     }
 
     fn remove_ignored(&mut self, word: &str) -> anyhow::Result<()> {
-        todo!()
+        let ignored = self.global_words_mut();
+        let nodes = ignored.nodes_mut();
+        let before = nodes.len();
+        nodes.retain(|x| x.name().value() != word);
+        let after = nodes.len();
+        if before == after {
+            bail!("word was not globally ignored")
+        }
+        Ok(())
     }
 
     fn remove_ignored_for_extension(&mut self, word: &str, extension: &str) -> anyhow::Result<()> {
-        todo!()
+        let for_extension = self
+            .ignored_words_for_extension_mut(extension)
+            .ok_or_else(|| anyhow!("word was not ignored for this extension"))?;
+        let nodes = for_extension.nodes_mut();
+        nodes.retain(|x| x.name().value() != word);
+        Ok(())
     }
 
     fn remove_ignored_for_path(
@@ -305,7 +366,16 @@ impl IgnoreStore for IgnoreConfig {
         project_id: crate::ProjectId,
         relative_path: &crate::RelativePath,
     ) -> anyhow::Result<()> {
-        todo!()
+        if project_id != MAGIC_PROJECT_ID {
+            bail!("Should have called with MAGIC_PROJECT_ID");
+        }
+
+        let for_path = self
+            .ignored_words_for_path_mut(&relative_path.as_str())
+            .ok_or_else(|| anyhow!("word was not ignored for this path"))?;
+        let nodes = for_path.nodes_mut();
+        nodes.retain(|x| x.name().value() != word);
+        Ok(())
     }
 
     fn remove_ignored_for_project(
@@ -313,7 +383,13 @@ impl IgnoreStore for IgnoreConfig {
         word: &str,
         project_id: crate::ProjectId,
     ) -> anyhow::Result<()> {
-        todo!()
+        if project_id != MAGIC_PROJECT_ID {
+            bail!("Should have called with MAGIC_PROJECT_ID");
+        }
+        let ignored = self.project_words_mut();
+        let nodes = ignored.nodes_mut();
+        nodes.retain(|x| x.name().value() != word);
+        Ok(())
     }
 }
 
