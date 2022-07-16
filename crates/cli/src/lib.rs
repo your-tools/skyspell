@@ -60,6 +60,16 @@ pub fn main() -> Result<()> {
         .with_context(|| "While reading {SKYSPELL_IGNORE_FILE}")?;
     let ignore_config = IgnoreConfig::parse(Some(ignore_path), &kdl)?;
 
+    let dictionary = EnchantDictionary::new(lang)?;
+    let current_provider = dictionary.provider();
+    let config_provider = ignore_config.provider();
+
+    if let Some(config_provider) = config_provider {
+        if current_provider != config_provider {
+            bail!("Using '{current_provider}' as provider but should be '{config_provider}'")
+        }
+    }
+
     let storage_backend;
 
     if ignore_config.use_db() {
@@ -74,8 +84,6 @@ pub fn main() -> Result<()> {
         info_1!("Using {SKYSPELL_IGNORE_FILE} as storage");
         storage_backend = StorageBackend::IgnoreStore(Box::new(ignore_config));
     }
-
-    let dictionary = EnchantDictionary::new(lang)?;
 
     let outcome = run(opts, dictionary, storage_backend);
     if let Err(e) = outcome {

@@ -1,4 +1,4 @@
-provider "aspell"
+provider name="aspell"
 
 patterns {
   *.lock

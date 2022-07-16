@@ -48,6 +48,16 @@ impl IgnoreConfig {
         Ok(IgnoreConfig { doc, path })
     }
 
+    pub fn provider(&self) -> Option<&str> {
+        let entry = self.doc.get("provider")?;
+        for entry in entry.entries() {
+            if entry.name().map(|i| i.value()) == Some("name") {
+                return entry.value().as_string();
+            }
+        }
+        None
+    }
+
     pub fn patterns(&self) -> Vec<&str> {
         let res = match self.doc.get("patterns") {
             Some(x) => x,
