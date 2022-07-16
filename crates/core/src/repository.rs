@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 
 use crate::{IgnoreStore, Operation, ProjectId, ProjectInfo, ProjectPath};
 
@@ -19,8 +19,15 @@ pub trait Repository {
     /// Get the list of known projects. Used for cleanup
     fn projects(&self) -> Result<Vec<ProjectInfo>>;
 
-    // Insert a new operation
+    /// Insert a new operation
     fn insert_operation(&mut self, operation: &Operation) -> Result<()>;
-    // Get last operation
+    /// Get last operation
     fn pop_last_operation(&mut self) -> Result<Option<Operation>>;
+
+    /// Undo last operation
+    fn undo(&mut self) -> Result<()> {
+        let last_operation = self.pop_last_operation()?;
+        let mut last_operation = last_operation.ok_or_else(|| anyhow!("Nothing to undo"))?;
+        todo!()
+    }
 }

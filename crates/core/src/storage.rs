@@ -1,17 +1,14 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 
 use crate::{IgnoreStore, Repository};
-use crate::{Project, ProjectId, ProjectPath};
+use crate::{Project, ProjectPath};
 
-/// We have two backends to store ignore words
-/// One can manipulate ignored words, but the
-/// other is more powerful because it can store
-/// and retriev operations
+/// We have two backends to store ignore words One can manipulate ignored words,
+/// but the other is more powerful because it can store and retriev operations
 
-/// Thus, we crate an enum to represent the
-/// "capabilities" of a storage - either it implements Repository with
-/// all its methods, or it implements IgnoreStore with a subset of
-/// these.
+/// Thus, we crate an enum to represent the "capabilities" of a storage - either
+/// it implements Repository with all its methods, or it implements IgnoreStore
+/// with a subset of these.
 pub enum StorageBackend {
     IgnoreStore(Box<dyn IgnoreStore>),
     Repository(Box<dyn Repository>),
@@ -41,6 +38,9 @@ impl StorageBackend {
     }
 
     pub fn undo(&mut self) -> Result<()> {
-        todo!()
+        match self {
+            StorageBackend::IgnoreStore(_) => bail!("Cannot undo"),
+            StorageBackend::Repository(r) => r.undo(),
+        }
     }
 }
