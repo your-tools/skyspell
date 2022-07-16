@@ -8,10 +8,10 @@ use skyspell_core::ignore_file::walk;
 use skyspell_core::Checker;
 use skyspell_core::Dictionary;
 use skyspell_core::EnchantDictionary;
+use skyspell_core::StorageBackend;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{get_default_db_path, SQLRepository};
-use skyspell_core::{IgnoreStore, StorageBackend};
-use skyspell_core::{Project, ProjectPath, RelativePath};
+use skyspell_core::{ProjectPath, RelativePath};
 
 mod checkers;
 pub mod interactor;

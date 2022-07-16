@@ -14,7 +14,7 @@ use crate::sql::schema::*;
 use crate::undo;
 use crate::{IgnoreStore, Repository};
 use crate::{Operation, ProjectInfo};
-use crate::{Project, ProjectId, ProjectPath, RelativePath};
+use crate::{ProjectId, ProjectPath, RelativePath};
 
 diesel_migrations::embed_migrations!("migrations");
 

@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::IgnoreStore;

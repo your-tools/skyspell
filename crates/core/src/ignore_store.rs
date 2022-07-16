@@ -1,7 +1,6 @@
 use anyhow::Result;
-use std::path::Path;
 
-use crate::{Operation, Project, ProjectId, ProjectPath, RelativePath};
+use crate::{ProjectId, RelativePath};
 
 pub struct ProjectInfo {
     id: ProjectId,

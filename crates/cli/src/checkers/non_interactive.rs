@@ -1,7 +1,7 @@
 use anyhow::{bail, Result};
 use colored::*;
 
-use skyspell_core::{Checker, Dictionary, IgnoreStore, StorageBackend};
+use skyspell_core::{Checker, Dictionary, StorageBackend};
 use skyspell_core::{Project, RelativePath};
 
 use crate::info_2;

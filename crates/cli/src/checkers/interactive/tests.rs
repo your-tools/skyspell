@@ -2,7 +2,7 @@ use tempfile::TempDir;
 
 use super::InteractiveChecker;
 use skyspell_core::tests::{FakeDictionary, FakeRepository};
-use skyspell_core::{Checker, IgnoreStore, ProjectPath, RelativePath, StorageBackend};
+use skyspell_core::{Checker, ProjectPath, RelativePath, StorageBackend};
 
 use crate::tests::FakeInteractor;
 

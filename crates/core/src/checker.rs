@@ -2,7 +2,7 @@ use std::path::Path;
 
 use anyhow::Result;
 
-use crate::{Dictionary, IgnoreStore, StorageBackend};
+use crate::{Dictionary, StorageBackend};
 use crate::{Project, RelativePath};
 
 pub trait Checker {
