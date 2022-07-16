@@ -251,6 +251,3 @@ fn test_is_ignored_for_extension() {
     let actual = ignore_config.is_ignored_for_extension("fn", "rs").unwrap();
     assert_eq!(actual, true);
 }
-
-use crate::test_repository;
-test_repository!(IgnoreConfig);
