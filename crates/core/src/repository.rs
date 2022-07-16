@@ -6,10 +6,6 @@ pub trait Repository {
     fn ignore_store_mut(&mut self) -> &mut dyn IgnoreStore;
     fn ignore_store(&self) -> &dyn IgnoreStore;
 
-    fn clean(&mut self) -> Result<()> {
-        todo!()
-    }
-
     /// Add a new project
     fn new_project(&mut self, project_path: &ProjectPath) -> Result<ProjectId>;
     /// Check if a project exists

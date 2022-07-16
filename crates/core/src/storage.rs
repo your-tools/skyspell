@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use anyhow::{bail, Result};
 
 use crate::{IgnoreStore, Project, ProjectId, ProjectPath, RelativePath, Repository};
@@ -79,8 +81,22 @@ impl StorageBackend {
         Ok(Project::new(project_id, project_path.clone()))
     }
 
-    fn clean(&mut self) -> Result<()> {
-        todo!()
+    pub fn clean(&mut self) -> Result<()> {
+        let repository = match self {
+            // No-op for IgnoreStore
+            StorageBackend::IgnoreStore(_) => return Ok(()),
+            StorageBackend::Repository(r) => r,
+        };
+        for project in repository.projects()? {
+            let path = project.path();
+            let path = Path::new(&path);
+            let id = project.id();
+            if !path.exists() {
+                repository.remove_project(id)?;
+                println!("Removed non longer existing project: {}", path.display());
+            }
+        }
+        Ok(())
     }
 
     pub fn undo(&mut self) -> Result<()> {
