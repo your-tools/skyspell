@@ -6,7 +6,7 @@ use textwrap::dedent;
 
 #[test]
 fn test_error_if_global_is_missing() {
-    IgnoreConfig::parse("").unwrap_err();
+    IgnoreConfig::parse(None, "").unwrap_err();
 }
 
 // Note: this checks that automatic formatting of the
@@ -16,7 +16,7 @@ where
     F: Fn(&mut IgnoreConfig) -> anyhow::Result<()>,
 {
     let input = dedent(input);
-    let mut ignore_config = IgnoreConfig::parse(&input).unwrap();
+    let mut ignore_config = IgnoreConfig::parse(None, &input).unwrap();
     let expected = dedent(expected);
     action(&mut ignore_config).unwrap();
     let actual = ignore_config.to_string();

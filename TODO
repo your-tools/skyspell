@@ -1,2 +1,10 @@
-Week-end in French is seen as a bad word - and I don't want to
-add both week and end to the global ignore list for French 🤔
+* Week-end in French is seen as a bad word - and I don't want to
+  add both week and end to the global ignore list for French 🤔
+
+* Store ignore globs in skyspell.kdl
+* Add settings for the db path, the enchant backend and the like
+* Delete .skyspell-ignore
+* Allow all sections to be missing
+* Use anyhow in kdl
+* Take cfg_path in the ctor (maybe an Option to keep tests fast)
+* Add save() method and call it for each member of the trait

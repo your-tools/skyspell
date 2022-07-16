@@ -1,7 +1,6 @@
-use std::path::Path;
 use std::path::PathBuf;
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{bail, Context, Result};
 use clap::Parser;
 use colored::*;
 
@@ -72,10 +71,9 @@ pub fn main() -> Result<()> {
     let storage_backend;
 
     if skyspell_kdl_path.exists() {
-        let kdl = std::fs::read_to_string(skyspell_kdl_path)
+        let kdl = std::fs::read_to_string(&skyspell_kdl_path)
             .with_context(|| "While reading skyspell.kdl")?;
-        let ignore_config =
-            IgnoreConfig::parse(&kdl).map_err(|e| anyhow!("While parsing skyspell.kdl: {e}"))?;
+        let ignore_config = IgnoreConfig::parse(Some(skyspell_kdl_path), &kdl)?;
         storage_backend = StorageBackend::IgnoreStore(Box::new(ignore_config));
     } else {
         storage_backend = StorageBackend::Repository(Box::new(repository));
