@@ -25,6 +25,10 @@ impl Project {
         &self.path
     }
 
+    pub fn as_str(&self) -> Cow<str> {
+        self.path.as_str()
+    }
+
     pub fn as_relative_path(&self, path: &str) -> Result<RelativePath> {
         RelativePath::new(self.path(), Path::new(path))
     }

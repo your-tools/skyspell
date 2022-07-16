@@ -2,6 +2,7 @@ use std::path::Path;
 
 use anyhow::{bail, Result};
 
+use crate::undo::Operation;
 use crate::{IgnoreStore, Project, ProjectId, ProjectPath, RelativePath, Repository};
 
 /// We have two backends to store ignore words One can manipulate ignored words,
@@ -69,7 +70,60 @@ impl StorageBackend {
             .is_ignored_for_path(word, project_id, relative_path)
     }
 
+    pub fn ignore_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()> {
+        let operation = Operation::new_ignore_for_project(word, project_id);
+        match self {
+            StorageBackend::Repository(r) => {
+                r.ignore_store_mut().ignore_for_project(word, project_id)?;
+                r.insert_operation(&operation)
+            }
+            StorageBackend::IgnoreStore(i) => i.ignore_for_project(word, project_id),
+        }
+    }
+
+    pub fn ignore_for_path(
+        &mut self,
+        word: &str,
+        project_id: ProjectId,
+        relative_path: &RelativePath,
+    ) -> Result<()> {
+        let operation = Operation::new_ignore_for_path(word, project_id, relative_path);
+        match self {
+            StorageBackend::Repository(r) => {
+                r.ignore_store_mut()
+                    .ignore_for_path(word, project_id, relative_path)?;
+                r.insert_operation(&operation)
+            }
+            StorageBackend::IgnoreStore(i) => i.ignore_for_path(word, project_id, relative_path),
+        }
+    }
+
+    pub fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
+        let operation = Operation::new_ignore_for_extension(word, extension);
+        match self {
+            StorageBackend::Repository(r) => {
+                r.ignore_store_mut().ignore_for_extension(word, extension)?;
+                r.insert_operation(&operation)
+            }
+            StorageBackend::IgnoreStore(i) => i.ignore_for_extension(word, extension),
+        }
+    }
+
     pub fn ensure_project(&mut self, project_path: &ProjectPath) -> Result<Project> {
+        let project_id = match self.repository_mut() {
+            Some(r) => {
+                if !r.project_exists(project_path)? {
+                    r.new_project(project_path)?;
+                }
+                r.get_project_id(project_path)?
+            }
+            None => 42,
+        };
+
+        Ok(Project::new(project_id, project_path.clone()))
+    }
+
+    pub fn new_project(&mut self, project_path: &ProjectPath) -> Result<Project> {
         let project_id = match self.repository_mut() {
             Some(r) => {
                 r.new_project(project_path)?;

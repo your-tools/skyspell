@@ -22,6 +22,32 @@ pub enum Operation {
 // Note: this is a bit verbose but less than coming up with a trait
 // that must be implemented for each variant
 impl Operation {
+    pub(crate) fn new_ignore_for_project(word: &str, project_id: ProjectId) -> Self {
+        Self::IgnoreForProject(IgnoreForProject {
+            word: word.to_string(),
+            project_id,
+        })
+    }
+
+    pub(crate) fn new_ignore_for_path(
+        word: &str,
+        project_id: ProjectId,
+        relative_path: &RelativePath,
+    ) -> Self {
+        Self::IgnoreForPath(IgnoreForPath {
+            word: word.to_string(),
+            project_id,
+            path: relative_path.clone(),
+        })
+    }
+
+    pub(crate) fn new_ignore_for_extension(word: &str, extension: &str) -> Self {
+        Self::IgnoreForExtension(IgnoreForExtension {
+            word: word.to_string(),
+            extension: extension.to_string(),
+        })
+    }
+
     pub fn execute(&mut self, ignore_store: &mut dyn IgnoreStore) -> Result<()> {
         use Operation::*;
         match self {

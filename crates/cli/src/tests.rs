@@ -159,6 +159,129 @@ fn test_remove_global() {
 }
 
 #[test]
+fn test_remove_for_project() {
+    let temp_dir = tempfile::Builder::new()
+        .prefix("test-skyspell")
+        .tempdir()
+        .unwrap();
+    let mut app = TestApp::new(&temp_dir);
+    let project = app.new_project_path(&temp_dir, "project");
+    let project = app.storage_backend.new_project(&project).unwrap();
+    app.storage_backend
+        .ignore_for_project("foo", project.id())
+        .unwrap();
+
+    app.run(&["remove", "foo", "--project-path", &project.as_str()])
+        .unwrap();
+
+    let repository = open_repository(&temp_dir);
+    assert!(!repository
+        .is_ignored_for_project("foo", project.id())
+        .unwrap());
+}
+
+#[test]
+fn test_remove_for_relative_path() {
+    let temp_dir = tempfile::Builder::new()
+        .prefix("test-skyspell")
+        .tempdir()
+        .unwrap();
+    let mut app = TestApp::new(&temp_dir);
+    let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
+    let project = app.new_project_path(&temp_dir, "project");
+    let project = app.storage_backend.new_project(&project).unwrap();
+    app.storage_backend
+        .ignore_for_path("foo", project.id(), &rel_path)
+        .unwrap();
+
+    app.run(&[
+        "remove",
+        "foo",
+        "--project-path",
+        &project.as_str(),
+        "--relative-path",
+        &full_path.to_string_lossy(),
+    ])
+    .unwrap();
+
+    let repository = open_repository(&temp_dir);
+    let project_id = repository.get_project_id(project.path()).unwrap();
+    assert!(!repository
+        .is_ignored_for_path("foo", project_id, &rel_path)
+        .unwrap());
+}
+
+#[test]
+fn test_remove_for_extension() {
+    let temp_dir = tempfile::Builder::new()
+        .prefix("test-skyspell")
+        .tempdir()
+        .unwrap();
+    let mut app = TestApp::new(&temp_dir);
+    TestApp::ensure_file(&temp_dir, "project", "foo.py");
+    app.storage_backend
+        .ignore_for_extension("foo", "py")
+        .unwrap();
+
+    app.run(&["remove", "foo", "--extension", "py"]).unwrap();
+
+    let repository = open_repository(&temp_dir);
+    assert!(!repository.is_ignored_for_extension("foo", "py").unwrap());
+}
+
+#[test]
+fn test_check_errors_in_two_files() {
+    let temp_dir = tempfile::Builder::new()
+        .prefix("test-skyspell")
+        .tempdir()
+        .unwrap();
+    let mut app = TestApp::new(&temp_dir);
+    let project = app.new_project_path(&temp_dir, "project");
+    let (foo_full, _) = TestApp::ensure_file(&temp_dir, "project", "foo.md");
+    let (bar_full, _) = TestApp::ensure_file(&temp_dir, "project", "bar.md");
+    std::fs::write(&foo_full, "This is foo").unwrap();
+    std::fs::write(&bar_full, "This is bar and it contains baz").unwrap();
+    for word in &["This", "is", "and", "it", "contains"] {
+        app.dictionary.add_known(word);
+    }
+
+    let err = app
+        .run(&[
+            "check",
+            "--non-interactive",
+            "--project-path",
+            &project.as_str(),
+        ])
+        .unwrap_err();
+
+    assert!(err.to_string().contains("spelling errors"))
+}
+
+#[test]
+fn test_check_happy() {
+    let temp_dir = tempfile::Builder::new()
+        .prefix("test-skyspell")
+        .tempdir()
+        .unwrap();
+    let mut app = TestApp::new(&temp_dir);
+    let project = app.new_project_path(&temp_dir, "project");
+    let (foo_full, _) = TestApp::ensure_file(&temp_dir, "project", "foo.md");
+    let (bar_full, _) = TestApp::ensure_file(&temp_dir, "project", "bar.md");
+    std::fs::write(&foo_full, "This is fine").unwrap();
+    std::fs::write(&bar_full, "This is also fine").unwrap();
+    for word in &["This", "is", "also", "fine"] {
+        app.dictionary.add_known(word);
+    }
+
+    app.run(&[
+        "check",
+        "--non-interactive",
+        "--project-path",
+        &project.as_str(),
+    ])
+    .unwrap();
+}
+#[test]
 fn test_suggest() {
     let temp_dir = tempfile::Builder::new()
         .prefix("test-skyspell")
