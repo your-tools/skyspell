@@ -28,6 +28,6 @@ pub trait Repository {
     fn undo(&mut self) -> Result<()> {
         let last_operation = self.pop_last_operation()?;
         let mut last_operation = last_operation.ok_or_else(|| anyhow!("Nothing to undo"))?;
-        todo!()
+        last_operation.undo(self.as_ignore_store())
     }
 }

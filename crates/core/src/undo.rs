@@ -78,23 +78,19 @@ pub enum Operation {
 // Note: this is a bit verbose but less than coming up with a trait
 // that must be implemented for each variant
 impl Operation {
-    fn execute<I: IgnoreStore>(&mut self, repo: &mut I) -> Result<()> {
+    pub fn execute(&mut self, ignore_store: &mut dyn IgnoreStore) -> Result<()> {
         use Operation::*;
         match self {
-            Ignore(o) => o.execute(repo),
-            IgnoreForExtension(o) => o.execute(repo),
-            IgnoreForPath(o) => o.execute(repo),
-            IgnoreForProject(o) => o.execute(repo),
+            Ignore(o) => o.execute(ignore_store),
+            _ => todo!(),
         }
     }
 
-    fn undo<I: IgnoreStore>(&mut self, repo: &mut I) -> Result<()> {
+    pub fn undo(&mut self, ignore_store: &mut dyn IgnoreStore) -> Result<()> {
         use Operation::*;
         match self {
-            Ignore(o) => o.undo(repo),
-            IgnoreForExtension(o) => o.undo(repo),
-            IgnoreForPath(o) => o.undo(repo),
-            IgnoreForProject(o) => o.undo(repo),
+            Ignore(o) => o.undo(ignore_store),
+            _ => todo!(),
         }
     }
 }
@@ -105,12 +101,12 @@ pub struct Ignore {
 }
 
 impl Ignore {
-    fn execute<I: IgnoreStore>(&mut self, repo: &mut I) -> Result<()> {
-        repo.ignore(&self.word)
+    fn execute(&mut self, ignore_store: &mut dyn IgnoreStore) -> Result<()> {
+        ignore_store.ignore(&self.word)
     }
 
-    fn undo<I: IgnoreStore>(&mut self, repo: &mut I) -> Result<()> {
-        repo.remove_ignored(&self.word)
+    fn undo(&mut self, ignore_store: &mut dyn IgnoreStore) -> Result<()> {
+        ignore_store.remove_ignored(&self.word)
     }
 }
 
