@@ -2,11 +2,11 @@ use tempfile::TempDir;
 
 use super::InteractiveChecker;
 use skyspell_core::tests::{FakeDictionary, FakeRepository};
-use skyspell_core::{Checker, IgnoreStore, ProjectPath, RelativePath};
+use skyspell_core::{Checker, IgnoreStore, ProjectPath, RelativePath, StorageBackend};
 
 use crate::tests::FakeInteractor;
 
-type TestChecker = InteractiveChecker<FakeInteractor, FakeDictionary, FakeRepository>;
+type TestChecker = InteractiveChecker<FakeInteractor, FakeDictionary>;
 
 struct TestApp {
     checker: TestChecker,
@@ -19,7 +19,8 @@ impl TestApp {
         let mut repository = FakeRepository::new();
         let project_path = ProjectPath::new(temp_dir.path()).unwrap();
         let project = repository.ensure_project(&project_path).unwrap();
-        let checker = TestChecker::new(project, interactor, dictionary, repository).unwrap();
+        let storage_backend = StorageBackend::Repository(Box::new(repository));
+        let checker = TestChecker::new(project, interactor, dictionary, storage_backend).unwrap();
         Self { checker }
     }
 

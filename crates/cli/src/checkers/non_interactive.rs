@@ -1,30 +1,30 @@
 use anyhow::{bail, Result};
 use colored::*;
 
-use skyspell_core::{Checker, Dictionary, IgnoreStore};
+use skyspell_core::{Checker, Dictionary, IgnoreStore, StorageBackend};
 use skyspell_core::{Project, RelativePath};
 
 use crate::info_2;
 
-pub struct NonInteractiveChecker<D: Dictionary, I: IgnoreStore> {
+pub struct NonInteractiveChecker<D: Dictionary> {
     project: Project,
     dictionary: D,
-    ignore_store: I,
+    storage_backend: StorageBackend,
     num_errors: usize,
 }
 
-impl<D: Dictionary, I: IgnoreStore> NonInteractiveChecker<D, I> {
-    pub fn new(project: Project, dictionary: D, ignore_store: I) -> Result<Self> {
+impl<D: Dictionary> NonInteractiveChecker<D> {
+    pub fn new(project: Project, dictionary: D, storage_backend: StorageBackend) -> Result<Self> {
         Ok(Self {
             project,
             dictionary,
-            ignore_store,
+            storage_backend,
             num_errors: 0,
         })
     }
 }
 
-impl<D: Dictionary, I: IgnoreStore> Checker for NonInteractiveChecker<D, I> {
+impl<D: Dictionary> Checker for NonInteractiveChecker<D> {
     // line, column
     type Context = (usize, usize);
 
@@ -67,6 +67,6 @@ impl<D: Dictionary, I: IgnoreStore> Checker for NonInteractiveChecker<D, I> {
     }
 
     fn ignore_store(&self) -> &dyn IgnoreStore {
-        &self.ignore_store
+        todo!()
     }
 }

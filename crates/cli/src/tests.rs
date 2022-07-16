@@ -2,8 +2,8 @@ use super::*;
 
 use skyspell_core::tests::{new_project_path, FakeDictionary};
 use skyspell_core::IgnoreStore;
-use skyspell_core::SQLRepository;
 use skyspell_core::{ProjectPath, RelativePath};
+use skyspell_core::{SQLRepository, StorageBackend};
 
 use tempfile::TempDir;
 
@@ -16,7 +16,7 @@ fn open_repository(temp_dir: &TempDir) -> SQLRepository {
 
 struct TestApp {
     dictionary: FakeDictionary,
-    repository: SQLRepository,
+    storage_backend: StorageBackend,
 }
 
 impl TestApp {
@@ -24,9 +24,10 @@ impl TestApp {
         let dictionary = FakeDictionary::new();
         let db_path = Self::db_path(temp_dir);
         let repository = SQLRepository::new(&db_path).unwrap();
+        let storage_backend = StorageBackend::Repository(Box::new(repository));
         Self {
             dictionary,
-            repository,
+            storage_backend,
         }
     }
 
@@ -60,7 +61,7 @@ impl TestApp {
         let mut with_arg0 = vec!["skyspell"];
         with_arg0.extend(args);
         let opts = Opts::try_parse_from(with_arg0)?;
-        super::run(opts, self.dictionary, self.repository)
+        super::run(opts, self.dictionary, self.storage_backend)
     }
 }
 
@@ -146,7 +147,7 @@ fn test_remove_global() {
         .tempdir()
         .unwrap();
     let mut app = TestApp::new(&temp_dir);
-    app.repository.ignore("foo").unwrap();
+    app.storage_backend.as_ignore_store().ignore("foo").unwrap();
 
     app.run(&["remove", "foo"]).unwrap();
 
@@ -156,126 +157,27 @@ fn test_remove_global() {
 
 #[test]
 fn test_remove_for_project() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    let project = app.new_project_path(&temp_dir, "project");
-    app.repository.new_project(&project).unwrap();
-    let project_id = app.repository.get_project_id(&project).unwrap();
-    app.repository
-        .ignore_for_project("foo", project_id)
-        .unwrap();
-
-    app.run(&["remove", "foo", "--project-path", &project.as_str()])
-        .unwrap();
-
-    let repository = open_repository(&temp_dir);
-    let project_id = repository.get_project_id(&project).unwrap();
-    assert!(!repository
-        .is_ignored_for_project("foo", project_id)
-        .unwrap());
+    todo!()
 }
 
 #[test]
 fn test_remove_for_relative_path() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
-    let project = app.new_project_path(&temp_dir, "project");
-    let project_id = app.repository.new_project(&project).unwrap();
-    app.repository
-        .ignore_for_path("foo", project_id, &rel_path)
-        .unwrap();
-
-    app.run(&[
-        "remove",
-        "foo",
-        "--project-path",
-        &project.as_str(),
-        "--relative-path",
-        &full_path.to_string_lossy(),
-    ])
-    .unwrap();
-
-    let repository = open_repository(&temp_dir);
-    let project_id = repository.get_project_id(&project).unwrap();
-    assert!(!repository
-        .is_ignored_for_path("foo", project_id, &rel_path)
-        .unwrap());
+    todo!()
 }
 
 #[test]
 fn test_remove_for_extension() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    TestApp::ensure_file(&temp_dir, "project", "foo.py");
-    app.repository.ignore_for_extension("foo", "py").unwrap();
-
-    app.run(&["remove", "foo", "--extension", "py"]).unwrap();
-
-    let repository = open_repository(&temp_dir);
-    assert!(!repository.is_ignored_for_extension("foo", "py").unwrap());
+    todo!()
 }
 
 #[test]
 fn test_check_errors_in_two_files() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    let project = app.new_project_path(&temp_dir, "project");
-    let (foo_full, _) = TestApp::ensure_file(&temp_dir, "project", "foo.md");
-    let (bar_full, _) = TestApp::ensure_file(&temp_dir, "project", "bar.md");
-    std::fs::write(&foo_full, "This is foo").unwrap();
-    std::fs::write(&bar_full, "This is bar and it contains baz").unwrap();
-    for word in &["This", "is", "and", "it", "contains"] {
-        app.dictionary.add_known(word);
-    }
-
-    let err = app
-        .run(&[
-            "check",
-            "--non-interactive",
-            "--project-path",
-            &project.as_str(),
-        ])
-        .unwrap_err();
-
-    assert!(err.to_string().contains("spelling errors"))
+    todo!()
 }
 
 #[test]
 fn test_check_happy() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    let project = app.new_project_path(&temp_dir, "project");
-    let (foo_full, _) = TestApp::ensure_file(&temp_dir, "project", "foo.md");
-    let (bar_full, _) = TestApp::ensure_file(&temp_dir, "project", "bar.md");
-    std::fs::write(&foo_full, "This is fine").unwrap();
-    std::fs::write(&bar_full, "This is also fine").unwrap();
-    for word in &["This", "is", "also", "fine"] {
-        app.dictionary.add_known(word);
-    }
-
-    app.run(&[
-        "check",
-        "--non-interactive",
-        "--project-path",
-        &project.as_str(),
-    ])
-    .unwrap();
+    todo!()
 }
 
 #[test]
@@ -293,27 +195,5 @@ fn test_suggest() {
 
 #[test]
 fn test_clean() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    let project1 = app.new_project_path(&temp_dir, "project1");
-    app.repository.new_project(&project1).unwrap();
-    let project2 = app.new_project_path(&temp_dir, "project2");
-    app.repository.new_project(&project2).unwrap();
-    let before = app.repository.projects().unwrap();
-
-    std::fs::remove_dir_all(&project2.as_ref()).unwrap();
-
-    app.run(&["clean"]).unwrap();
-
-    let repository = open_repository(&temp_dir);
-    let after = repository.projects().unwrap();
-
-    assert_eq!(
-        before.len() - after.len(),
-        1,
-        "Should have removed one project"
-    );
+    todo!()
 }

@@ -11,8 +11,10 @@ use directories_next::ProjectDirs;
 
 use crate::sql::models::*;
 use crate::sql::schema::*;
-use crate::{IgnoreStore, ProjectId, ProjectPath, RelativePath};
+use crate::undo;
+use crate::{IgnoreStore, Repository};
 use crate::{Operation, ProjectInfo};
+use crate::{Project, ProjectId, ProjectPath, RelativePath};
 
 diesel_migrations::embed_migrations!("migrations");
 
@@ -170,7 +172,11 @@ impl IgnoreStore for SQLRepository {
             .values(NewIgnored { word })
             .execute(&self.connection)
             .with_context(|| "Could not insert ignored word")?;
-        Ok(())
+        let ignore_op = undo::Ignore {
+            word: word.to_string(),
+        };
+        let operation = Operation::Ignore(ignore_op);
+        self.insert_operation(&operation)
     }
 
     fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
@@ -315,5 +321,23 @@ impl IgnoreStore for SQLRepository {
         let operation: Operation = serde_json::from_str(&json)
             .with_context(|| "Could not deserialize operation from db")?;
         Ok(Some(operation))
+    }
+}
+
+impl Repository for SQLRepository {
+    fn undo(&mut self) -> Result<()> {
+        todo!()
+    }
+
+    fn as_ignore_store(&mut self) -> &mut dyn IgnoreStore {
+        self
+    }
+
+    fn ensure_project(&mut self, project_path: &ProjectPath) -> Result<crate::Project> {
+        if !self.project_exists(project_path)? {
+            self.new_project(project_path)?;
+        }
+        let id = self.get_project_id(project_path)?;
+        Ok(Project::new(id, project_path.clone()))
     }
 }

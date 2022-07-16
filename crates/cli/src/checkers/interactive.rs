@@ -3,28 +3,21 @@ use std::collections::HashSet;
 use anyhow::{bail, Result};
 use colored::*;
 
-use skyspell_core::Undoer;
-use skyspell_core::{Checker, Dictionary, IgnoreStore};
+use skyspell_core::{Checker, Dictionary, IgnoreStore, StorageBackend};
 use skyspell_core::{Project, RelativePath};
 
 use crate::Interactor;
 use crate::{info_2, print_error};
 
-pub struct InteractiveChecker<I: Interactor, D: Dictionary, S: IgnoreStore> {
+pub struct InteractiveChecker<I: Interactor, D: Dictionary> {
     project: Project,
     interactor: I,
     dictionary: D,
-    undoer: Undoer<S>,
+    storage_backend: StorageBackend,
     skipped: HashSet<String>,
 }
 
-impl<I: Interactor, D: Dictionary, S: IgnoreStore> InteractiveChecker<I, D, S> {
-    pub fn repository(&mut self) -> &mut S {
-        self.undoer.ignore_store_mut()
-    }
-}
-
-impl<I: Interactor, D: Dictionary, S: IgnoreStore> Checker for InteractiveChecker<I, D, S> {
+impl<I: Interactor, D: Dictionary> Checker for InteractiveChecker<I, D> {
     // line, column
     type Context = (usize, usize);
 
@@ -46,7 +39,7 @@ impl<I: Interactor, D: Dictionary, S: IgnoreStore> Checker for InteractiveChecke
     }
 
     fn ignore_store(&self) -> &dyn IgnoreStore {
-        self.undoer.ignore_store()
+        todo!()
     }
 
     fn handle_error(
@@ -63,14 +56,18 @@ impl<I: Interactor, D: Dictionary, S: IgnoreStore> Checker for InteractiveChecke
     }
 }
 
-impl<I: Interactor, D: Dictionary, S: IgnoreStore> InteractiveChecker<I, D, S> {
-    pub fn new(project: Project, interactor: I, dictionary: D, repository: S) -> Result<Self> {
-        let undoer = Undoer::new(repository);
+impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
+    pub fn new(
+        project: Project,
+        interactor: I,
+        dictionary: D,
+        storage_backend: StorageBackend,
+    ) -> Result<Self> {
         Ok(Self {
             project,
             dictionary,
             interactor,
-            undoer,
+            storage_backend,
             skipped: HashSet::new(),
         })
     }
@@ -129,7 +126,8 @@ q : Quit
     // Note: this cannot fail, but it's convenient to have it return a
     // boolean like the other on_* methods
     fn on_global_ignore(&mut self, error: &str) -> Result<bool> {
-        self.undoer.ignore(error)?;
+        let ignore_store = self.storage_backend.as_ignore_store();
+        ignore_store.ignore(error)?;
         info_2!("Added '{}' to the global ignore list", error);
         Ok(true)
     }
@@ -143,7 +141,8 @@ q : Quit
             Some(e) => e,
         };
 
-        self.undoer.ignore_for_extension(error, &extension)?;
+        let ignore_store = self.storage_backend.as_ignore_store();
+        ignore_store.ignore_for_extension(error, &extension)?;
         info_2!(
             "Added '{}' to the ignore list for extension '{}'",
             error,
@@ -153,7 +152,8 @@ q : Quit
     }
 
     fn on_project_ignore(&mut self, error: &str) -> Result<bool> {
-        self.undoer.ignore_for_project(error, self.project.id())?;
+        let ignore_store = self.storage_backend.as_ignore_store();
+        ignore_store.ignore_for_project(error, self.project.id())?;
         info_2!(
             "Added '{}' to the ignore list for the current project",
             error
@@ -162,18 +162,14 @@ q : Quit
     }
 
     fn on_file_ignore(&mut self, error: &str, relative_path: &RelativePath) -> Result<bool> {
-        self.undoer
-            .ignore_for_path(error, self.project.id(), relative_path)?;
+        let ignore_store = self.storage_backend.as_ignore_store();
+        ignore_store.ignore_for_path(error, self.project.id(), relative_path)?;
         info_2!(
             "Added '{}' to the ignore list for path '{}'",
             error,
             relative_path
         );
         Ok(true)
-    }
-
-    pub fn ignore_store(&self) -> &dyn IgnoreStore {
-        self.undoer.ignore_store()
     }
 }
 

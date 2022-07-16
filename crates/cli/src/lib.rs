@@ -10,8 +10,8 @@ use skyspell_core::Dictionary;
 use skyspell_core::EnchantDictionary;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{get_default_db_path, SQLRepository};
-use skyspell_core::{IgnoreStore, Undoer};
-use skyspell_core::{ProjectPath, RelativePath};
+use skyspell_core::{IgnoreStore, StorageBackend};
+use skyspell_core::{Project, ProjectPath, RelativePath};
 
 mod checkers;
 pub mod interactor;
@@ -59,9 +59,10 @@ pub fn main() -> Result<()> {
     }?;
 
     let repository = SQLRepository::new(&db_path)?;
+    let storage_backend = StorageBackend::Repository(Box::new(repository));
     let dictionary = EnchantDictionary::new(lang)?;
 
-    let outcome = run(opts, dictionary, repository);
+    let outcome = run(opts, dictionary, storage_backend);
     if let Err(e) = outcome {
         print_error!("{}", e);
         std::process::exit(1);
@@ -70,19 +71,22 @@ pub fn main() -> Result<()> {
 }
 
 // NOTE: we use this function to test the cli using a FakeDictionary
-fn run<D: Dictionary>(opts: Opts, dictionary: D, repository: SQLRepository) -> Result<()> {
+fn run<D: Dictionary>(opts: Opts, dictionary: D, storage_backend: StorageBackend) -> Result<()> {
     match opts.action {
-        Action::Add(opts) => add(repository, opts),
-        Action::Remove(opts) => remove(repository, opts),
-        Action::Check(opts) => check(repository, dictionary, opts),
+        Action::Add(opts) => add(storage_backend, opts),
+        Action::Remove(opts) => remove(storage_backend, opts),
+        Action::Check(opts) => check(storage_backend, dictionary, opts),
         Action::Suggest(opts) => suggest(dictionary, opts),
-        Action::Undo => undo(repository),
-        Action::Clean => clean(repository),
+        Action::Undo => undo(storage_backend),
+        Action::Clean => clean(storage_backend),
     }
 }
 
-fn clean(mut repository: SQLRepository) -> Result<()> {
-    repository.clean()
+fn clean(mut storage_backend: StorageBackend) -> Result<()> {
+    if let Some(r) = storage_backend.as_repository() {
+        r.clean()?;
+    }
+    Ok(())
 }
 
 #[derive(Parser)]
@@ -161,28 +165,43 @@ struct RemoveOpts {
     word: String,
 }
 
-fn add(mut repository: impl IgnoreStore, opts: AddOpts) -> Result<()> {
+fn add(mut storage_backend: StorageBackend, opts: AddOpts) -> Result<()> {
     let word = &opts.word;
     match (opts.project_path, opts.relative_path, opts.extension) {
-        (None, None, None) => repository.ignore(word),
-        (None, _, Some(e)) => repository.ignore_for_extension(word, &e),
+        (None, None, None) => storage_backend.as_ignore_store().ignore(word),
+        (None, _, Some(e)) => storage_backend
+            .as_ignore_store()
+            .ignore_for_extension(word, &e),
         (Some(project_path), Some(relative_path), None) => {
             let project_path = ProjectPath::new(&project_path)?;
-            let project = repository.ensure_project(&project_path)?;
+            let project_id = storage_backend.ensure_project(&project_path)?;
             let relative_path = RelativePath::new(&project_path, &relative_path)?;
-            repository.ignore_for_path(word, project.id(), &relative_path)
+            storage_backend
+                .as_ignore_store()
+                .ignore_for_path(word, project_id, &relative_path)
         }
         (Some(project_path), None, None) => {
             let project_path = ProjectPath::new(&project_path)?;
-            let project = repository.ensure_project(&project_path)?;
-            repository.ignore_for_project(word, project.id())
+            let project_id = if let Some(r) = storage_backend.as_repository() {
+                let project = r.ensure_project(&project_path)?;
+                project.id()
+            } else {
+                42
+            };
+            storage_backend
+                .as_ignore_store()
+                .ignore_for_project(word, project_id)
         }
         (None, Some(_), None) => bail!("Cannot use --relative-path without --project-path"),
         (Some(_), _, Some(_)) => bail!("--extension is incompatible with --project-path"),
     }
 }
 
-fn remove(mut repository: impl IgnoreStore, opts: RemoveOpts) -> Result<()> {
+fn remove(storage_backend: StorageBackend, opts: RemoveOpts) -> Result<()> {
+    todo!()
+    /*
+    let ignore_store = storage_backend.as_ignore_store();
+    let repository = storage_backend.as_repository();
     let word = &opts.word;
     match (opts.project_path, opts.relative_path, opts.extension) {
         (None, None, None) => repository.remove_ignored(word),
@@ -201,10 +220,11 @@ fn remove(mut repository: impl IgnoreStore, opts: RemoveOpts) -> Result<()> {
         (None, Some(_), None) => bail!("Cannot use --relative-path without --project-path"),
         (Some(_), _, Some(_)) => bail!("--extension is incompatible with --project-path"),
     }
+    */
 }
 
 fn check(
-    mut repository: impl IgnoreStore,
+    mut storage_backend: StorageBackend,
     dictionary: impl Dictionary,
     opts: CheckOpts,
 ) -> Result<()> {
@@ -219,16 +239,23 @@ fn check(
     );
 
     let interactive = !opts.non_interactive;
-    let project = repository.ensure_project(&project_path)?;
+    let project = if let Some(r) = storage_backend.as_repository() {
+        r.ensure_project(&project_path)?
+    } else {
+        Project::new(42, project_path)
+    };
+
+    let ignore_store = storage_backend.as_ignore_store();
 
     match interactive {
         false => {
-            let mut checker = NonInteractiveChecker::new(project, dictionary, repository)?;
+            let mut checker = NonInteractiveChecker::new(project, dictionary, storage_backend)?;
             check_with(&mut checker)
         }
         true => {
             let interactor = ConsoleInteractor;
-            let mut checker = InteractiveChecker::new(project, interactor, dictionary, repository)?;
+            let mut checker =
+                InteractiveChecker::new(project, interactor, dictionary, storage_backend)?;
             check_with(&mut checker)
         }
     }
@@ -261,9 +288,13 @@ where
     checker.success()
 }
 
-fn undo(repository: impl IgnoreStore) -> Result<()> {
-    let mut undoer = Undoer::new(repository);
-    undoer.undo()
+fn undo(mut storage_backend: StorageBackend) -> Result<()> {
+    match storage_backend.as_repository() {
+        Some(r) => r.undo(),
+        None => {
+            bail!("Connot undo with this storage backend")
+        }
+    }
 }
 
 fn suggest(dictionary: impl Dictionary, opts: SuggestOpts) -> Result<()> {

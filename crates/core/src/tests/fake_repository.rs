@@ -5,6 +5,7 @@ use std::collections::{HashMap, HashSet};
 use crate::IgnoreStore;
 use crate::Operation;
 use crate::ProjectInfo;
+use crate::Repository;
 use crate::{ProjectId, ProjectPath, RelativePath};
 
 use crate::test_repository;
@@ -195,6 +196,20 @@ impl IgnoreStore for FakeRepository {
         let res: Operation =
             serde_json::from_str(&as_json).expect("failed to deserialize operation");
         Ok(Some(res))
+    }
+}
+
+impl Repository for FakeRepository {
+    fn undo(&mut self) -> Result<()> {
+        todo!()
+    }
+
+    fn as_ignore_store(&mut self) -> &mut dyn IgnoreStore {
+        todo!()
+    }
+
+    fn ensure_project(&mut self, project_path: &ProjectPath) -> Result<crate::Project> {
+        todo!()
     }
 }
 

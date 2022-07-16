@@ -28,6 +28,7 @@ pub use os_io::{OperatingSystemIO, StandardIO};
 pub use project::{Project, ProjectId, ProjectPath, RelativePath};
 pub use repository::Repository;
 pub use sql::{get_default_db_path, SQLRepository};
+pub use storage::StorageBackend;
 pub use tokens::TokenProcessor;
 pub use undo::{Operation, Undoer};
 pub(crate) mod checker;
