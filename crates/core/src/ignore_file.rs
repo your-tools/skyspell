@@ -1,19 +1,27 @@
-use ignore::gitignore::Gitignore;
+use anyhow::{Context, Result};
+
+use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
 use ignore::{Walk, WalkBuilder};
 
 use crate::project::SKYSPELL_IGNORE_FILE;
+use crate::IgnoreConfig;
 use crate::{Project, RelativePath};
 
 pub struct IgnoreFile(Gitignore);
 
 impl IgnoreFile {
-    pub fn new(project: &Project) -> Self {
+    pub fn new(project: &Project) -> Result<Self> {
+        let path = project.path().as_ref();
         let ignore_path = project.ignore_path();
-        let (ignore, _error) = Gitignore::new(ignore_path);
-        // Note: _error will be Some(Err) if there's a invalid glob in
-        // .skyspell-ignore for instance, but we don't care about that.
-        Self(ignore)
+        let kdl = std::fs::read_to_string(&ignore_path)
+            .with_context(|| "While reading {SKYSPELL_IGNORE_FILE}")?;
+        let ignore_config = IgnoreConfig::parse(Some(ignore_path.to_path_buf()), &kdl)?;
+        let mut gitignore_builder = GitignoreBuilder::new(path);
+        for glob in ignore_config.patterns() {
+            gitignore_builder.add_line(None, glob)?;
+        }
+        Ok(Self(gitignore_builder.build()?))
     }
 
     pub fn is_ignored(&self, relative_path: &RelativePath) -> bool {
@@ -27,9 +35,18 @@ impl IgnoreFile {
     }
 }
 
-pub fn walk(project: &Project) -> Walk {
-    let ignore_path = project.ignore_path();
-    WalkBuilder::new(project.path().as_ref())
-        .add_custom_ignore_filename(ignore_path)
-        .build()
+pub fn walk(project: &Project) -> Result<Walk> {
+    let ignore_file = IgnoreFile::new(&project)?;
+    let project_path = project.path().clone();
+    Ok(WalkBuilder::new(project.path().as_ref())
+        .standard_filters(true)
+        .filter_entry(move |x| {
+            let full_path = x.path();
+            if let Ok(r) = RelativePath::new(&project_path, full_path) {
+                !ignore_file.is_ignored(&r)
+            } else {
+                false
+            }
+        })
+        .build())
 }

@@ -48,6 +48,22 @@ impl IgnoreConfig {
         Ok(IgnoreConfig { doc, path })
     }
 
+    pub fn patterns(&self) -> Vec<&str> {
+        let res = match self.doc.get("patterns") {
+            Some(x) => x,
+            None => return vec![],
+        };
+        let res = match res.children() {
+            Some(x) => x,
+            None => return vec![],
+        };
+        res.nodes().iter().map(|x| x.name().value()).collect()
+    }
+
+    pub fn use_db(&self) -> bool {
+        self.doc.get("use_db").is_some()
+    }
+
     fn global_words(&self) -> Result<&KdlDocument> {
         self.words_for_key("global")
     }

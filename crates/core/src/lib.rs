@@ -26,7 +26,7 @@ pub use dictionary::Dictionary;
 pub use ignore_file::IgnoreFile;
 pub use ignore_store::{IgnoreStore, ProjectInfo};
 pub use os_io::{OperatingSystemIO, StandardIO};
-pub use project::{Project, ProjectId, ProjectPath, RelativePath};
+pub use project::{Project, ProjectId, ProjectPath, RelativePath, SKYSPELL_IGNORE_FILE};
 pub use repository::Repository;
 pub use sql::{get_default_db_path, SQLRepository};
 pub use storage::StorageBackend;

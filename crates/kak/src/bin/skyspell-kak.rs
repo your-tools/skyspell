@@ -149,7 +149,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
             .to_str()
             .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
         let project = checker.project();
-        let ignore_file = IgnoreFile::new(project);
+        let ignore_file = IgnoreFile::new(project)?;
         Ok(Self {
             home_dir: home_dir.to_string(),
             checker,

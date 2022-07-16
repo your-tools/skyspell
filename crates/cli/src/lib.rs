@@ -12,7 +12,7 @@ use skyspell_core::IgnoreConfig;
 use skyspell_core::StorageBackend;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{get_default_db_path, SQLRepository};
-use skyspell_core::{ProjectPath, RelativePath};
+use skyspell_core::{ProjectPath, RelativePath, SKYSPELL_IGNORE_FILE};
 
 mod checkers;
 pub mod interactor;
@@ -54,30 +54,27 @@ pub fn main() -> Result<()> {
         None => "en_US",
     };
 
-    let db_path = match opts.db_path.as_ref() {
-        Some(s) => Ok(s.to_string()),
-        None => get_default_db_path(lang),
-    }?;
+    let ignore_path = PathBuf::from(SKYSPELL_IGNORE_FILE);
 
-    let repository = SQLRepository::new(&db_path)?;
-
-    let skyspell_kdl_path = PathBuf::from("skyspell.kdl");
-    if skyspell_kdl_path.exists() {
-        info_1!("Using skyspell.kdl as storage");
-    } else {
-        info_1!("Using {db_path} as storage");
-    }
+    let kdl = std::fs::read_to_string(&ignore_path)
+        .with_context(|| "While reading {SKYSPELL_IGNORE_FILE}")?;
+    let ignore_config = IgnoreConfig::parse(Some(ignore_path), &kdl)?;
 
     let storage_backend;
 
-    if skyspell_kdl_path.exists() {
-        let kdl = std::fs::read_to_string(&skyspell_kdl_path)
-            .with_context(|| "While reading skyspell.kdl")?;
-        let ignore_config = IgnoreConfig::parse(Some(skyspell_kdl_path), &kdl)?;
-        storage_backend = StorageBackend::IgnoreStore(Box::new(ignore_config));
-    } else {
+    if ignore_config.use_db() {
+        let db_path = match opts.db_path.as_ref() {
+            Some(s) => Ok(s.to_string()),
+            None => get_default_db_path(lang),
+        }?;
+        info_1!("Using {db_path} as storage");
+        let repository = SQLRepository::new(&db_path)?;
         storage_backend = StorageBackend::Repository(Box::new(repository));
+    } else {
+        info_1!("Using {SKYSPELL_IGNORE_FILE} as storage");
+        storage_backend = StorageBackend::IgnoreStore(Box::new(ignore_config));
     }
+
     let dictionary = EnchantDictionary::new(lang)?;
 
     let outcome = run(opts, dictionary, storage_backend);
@@ -273,7 +270,7 @@ where
     C: Checker<Context = (usize, usize)>,
 {
     let project = checker.project();
-    let walker = walk(project);
+    let walker = walk(project)?;
     let mut checked = 0;
     for dir_entry in walker {
         let dir_entry = dir_entry?;
