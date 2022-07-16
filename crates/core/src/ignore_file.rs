@@ -16,7 +16,7 @@ impl IgnoreFile {
         let ignore_path = project.ignore_path();
         let kdl = std::fs::read_to_string(&ignore_path)
             .with_context(|| "While reading {SKYSPELL_IGNORE_FILE}")?;
-        let ignore_config = IgnoreConfig::parse(Some(ignore_path.to_path_buf()), &kdl)?;
+        let ignore_config = IgnoreConfig::parse(Some(ignore_path), &kdl)?;
         let mut gitignore_builder = GitignoreBuilder::new(path);
         for glob in ignore_config.patterns() {
             gitignore_builder.add_line(None, glob)?;
@@ -36,7 +36,7 @@ impl IgnoreFile {
 }
 
 pub fn walk(project: &Project) -> Result<Walk> {
-    let ignore_file = IgnoreFile::new(&project)?;
+    let ignore_file = IgnoreFile::new(project)?;
     let project_path = project.path().clone();
     Ok(WalkBuilder::new(project.path().as_ref())
         .standard_filters(true)

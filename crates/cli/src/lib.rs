@@ -70,20 +70,18 @@ pub fn main() -> Result<()> {
         }
     }
 
-    let storage_backend;
-
-    if ignore_config.use_db() {
+    let storage_backend = if ignore_config.use_db() {
         let db_path = match opts.db_path.as_ref() {
             Some(s) => Ok(s.to_string()),
             None => get_default_db_path(lang),
         }?;
         info_1!("Using {db_path} as storage");
         let repository = SQLRepository::new(&db_path)?;
-        storage_backend = StorageBackend::Repository(Box::new(repository));
+        StorageBackend::Repository(Box::new(repository))
     } else {
         info_1!("Using {SKYSPELL_IGNORE_FILE} as storage");
-        storage_backend = StorageBackend::IgnoreStore(Box::new(ignore_config));
-    }
+        StorageBackend::IgnoreStore(Box::new(ignore_config))
+    };
 
     let outcome = run(opts, dictionary, storage_backend);
     if let Err(e) = outcome {
