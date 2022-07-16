@@ -16,10 +16,10 @@ impl TestApp {
     fn new(temp_dir: &TempDir) -> Self {
         let interactor = FakeInteractor::new();
         let dictionary = FakeDictionary::new();
-        let mut repository = FakeRepository::new();
+        let repository = FakeRepository::new();
         let project_path = ProjectPath::new(temp_dir.path()).unwrap();
-        let project = repository.ensure_project(&project_path).unwrap();
-        let storage_backend = StorageBackend::Repository(Box::new(repository));
+        let mut storage_backend = StorageBackend::Repository(Box::new(repository));
+        let project = storage_backend.ensure_project(&project_path).unwrap();
         let checker = TestChecker::new(project, interactor, dictionary, storage_backend).unwrap();
         Self { checker }
     }

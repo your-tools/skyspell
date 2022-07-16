@@ -1,5 +1,6 @@
 use crate::undo::Ignore as IgnoreOperation;
 use crate::Operation;
+use crate::Repository;
 use diesel::dsl::count_star;
 use diesel::prelude::*;
 
@@ -7,8 +8,6 @@ use crate::sql::schema::operations;
 use crate::test_repository;
 use crate::IgnoreStore;
 use crate::SQLRepository;
-
-test_repository!(SQLRepository);
 
 #[test]
 fn test_delete_old_operations_when_more_than_100_operations_are_stored() {

@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use crate::{IgnoreStore, Repository};
-use crate::{ProjectId, ProjectPath};
+use crate::{Project, ProjectId, ProjectPath};
 
 /// We have two backends to store ignore words
 /// One can manipulate ignored words, but the
@@ -32,7 +32,15 @@ impl StorageBackend {
         }
     }
 
-    pub fn ensure_project(&mut self, project_path: &ProjectPath) -> Result<ProjectId> {
+    pub fn ensure_project(&mut self, project_path: &ProjectPath) -> Result<Project> {
+        todo!()
+    }
+
+    fn clean(&mut self) -> Result<()> {
+        todo!()
+    }
+
+    pub fn undo(&mut self) -> Result<()> {
         todo!()
     }
 }

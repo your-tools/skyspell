@@ -67,42 +67,6 @@ impl IgnoreStore for FakeRepository {
         }
     }
 
-    fn project_exists(&self, project_path: &ProjectPath) -> Result<bool> {
-        Ok(self.get_project_id(project_path).is_ok())
-    }
-
-    fn new_project(&mut self, project_path: &ProjectPath) -> Result<ProjectId> {
-        if self.project_exists(project_path)? {
-            bail!("Project in '{}' already exists", project_path);
-        }
-        let max_id = self.projects.values().max().unwrap_or(&0);
-        let new_id = *max_id + 1;
-
-        self.projects.insert(project_path.to_string(), new_id);
-        Ok(new_id)
-    }
-
-    fn get_project_id(&self, project_path: &ProjectPath) -> Result<ProjectId> {
-        let res = self
-            .projects
-            .get(&project_path.to_string())
-            .ok_or_else(|| anyhow!("Could not get project ID for {}", project_path))?;
-        Ok(*res)
-    }
-
-    fn projects(&self) -> Result<Vec<ProjectInfo>> {
-        Ok(self
-            .projects
-            .iter()
-            .map(|(p, i)| ProjectInfo::new(*i, p))
-            .collect())
-    }
-
-    fn remove_project(&mut self, project_id: ProjectId) -> Result<()> {
-        self.projects.retain(|_, i| *i != project_id);
-        Ok(())
-    }
-
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()> {
         for word in words {
             self.global.insert(word.to_string());
@@ -181,6 +145,48 @@ impl IgnoreStore for FakeRepository {
         entry.retain(|w| w != word);
         Ok(())
     }
+}
+
+impl Repository for FakeRepository {
+    fn as_ignore_store(&mut self) -> &mut dyn IgnoreStore {
+        todo!()
+    }
+
+    fn project_exists(&self, project_path: &ProjectPath) -> Result<bool> {
+        Ok(self.get_project_id(project_path).is_ok())
+    }
+
+    fn new_project(&mut self, project_path: &ProjectPath) -> Result<ProjectId> {
+        if self.project_exists(project_path)? {
+            bail!("Project in '{}' already exists", project_path);
+        }
+        let max_id = self.projects.values().max().unwrap_or(&0);
+        let new_id = *max_id + 1;
+
+        self.projects.insert(project_path.to_string(), new_id);
+        Ok(new_id)
+    }
+
+    fn get_project_id(&self, project_path: &ProjectPath) -> Result<ProjectId> {
+        let res = self
+            .projects
+            .get(&project_path.to_string())
+            .ok_or_else(|| anyhow!("Could not get project ID for {}", project_path))?;
+        Ok(*res)
+    }
+
+    fn projects(&self) -> Result<Vec<ProjectInfo>> {
+        Ok(self
+            .projects
+            .iter()
+            .map(|(p, i)| ProjectInfo::new(*i, p))
+            .collect())
+    }
+
+    fn remove_project(&mut self, project_id: ProjectId) -> Result<()> {
+        self.projects.retain(|_, i| *i != project_id);
+        Ok(())
+    }
 
     fn insert_operation(&mut self, operation: &Operation) -> Result<()> {
         let as_json = serde_json::to_string(operation).expect("failed to serialize operation");
@@ -198,19 +204,3 @@ impl IgnoreStore for FakeRepository {
         Ok(Some(res))
     }
 }
-
-impl Repository for FakeRepository {
-    fn undo(&mut self) -> Result<()> {
-        todo!()
-    }
-
-    fn as_ignore_store(&mut self) -> &mut dyn IgnoreStore {
-        todo!()
-    }
-
-    fn ensure_project(&mut self, project_path: &ProjectPath) -> Result<crate::Project> {
-        todo!()
-    }
-}
-
-test_repository!(FakeRepository);

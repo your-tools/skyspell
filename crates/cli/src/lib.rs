@@ -174,23 +174,18 @@ fn add(mut storage_backend: StorageBackend, opts: AddOpts) -> Result<()> {
             .ignore_for_extension(word, &e),
         (Some(project_path), Some(relative_path), None) => {
             let project_path = ProjectPath::new(&project_path)?;
-            let project_id = storage_backend.ensure_project(&project_path)?;
+            let project = storage_backend.ensure_project(&project_path)?;
             let relative_path = RelativePath::new(&project_path, &relative_path)?;
             storage_backend
                 .as_ignore_store()
-                .ignore_for_path(word, project_id, &relative_path)
+                .ignore_for_path(word, project.id(), &relative_path)
         }
         (Some(project_path), None, None) => {
             let project_path = ProjectPath::new(&project_path)?;
-            let project_id = if let Some(r) = storage_backend.as_repository() {
-                let project = r.ensure_project(&project_path)?;
-                project.id()
-            } else {
-                42
-            };
+            let project = storage_backend.ensure_project(&project_path)?;
             storage_backend
                 .as_ignore_store()
-                .ignore_for_project(word, project_id)
+                .ignore_for_project(word, project.id())
         }
         (None, Some(_), None) => bail!("Cannot use --relative-path without --project-path"),
         (Some(_), _, Some(_)) => bail!("--extension is incompatible with --project-path"),
@@ -239,13 +234,7 @@ fn check(
     );
 
     let interactive = !opts.non_interactive;
-    let project = if let Some(r) = storage_backend.as_repository() {
-        r.ensure_project(&project_path)?
-    } else {
-        Project::new(42, project_path)
-    };
-
-    let ignore_store = storage_backend.as_ignore_store();
+    let project = storage_backend.ensure_project(&project_path)?;
 
     match interactive {
         false => {
@@ -289,12 +278,7 @@ where
 }
 
 fn undo(mut storage_backend: StorageBackend) -> Result<()> {
-    match storage_backend.as_repository() {
-        Some(r) => r.undo(),
-        None => {
-            bail!("Connot undo with this storage backend")
-        }
-    }
+    storage_backend.undo()
 }
 
 fn suggest(dictionary: impl Dictionary, opts: SuggestOpts) -> Result<()> {

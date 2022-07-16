@@ -104,59 +104,6 @@ impl IgnoreStore for SQLRepository {
             .is_some())
     }
 
-    fn new_project(&mut self, project: &ProjectPath) -> Result<ProjectId> {
-        let new_project = NewProject {
-            path: &project.as_str(),
-        };
-        diesel::insert_into(projects::table)
-            .values(new_project)
-            .execute(&self.connection)
-            .with_context(|| format!("Could not insert project '{}'", project.as_str()))?;
-        self.get_project_id(project)
-    }
-
-    fn get_project_id(&self, project: &ProjectPath) -> Result<ProjectId> {
-        let res = projects::table
-            .filter(projects::path.eq(project.as_str()))
-            .select(projects::id)
-            .first::<i32>(&self.connection)
-            .with_context(|| {
-                format!(
-                    "Could not get project ID for project '{}'",
-                    project.as_str()
-                )
-            })?;
-        Ok(res)
-    }
-
-    fn project_exists(&self, project: &ProjectPath) -> Result<bool> {
-        Ok(projects::table
-            .filter(projects::path.eq(project.as_str()))
-            .select(projects::id)
-            .first::<i32>(&self.connection)
-            .optional()
-            .with_context(|| format!("Error when looking for project {}", project.as_str()))?
-            .is_some())
-    }
-
-    fn projects(&self) -> Result<Vec<ProjectInfo>> {
-        let rows: Vec<ProjectModel> = projects::table
-            .load(&self.connection)
-            .with_context(|| "Could not retrieve project list")?;
-        Ok(rows
-            .iter()
-            .map(|x| ProjectInfo::new(x.id, &x.path))
-            .collect())
-    }
-
-    fn remove_project(&mut self, project_id: ProjectId) -> Result<()> {
-        diesel::delete(projects::table)
-            .filter(projects::id.eq(project_id))
-            .execute(&self.connection)
-            .with_context(|| format!("Error when removing project #{} from db", project_id))?;
-        Ok(())
-    }
-
     fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()> {
         let new_ignored_words: Vec<_> = words.iter().map(|x| NewIgnored { word: x }).collect();
         diesel::insert_or_ignore_into(ignored::table)
@@ -268,6 +215,65 @@ impl IgnoreStore for SQLRepository {
             .with_context(|| "Could not remove word from ignore list for project")?;
         Ok(())
     }
+}
+
+impl Repository for SQLRepository {
+    fn as_ignore_store(&mut self) -> &mut dyn IgnoreStore {
+        self
+    }
+
+    fn new_project(&mut self, project: &ProjectPath) -> Result<ProjectId> {
+        let new_project = NewProject {
+            path: &project.as_str(),
+        };
+        diesel::insert_into(projects::table)
+            .values(new_project)
+            .execute(&self.connection)
+            .with_context(|| format!("Could not insert project '{}'", project.as_str()))?;
+        self.get_project_id(project)
+    }
+
+    fn get_project_id(&self, project: &ProjectPath) -> Result<ProjectId> {
+        let res = projects::table
+            .filter(projects::path.eq(project.as_str()))
+            .select(projects::id)
+            .first::<i32>(&self.connection)
+            .with_context(|| {
+                format!(
+                    "Could not get project ID for project '{}'",
+                    project.as_str()
+                )
+            })?;
+        Ok(res)
+    }
+
+    fn project_exists(&self, project: &ProjectPath) -> Result<bool> {
+        Ok(projects::table
+            .filter(projects::path.eq(project.as_str()))
+            .select(projects::id)
+            .first::<i32>(&self.connection)
+            .optional()
+            .with_context(|| format!("Error when looking for project {}", project.as_str()))?
+            .is_some())
+    }
+
+    fn projects(&self) -> Result<Vec<ProjectInfo>> {
+        let rows: Vec<ProjectModel> = projects::table
+            .load(&self.connection)
+            .with_context(|| "Could not retrieve project list")?;
+        Ok(rows
+            .iter()
+            .map(|x| ProjectInfo::new(x.id, &x.path))
+            .collect())
+    }
+
+    fn remove_project(&mut self, project_id: ProjectId) -> Result<()> {
+        diesel::delete(projects::table)
+            .filter(projects::id.eq(project_id))
+            .execute(&self.connection)
+            .with_context(|| format!("Error when removing project #{} from db", project_id))?;
+        Ok(())
+    }
 
     fn insert_operation(&mut self, operation: &Operation) -> Result<()> {
         let as_json = serde_json::to_string(operation).expect("Could not deserialize operation");
@@ -321,23 +327,5 @@ impl IgnoreStore for SQLRepository {
         let operation: Operation = serde_json::from_str(&json)
             .with_context(|| "Could not deserialize operation from db")?;
         Ok(Some(operation))
-    }
-}
-
-impl Repository for SQLRepository {
-    fn undo(&mut self) -> Result<()> {
-        todo!()
-    }
-
-    fn as_ignore_store(&mut self) -> &mut dyn IgnoreStore {
-        self
-    }
-
-    fn ensure_project(&mut self, project_path: &ProjectPath) -> Result<crate::Project> {
-        if !self.project_exists(project_path)? {
-            self.new_project(project_path)?;
-        }
-        let id = self.get_project_id(project_path)?;
-        Ok(Project::new(id, project_path.clone()))
     }
 }

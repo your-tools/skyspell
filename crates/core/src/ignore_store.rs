@@ -89,38 +89,6 @@ pub trait IgnoreStore {
     // Add word to the global ignore list
     fn ignore(&mut self, word: &str) -> Result<()>;
 
-    // Add a new project
-    fn new_project(&mut self, project_path: &ProjectPath) -> Result<ProjectId>;
-    // Check if a project exists
-    fn project_exists(&self, project_path: &ProjectPath) -> Result<bool>;
-    // Create a project if it does not exist yet
-    fn ensure_project(&mut self, project_path: &ProjectPath) -> Result<Project> {
-        if !self.project_exists(project_path)? {
-            self.new_project(project_path)?;
-        }
-        let id = self.get_project_id(project_path)?;
-        Ok(Project::new(id, project_path.clone()))
-    }
-
-    // Remove the given project from the list
-    fn remove_project(&mut self, project_id: ProjectId) -> Result<()>;
-    // Get project id
-    fn get_project_id(&self, project_path: &ProjectPath) -> Result<ProjectId>;
-    fn projects(&self) -> Result<Vec<ProjectInfo>>;
-
-    fn clean(&mut self) -> Result<()> {
-        for project in self.projects()? {
-            let path = project.path();
-            let path = Path::new(&path);
-            let id = project.id();
-            if !path.exists() {
-                self.remove_project(id)?;
-                println!("Removed non longer existing project: {}", path.display());
-            }
-        }
-        Ok(())
-    }
-
     // Add word to the ignore list for the given extension
     fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()>;
 
@@ -148,9 +116,4 @@ pub trait IgnoreStore {
     ) -> Result<()>;
     // Remove word from the ignore list for the given project
     fn remove_ignored_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()>;
-
-    // Insert a new operation
-    fn insert_operation(&mut self, operation: &Operation) -> Result<()>;
-    // Get last operation
-    fn pop_last_operation(&mut self) -> Result<Option<Operation>>;
 }

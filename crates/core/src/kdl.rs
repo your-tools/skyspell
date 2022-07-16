@@ -207,32 +207,6 @@ impl IgnoreStore for IgnoreConfig {
         Ok(())
     }
 
-    fn new_project(
-        &mut self,
-        project_path: &crate::ProjectPath,
-    ) -> anyhow::Result<crate::ProjectId> {
-        Ok(PROJECT_ID)
-    }
-
-    fn project_exists(&self, _project_path: &crate::ProjectPath) -> anyhow::Result<bool> {
-        Ok(true)
-    }
-
-    fn remove_project(&mut self, _project_id: crate::ProjectId) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    fn get_project_id(
-        &self,
-        _project_path: &crate::ProjectPath,
-    ) -> anyhow::Result<crate::ProjectId> {
-        Ok(PROJECT_ID)
-    }
-
-    fn projects(&self) -> anyhow::Result<Vec<crate::ProjectInfo>> {
-        Ok(vec![])
-    }
-
     fn ignore_for_extension(&mut self, word: &str, ext: &str) -> anyhow::Result<()> {
         let mut extension_node = None;
         let extensions = self
@@ -302,14 +276,6 @@ impl IgnoreStore for IgnoreConfig {
         project_id: crate::ProjectId,
     ) -> anyhow::Result<()> {
         todo!()
-    }
-
-    fn insert_operation(&mut self, _operation: &crate::Operation) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    fn pop_last_operation(&mut self) -> anyhow::Result<Option<crate::Operation>> {
-        Ok(None)
     }
 }
 

@@ -26,13 +26,11 @@ impl<I: IgnoreStore> Undoer<I> {
 
     fn run(&mut self, mut operation: Operation) -> Result<()> {
         operation.execute(&mut self.ignore_store)?;
-        self.ignore_store.insert_operation(&operation)
+        todo!()
     }
 
     pub fn undo(&mut self) -> Result<()> {
-        let last_operation = self.ignore_store.pop_last_operation()?;
-        let mut last_operation = last_operation.ok_or_else(|| anyhow!("Nothing to undo"))?;
-        last_operation.undo(&mut self.ignore_store)
+        todo!()
     }
 
     pub fn ignore(&mut self, word: &str) -> Result<()> {
