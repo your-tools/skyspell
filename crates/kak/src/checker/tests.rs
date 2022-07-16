@@ -7,7 +7,7 @@ use skyspell_core::{ProjectPath, RelativePath};
 
 use crate::io::tests::new_fake_io;
 
-pub(crate) type FakeChecker = KakouneChecker<FakeDictionary, FakeRepository, FakeIO>;
+pub(crate) type FakeChecker = KakouneChecker<FakeDictionary, FakeIO>;
 
 impl FakeChecker {
     pub(crate) fn get_output(self) -> String {
@@ -31,12 +31,14 @@ impl FakeChecker {
 }
 
 pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
-    let project = ProjectPath::new(temp_dir.path()).unwrap();
+    let project_path = ProjectPath::new(temp_dir.path()).unwrap();
     let dictionary = FakeDictionary::new();
     let repository = FakeRepository::new();
+    let mut storage_backend = StorageBackend::Repository(Box::new(repository));
+    let project = storage_backend.ensure_project(&project_path).unwrap();
     let mut fake_io = new_fake_io();
     fake_io.set_option("skyspell_project", &project.as_str());
-    KakouneChecker::new(project, dictionary, repository, fake_io).unwrap()
+    KakouneChecker::new(project, dictionary, storage_backend, fake_io).unwrap()
 }
 
 #[test]

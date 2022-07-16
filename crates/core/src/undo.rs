@@ -22,6 +22,11 @@ pub enum Operation {
 // Note: this is a bit verbose but less than coming up with a trait
 // that must be implemented for each variant
 impl Operation {
+    pub(crate) fn new_ignore(word: &str) -> Self {
+        Self::Ignore(Ignore {
+            word: word.to_string(),
+        })
+    }
     pub(crate) fn new_ignore_for_project(word: &str, project_id: ProjectId) -> Self {
         Self::IgnoreForProject(IgnoreForProject {
             word: word.to_string(),

@@ -3,10 +3,10 @@ use itertools::Itertools;
 use std::path::PathBuf;
 
 use skyspell_core::Checker;
+use skyspell_core::Dictionary;
 use skyspell_core::OperatingSystemIO;
-use skyspell_core::Undoer;
-use skyspell_core::{Dictionary, IgnoreStore};
-use skyspell_core::{Project, ProjectPath, RelativePath};
+use skyspell_core::StorageBackend;
+use skyspell_core::{Project, RelativePath};
 
 use crate::io::KakouneIO;
 
@@ -17,16 +17,15 @@ pub struct Error {
     pub token: String,
 }
 
-pub struct KakouneChecker<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> {
+pub struct KakouneChecker<D: Dictionary, S: OperatingSystemIO> {
     kakoune_io: KakouneIO<S>,
-    undoer: Undoer<I>,
-
+    storage_backend: StorageBackend,
     project: Project,
     dictionary: D,
     errors: Vec<Error>,
 }
 
-impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> Checker for KakouneChecker<D, I, S> {
+impl<D: Dictionary, S: OperatingSystemIO> Checker for KakouneChecker<D, S> {
     // bufname, line, column
     type Context = (String, usize, usize);
 
@@ -54,8 +53,8 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> Checker for KakouneChe
         Ok(())
     }
 
-    fn ignore_store(&self) -> &dyn IgnoreStore {
-        self.undoer.ignore_store()
+    fn storage_backend(&self) -> &StorageBackend {
+        &self.storage_backend
     }
 
     fn dictionary(&self) -> &dyn Dictionary {
@@ -67,20 +66,18 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> Checker for KakouneChe
     }
 }
 
-impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakouneChecker<D, I, S> {
+impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
     pub fn new(
-        project_path: ProjectPath,
+        project: Project,
         dictionary: D,
-        mut repository: I,
+        storage_backend: StorageBackend,
         kakoune_io: KakouneIO<S>,
     ) -> Result<Self> {
-        let project = repository.ensure_project(&project_path)?;
-        let undoer = Undoer::new(repository);
         Ok(Self {
             project,
             dictionary,
             kakoune_io,
-            undoer,
+            storage_backend,
             errors: vec![],
         })
     }
@@ -89,12 +86,12 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakouneChecker<D, I, S
         &self.kakoune_io
     }
 
-    pub fn repo_mut(&mut self) -> &mut Undoer<I> {
-        &mut self.undoer
-    }
-
     pub fn print(&self, command: &str) {
         self.kakoune_io.print(command)
+    }
+
+    pub fn storage_backend_mut(&mut self) -> &mut StorageBackend {
+        &mut self.storage_backend
     }
 
     pub fn write_code(&self) -> Result<()> {

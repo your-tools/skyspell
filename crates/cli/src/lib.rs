@@ -165,7 +165,7 @@ struct RemoveOpts {
 fn add(mut storage_backend: StorageBackend, opts: AddOpts) -> Result<()> {
     let word = &opts.word;
     match (opts.project_path, opts.relative_path, opts.extension) {
-        (None, None, None) => storage_backend.ignore_store_mut().ignore(word),
+        (None, None, None) => storage_backend.ignore(word),
         (None, _, Some(e)) => storage_backend
             .ignore_store_mut()
             .ignore_for_extension(word, &e),

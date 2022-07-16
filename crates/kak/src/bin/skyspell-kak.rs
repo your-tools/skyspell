@@ -8,10 +8,9 @@ use skyspell_core::Checker;
 use skyspell_core::EnchantDictionary;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::ProjectPath;
-use skyspell_core::Undoer;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{get_default_db_path, SQLRepository};
-use skyspell_core::{Dictionary, IgnoreFile, IgnoreStore};
+use skyspell_core::{Dictionary, IgnoreFile, StorageBackend};
 use skyspell_kak::{new_kakoune_io, KakouneChecker, KakouneIO};
 
 // Warning: most of the things written to stdout while this code is
@@ -109,8 +108,10 @@ pub fn main() -> Result<()> {
     let dictionary = EnchantDictionary::new(lang)?;
     let project_as_str = kakoune_io.get_option("skyspell_project")?;
     let project_path = PathBuf::from(project_as_str);
-    let project = ProjectPath::new(&project_path)?;
-    let checker = KakouneChecker::new(project, dictionary, repository, kakoune_io)?;
+    let project_path = ProjectPath::new(&project_path)?;
+    let mut storage_backend = StorageBackend::Repository(Box::new(repository));
+    let project = storage_backend.ensure_project(&project_path)?;
+    let checker = KakouneChecker::new(project, dictionary, storage_backend, kakoune_io)?;
     let mut cli = KakCli::new(checker)?;
 
     let outcome = match opts.action {
@@ -134,14 +135,14 @@ pub fn main() -> Result<()> {
     Ok(())
 }
 
-struct KakCli<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> {
-    checker: KakouneChecker<D, I, S>,
+struct KakCli<D: Dictionary, S: OperatingSystemIO> {
+    checker: KakouneChecker<D, S>,
     home_dir: String,
     ignore_file: IgnoreFile,
 }
 
-impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakCli<D, I, S> {
-    fn new(checker: KakouneChecker<D, I, S>) -> Result<Self> {
+impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
+    fn new(checker: KakouneChecker<D, S>) -> Result<Self> {
         let base_dirs = BaseDirs::new().ok_or_else(|| anyhow!("Could not get home directory"))?;
         let home_dir = base_dirs
             .home_dir()
@@ -168,13 +169,8 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakCli<D, I, S> {
         self.checker.dictionary()
     }
 
-    fn undoer(&mut self) -> &mut Undoer<I> {
-        self.checker.repo_mut()
-    }
-
-    #[allow(dead_code)]
-    pub fn ignore_store(&self) -> &dyn IgnoreStore {
-        self.checker.ignore_store()
+    fn storage_mut(&mut self) -> &mut StorageBackend {
+        self.checker.storage_backend_mut()
     }
 
     fn add_extension(&mut self) -> Result<()> {
@@ -182,7 +178,7 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakCli<D, I, S> {
         let (_, ext) = path
             .rsplit_once('.')
             .ok_or_else(|| anyhow!("File has no extension"))?;
-        self.undoer().ignore_for_extension(word, ext)?;
+        self.storage_mut().ignore_for_extension(word, ext)?;
         self.recheck();
         self.print(&format!(
             "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
@@ -195,7 +191,7 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakCli<D, I, S> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
         let project = &self.checker.project().clone();
         let relative_path = project.as_relative_path(path)?;
-        self.undoer()
+        self.storage_mut()
             .ignore_for_path(word, project.id(), &relative_path)?;
         self.recheck();
         self.print(&format!(
@@ -207,7 +203,7 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakCli<D, I, S> {
 
     fn add_global(&mut self) -> Result<()> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
-        self.undoer().ignore(word)?;
+        self.storage_mut().ignore(word)?;
         self.recheck();
         self.print(&format!("echo '\"{}\" added to global ignore list'", word));
         Ok(())
@@ -216,8 +212,7 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakCli<D, I, S> {
     fn add_project(&mut self) -> Result<()> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
         let project_id = self.checker.project().id();
-        self.undoer()
-            .ignore_for_project(word, project_id)?;
+        self.storage_mut().ignore_for_project(word, project_id)?;
         self.recheck();
         self.print(&format!(
             "echo '\"{}\" added to ignore list for the current project'",
@@ -368,7 +363,7 @@ impl<D: Dictionary, I: IgnoreStore, S: OperatingSystemIO> KakCli<D, I, S> {
     }
 
     fn undo(&mut self) -> Result<()> {
-        self.undoer().undo()
+        self.storage_mut().undo()
     }
 
     fn recheck(&self) {

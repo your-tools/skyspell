@@ -70,6 +70,17 @@ impl StorageBackend {
             .is_ignored_for_path(word, project_id, relative_path)
     }
 
+    pub fn ignore(&mut self, word: &str) -> Result<()> {
+        let operation = Operation::new_ignore(word);
+        match self {
+            StorageBackend::Repository(r) => {
+                r.ignore_store_mut().ignore(word)?;
+                r.insert_operation(&operation)
+            }
+            StorageBackend::IgnoreStore(i) => i.ignore(word),
+        }
+    }
+
     pub fn ignore_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()> {
         let operation = Operation::new_ignore_for_project(word, project_id);
         match self {
