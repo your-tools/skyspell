@@ -190,7 +190,10 @@ impl IgnoreConfig {
 
         let node = match matching_node {
             // Not found: create a new section
-            None => return Ok(self.create_new_section_with(section, value, word)),
+            None => return {
+                self.create_new_section_with(section, value, word);
+                Ok(())
+            },
             Some(n) => n,
         };
         // Found: insert the word in the section
@@ -335,7 +338,7 @@ impl IgnoreStore for IgnoreConfig {
             bail!("Should have called with MAGIC_PROJECT_ID");
         }
         self.insert_in_section_with_value(word, "paths", &relative_path.as_str())?;
-        println!("{}", self.doc.to_string());
+        println!("{}", self.doc);
         Ok(())
     }
 
