@@ -1,11 +1,12 @@
 use std::fmt::Display;
+use textwrap;
 
 use kdl::{KdlDocument, KdlIdentifier, KdlNode};
 
 use crate::IgnoreStore;
 use crate::ProjectId;
 
-const SECTIONS: [&str; 3] = ["global", "project", "extensions"];
+const SECTIONS: [&str; 4] = ["global", "project", "extensions", "paths"];
 // We need a project_id because it's found in the arguments of some
 // methods of the trait, but we never use its value
 const PROJECT_ID: ProjectId = 42;
@@ -39,7 +40,12 @@ impl IgnoreConfig {
         extensions {
             
         }
+         
+        paths {
+            
+        }
         "#;
+        let input = textwrap::dedent(input);
         let doc: KdlDocument = input.parse().expect("hard-coded config should be valid");
         Self { doc }
     }
@@ -62,30 +68,38 @@ impl IgnoreConfig {
     }
 
     fn global_words(&self) -> &KdlDocument {
-        self.doc
-            .get("global")
-            .expect("global should exist")
-            .children()
-            .expect("global should have children")
+        self.words_for_key("global")
     }
 
     fn project_words(&self) -> &KdlDocument {
-        self.doc
-            .get("project")
-            .expect("project should exist")
-            .children()
-            .expect("project should have children")
+        self.words_for_key("project")
     }
 
     fn ignored_words_for_extension(&self, ext: &str) -> Option<&KdlDocument> {
-        let extensions = self.doc.get("extensions").expect("extensions should exist");
+        self.words_for_section("extensions", ext)
+    }
+
+    fn ignored_words_for_path(&self, path: &str) -> Option<&KdlDocument> {
+        self.words_for_section("paths", path)
+    }
+
+    fn words_for_key(&self, key: &'static str) -> &KdlDocument {
+        self.doc
+            .get(key)
+            .expect("key '{key}' should exist")
+            .children()
+            .expect("key '{key}' should have children")
+    }
+
+    fn words_for_section(&self, key: &'static str, value: &str) -> Option<&KdlDocument> {
+        let extensions = self.doc.get(key).expect("section '{key}' should exist");
         let entries = extensions.children();
         for entry in entries {
             for node in entry.nodes() {
-                if node.name().value() == ext {
+                if node.name().value() == value {
                     let words = node
                         .children()
-                        .expect("extensions sections should have children");
+                        .expect("section '{key}' should have children");
                     return Some(words);
                 }
             }
@@ -105,22 +119,55 @@ impl IgnoreConfig {
         Self::insert_word_in_section(word_node, children, IndentLevel::One);
     }
 
-    fn create_new_extension_section_with(&mut self, word: &str, ext: &str) {
+    fn insert_in_section_with_value(
+        &mut self,
+        word: &str,
+        section: &'static str,
+        value: &str,
+    ) -> anyhow::Result<()> {
+        let mut matching_node = None;
+        let section_node = self
+            .doc
+            .get_mut(section)
+            .expect("section '{section}' should exist");
+        let entries = section_node.children_mut();
+        // Look for a section with a matching name
+        for entry in entries {
+            for node in entry.nodes_mut() {
+                if node.name().value() == value {
+                    matching_node = Some(node);
+                }
+            }
+        }
+
+        let node = match matching_node {
+            // Not found: create a new section
+            None => return Ok(self.create_new_section_with(section, value, word)),
+            Some(n) => n,
+        };
+        // Found: insert the word in the section
+        let word_node = Self::make_word_node(word);
+        let doc = node.ensure_children();
+        Self::insert_word_in_section(word_node, doc, IndentLevel::Two);
+        Ok(())
+    }
+
+    fn create_new_section_with(&mut self, section: &'static str, value: &str, word: &str) {
         let mut words = KdlDocument::new();
         let word_node = Self::make_word_node(word);
         Self::insert_word_in_section(word_node, &mut words, IndentLevel::Two);
-        let mut extension_node = KdlNode::new(KdlIdentifier::from(ext));
-        extension_node.set_children(words);
-        extension_node.set_leading("\n  ");
-        extension_node.set_trailing("");
+        let mut section_node = KdlNode::new(KdlIdentifier::from(value));
+        section_node.set_children(words);
+        section_node.set_leading("\n  ");
+        section_node.set_trailing("");
 
-        let extensions = self
+        let parent_node = self
             .doc
-            .get_mut("extensions")
-            .expect("extensions should always exist");
-        let children = extensions.ensure_children();
+            .get_mut(section)
+            .expect("section '{section}' should always exist");
+        let children = parent_node.ensure_children();
         let nodes = children.nodes_mut();
-        nodes.push(extension_node);
+        nodes.push(section_node);
     }
 
     /// Insert a word in a section with a proper indent level
@@ -180,8 +227,11 @@ impl IgnoreStore for IgnoreConfig {
     fn is_ignored_for_project(
         &self,
         word: &str,
-        _project_id: crate::ProjectId,
+        project_id: crate::ProjectId,
     ) -> anyhow::Result<bool> {
+        if project_id != PROJECT_ID {
+            return Ok(false);
+        }
         let project_words = self.project_words();
         Ok(project_words.get(word).is_some())
     }
@@ -189,10 +239,17 @@ impl IgnoreStore for IgnoreConfig {
     fn is_ignored_for_path(
         &self,
         word: &str,
-        _project_id: crate::ProjectId,
+        project_id: crate::ProjectId,
         relative_path: &crate::RelativePath,
     ) -> anyhow::Result<bool> {
-        todo!()
+        if project_id != 42 {
+            return Ok(false);
+        }
+        let for_path = match self.ignored_words_for_path(&relative_path.as_str()) {
+            None => return Ok(false),
+            Some(e) => e,
+        };
+        Ok(for_path.get(word).is_some())
     }
 
     fn insert_ignored_words(&mut self, words: &[&str]) -> anyhow::Result<()> {
@@ -208,31 +265,7 @@ impl IgnoreStore for IgnoreConfig {
     }
 
     fn ignore_for_extension(&mut self, word: &str, ext: &str) -> anyhow::Result<()> {
-        let mut extension_node = None;
-        let extensions = self
-            .doc
-            .get_mut("extensions")
-            .expect("extensions should exist");
-        let entries = extensions.children_mut();
-        // Look for a section with a matching name
-        for entry in entries {
-            for node in entry.nodes_mut() {
-                if node.name().value() == ext {
-                    extension_node = Some(node);
-                }
-            }
-        }
-
-        let node = match extension_node {
-            // Not found: create a new section
-            None => return Ok(self.create_new_extension_section_with(word, ext)),
-            Some(n) => n,
-        };
-        // Found: insert the word in the section
-        let word_node = Self::make_word_node(word);
-        let doc = node.ensure_children();
-        Self::insert_word_in_section(word_node, doc, IndentLevel::Two);
-        Ok(())
+        self.insert_in_section_with_value(word, "extensions", ext)
     }
 
     fn ignore_for_project(
@@ -250,7 +283,12 @@ impl IgnoreStore for IgnoreConfig {
         project_id: crate::ProjectId,
         relative_path: &crate::RelativePath,
     ) -> anyhow::Result<()> {
-        todo!()
+        if project_id != 42 {
+            return Ok(());
+        }
+        self.insert_in_section_with_value(word, "paths", &relative_path.as_str())?;
+        println!("{}", self.doc.to_string());
+        Ok(())
     }
 
     fn remove_ignored(&mut self, word: &str) -> anyhow::Result<()> {

@@ -95,6 +95,14 @@ impl RelativePath {
         Ok(Self(path))
     }
 
+    /// Returs a relative path without checking that
+    ///  - it's relative to an existing project
+    ///  - it exists
+    /// Mainly used for testing
+    pub fn from_path_unchecked(path: PathBuf) -> Self {
+        Self(path)
+    }
+
     pub fn as_str(&self) -> Cow<str> {
         self.0.to_string_lossy()
     }

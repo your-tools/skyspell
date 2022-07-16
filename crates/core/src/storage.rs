@@ -6,7 +6,7 @@ use crate::undo::Operation;
 use crate::{IgnoreStore, Project, ProjectId, ProjectPath, RelativePath, Repository};
 
 /// We have two backends to store ignore words One can manipulate ignored words,
-/// but the other is more powerful because it can store and retriev operations
+/// but the other is more powerful because it can store and retrieve operations
 
 /// Thus, we crate an enum to represent the "capabilities" of a storage - either
 /// it implements Repository with all its methods, or it implements IgnoreStore

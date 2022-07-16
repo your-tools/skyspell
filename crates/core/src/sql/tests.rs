@@ -1,13 +1,14 @@
+use crate::sql::schema::operations;
+use crate::test_ignore_store;
+use crate::test_repository;
 use crate::undo::Ignore as IgnoreOperation;
+use crate::IgnoreStore;
 use crate::Operation;
 use crate::Repository;
+use crate::SQLRepository;
+
 use diesel::dsl::count_star;
 use diesel::prelude::*;
-
-use crate::sql::schema::operations;
-use crate::test_repository;
-use crate::IgnoreStore;
-use crate::SQLRepository;
 
 #[test]
 fn test_delete_old_operations_when_more_than_100_operations_are_stored() {
@@ -69,4 +70,5 @@ fn test_keep_old_operations_when_less_than_100_operations_are_stored() {
     assert_eq!(actual_count, 49);
 }
 
+test_ignore_store!(SQLRepository);
 test_repository!(SQLRepository);

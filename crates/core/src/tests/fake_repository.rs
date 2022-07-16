@@ -2,13 +2,13 @@ use anyhow::{anyhow, bail, ensure, Result};
 
 use std::collections::{HashMap, HashSet};
 
+use crate::test_ignore_store;
+use crate::test_repository;
 use crate::IgnoreStore;
 use crate::Operation;
 use crate::ProjectInfo;
 use crate::Repository;
-use crate::{ProjectId, ProjectPath, RelativePath};
-
-use crate::test_repository;
+use crate::{ProjectId, ProjectPath};
 
 #[derive(Default, Debug)]
 pub struct FakeRepository {
@@ -208,4 +208,6 @@ impl Repository for FakeRepository {
         Ok(Some(res))
     }
 }
+
+test_ignore_store!(FakeRepository);
 test_repository!(FakeRepository);
