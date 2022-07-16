@@ -95,7 +95,7 @@ impl RelativePath {
         Ok(Self(path))
     }
 
-    /// Returs a relative path without checking that
+    /// Returns a relative path without checking that
     ///  - it's relative to an existing project
     ///  - it exists
     /// Mainly used for testing
