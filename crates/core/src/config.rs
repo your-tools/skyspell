@@ -10,7 +10,7 @@ use crate::IgnoreStore;
 use crate::ProjectId;
 
 // We need a project_id because it's found in the arguments of some
-// methods of the trait, but we never use its value
+// methods of the trait
 const MAGIC_PROJECT_ID: ProjectId = 42;
 
 #[derive(Debug, Clone, Copy)]
