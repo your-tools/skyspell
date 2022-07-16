@@ -83,10 +83,7 @@ fn run<D: Dictionary>(opts: Opts, dictionary: D, storage_backend: StorageBackend
 }
 
 fn clean(mut storage_backend: StorageBackend) -> Result<()> {
-    if let Some(r) = storage_backend.repository_mut() {
-        r.clean()?;
-    }
-    Ok(())
+    storage_backend.clean()
 }
 
 #[derive(Parser)]
