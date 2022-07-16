@@ -28,8 +28,8 @@ pub struct IgnoreConfig {
     doc: KdlDocument,
 }
 
-impl IgnoreConfig {
-    pub fn new() -> Self {
+impl Default for IgnoreConfig {
+    fn default() -> Self {
         let input = r#"
         global {
             
@@ -50,6 +50,12 @@ impl IgnoreConfig {
         let input = textwrap::dedent(input);
         let doc: KdlDocument = input.parse().expect("hard-coded config should be valid");
         Self { doc }
+    }
+}
+
+impl IgnoreConfig {
+    pub fn new() -> Self {
+        Default::default()
     }
 
     pub fn new_for_tests() -> anyhow::Result<Self> {
@@ -120,15 +126,15 @@ impl IgnoreConfig {
 
     fn words_for_section(&self, key: &'static str, value: &str) -> Option<&KdlDocument> {
         let extensions = self.doc.get(key).expect("section '{key}' should exist");
-        let entries = extensions.children();
-        for entry in entries {
-            for node in entry.nodes() {
-                if node.name().value() == value {
-                    let words = node
-                        .children()
-                        .expect("section '{key}' should have children");
-                    return Some(words);
-                }
+        let entries = extensions
+            .children()
+            .expect("section '{key} should have children");
+        for node in entries.nodes() {
+            if node.name().value() == value {
+                let words = node
+                    .children()
+                    .expect("section '{key}' should have children");
+                return Some(words);
             }
         }
         None
@@ -190,10 +196,12 @@ impl IgnoreConfig {
 
         let node = match matching_node {
             // Not found: create a new section
-            None => return {
-                self.create_new_section_with(section, value, word);
-                Ok(())
-            },
+            None => {
+                return {
+                    self.create_new_section_with(section, value, word);
+                    Ok(())
+                }
+            }
             Some(n) => n,
         };
         // Found: insert the word in the section
