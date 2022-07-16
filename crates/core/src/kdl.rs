@@ -1,8 +1,8 @@
 use std::fmt::Display;
 use std::path::PathBuf;
 
+use anyhow::Context;
 use anyhow::{anyhow, bail, Result};
-use textwrap;
 
 use kdl::{KdlDocument, KdlIdentifier, KdlNode};
 
@@ -246,6 +246,14 @@ impl IgnoreConfig {
         document.set_leading("");
         document.set_trailing("");
     }
+
+    fn save(&self) -> Result<()> {
+        let path = match &self.path {
+            None => return Ok(()),
+            Some(p) => p,
+        };
+        std::fs::write(path, self.doc.to_string()).with_context(|| "While writing")
+    }
 }
 
 impl Display for IgnoreConfig {
@@ -296,19 +304,22 @@ impl IgnoreStore for IgnoreConfig {
         for word in words {
             self.add_to_section("project", word)?
         }
-        Ok(())
+        self.save()
     }
 
     fn ignore(&mut self, word: &str) -> Result<()> {
-        self.add_to_section("global", word)
+        self.add_to_section("global", word)?;
+        self.save()
     }
 
     fn ignore_for_extension(&mut self, word: &str, ext: &str) -> Result<()> {
-        self.insert_in_section_with_value(word, "extensions", ext)
+        self.insert_in_section_with_value(word, "extensions", ext)?;
+        self.save()
     }
 
     fn ignore_for_project(&mut self, word: &str, _project_id: crate::ProjectId) -> Result<()> {
-        self.add_to_section("project", word)
+        self.add_to_section("project", word)?;
+        self.save()
     }
 
     fn ignore_for_path(
@@ -320,7 +331,8 @@ impl IgnoreStore for IgnoreConfig {
         if project_id != MAGIC_PROJECT_ID {
             bail!("Should have called with MAGIC_PROJECT_ID");
         }
-        self.insert_in_section_with_value(word, "paths", &relative_path.as_str())
+        self.insert_in_section_with_value(word, "paths", &relative_path.as_str())?;
+        self.save()
     }
 
     fn remove_ignored(&mut self, word: &str) -> Result<()> {
@@ -332,7 +344,7 @@ impl IgnoreStore for IgnoreConfig {
         if before == after {
             bail!("word was not globally ignored")
         }
-        Ok(())
+        self.save()
     }
 
     fn remove_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
@@ -341,7 +353,7 @@ impl IgnoreStore for IgnoreConfig {
             .ok_or_else(|| anyhow!("word was not ignored for this extension"))?;
         let nodes = for_extension.nodes_mut();
         nodes.retain(|x| x.name().value() != word);
-        Ok(())
+        self.save()
     }
 
     fn remove_ignored_for_path(
@@ -359,7 +371,7 @@ impl IgnoreStore for IgnoreConfig {
             .ok_or_else(|| anyhow!("word was not ignored for this path"))?;
         let nodes = for_path.nodes_mut();
         nodes.retain(|x| x.name().value() != word);
-        Ok(())
+        self.save()
     }
 
     fn remove_ignored_for_project(
@@ -373,7 +385,7 @@ impl IgnoreStore for IgnoreConfig {
         let ignored = self.project_words_mut()?;
         let nodes = ignored.nodes_mut();
         nodes.retain(|x| x.name().value() != word);
-        Ok(())
+        self.save()
     }
 }
 
