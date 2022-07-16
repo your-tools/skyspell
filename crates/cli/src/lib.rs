@@ -192,30 +192,33 @@ fn add(mut storage_backend: StorageBackend, opts: AddOpts) -> Result<()> {
     }
 }
 
-fn remove(storage_backend: StorageBackend, opts: RemoveOpts) -> Result<()> {
-    todo!()
-    /*
-    let ignore_store = storage_backend.as_ignore_store();
-    let repository = storage_backend.as_repository();
+fn remove(mut storage_backend: StorageBackend, opts: RemoveOpts) -> Result<()> {
     let word = &opts.word;
     match (opts.project_path, opts.relative_path, opts.extension) {
-        (None, None, None) => repository.remove_ignored(word),
-        (None, _, Some(e)) => repository.remove_ignored_for_extension(word, &e),
+        (None, None, None) => storage_backend.as_ignore_store().remove_ignored(word),
+        (None, _, Some(e)) => storage_backend
+            .as_ignore_store()
+            .remove_ignored_for_extension(word, &e),
         (Some(project_path), Some(relative_path), None) => {
             let project_path = ProjectPath::new(&project_path)?;
-            let project_id = repository.get_project_id(&project_path)?;
+            let project = storage_backend.ensure_project(&project_path)?;
             let relative_path = RelativePath::new(&project_path, &relative_path)?;
-            repository.remove_ignored_for_path(word, project_id, &relative_path)
+            storage_backend.as_ignore_store().remove_ignored_for_path(
+                word,
+                project.id(),
+                &relative_path,
+            )
         }
         (Some(project_path), None, None) => {
             let project_path = ProjectPath::new(&project_path)?;
-            let project_id = repository.get_project_id(&project_path)?;
-            repository.remove_ignored_for_project(word, project_id)
+            let project = storage_backend.ensure_project(&project_path)?;
+            storage_backend
+                .as_ignore_store()
+                .remove_ignored_for_project(word, project.id())
         }
         (None, Some(_), None) => bail!("Cannot use --relative-path without --project-path"),
         (Some(_), _, Some(_)) => bail!("--extension is incompatible with --project-path"),
     }
-    */
 }
 
 fn check(
