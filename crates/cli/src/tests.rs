@@ -156,31 +156,6 @@ fn test_remove_global() {
 }
 
 #[test]
-fn test_remove_for_project() {
-    todo!()
-}
-
-#[test]
-fn test_remove_for_relative_path() {
-    todo!()
-}
-
-#[test]
-fn test_remove_for_extension() {
-    todo!()
-}
-
-#[test]
-fn test_check_errors_in_two_files() {
-    todo!()
-}
-
-#[test]
-fn test_check_happy() {
-    todo!()
-}
-
-#[test]
 fn test_suggest() {
     let temp_dir = tempfile::Builder::new()
         .prefix("test-skyspell")
@@ -191,9 +166,4 @@ fn test_suggest() {
         .add_suggestions("hel", &["hello".to_string(), "hell".to_string()]);
 
     app.run(&["suggest", "hel"]).unwrap();
-}
-
-#[test]
-fn test_clean() {
-    todo!()
 }

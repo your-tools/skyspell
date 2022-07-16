@@ -30,7 +30,15 @@ impl StorageBackend {
     }
 
     pub fn ensure_project(&mut self, project_path: &ProjectPath) -> Result<Project> {
-        todo!()
+        let project_id = match self.as_repository() {
+            Some(r) => {
+                r.new_project(project_path)?;
+                r.get_project_id(project_path)?
+            }
+            None => 42,
+        };
+
+        Ok(Project::new(project_id, project_path.clone()))
     }
 
     fn clean(&mut self) -> Result<()> {
