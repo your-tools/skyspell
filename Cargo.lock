@@ -201,12 +201,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "either"
-version = "1.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f107b87b6afc2a64fd13cac55fe06d6c8859f12d4b14cbcdd2c67d0976781be"
-
-[[package]]
 name = "enchant"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -325,15 +319,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
 dependencies = [
  "cfg-if",
-]
-
-[[package]]
-name = "itertools"
-version = "0.10.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9a9d19fa1e79b6215ff29b9d6880b706147f16e9b1dbb1e4e5947b5b02bc5e3"
-dependencies = [
- "either",
 ]
 
 [[package]]
@@ -651,33 +636,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "skyspell_kak"
-version = "0.8.2"
-dependencies = [
- "anyhow",
- "clap",
- "directories-next",
- "itertools",
- "skyspell_core",
- "snailquote",
- "tempfile",
-]
-
-[[package]]
 name = "smawk"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f67ad224767faa3c7d8b6d91985b78e70a1324408abcb1cfcc2be4c06bc06043"
-
-[[package]]
-name = "snailquote"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec62a949bda7f15800481a711909f946e1204f2460f89210eaf7f57730f88f86"
-dependencies = [
- "thiserror",
- "unicode_categories",
-]
 
 [[package]]
 name = "strsim"
@@ -799,12 +761,6 @@ name = "unicode-width"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ed742d4ea2bd1176e236172c8429aaf54486e7ac098db29ffe6529e0ce50973"
-
-[[package]]
-name = "unicode_categories"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39ec24b3121d976906ece63c9daad25b85969647682eee313cb5779fdd69e14e"
 
 [[package]]
 name = "vcpkg"
