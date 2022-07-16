@@ -57,7 +57,7 @@ pub fn main() -> Result<()> {
     let ignore_path = PathBuf::from(SKYSPELL_IGNORE_FILE);
 
     let kdl = std::fs::read_to_string(&ignore_path)
-        .with_context(|| "While reading {SKYSPELL_IGNORE_FILE}")?;
+        .with_context(|| format!("While reading {SKYSPELL_IGNORE_FILE}"))?;
     let ignore_config = IgnoreConfig::parse(Some(ignore_path), &kdl)?;
 
     let dictionary = EnchantDictionary::new(lang)?;
