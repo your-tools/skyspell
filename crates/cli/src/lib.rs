@@ -74,8 +74,7 @@ pub fn main() -> Result<()> {
     }
 
     let use_db = ignore_config
-        .as_ref()
-        .and_then(|c| Some(c.use_db()))
+        .as_ref().map(|c| c.use_db())
         .unwrap_or(true);
     let storage_backend = if use_db {
         let db_path = match opts.db_path.as_ref() {
