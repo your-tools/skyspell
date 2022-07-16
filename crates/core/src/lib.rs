@@ -20,6 +20,7 @@ pub mod tokens;
 pub mod undo;
 
 pub use crate::enchant::EnchantDictionary;
+pub use crate::kdl::IgnoreConfig;
 pub use checker::Checker;
 pub use dictionary::Dictionary;
 pub use ignore_file::IgnoreFile;

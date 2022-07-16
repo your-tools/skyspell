@@ -1,6 +1,7 @@
+use std::path::Path;
 use std::path::PathBuf;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
 use colored::*;
 
@@ -8,6 +9,7 @@ use skyspell_core::ignore_file::walk;
 use skyspell_core::Checker;
 use skyspell_core::Dictionary;
 use skyspell_core::EnchantDictionary;
+use skyspell_core::IgnoreConfig;
 use skyspell_core::StorageBackend;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{get_default_db_path, SQLRepository};
@@ -59,7 +61,25 @@ pub fn main() -> Result<()> {
     }?;
 
     let repository = SQLRepository::new(&db_path)?;
-    let storage_backend = StorageBackend::Repository(Box::new(repository));
+
+    let skyspell_kdl_path = PathBuf::from("skyspell.kdl");
+    if skyspell_kdl_path.exists() {
+        info_1!("Using skyspell.kdl as storage");
+    } else {
+        info_1!("Using {db_path} as storage");
+    }
+
+    let storage_backend;
+
+    if skyspell_kdl_path.exists() {
+        let kdl = std::fs::read_to_string(skyspell_kdl_path)
+            .with_context(|| "While reading skyspell.kdl")?;
+        let ignore_config =
+            IgnoreConfig::parse(&kdl).map_err(|e| anyhow!("While parsing skyspell.kdl: {e}"))?;
+        storage_backend = StorageBackend::IgnoreStore(Box::new(ignore_config));
+    } else {
+        storage_backend = StorageBackend::Repository(Box::new(repository));
+    }
     let dictionary = EnchantDictionary::new(lang)?;
 
     let outcome = run(opts, dictionary, storage_backend);
