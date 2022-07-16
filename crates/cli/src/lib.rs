@@ -55,22 +55,29 @@ pub fn main() -> Result<()> {
     };
 
     let ignore_path = PathBuf::from(SKYSPELL_IGNORE_FILE);
+    let mut ignore_config = None;
 
-    let kdl = std::fs::read_to_string(&ignore_path)
-        .with_context(|| format!("While reading {SKYSPELL_IGNORE_FILE}"))?;
-    let ignore_config = IgnoreConfig::parse(Some(ignore_path), &kdl)?;
+    if ignore_path.exists() {
+        let kdl = std::fs::read_to_string(&ignore_path)
+            .with_context(|| format!("While reading {SKYSPELL_IGNORE_FILE}"))?;
+        ignore_config = Some(IgnoreConfig::parse(Some(ignore_path), &kdl)?);
+    }
 
     let dictionary = EnchantDictionary::new(lang)?;
     let current_provider = dictionary.provider();
-    let config_provider = ignore_config.provider();
 
-    if let Some(config_provider) = config_provider {
-        if current_provider != config_provider {
-            bail!("Using '{current_provider}' as provider but should be '{config_provider}'")
+    let provider_in_config = ignore_config.as_ref().and_then(|c| c.provider());
+    if let Some(provider_in_config) = provider_in_config {
+        if current_provider != provider_in_config {
+            bail!("Using '{current_provider}' as provider but should be '{provider_in_config}'")
         }
     }
 
-    let storage_backend = if ignore_config.use_db() {
+    let use_db = ignore_config
+        .as_ref()
+        .and_then(|c| Some(c.use_db()))
+        .unwrap_or(false);
+    let storage_backend = if use_db {
         let db_path = match opts.db_path.as_ref() {
             Some(s) => Ok(s.to_string()),
             None => get_default_db_path(lang),
@@ -79,6 +86,8 @@ pub fn main() -> Result<()> {
         let repository = SQLRepository::new(&db_path)?;
         StorageBackend::Repository(Box::new(repository))
     } else {
+        let ignore_config =
+            ignore_config.expect("ignore_config should not be None when use_db is True");
         info_1!("Using {SKYSPELL_IGNORE_FILE} as storage");
         StorageBackend::IgnoreStore(Box::new(ignore_config))
     };
