@@ -68,3 +68,5 @@ fn test_keep_old_operations_when_less_than_100_operations_are_stored() {
 
     assert_eq!(actual_count, 49);
 }
+
+test_repository!(SQLRepository);

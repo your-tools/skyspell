@@ -208,3 +208,4 @@ impl Repository for FakeRepository {
         Ok(Some(res))
     }
 }
+test_repository!(FakeRepository);
