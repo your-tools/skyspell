@@ -7,8 +7,7 @@ use serde::{Deserialize, Serialize};
 
 pub type ProjectId = i32;
 
-pub const SKYSPELL_IGNORE_FILE: &str = ".skyspell-ignore";
-pub const SKYSPELL_CONFIG_FILE: &str = "skyspell.kdl";
+pub const SKYSPELL_IGNORE_FILE: &str = "skyspell.kdl";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Project {
