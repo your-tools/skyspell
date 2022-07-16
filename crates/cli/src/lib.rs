@@ -83,7 +83,7 @@ fn run<D: Dictionary>(opts: Opts, dictionary: D, storage_backend: StorageBackend
 }
 
 fn clean(mut storage_backend: StorageBackend) -> Result<()> {
-    if let Some(r) = storage_backend.as_repository() {
+    if let Some(r) = storage_backend.repository_mut() {
         r.clean()?;
     }
     Ok(())
@@ -168,23 +168,23 @@ struct RemoveOpts {
 fn add(mut storage_backend: StorageBackend, opts: AddOpts) -> Result<()> {
     let word = &opts.word;
     match (opts.project_path, opts.relative_path, opts.extension) {
-        (None, None, None) => storage_backend.as_ignore_store().ignore(word),
+        (None, None, None) => storage_backend.ignore_store_mut().ignore(word),
         (None, _, Some(e)) => storage_backend
-            .as_ignore_store()
+            .ignore_store_mut()
             .ignore_for_extension(word, &e),
         (Some(project_path), Some(relative_path), None) => {
             let project_path = ProjectPath::new(&project_path)?;
             let project = storage_backend.ensure_project(&project_path)?;
             let relative_path = RelativePath::new(&project_path, &relative_path)?;
             storage_backend
-                .as_ignore_store()
+                .ignore_store_mut()
                 .ignore_for_path(word, project.id(), &relative_path)
         }
         (Some(project_path), None, None) => {
             let project_path = ProjectPath::new(&project_path)?;
             let project = storage_backend.ensure_project(&project_path)?;
             storage_backend
-                .as_ignore_store()
+                .ignore_store_mut()
                 .ignore_for_project(word, project.id())
         }
         (None, Some(_), None) => bail!("Cannot use --relative-path without --project-path"),
@@ -195,15 +195,15 @@ fn add(mut storage_backend: StorageBackend, opts: AddOpts) -> Result<()> {
 fn remove(mut storage_backend: StorageBackend, opts: RemoveOpts) -> Result<()> {
     let word = &opts.word;
     match (opts.project_path, opts.relative_path, opts.extension) {
-        (None, None, None) => storage_backend.as_ignore_store().remove_ignored(word),
+        (None, None, None) => storage_backend.ignore_store_mut().remove_ignored(word),
         (None, _, Some(e)) => storage_backend
-            .as_ignore_store()
+            .ignore_store_mut()
             .remove_ignored_for_extension(word, &e),
         (Some(project_path), Some(relative_path), None) => {
             let project_path = ProjectPath::new(&project_path)?;
             let project = storage_backend.ensure_project(&project_path)?;
             let relative_path = RelativePath::new(&project_path, &relative_path)?;
-            storage_backend.as_ignore_store().remove_ignored_for_path(
+            storage_backend.ignore_store_mut().remove_ignored_for_path(
                 word,
                 project.id(),
                 &relative_path,
@@ -213,7 +213,7 @@ fn remove(mut storage_backend: StorageBackend, opts: RemoveOpts) -> Result<()> {
             let project_path = ProjectPath::new(&project_path)?;
             let project = storage_backend.ensure_project(&project_path)?;
             storage_backend
-                .as_ignore_store()
+                .ignore_store_mut()
                 .remove_ignored_for_project(word, project.id())
         }
         (None, Some(_), None) => bail!("Cannot use --relative-path without --project-path"),

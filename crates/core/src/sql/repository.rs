@@ -218,7 +218,11 @@ impl IgnoreStore for SQLRepository {
 }
 
 impl Repository for SQLRepository {
-    fn as_ignore_store(&mut self) -> &mut dyn IgnoreStore {
+    fn ignore_store_mut(&mut self) -> &mut dyn IgnoreStore {
+        self
+    }
+
+    fn ignore_store(&self) -> &dyn IgnoreStore {
         self
     }
 

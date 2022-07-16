@@ -3,7 +3,9 @@ use anyhow::{anyhow, Result};
 use crate::{IgnoreStore, Operation, ProjectId, ProjectInfo, ProjectPath};
 
 pub trait Repository {
-    fn as_ignore_store(&mut self) -> &mut dyn IgnoreStore;
+    fn ignore_store_mut(&mut self) -> &mut dyn IgnoreStore;
+    fn ignore_store(&self) -> &dyn IgnoreStore;
+
     fn clean(&mut self) -> Result<()> {
         todo!()
     }
@@ -28,6 +30,6 @@ pub trait Repository {
     fn undo(&mut self) -> Result<()> {
         let last_operation = self.pop_last_operation()?;
         let mut last_operation = last_operation.ok_or_else(|| anyhow!("Nothing to undo"))?;
-        last_operation.undo(self.as_ignore_store())
+        last_operation.undo(self.ignore_store_mut())
     }
 }

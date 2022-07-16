@@ -66,7 +66,7 @@ impl<D: Dictionary> Checker for NonInteractiveChecker<D> {
         &self.project
     }
 
-    fn ignore_store(&self) -> &dyn IgnoreStore {
-        todo!()
+    fn storage_backend(&self) -> &StorageBackend {
+        &self.storage_backend
     }
 }

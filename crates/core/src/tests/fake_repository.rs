@@ -148,8 +148,12 @@ impl IgnoreStore for FakeRepository {
 }
 
 impl Repository for FakeRepository {
-    fn as_ignore_store(&mut self) -> &mut dyn IgnoreStore {
-        todo!()
+    fn ignore_store_mut(&mut self) -> &mut dyn IgnoreStore {
+        self
+    }
+
+    fn ignore_store(&self) -> &dyn IgnoreStore {
+        self
     }
 
     fn project_exists(&self, project_path: &ProjectPath) -> Result<bool> {

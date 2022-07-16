@@ -38,8 +38,8 @@ impl<I: Interactor, D: Dictionary> Checker for InteractiveChecker<I, D> {
         &self.dictionary
     }
 
-    fn ignore_store(&self) -> &dyn IgnoreStore {
-        todo!()
+    fn storage_backend(&self) -> &StorageBackend {
+        &self.storage_backend
     }
 
     fn handle_error(
@@ -126,7 +126,7 @@ q : Quit
     // Note: this cannot fail, but it's convenient to have it return a
     // boolean like the other on_* methods
     fn on_global_ignore(&mut self, error: &str) -> Result<bool> {
-        let ignore_store = self.storage_backend.as_ignore_store();
+        let ignore_store = self.storage_backend.ignore_store_mut();
         ignore_store.ignore(error)?;
         info_2!("Added '{}' to the global ignore list", error);
         Ok(true)
@@ -141,7 +141,7 @@ q : Quit
             Some(e) => e,
         };
 
-        let ignore_store = self.storage_backend.as_ignore_store();
+        let ignore_store = self.storage_backend.ignore_store_mut();
         ignore_store.ignore_for_extension(error, &extension)?;
         info_2!(
             "Added '{}' to the ignore list for extension '{}'",
@@ -152,7 +152,7 @@ q : Quit
     }
 
     fn on_project_ignore(&mut self, error: &str) -> Result<bool> {
-        let ignore_store = self.storage_backend.as_ignore_store();
+        let ignore_store = self.storage_backend.ignore_store_mut();
         ignore_store.ignore_for_project(error, self.project.id())?;
         info_2!(
             "Added '{}' to the ignore list for the current project",
@@ -162,7 +162,7 @@ q : Quit
     }
 
     fn on_file_ignore(&mut self, error: &str, relative_path: &RelativePath) -> Result<bool> {
-        let ignore_store = self.storage_backend.as_ignore_store();
+        let ignore_store = self.storage_backend.ignore_store_mut();
         ignore_store.ignore_for_path(error, self.project.id(), relative_path)?;
         info_2!(
             "Added '{}' to the ignore list for path '{}'",
