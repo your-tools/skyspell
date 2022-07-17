@@ -153,7 +153,7 @@ pub fn main() -> Result<()> {
     };
 
     if let Err(e) = outcome {
-        println!("echo -markup {{Error}}{}", e);
+        println!("fail skyspell error: {}", e);
         return Err(e);
     }
     Ok(())
