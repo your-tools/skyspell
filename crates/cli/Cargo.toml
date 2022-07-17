@@ -1,6 +1,6 @@
 [package]
 name = "skyspell"
-version = "0.8.1"
+version = "1.0.0"
 authors = ["Dimitri Merejkowsky <dimitri@dmerej.info>"]
 description = "Fast and handy spell checker for the command line"
 edition = "2021"

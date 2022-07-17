@@ -619,7 +619,7 @@ dependencies = [
 
 [[package]]
 name = "skyspell"
-version = "0.8.1"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -652,7 +652,7 @@ dependencies = [
 
 [[package]]
 name = "skyspell_kak"
-version = "0.8.2"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
