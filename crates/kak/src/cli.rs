@@ -6,9 +6,11 @@ use directories_next::BaseDirs;
 
 use skyspell_core::Checker;
 use skyspell_core::EnchantDictionary;
+use skyspell_core::IgnoreConfig;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::ProjectPath;
 use skyspell_core::TokenProcessor;
+use skyspell_core::SKYSPELL_IGNORE_FILE;
 use skyspell_core::{get_default_db_path, SQLRepository};
 use skyspell_core::{Dictionary, IgnoreFile, StorageBackend};
 
@@ -96,6 +98,20 @@ pub fn main() -> Result<()> {
 
     let lang = &kakoune_io.get_option("skyspell_lang")?;
 
+    let project_as_str = kakoune_io.get_option("skyspell_project")?;
+    let project_path = PathBuf::from(project_as_str);
+
+    let config_path = project_path.join(SKYSPELL_IGNORE_FILE);
+    let mut ignore_config = None;
+
+    if config_path.exists() {
+        let kdl = std::fs::read_to_string(&config_path)
+            .with_context(|| format!("While reading {SKYSPELL_IGNORE_FILE}"))?;
+        ignore_config = Some(IgnoreConfig::parse(Some(config_path), &kdl)?);
+    }
+
+    let use_db = ignore_config.as_ref().map(|c| c.use_db()).unwrap_or(true);
+
     let db_path_option = kakoune_io.get_option("skyspell_db_path")?;
     let db_path = if db_path_option.is_empty() {
         get_default_db_path(lang)?
@@ -103,15 +119,22 @@ pub fn main() -> Result<()> {
         db_path_option
     };
 
-    kakoune_io.debug(&format!("Using db path: {}", db_path));
+    let mut storage_backend = if use_db {
+        kakoune_io.debug(&format!("Using db path: {}", db_path));
+        let repository = SQLRepository::new(&db_path)?;
+        StorageBackend::Repository(Box::new(repository))
+    } else {
+        let ignore_config =
+            ignore_config.expect("ignore_config should not be None when use_db is false");
+        kakoune_io.debug(&format!("Using config {}", db_path));
+        StorageBackend::IgnoreStore(Box::new(ignore_config))
+    };
 
-    let repository = SQLRepository::new(&db_path)?;
     let dictionary = EnchantDictionary::new(lang)?;
-    let project_as_str = kakoune_io.get_option("skyspell_project")?;
-    let project_path = PathBuf::from(project_as_str);
+
     let project_path = ProjectPath::new(&project_path)?;
-    let mut storage_backend = StorageBackend::Repository(Box::new(repository));
     let project = storage_backend.ensure_project(&project_path)?;
+
     let checker = KakouneChecker::new(project, dictionary, storage_backend, kakoune_io)?;
     let mut cli = KakCli::new(checker)?;
 
