@@ -207,8 +207,8 @@ def test_add_global(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
 
 
 def test_honor_skyspell_ignore(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
-    ignore = tmp_path / ".skyspell-ignore"
-    ignore.write_text("foo.lock")
+    ignore = tmp_path / "skyspell-ignore.kdl"
+    ignore.write_text("patterns {\n  foo.lock\n}\n")
     open_file_with_contents(
         kak_checker, tmp_path / "foo.lock", r"I'm testing skyspell here"
     )
