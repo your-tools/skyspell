@@ -238,7 +238,9 @@ paths {
 
   README.md {
     fn
+    impl
     nextest
+    png
     sha
   }
 

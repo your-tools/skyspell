@@ -18,6 +18,7 @@ A fast and handy spell checker for the command line.
 * Skip list per file names (like always skipping files named `Cargo.lock`)
 * Skip list per relative path inside a project (like `image.svg`)
 * [Kakoune integration](https://git.sr.ht/~your-tools/skyspell/tree/main/item/crates/kak/README.md)
+* Ignore rules stored either in a global sqlite3 db (useful for personal files and such) - or in a configuration file (useful for CI and the like).
 
 ## Installation
 
@@ -69,16 +70,62 @@ q : Quit
 => Added 'fn' to the ignore list for '.rs' files
 ```
 
-## Advanced usage
+Note that by default, skyspell will try to read *every* file in the project.
+To prevent skyspell from trying to read certain file, create a `skyspell-ignore` [kdl](https://kdl.dev/) file containing something like this:
 
-If for some reason a file can't be checked, you can create a `.skyspell-ignore` file,
-like this:
-
+```kdl
+patterns {
+   Cargo.lock  // no point in checking auto-generated files
+   logo.png    // no point in trying to read non-text files
+}
 ```
-Cargo.lock
+
+By default, ignore rules will be automatically added to this file when
+your run the above session, resulting in a file looking like this:
+
+```kdl
+patterns {
+  // same as above
+}
+
+global {
+  // always ignored
+  your-name
+}
+
+
+project {
+  // ignored just for this project
+  your-project-name
+}
+
+extension "rs" {
+  // ignored for this extension
+  fn
+  impl
+}
 ```
 
-See also `skyspell --help` for the various command and flags.
+so that you can share your ignore rules with others.
+
+By the way, there's a `--non-interactive` option to run `skyspell check`
+as part of your continuous integration.
+
+## Using an sqlite3 db instead
+
+If you don't want the above behavior, you can tell skyspell to store
+ignore rules in a global sqlite3 database by using:
+
+```kdl
+patterns {
+   // Same patterns as above
+}
+
+use_db
+```
+
+By default, the path will be `~/.local/share/skyspell/<lang>.db`, but you
+can use `--db-path` to change it.
 
 ## Comparison with scspell
 
