@@ -337,4 +337,8 @@ paths {
     fi
   }
 
+  TODO {
+    enum
+    struct
+  }
 }
