@@ -106,6 +106,7 @@ project {
   kakrc
   kdl
   lang
+  miette
   mypy
   nuspell
   pytest
