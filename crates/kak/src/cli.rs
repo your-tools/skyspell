@@ -107,7 +107,7 @@ pub fn main() -> Result<()> {
     if config_path.exists() {
         let kdl = std::fs::read_to_string(&config_path)
             .with_context(|| format!("While reading {SKYSPELL_IGNORE_FILE}"))?;
-        ignore_config = Some(IgnoreConfig::parse(Some(config_path), &kdl)?);
+        ignore_config = Some(IgnoreConfig::parse(Some(config_path.clone()), &kdl)?);
     }
 
     let use_db = ignore_config.as_ref().map(|c| c.use_db()).unwrap_or(true);
@@ -126,7 +126,7 @@ pub fn main() -> Result<()> {
     } else {
         let ignore_config =
             ignore_config.expect("ignore_config should not be None when use_db is false");
-        kakoune_io.debug(&format!("Using config {}", db_path));
+        kakoune_io.debug(&format!("Using config {:?}", config_path));
         StorageBackend::IgnoreStore(Box::new(ignore_config))
     };
 
