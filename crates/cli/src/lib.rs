@@ -135,9 +135,9 @@ fn add(project: Project, mut storage_backend: StorageBackend, opts: &AddOpts) ->
         (None, None, false) => storage_backend.ignore(word),
         (None, Some(e), _) => storage_backend
             .ignore_store_mut()
-            .ignore_for_extension(word, &e),
+            .ignore_for_extension(word, e),
         (Some(relative_path), None, _) => {
-            let relative_path = project.get_relative_path(&relative_path)?;
+            let relative_path = project.get_relative_path(relative_path)?;
             storage_backend
                 .ignore_store_mut()
                 .ignore_for_path(word, project.id(), &relative_path)
@@ -153,9 +153,9 @@ fn remove(project: Project, mut storage_backend: StorageBackend, opts: &RemoveOp
     let word = &opts.word;
     match (&opts.relative_path, &opts.extension, &opts.project) {
         (None, None, false) => storage_backend.remove_ignored(word),
-        (None, Some(e), _) => storage_backend.remove_ignored_for_extension(word, &e),
+        (None, Some(e), _) => storage_backend.remove_ignored_for_extension(word, e),
         (Some(relative_path), None, _) => {
-            let relative_path = project.get_relative_path(&relative_path)?;
+            let relative_path = project.get_relative_path(relative_path)?;
             storage_backend.remove_ignored_for_path(word, project.id(), &relative_path)
         }
         (None, None, true) => storage_backend

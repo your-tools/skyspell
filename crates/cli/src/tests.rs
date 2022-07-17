@@ -47,7 +47,7 @@ impl TestApp {
         let full_path = self.project.path().as_ref().join(file_name);
         std::fs::write(&full_path, "").unwrap();
         let relative_path = self.project.get_relative_path(&full_path).unwrap();
-        (full_path.clone(), relative_path)
+        (full_path, relative_path)
     }
 
     fn db_path(temp_dir: &TempDir) -> String {
