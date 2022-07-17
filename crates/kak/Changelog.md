@@ -1,3 +1,18 @@
+# 1.0.0 (2022-07-17)
+
+## Changes in configuration files
+
+See [skyspell_core](https://git.sr.ht/~your-tools/skyspell/tree/main/item/crates/core/Changelog.md) changelog.
+
+## Changes in behavior
+
+When the `skyspell-ignore.kdl` file is used, the `undo` operation is now a non-op.
+
+This should be fine because you can always open the `skyspell-
+ignore.kdl` buffer and undo the changes there. Even better, the `.kdl`
+file can be tracked by whatever version control system you're using for
+your project.
+
 # 0.8.2 (2022-04-16)
 
 * Rename option `spell_errors` -> `skyspell_errors`

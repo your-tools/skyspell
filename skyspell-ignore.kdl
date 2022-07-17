@@ -31,6 +31,7 @@ global {
   backends
   baz
   cd
+  changelog
   chrono
   cli
   cmd

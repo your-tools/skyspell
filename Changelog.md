@@ -1,3 +1,38 @@
+# 1.0.0 (2022-07-17)
+
+## Changes in configuration files
+
+See [skyspell_core](https://git.sr.ht/~your-tools/skyspell/tree/main/item/crates/core/Changelog.md) changelog.
+
+## Changes in command-line syntax
+
+The `--project-path` option must use right before the action.
+
+Also, to add or ignore a rule for a project, use the boolean `--project` option
+
+Before skyspell 1.0
+
+```
+# Add bar as a ignored word for the project in /path/to/foo
+skyspell add --project-path /path/to/foo bar
+# Add baz to the global ignore list:
+skyspell add baz
+```
+
+After skyspell 1.0
+
+```
+# Add bar as a ignored word for the project in /path/to/foo
+skyspell --project-path /path/to/bar add bar --project
+# Add baz to the global ignore list:
+skyspell --project-path add baz --project
+```
+
+In this version, the `skyspell-ignore.kdl` file in the current working
+directory will be parsed, because we need to know if we need to store
+baz in a sqlite or in the configuration file, which is why both
+`--project-path` and `--project` need to be used.
+
 # 0.8.1 (2022-03-12)
 
 * Handle Python string prefixes, like in `f'input`

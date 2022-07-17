@@ -1,3 +1,60 @@
+# 1.0.0 (2022-07-17)
+
+## Change in configuration file
+
+Instead of a `.skyspell-ignore` file using `gitignore` syntax,
+configuration is now read from a [kdl](https://kdl.dev/) file named
+`skyspell-ignore.kdl`
+
+Before skyspell 1.0:
+```
+# in .skyspell-ignore
+*.lock
+```
+
+After skyspell 1.0
+
+```
+# in skyspell-ignore.kdl
+patterns {
+   *.lock
+}
+```
+
+## New storage backend
+
+In addition to storing ignore rules in an `sqlite` database, you can
+now store ignore rule in a `skyspell-ignore.kdl` file.
+
+See the [skyspell-ignore.kdl for this project](https://git.sr.ht/~your-tools/skyspell/tree/main/item/skyspell-ignore.kdl)
+for an example.
+
+By default, the storage backend will be this configuration file. This
+makes it easier to share ignore rules across member of the same project,
+or even to run `skyspell` as part of a continuous integration system.
+
+The old storage backend can still be used by inserting the correct node
+in the file, like this:
+
+```kdl
+use_db
+
+# still used to skip unwanted files
+patterns {
+    *.lock
+}
+
+# no longer used
+project {
+}
+
+extensions {
+}
+
+# ...
+```
+
+
 # 0.3.1 (2022-03-12)
 
 * Always skip `.skyspell-ignore`
