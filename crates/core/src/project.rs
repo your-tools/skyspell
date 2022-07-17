@@ -28,8 +28,13 @@ impl Project {
         self.path.as_str()
     }
 
+    // Note: used only for tests
     pub fn as_relative_path(&self, path: &str) -> Result<RelativePath> {
         RelativePath::new(self.path(), Path::new(path))
+    }
+
+    pub fn get_relative_path(&self, path: &Path) -> Result<RelativePath> {
+        RelativePath::new(self.path(), path)
     }
 
     pub fn id(&self) -> ProjectId {

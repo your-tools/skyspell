@@ -120,6 +120,30 @@ impl StorageBackend {
         }
     }
 
+    pub fn remove_ignored(&mut self, word: &str) -> Result<()> {
+        self.ignore_store_mut().remove_ignored(word)
+    }
+
+    pub fn remove_ignored_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()> {
+        self.ignore_store_mut()
+            .remove_ignored_for_project(word, project_id)
+    }
+
+    pub fn remove_ignored_for_extension(&mut self, word: &str, ext: &str) -> Result<()> {
+        self.ignore_store_mut()
+            .remove_ignored_for_extension(word, ext)
+    }
+
+    pub fn remove_ignored_for_path(
+        &mut self,
+        word: &str,
+        project_id: ProjectId,
+        relative_path: &RelativePath,
+    ) -> Result<()> {
+        self.ignore_store_mut()
+            .remove_ignored_for_path(word, project_id, relative_path)
+    }
+
     pub fn ensure_project(&mut self, project_path: &ProjectPath) -> Result<Project> {
         let project_id = match self.repository_mut() {
             Some(r) => {

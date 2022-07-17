@@ -2,7 +2,7 @@ use super::*;
 
 use skyspell_core::tests::{new_project_path, FakeDictionary};
 use skyspell_core::IgnoreStore;
-use skyspell_core::{ProjectPath, RelativePath};
+use skyspell_core::{ProjectId, ProjectPath, RelativePath};
 use skyspell_core::{Repository, SQLRepository, StorageBackend};
 
 use tempfile::TempDir;
@@ -17,6 +17,7 @@ fn open_repository(temp_dir: &TempDir) -> SQLRepository {
 struct TestApp {
     dictionary: FakeDictionary,
     storage_backend: StorageBackend,
+    project: Project,
 }
 
 impl TestApp {
@@ -24,29 +25,29 @@ impl TestApp {
         let dictionary = FakeDictionary::new();
         let db_path = Self::db_path(temp_dir);
         let repository = SQLRepository::new(&db_path).unwrap();
-        let storage_backend = StorageBackend::Repository(Box::new(repository));
+        let mut storage_backend = StorageBackend::Repository(Box::new(repository));
+
+        let project_path = temp_dir.path().join("project");
+        std::fs::create_dir(&project_path).unwrap();
+        let project_path = ProjectPath::new(&project_path).unwrap();
+        let project = storage_backend.ensure_project(&project_path).unwrap();
+
         Self {
             dictionary,
             storage_backend,
+            project,
         }
     }
 
-    fn new_project_path(&mut self, temp_dir: &TempDir, project_name: &str) -> ProjectPath {
-        new_project_path(temp_dir, project_name)
+    fn project_id(&self) -> ProjectId {
+        self.project.id()
     }
 
-    fn ensure_file(
-        temp_dir: &TempDir,
-        project_name: &str,
-        file_name: &str,
-    ) -> (PathBuf, RelativePath) {
-        let project = new_project_path(temp_dir, project_name);
-        let full_path = project.as_ref().join(file_name);
+    fn ensure_file(&self, file_name: &str) -> (PathBuf, RelativePath) {
+        let full_path = self.project.path().as_ref().join(file_name);
         std::fs::write(&full_path, "").unwrap();
-        (
-            full_path.clone(),
-            RelativePath::new(&project, &full_path).unwrap(),
-        )
+        let relative_path = self.project.get_relative_path(&full_path).unwrap();
+        (full_path.clone(), relative_path)
     }
 
     fn db_path(temp_dir: &TempDir) -> String {
@@ -58,10 +59,14 @@ impl TestApp {
     }
 
     fn run(self, args: &[&str]) -> Result<()> {
+        let project_path_as_str = self.project.as_str();
         let mut with_arg0 = vec!["skyspell"];
+        with_arg0.push("--project-path");
+        with_arg0.push(&project_path_as_str);
         with_arg0.extend(args);
+        dbg!(&with_arg0);
         let opts = Opts::try_parse_from(with_arg0)?;
-        super::run(opts, self.dictionary, self.storage_backend)
+        super::run(self.project, &opts, self.dictionary, self.storage_backend)
     }
 }
 
@@ -85,14 +90,11 @@ fn test_add_for_project_happy() {
         .prefix("test-skyspell")
         .tempdir()
         .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    let project = app.new_project_path(&temp_dir, "project");
-
-    app.run(&["add", "foo", "--project-path", &project.as_str()])
-        .unwrap();
+    let app = TestApp::new(&temp_dir);
+    let project_id = app.project_id();
+    app.run(&["add", "foo", "--project"]).unwrap();
 
     let repository = open_repository(&temp_dir);
-    let project_id = repository.get_project_id(&project).unwrap();
     assert!(repository
         .is_ignored_for_project("foo", project_id)
         .unwrap());
@@ -105,7 +107,7 @@ fn test_add_for_extension() {
         .tempdir()
         .unwrap();
     let app = TestApp::new(&temp_dir);
-    TestApp::ensure_file(&temp_dir, "project", "foo.py");
+    app.ensure_file("foo.py");
 
     app.run(&["add", "foo", "--extension", "py"]).unwrap();
 
@@ -119,22 +121,19 @@ fn test_add_for_relative_path() {
         .prefix("test-skyspell")
         .tempdir()
         .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
-    let project = app.new_project_path(&temp_dir, "project");
+    let app = TestApp::new(&temp_dir);
+    let project_id = app.project_id();
+    let (full_path, rel_path) = app.ensure_file("foo.txt");
 
     app.run(&[
         "add",
         "foo",
-        "--project-path",
-        &project.as_str(),
         "--relative-path",
         &full_path.to_string_lossy(),
     ])
     .unwrap();
 
     let repository = open_repository(&temp_dir);
-    let project_id = repository.get_project_id(&project).unwrap();
     assert!(repository
         .is_ignored_for_path("foo", project_id, &rel_path)
         .unwrap());
@@ -165,18 +164,16 @@ fn test_remove_for_project() {
         .tempdir()
         .unwrap();
     let mut app = TestApp::new(&temp_dir);
-    let project = app.new_project_path(&temp_dir, "project");
-    let project = app.storage_backend.new_project(&project).unwrap();
+    let project_id = app.project_id();
     app.storage_backend
-        .ignore_for_project("foo", project.id())
+        .ignore_for_project("foo", project_id)
         .unwrap();
 
-    app.run(&["remove", "foo", "--project-path", &project.as_str()])
-        .unwrap();
+    app.run(&["remove", "foo", "--project"]).unwrap();
 
     let repository = open_repository(&temp_dir);
     assert!(!repository
-        .is_ignored_for_project("foo", project.id())
+        .is_ignored_for_project("foo", project_id)
         .unwrap());
 }
 
@@ -187,25 +184,21 @@ fn test_remove_for_relative_path() {
         .tempdir()
         .unwrap();
     let mut app = TestApp::new(&temp_dir);
-    let (full_path, rel_path) = TestApp::ensure_file(&temp_dir, "project", "foo.txt");
-    let project = app.new_project_path(&temp_dir, "project");
-    let project = app.storage_backend.new_project(&project).unwrap();
+    let project_id = app.project_id();
+    let (full_path, rel_path) = app.ensure_file("foo.txt");
     app.storage_backend
-        .ignore_for_path("foo", project.id(), &rel_path)
+        .ignore_for_path("foo", project_id, &rel_path)
         .unwrap();
 
     app.run(&[
         "remove",
         "foo",
-        "--project-path",
-        &project.as_str(),
         "--relative-path",
         &full_path.to_string_lossy(),
     ])
     .unwrap();
 
     let repository = open_repository(&temp_dir);
-    let project_id = repository.get_project_id(project.path()).unwrap();
     assert!(!repository
         .is_ignored_for_path("foo", project_id, &rel_path)
         .unwrap());
@@ -218,7 +211,7 @@ fn test_remove_for_extension() {
         .tempdir()
         .unwrap();
     let mut app = TestApp::new(&temp_dir);
-    TestApp::ensure_file(&temp_dir, "project", "foo.py");
+    app.ensure_file("foo.py");
     app.storage_backend
         .ignore_for_extension("foo", "py")
         .unwrap();
@@ -236,23 +229,15 @@ fn test_check_errors_in_two_files() {
         .tempdir()
         .unwrap();
     let mut app = TestApp::new(&temp_dir);
-    let project = app.new_project_path(&temp_dir, "project");
-    let (foo_full, _) = TestApp::ensure_file(&temp_dir, "project", "foo.md");
-    let (bar_full, _) = TestApp::ensure_file(&temp_dir, "project", "bar.md");
+    let (foo_full, _) = app.ensure_file("foo.md");
+    let (bar_full, _) = app.ensure_file("bar.md");
     std::fs::write(&foo_full, "This is foo").unwrap();
     std::fs::write(&bar_full, "This is bar and it contains baz").unwrap();
     for word in &["This", "is", "and", "it", "contains"] {
         app.dictionary.add_known(word);
     }
 
-    let err = app
-        .run(&[
-            "check",
-            "--non-interactive",
-            "--project-path",
-            &project.as_str(),
-        ])
-        .unwrap_err();
+    let err = app.run(&["check", "--non-interactive"]).unwrap_err();
 
     assert!(err.to_string().contains("spelling errors"))
 }
@@ -264,23 +249,17 @@ fn test_check_happy() {
         .tempdir()
         .unwrap();
     let mut app = TestApp::new(&temp_dir);
-    let project = app.new_project_path(&temp_dir, "project");
-    let (foo_full, _) = TestApp::ensure_file(&temp_dir, "project", "foo.md");
-    let (bar_full, _) = TestApp::ensure_file(&temp_dir, "project", "bar.md");
+    let (foo_full, _) = app.ensure_file("foo.md");
+    let (bar_full, _) = app.ensure_file("bar.md");
     std::fs::write(&foo_full, "This is fine").unwrap();
     std::fs::write(&bar_full, "This is also fine").unwrap();
     for word in &["This", "is", "also", "fine"] {
         app.dictionary.add_known(word);
     }
 
-    app.run(&[
-        "check",
-        "--non-interactive",
-        "--project-path",
-        &project.as_str(),
-    ])
-    .unwrap();
+    app.run(&["check", "--non-interactive"]).unwrap();
 }
+
 #[test]
 fn test_suggest() {
     let temp_dir = tempfile::Builder::new()
