@@ -11,7 +11,6 @@ use directories_next::ProjectDirs;
 
 use crate::sql::models::*;
 use crate::sql::schema::*;
-use crate::undo;
 use crate::{IgnoreStore, Repository};
 use crate::{Operation, ProjectInfo};
 use crate::{ProjectId, ProjectPath, RelativePath};
@@ -119,11 +118,7 @@ impl IgnoreStore for SQLRepository {
             .values(NewIgnored { word })
             .execute(&self.connection)
             .with_context(|| "Could not insert ignored word")?;
-        let ignore_op = undo::Ignore {
-            word: word.to_string(),
-        };
-        let operation = Operation::Ignore(ignore_op);
-        self.insert_operation(&operation)
+        Ok(())
     }
 
     fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
