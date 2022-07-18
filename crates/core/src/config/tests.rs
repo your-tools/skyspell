@@ -41,6 +41,27 @@ fn test_add_global_ignore_to_empty_config() {
 }
 
 #[test]
+fn test_create_subsection_from_scratch() {
+    let input = "global {\n  hello\n}\n";
+
+    let action = |x: &mut IgnoreConfig| x.ignore_for_extension("fn", "rs");
+
+    let expected = r#"
+            global {
+              hello
+            }
+            extensions {
+
+              rs {
+                fn
+              }
+            }
+            "#;
+
+    check(&action, input, expected);
+}
+
+#[test]
 fn test_add_global_ignore_to_existing_config() {
     let input = r#"
             global {
@@ -212,6 +233,7 @@ fn test_add_ignore_for_new_extension() {
               rs {
                 fn
               }
+
 
             }
 

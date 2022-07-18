@@ -244,7 +244,7 @@ impl IgnoreConfig {
         let mut section_node = KdlNode::new(KdlIdentifier::from(value));
         section_node.set_children(words);
         section_node.set_leading("\n  ");
-        section_node.set_trailing("");
+        section_node.set_trailing("\n");
 
         let parent_node = self
             .doc
