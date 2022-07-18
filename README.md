@@ -39,6 +39,11 @@ $ cargo install skyspell
 
 and make sure `skyspell` is in your `PATH`.
 
+## Checking setup
+
+Run `skyspell suggest helllo`, and check that the word `hello`
+is suggested.
+
 ## skyspell in action
 
 Usually, you will run `skyspell check` to start an interactive session,

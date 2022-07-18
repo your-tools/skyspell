@@ -238,6 +238,7 @@ paths {
 
   README.md {
     fn
+    helllo
     impl
     nextest
     png
