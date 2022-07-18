@@ -2,5 +2,3 @@
   add both week and end to the global ignore list for French 🤔
 
 * miette errors are eaten and you only get a generic error message when parsing fails
-
-* remove old Undoer struct, decide where to put the Operation enum

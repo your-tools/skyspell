@@ -1,15 +1,9 @@
-#![allow(dead_code)]
-
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::IgnoreStore;
 use crate::ProjectId;
 use crate::RelativePath;
-
-pub struct Undoer<I: IgnoreStore> {
-    ignore_store: I,
-}
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub enum Operation {

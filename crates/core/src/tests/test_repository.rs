@@ -62,7 +62,7 @@ macro_rules! test_repository {
 
         #[test]
         fn test_pop_last_operation_happy() {
-            use $crate::undo::Ignore;
+            use $crate::operations::Ignore;
             use $crate::Operation;
             let mut repository = <$repo>::new_for_tests().unwrap();
             let ignore_foo = Operation::Ignore(Ignore {

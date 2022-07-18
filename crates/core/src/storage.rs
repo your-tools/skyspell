@@ -2,7 +2,7 @@ use std::path::Path;
 
 use anyhow::{bail, Result};
 
-use crate::undo::Operation;
+use crate::operations::Operation;
 use crate::{IgnoreStore, Project, ProjectId, ProjectPath, RelativePath, Repository};
 
 /// We have two backends to store ignore words One can manipulate ignored words,
@@ -195,3 +195,5 @@ impl StorageBackend {
         }
     }
 }
+#[cfg(test)]
+mod tests;

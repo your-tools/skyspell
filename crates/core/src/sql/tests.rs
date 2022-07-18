@@ -1,7 +1,7 @@
+use crate::operations::Ignore as IgnoreOperation;
 use crate::sql::schema::operations;
 use crate::test_ignore_store;
 use crate::test_repository;
-use crate::undo::Ignore as IgnoreOperation;
 use crate::IgnoreStore;
 use crate::Operation;
 use crate::Repository;
