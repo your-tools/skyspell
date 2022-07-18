@@ -1,3 +1,23 @@
+# 1.0.1 (2022-07-18)
+
+## Fixes
+
+There was a bug in the code that writes the generated `kdl` file. In some cases, the text was generated this way:
+
+```
+{
+  extensions rs {
+    struct
+  }}
+}
+```
+
+which is invalid and caused subsequent calls to skyspell to fail.
+
+This has been fixed.
+
+
+
 # 1.0.0 (2022-07-17)
 
 ## Change in configuration file

@@ -315,6 +315,7 @@ paths {
   }
 
   "crates/core/Changelog.md" {
+    struct
   }
 
   "crates/kak/src/io/tests.rs" {
