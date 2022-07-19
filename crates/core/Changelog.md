@@ -1,3 +1,11 @@
+# 1.0.2 (2022-07-19)
+
+## Fixes
+
+Display more info when parsing `skyspell-ignore.kdl` fails. In particular
+the filename, line number and column number are displayed, along with
+an help message if it exists.
+
 # 1.0.1 (2022-07-18)
 
 ## Fixes
