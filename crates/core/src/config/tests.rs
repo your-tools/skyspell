@@ -9,6 +9,31 @@ fn test_empty_config_is_valid() {
     IgnoreConfig::parse(None, "").unwrap();
 }
 
+#[test]
+fn test_detailed_error_when_parsing_invalid_kdl_syntax() {
+    let input = r#" 
+    global {
+      one
+      two
+    }
+
+    extensions {
+      "rs {
+        fn
+      }
+    }
+    "#;
+
+    let err = IgnoreConfig::parse(None, input).unwrap_err();
+    let message = err.to_string();
+
+    assert!(
+        message.contains("valid node name"),
+        "bad message: '{message}'"
+    );
+    assert!(message.contains("12:5"), "bad message: '{message}'");
+}
+
 // Note: this checks that automatic formatting of the
 // skyspell.kdl file is not too bad
 fn check<F>(action: F, input: &str, expected: &str)

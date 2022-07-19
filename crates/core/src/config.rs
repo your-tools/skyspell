@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use anyhow::{anyhow, bail, Result};
+use miette::{Diagnostic, SourceSpan};
 
 use kdl::{KdlDocument, KdlIdentifier, KdlNode};
 
@@ -42,10 +43,29 @@ impl IgnoreConfig {
     }
 
     pub fn parse(path: Option<PathBuf>, kdl: &str) -> Result<Self> {
-        let doc = kdl
-            .parse::<KdlDocument>()
-            .map_err(|e| anyhow!("while parsing: {e}"))?;
-        Ok(IgnoreConfig { doc, path })
+        let res = kdl.parse::<KdlDocument>();
+        let path_str = path
+            .as_ref()
+            .map(|x| x.to_string_lossy())
+            .unwrap_or_default();
+        let doc = res.map_err(move |e| {
+            let source = e
+                .source_code()
+                .expect("parse errors should have source code");
+            let help = e.help.unwrap_or_default();
+            let span: SourceSpan = e.span;
+            let contents = source
+                .read_span(&span, 0, 0)
+                .expect("source should have span contents");
+            // miette uses 0 based indexes, but humans prefer 1-based
+            let line = contents.line() + 1;
+            let column = contents.column() + 1;
+            anyhow!("{path_str}:{line}:{column} {e}\n  help: {help}")
+        })?;
+        Ok(IgnoreConfig {
+            doc,
+            path: path.to_owned(),
+        })
     }
 
     pub fn provider(&self) -> Option<&str> {
