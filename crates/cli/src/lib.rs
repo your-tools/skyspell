@@ -101,6 +101,9 @@ struct CheckOpts {
         help = "Don't ask what to do for each unknown word, instead just print the whole list - useful for continuous integration and other scripts"
     )]
     non_interactive: bool,
+
+    #[clap(help = "List of paths to check")]
+    paths: Vec<PathBuf>,
 }
 
 #[derive(Parser)]
@@ -181,40 +184,53 @@ fn check(
     match interactive {
         false => {
             let mut checker = NonInteractiveChecker::new(project, dictionary, storage_backend)?;
-            check_with(&mut checker)
+            check_with(&mut checker, &opts.paths)
         }
         true => {
             let interactor = ConsoleInteractor;
             let mut checker =
                 InteractiveChecker::new(project, interactor, dictionary, storage_backend)?;
-            check_with(&mut checker)
+            check_with(&mut checker, &opts.paths)
         }
     }
 }
 
-fn check_with<C>(checker: &mut C) -> Result<()>
+fn check_with<C>(checker: &mut C, paths: &[PathBuf]) -> Result<()>
 where
     C: Checker<Context = (usize, usize)>,
 {
     let project = checker.project();
+    let skip_file = SkipFile::new(project)?;
+    let mut paths = paths.to_vec();
+    if paths.is_empty() {
         let walker = project.walk()?;
-    let mut checked = 0;
-    for dir_entry in walker {
-        let dir_entry = dir_entry?;
-        let file_type = dir_entry.file_type().expect("walker yielded stdin");
-        if !file_type.is_file() {
-            continue;
+        for dir_entry in walker {
+            let dir_entry = dir_entry?;
+            let file_type = dir_entry.file_type().expect("walker yielded stdin");
+            if !file_type.is_file() {
+                continue;
+            }
+            let path = dir_entry.path();
+            paths.push(path.to_path_buf());
         }
-        let path = dir_entry.path();
-        let relative_path = checker.to_relative_path(path)?;
-        let token_processor = TokenProcessor::new(path);
-        token_processor.each_token(|word, line, column| {
-            checker.handle_token(word, &relative_path, &(line, column))
-        })?;
-        checked += 1;
     }
 
-    info_3!("Checked {checked} files");
+    let mut checked = 0;
+    let mut skipped = 0;
+    for path in paths {
+        let relative_path = checker.to_relative_path(&path)?;
+        if skip_file.is_skipped(&relative_path) {
+            skipped += 1;
+        } else {
+            let token_processor = TokenProcessor::new(&path);
+            token_processor.each_token(|word, line, column| {
+                checker.handle_token(word, &relative_path, &(line, column))
+            })?;
+            checked += 1;
+        }
+    }
+
+    info_3!("Checked {checked} files - {skipped} skipped");
 
     checker.success()
 }
