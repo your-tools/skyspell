@@ -40,7 +40,9 @@ impl<D: Dictionary> Checker for NonInteractiveChecker<D> {
     ) -> Result<()> {
         let &(line, column) = context;
         self.num_errors += 1;
-        let prefix = format!("{}:{}:{}", path, line, column + 1);
+        let start_column = column + 1;
+        let end_column = start_column + token.chars().count() - 1;
+        let prefix = format!("{}:{}:{}:{}", path, line, start_column, end_column);
         println!(
             "{}: {}: {}: {}",
             prefix,
