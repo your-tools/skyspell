@@ -4,11 +4,11 @@ use anyhow::{bail, Context, Result};
 use clap::Parser;
 use colored::*;
 
-use skyspell_core::ignore_file::walk;
 use skyspell_core::Checker;
 use skyspell_core::Dictionary;
 use skyspell_core::EnchantDictionary;
 use skyspell_core::IgnoreConfig;
+use skyspell_core::SkipFile;
 use skyspell_core::StorageBackend;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{get_default_db_path, SQLRepository};
@@ -197,7 +197,7 @@ where
     C: Checker<Context = (usize, usize)>,
 {
     let project = checker.project();
-    let walker = walk(project)?;
+        let walker = project.walk()?;
     let mut checked = 0;
     for dir_entry in walker {
         let dir_entry = dir_entry?;

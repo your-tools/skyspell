@@ -3,6 +3,7 @@ use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Context, Result};
+use ignore::{Walk, WalkBuilder};
 use serde::{Deserialize, Serialize};
 
 pub type ProjectId = i32;
@@ -44,6 +45,10 @@ impl Project {
     pub fn ignore_path(&self) -> PathBuf {
         let path = self.path().as_ref();
         path.join(SKYSPELL_IGNORE_FILE)
+    }
+
+    pub fn walk(&self) -> Result<Walk> {
+        Ok(WalkBuilder::new(self.path().as_ref()).build())
     }
 }
 

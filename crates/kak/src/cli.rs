@@ -12,7 +12,7 @@ use skyspell_core::ProjectPath;
 use skyspell_core::TokenProcessor;
 use skyspell_core::SKYSPELL_IGNORE_FILE;
 use skyspell_core::{get_default_db_path, SQLRepository};
-use skyspell_core::{Dictionary, IgnoreFile, StorageBackend};
+use skyspell_core::{Dictionary, SkipFile, StorageBackend};
 
 use crate::{new_kakoune_io, KakouneChecker, KakouneIO};
 
@@ -162,7 +162,7 @@ pub fn main() -> Result<()> {
 struct KakCli<D: Dictionary, S: OperatingSystemIO> {
     checker: KakouneChecker<D, S>,
     home_dir: String,
-    ignore_file: IgnoreFile,
+    skip_file: SkipFile,
 }
 
 impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
@@ -173,11 +173,11 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
             .to_str()
             .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
         let project = checker.project();
-        let ignore_file = IgnoreFile::new(project)?;
+        let ignore_file = SkipFile::new(project)?;
         Ok(Self {
             home_dir: home_dir.to_string(),
             checker,
-            ignore_file,
+            skip_file: ignore_file,
         })
     }
 
@@ -296,7 +296,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
                 continue;
             }
 
-            if self.ignore_file.is_ignored(&relative_path) {
+            if self.skip_file.is_skipped(&relative_path) {
                 continue;
             }
 

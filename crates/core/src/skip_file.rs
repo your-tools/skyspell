@@ -8,9 +8,9 @@ use crate::project::SKYSPELL_IGNORE_FILE;
 use crate::IgnoreConfig;
 use crate::{Project, RelativePath};
 
-pub struct IgnoreFile(Gitignore);
+pub struct SkipFile(Gitignore);
 
-impl IgnoreFile {
+impl SkipFile {
     pub fn new(project: &Project) -> Result<Self> {
         let path = project.path().as_ref();
         let ignore_path = project.ignore_path();
@@ -26,7 +26,7 @@ impl IgnoreFile {
         Ok(Self(gitignore_builder.build()?))
     }
 
-    pub fn is_ignored(&self, relative_path: &RelativePath) -> bool {
+    pub fn is_skipped(&self, relative_path: &RelativePath) -> bool {
         if relative_path.as_str() == SKYSPELL_IGNORE_FILE {
             return true;
         }
@@ -38,17 +38,5 @@ impl IgnoreFile {
 }
 
 pub fn walk(project: &Project) -> Result<Walk> {
-    let ignore_file = IgnoreFile::new(project)?;
-    let project_path = project.path().clone();
-    Ok(WalkBuilder::new(project.path().as_ref())
-        .standard_filters(true)
-        .filter_entry(move |x| {
-            let full_path = x.path();
-            if let Ok(r) = RelativePath::new(&project_path, full_path) {
-                !ignore_file.is_ignored(&r)
-            } else {
-                false
-            }
-        })
-        .build())
+    Ok(WalkBuilder::new(project.path().as_ref()).build())
 }
