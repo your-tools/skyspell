@@ -6,7 +6,7 @@ use colored::*;
 use skyspell_core::{Checker, Dictionary, StorageBackend};
 use skyspell_core::{Project, RelativePath};
 
-use crate::Interactor;
+use crate::{info_1, Interactor};
 use crate::{info_2, print_error};
 
 pub struct InteractiveChecker<I: Interactor, D: Dictionary> {
@@ -63,6 +63,10 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
         dictionary: D,
         storage_backend: StorageBackend,
     ) -> Result<Self> {
+        info_1!(
+            "Checking project {} for spelling errors",
+            project.path().as_str().bold()
+        );
         Ok(Self {
             project,
             dictionary,

@@ -47,6 +47,24 @@ macro_rules! print_error {
     })
 }
 
+#[derive(Debug, PartialEq, Eq, clap::ValueEnum, Clone, Copy)]
+pub enum OutputFormat {
+    Text,
+    Json,
+}
+
+impl Default for OutputFormat {
+    fn default() -> Self {
+        OutputFormat::Text
+    }
+}
+
+impl OutputFormat {
+    fn is_text(&self) -> bool {
+        matches!(self, OutputFormat::Text)
+    }
+}
+
 #[derive(Parser)]
 #[clap(version)]
 pub struct Opts {
@@ -59,8 +77,17 @@ pub struct Opts {
     #[clap(long, help = "Project path")]
     project_path: Option<PathBuf>,
 
+    #[clap(long, value_enum, short = 'o', help = "Output format")]
+    output_format: Option<OutputFormat>,
+
     #[clap(subcommand)]
     action: Action,
+}
+
+impl Opts {
+    fn text_output(&self) -> bool {
+        self.output_format.unwrap_or_default() == OutputFormat::Text
+    }
 }
 
 #[derive(Parser)]
@@ -173,29 +200,26 @@ fn check(
     storage_backend: StorageBackend,
     dictionary: impl Dictionary,
     opts: &CheckOpts,
+    output_format: OutputFormat,
 ) -> Result<()> {
-    info_1!(
-        "Checking project {} for spelling errors",
-        project.path().as_str().bold()
-    );
-
     let interactive = !opts.non_interactive;
 
     match interactive {
         false => {
-            let mut checker = NonInteractiveChecker::new(project, dictionary, storage_backend)?;
-            check_with(&mut checker, &opts.paths)
+            let mut checker =
+                NonInteractiveChecker::new(project, dictionary, storage_backend, output_format)?;
+            check_with(&mut checker, &opts.paths, output_format)
         }
         true => {
             let interactor = ConsoleInteractor;
             let mut checker =
                 InteractiveChecker::new(project, interactor, dictionary, storage_backend)?;
-            check_with(&mut checker, &opts.paths)
+            check_with(&mut checker, &opts.paths, output_format)
         }
     }
 }
 
-fn check_with<C>(checker: &mut C, paths: &[PathBuf]) -> Result<()>
+fn check_with<C>(checker: &mut C, paths: &[PathBuf], output_format: OutputFormat) -> Result<()>
 where
     C: Checker<Context = (usize, usize)>,
 {
@@ -230,7 +254,9 @@ where
         }
     }
 
-    info_3!("Checked {checked} files - {skipped} skipped");
+    if output_format.is_text() {
+        info_3!("Checked {checked} files - {skipped} skipped");
+    }
 
     checker.success()
 }
@@ -265,10 +291,11 @@ fn run<D: Dictionary>(
     dictionary: D,
     storage_backend: StorageBackend,
 ) -> Result<()> {
+    let output_format = opts.output_format.unwrap_or_default();
     match &opts.action {
         Action::Add(opts) => add(project, storage_backend, opts),
         Action::Remove(opts) => remove(project, storage_backend, opts),
-        Action::Check(opts) => check(project, storage_backend, dictionary, opts),
+        Action::Check(opts) => check(project, storage_backend, dictionary, opts, output_format),
         Action::Suggest(opts) => suggest(dictionary, opts),
         Action::Undo => undo(storage_backend),
         Action::Clean => clean(storage_backend),
@@ -311,13 +338,17 @@ pub fn main() -> Result<()> {
             Some(s) => Ok(s.to_string()),
             None => get_default_db_path(lang),
         }?;
-        info_1!("Using {db_path} as storage");
+        if opts.text_output() {
+            info_1!("Using {db_path} as storage");
+        }
         let repository = SQLRepository::new(&db_path)?;
         StorageBackend::Repository(Box::new(repository))
     } else {
         let ignore_config =
             ignore_config.expect("ignore_config should not be None when use_db is false");
-        info_1!("Using {SKYSPELL_IGNORE_FILE} as storage");
+        if opts.text_output() {
+            info_1!("Using {SKYSPELL_IGNORE_FILE} as storage");
+        }
         StorageBackend::IgnoreStore(Box::new(ignore_config))
     };
 

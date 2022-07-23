@@ -71,9 +71,11 @@ global {
 
 project {
   Enchant's
+  Enum
   Gitignore
   Insertable
   Interactor
+  Json
   Kak
   Kakoune
   Kdl
