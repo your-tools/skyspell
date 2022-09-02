@@ -325,18 +325,18 @@ impl Display for IgnoreConfig {
 }
 
 impl IgnoreStore for IgnoreConfig {
-    fn is_ignored(&self, word: &str) -> Result<bool> {
+    fn is_ignored(&mut self, word: &str) -> Result<bool> {
         let global_words = self.global_words();
         Ok(global_words.contains(&word.to_string()))
     }
 
-    fn is_ignored_for_extension(&self, word: &str, extension: &str) -> Result<bool> {
+    fn is_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<bool> {
         Ok(self
             .ignored_words_for_extension(extension)
             .contains(&word.to_string()))
     }
 
-    fn is_ignored_for_project(&self, word: &str, project_id: crate::ProjectId) -> Result<bool> {
+    fn is_ignored_for_project(&mut self, word: &str, project_id: crate::ProjectId) -> Result<bool> {
         if project_id != MAGIC_PROJECT_ID {
             return Ok(false);
         }
@@ -345,7 +345,7 @@ impl IgnoreStore for IgnoreConfig {
     }
 
     fn is_ignored_for_path(
-        &self,
+        &mut self,
         word: &str,
         project_id: crate::ProjectId,
         relative_path: &crate::RelativePath,

@@ -9,13 +9,13 @@ pub trait Repository {
     /// Add a new project
     fn new_project(&mut self, project_path: &ProjectPath) -> Result<ProjectId>;
     /// Check if a project exists
-    fn project_exists(&self, project_path: &ProjectPath) -> Result<bool>;
+    fn project_exists(&mut self, project_path: &ProjectPath) -> Result<bool>;
     /// Remove the given project from the list
     fn remove_project(&mut self, project_id: ProjectId) -> Result<()>;
     /// Get project id
-    fn get_project_id(&self, project_path: &ProjectPath) -> Result<ProjectId>;
+    fn get_project_id(&mut self, project_path: &ProjectPath) -> Result<ProjectId>;
     /// Get the list of known projects. Used for cleanup
-    fn projects(&self) -> Result<Vec<ProjectInfo>>;
+    fn projects(&mut self) -> Result<Vec<ProjectInfo>>;
 
     /// Insert a new operation
     fn insert_operation(&mut self, operation: &Operation) -> Result<()>;

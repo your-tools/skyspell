@@ -139,7 +139,7 @@ impl<D: Dictionary> Checker for NonInteractiveChecker<D> {
         &self.project
     }
 
-    fn storage_backend(&self) -> &StorageBackend {
-        &self.storage_backend
+    fn storage_backend(&mut self) -> &mut StorageBackend {
+        &mut self.storage_backend
     }
 }

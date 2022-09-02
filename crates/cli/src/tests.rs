@@ -80,7 +80,7 @@ fn test_add_global() {
 
     app.run(&["add", "foo"]).unwrap();
 
-    let repository = open_repository(&temp_dir);
+    let mut repository = open_repository(&temp_dir);
     assert!(repository.is_ignored("foo").unwrap());
 }
 
@@ -94,7 +94,7 @@ fn test_add_for_project_happy() {
     let project_id = app.project_id();
     app.run(&["add", "foo", "--project"]).unwrap();
 
-    let repository = open_repository(&temp_dir);
+    let mut repository = open_repository(&temp_dir);
     assert!(repository
         .is_ignored_for_project("foo", project_id)
         .unwrap());
@@ -111,7 +111,7 @@ fn test_add_for_extension() {
 
     app.run(&["add", "foo", "--extension", "py"]).unwrap();
 
-    let repository = open_repository(&temp_dir);
+    let mut repository = open_repository(&temp_dir);
     assert!(repository.is_ignored_for_extension("foo", "py").unwrap());
 }
 
@@ -133,7 +133,7 @@ fn test_add_for_relative_path() {
     ])
     .unwrap();
 
-    let repository = open_repository(&temp_dir);
+    let mut repository = open_repository(&temp_dir);
     assert!(repository
         .is_ignored_for_path("foo", project_id, &rel_path)
         .unwrap());
@@ -153,7 +153,7 @@ fn test_remove_global() {
 
     app.run(&["remove", "foo"]).unwrap();
 
-    let repository = open_repository(&temp_dir);
+    let mut repository = open_repository(&temp_dir);
     assert!(!repository.is_ignored("foo").unwrap());
 }
 
@@ -171,7 +171,7 @@ fn test_remove_for_project() {
 
     app.run(&["remove", "foo", "--project"]).unwrap();
 
-    let repository = open_repository(&temp_dir);
+    let mut repository = open_repository(&temp_dir);
     assert!(!repository
         .is_ignored_for_project("foo", project_id)
         .unwrap());
@@ -198,7 +198,7 @@ fn test_remove_for_relative_path() {
     ])
     .unwrap();
 
-    let repository = open_repository(&temp_dir);
+    let mut repository = open_repository(&temp_dir);
     assert!(!repository
         .is_ignored_for_path("foo", project_id, &rel_path)
         .unwrap());
@@ -218,7 +218,7 @@ fn test_remove_for_extension() {
 
     app.run(&["remove", "foo", "--extension", "py"]).unwrap();
 
-    let repository = open_repository(&temp_dir);
+    let mut repository = open_repository(&temp_dir);
     assert!(!repository.is_ignored_for_extension("foo", "py").unwrap());
 }
 

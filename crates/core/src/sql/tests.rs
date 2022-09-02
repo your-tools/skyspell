@@ -26,7 +26,7 @@ fn test_delete_old_operations_when_more_than_100_operations_are_stored() {
         .collect();
     diesel::insert_into(operations::table)
         .values(values)
-        .execute(&sql_repository.connection)
+        .execute(&mut sql_repository.connection)
         .unwrap();
 
     let last = sql_repository.pop_last_operation().unwrap();
@@ -34,7 +34,7 @@ fn test_delete_old_operations_when_more_than_100_operations_are_stored() {
 
     let actual_count: i64 = operations::table
         .select(count_star())
-        .first(&sql_repository.connection)
+        .first(&mut sql_repository.connection)
         .unwrap();
 
     assert_eq!(actual_count, 101);
@@ -56,7 +56,7 @@ fn test_keep_old_operations_when_less_than_100_operations_are_stored() {
         .collect();
     diesel::insert_into(operations::table)
         .values(values)
-        .execute(&sql_repository.connection)
+        .execute(&mut sql_repository.connection)
         .unwrap();
 
     let last = sql_repository.pop_last_operation().unwrap();
@@ -64,7 +64,7 @@ fn test_keep_old_operations_when_less_than_100_operations_are_stored() {
 
     let actual_count: i64 = operations::table
         .select(count_star())
-        .first(&sql_repository.connection)
+        .first(&mut sql_repository.connection)
         .unwrap();
 
     assert_eq!(actual_count, 49);

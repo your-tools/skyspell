@@ -31,17 +31,17 @@ impl ProjectInfo {
 
 pub trait IgnoreStore {
     // Is the word in the global ignore list?
-    fn is_ignored(&self, word: &str) -> Result<bool>;
+    fn is_ignored(&mut self, word: &str) -> Result<bool>;
 
     // Is the word in the ignore list for the given extension?
-    fn is_ignored_for_extension(&self, word: &str, extension: &str) -> Result<bool>;
+    fn is_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<bool>;
 
     // Is the word in the ignore list for the given project?
-    fn is_ignored_for_project(&self, word: &str, project_id: ProjectId) -> Result<bool>;
+    fn is_ignored_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<bool>;
 
     // Is the word in the ignore list for the given project and path?
     fn is_ignored_for_path(
-        &self,
+        &mut self,
         word: &str,
         project_id: ProjectId,
         relative_path: &RelativePath,
@@ -60,7 +60,7 @@ pub trait IgnoreStore {
     // Otherwise, it's *not* ignored and the Checker will call handle_error()
     //
     fn should_ignore(
-        &self,
+        &mut self,
         word: &str,
         project_id: ProjectId,
         relative_path: &RelativePath,

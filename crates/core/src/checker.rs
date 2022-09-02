@@ -18,7 +18,7 @@ pub trait Checker {
     // Were all the errors handled properly?
     fn success(&self) -> Result<()>;
 
-    fn storage_backend(&self) -> &StorageBackend;
+    fn storage_backend(&mut self) -> &mut StorageBackend;
 
     fn dictionary(&self) -> &dyn Dictionary;
 

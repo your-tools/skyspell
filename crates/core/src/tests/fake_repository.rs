@@ -31,11 +31,11 @@ impl FakeRepository {
 }
 
 impl IgnoreStore for FakeRepository {
-    fn is_ignored(&self, word: &str) -> Result<bool> {
+    fn is_ignored(&mut self, word: &str) -> Result<bool> {
         Ok(self.global.contains(word))
     }
 
-    fn is_ignored_for_extension(&self, word: &str, extension: &str) -> Result<bool> {
+    fn is_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<bool> {
         if let Some(words) = self.by_extension.get(extension) {
             Ok(words.contains(&word.to_string()))
         } else {
@@ -43,7 +43,7 @@ impl IgnoreStore for FakeRepository {
         }
     }
 
-    fn is_ignored_for_project(&self, word: &str, project_id: ProjectId) -> Result<bool> {
+    fn is_ignored_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<bool> {
         if let Some(words) = self.by_project.get(&project_id) {
             Ok(words.contains(&word.to_string()))
         } else {
@@ -52,7 +52,7 @@ impl IgnoreStore for FakeRepository {
     }
 
     fn is_ignored_for_path(
-        &self,
+        &mut self,
         word: &str,
         project_id: ProjectId,
         path: &RelativePath,
@@ -156,7 +156,7 @@ impl Repository for FakeRepository {
         self
     }
 
-    fn project_exists(&self, project_path: &ProjectPath) -> Result<bool> {
+    fn project_exists(&mut self, project_path: &ProjectPath) -> Result<bool> {
         Ok(self.get_project_id(project_path).is_ok())
     }
 
@@ -171,7 +171,7 @@ impl Repository for FakeRepository {
         Ok(new_id)
     }
 
-    fn get_project_id(&self, project_path: &ProjectPath) -> Result<ProjectId> {
+    fn get_project_id(&mut self, project_path: &ProjectPath) -> Result<ProjectId> {
         let res = self
             .projects
             .get(&project_path.to_string())
@@ -179,7 +179,7 @@ impl Repository for FakeRepository {
         Ok(*res)
     }
 
-    fn projects(&self) -> Result<Vec<ProjectInfo>> {
+    fn projects(&mut self) -> Result<Vec<ProjectInfo>> {
         Ok(self
             .projects
             .iter()

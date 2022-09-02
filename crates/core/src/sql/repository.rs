@@ -7,6 +7,7 @@
 use anyhow::{anyhow, ensure, Context, Result};
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use directories_next::ProjectDirs;
 
 use crate::sql::models::*;
@@ -15,7 +16,7 @@ use crate::{IgnoreStore, Repository};
 use crate::{Operation, ProjectInfo};
 use crate::{ProjectId, ProjectPath, RelativePath};
 
-diesel_migrations::embed_migrations!("migrations");
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 
 pub fn get_default_db_path(lang: &str) -> Result<String> {
     let project_dirs = ProjectDirs::from("info", "dmerej", "skyspell").ok_or_else(|| {
@@ -38,9 +39,10 @@ pub struct SQLRepository {
 
 impl SQLRepository {
     pub fn new(url: &str) -> Result<Self> {
-        let connection = SqliteConnection::establish(url)
+        let mut connection = SqliteConnection::establish(url)
             .with_context(|| format!("Could not connect to {}", url))?;
-        embedded_migrations::run(&connection).with_context(|| "Could not migrate db")?;
+        let outcome = connection.run_pending_migrations(MIGRATIONS);
+        outcome.map_err(|e| anyhow!("Could not migrate db: {e}"))?;
         Ok(Self { connection })
     }
 
@@ -50,43 +52,43 @@ impl SQLRepository {
 }
 
 impl IgnoreStore for SQLRepository {
-    fn is_ignored(&self, word: &str) -> Result<bool> {
+    fn is_ignored(&mut self, word: &str) -> Result<bool> {
         let word = word.to_lowercase();
         Ok(ignored::table
             .filter(ignored::word.eq(word))
             .select(ignored::id)
-            .first::<i32>(&self.connection)
+            .first::<i32>(&mut self.connection)
             .optional()
             .with_context(|| "Error when checking if word is ignored")?
             .is_some())
     }
 
-    fn is_ignored_for_extension(&self, word: &str, extension: &str) -> Result<bool> {
+    fn is_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<bool> {
         let word = &word.to_lowercase();
         Ok(ignored_for_extension::table
             .filter(ignored_for_extension::word.eq(word))
             .filter(ignored_for_extension::extension.eq(extension))
             .select(ignored_for_extension::id)
-            .first::<i32>(&self.connection)
+            .first::<i32>(&mut self.connection)
             .optional()
             .with_context(|| "Error when checking if word is ignored for extension")?
             .is_some())
     }
 
-    fn is_ignored_for_project(&self, word: &str, project_id: ProjectId) -> Result<bool> {
+    fn is_ignored_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<bool> {
         let word = &word.to_lowercase();
         Ok(ignored_for_project::table
             .filter(ignored_for_project::project_id.eq(project_id))
             .filter(ignored_for_project::word.eq(word))
             .select(ignored_for_project::id)
-            .first::<i32>(&self.connection)
+            .first::<i32>(&mut self.connection)
             .optional()
             .with_context(|| "Error when checking if word is ignored for project")?
             .is_some())
     }
 
     fn is_ignored_for_path(
-        &self,
+        &mut self,
         word: &str,
         project_id: ProjectId,
         relative_path: &RelativePath,
@@ -97,7 +99,7 @@ impl IgnoreStore for SQLRepository {
             .filter(ignored_for_path::word.eq(word))
             .filter(ignored_for_path::path.eq(relative_path.as_str()))
             .select(ignored_for_path::id)
-            .first::<i32>(&self.connection)
+            .first::<i32>(&mut self.connection)
             .optional()
             .with_context(|| "Error when checking if word is ignored for given path")?
             .is_some())
@@ -107,7 +109,7 @@ impl IgnoreStore for SQLRepository {
         let new_ignored_words: Vec<_> = words.iter().map(|x| NewIgnored { word: x }).collect();
         diesel::insert_or_ignore_into(ignored::table)
             .values(new_ignored_words)
-            .execute(&self.connection)
+            .execute(&mut self.connection)
             .with_context(|| "Could not insert ignored words")?;
         Ok(())
     }
@@ -116,7 +118,7 @@ impl IgnoreStore for SQLRepository {
         let word = &word.to_lowercase();
         diesel::insert_or_ignore_into(ignored::table)
             .values(NewIgnored { word })
-            .execute(&self.connection)
+            .execute(&mut self.connection)
             .with_context(|| "Could not insert ignored word")?;
         Ok(())
     }
@@ -125,7 +127,7 @@ impl IgnoreStore for SQLRepository {
         let word = &word.to_lowercase();
         diesel::insert_or_ignore_into(ignored_for_extension::table)
             .values(NewIgnoredForExtension { word, extension })
-            .execute(&self.connection)
+            .execute(&mut self.connection)
             .with_context(|| "Could not insert ignored word for extension")?;
         Ok(())
     }
@@ -134,7 +136,7 @@ impl IgnoreStore for SQLRepository {
         let word = &word.to_lowercase();
         diesel::insert_or_ignore_into(ignored_for_project::table)
             .values(NewIgnoredForProject { word, project_id })
-            .execute(&self.connection)
+            .execute(&mut self.connection)
             .with_context(|| "Could not insert ignored word for project")?;
         Ok(())
     }
@@ -152,7 +154,7 @@ impl IgnoreStore for SQLRepository {
                 project_id,
                 path: &relative_path.as_str(),
             })
-            .execute(&self.connection)
+            .execute(&mut self.connection)
             .with_context(|| "Could not insert ignored word for path")?;
         Ok(())
     }
@@ -161,7 +163,7 @@ impl IgnoreStore for SQLRepository {
         let word = word.to_lowercase();
         let num_rows = diesel::delete(ignored::table)
             .filter(ignored::word.eq(word))
-            .execute(&self.connection)
+            .execute(&mut self.connection)
             .with_context(|| "Could not remove word from global ignored list")?;
         ensure!(num_rows != 0, "word was not globally ignored");
         Ok(())
@@ -172,7 +174,7 @@ impl IgnoreStore for SQLRepository {
         let num_rows = diesel::delete(ignored_for_extension::table)
             .filter(ignored_for_extension::extension.eq(extension))
             .filter(ignored_for_extension::word.eq(word))
-            .execute(&self.connection)
+            .execute(&mut self.connection)
             .with_context(|| "Could not remove word from ignore list for extension")?;
         ensure!(
             num_rows != 0,
@@ -192,7 +194,7 @@ impl IgnoreStore for SQLRepository {
             .filter(ignored_for_path::word.eq(word))
             .filter(ignored_for_path::project_id.eq(project_id))
             .filter(ignored_for_path::path.eq(relative_path.as_str()))
-            .execute(&self.connection)
+            .execute(&mut self.connection)
             .with_context(|| "Could not remove word from ignore list for path")?;
         ensure!(
             num_rows != 0,
@@ -206,7 +208,7 @@ impl IgnoreStore for SQLRepository {
         diesel::delete(ignored_for_project::table)
             .filter(ignored_for_project::word.eq(word))
             .filter(ignored_for_project::project_id.eq(project_id))
-            .execute(&self.connection)
+            .execute(&mut self.connection)
             .with_context(|| "Could not remove word from ignore list for project")?;
         Ok(())
     }
@@ -227,16 +229,16 @@ impl Repository for SQLRepository {
         };
         diesel::insert_into(projects::table)
             .values(new_project)
-            .execute(&self.connection)
+            .execute(&mut self.connection)
             .with_context(|| format!("Could not insert project '{}'", project.as_str()))?;
         self.get_project_id(project)
     }
 
-    fn get_project_id(&self, project: &ProjectPath) -> Result<ProjectId> {
+    fn get_project_id(&mut self, project: &ProjectPath) -> Result<ProjectId> {
         let res = projects::table
             .filter(projects::path.eq(project.as_str()))
             .select(projects::id)
-            .first::<i32>(&self.connection)
+            .first::<i32>(&mut self.connection)
             .with_context(|| {
                 format!(
                     "Could not get project ID for project '{}'",
@@ -246,19 +248,19 @@ impl Repository for SQLRepository {
         Ok(res)
     }
 
-    fn project_exists(&self, project: &ProjectPath) -> Result<bool> {
+    fn project_exists(&mut self, project: &ProjectPath) -> Result<bool> {
         Ok(projects::table
             .filter(projects::path.eq(project.as_str()))
             .select(projects::id)
-            .first::<i32>(&self.connection)
+            .first::<i32>(&mut self.connection)
             .optional()
             .with_context(|| format!("Error when looking for project {}", project.as_str()))?
             .is_some())
     }
 
-    fn projects(&self) -> Result<Vec<ProjectInfo>> {
+    fn projects(&mut self) -> Result<Vec<ProjectInfo>> {
         let rows: Vec<ProjectModel> = projects::table
-            .load(&self.connection)
+            .load(&mut self.connection)
             .with_context(|| "Could not retrieve project list")?;
         Ok(rows
             .iter()
@@ -269,7 +271,7 @@ impl Repository for SQLRepository {
     fn remove_project(&mut self, project_id: ProjectId) -> Result<()> {
         diesel::delete(projects::table)
             .filter(projects::id.eq(project_id))
-            .execute(&self.connection)
+            .execute(&mut self.connection)
             .with_context(|| format!("Error when removing project #{} from db", project_id))?;
         Ok(())
     }
@@ -284,7 +286,7 @@ impl Repository for SQLRepository {
         };
         diesel::insert_into(operations::table)
             .values(new_operation)
-            .execute(&self.connection)
+            .execute(&mut self.connection)
             .with_context(|| format!("Could not insert operation '{:?}'", operation))?;
         Ok(())
     }
@@ -295,7 +297,7 @@ impl Repository for SQLRepository {
         // keep the most recent values
         let res = operations::table
             .order_by(operations::timestamp.desc())
-            .first::<OperationModel>(&self.connection)
+            .first::<OperationModel>(&mut self.connection)
             .optional()
             .with_context(|| "Could not fetch last operation")?;
 
@@ -306,20 +308,20 @@ impl Repository for SQLRepository {
 
         diesel::delete(operations::table)
             .filter(operations::id.eq(id))
-            .execute(&self.connection)
+            .execute(&mut self.connection)
             .with_context(|| "Could not delete last operation")?;
 
         let oldest_operation = operations::table
             .order_by(operations::timestamp.desc())
             .offset(100)
-            .first::<OperationModel>(&self.connection)
+            .first::<OperationModel>(&mut self.connection)
             .optional()
             .with_context(|| "Could not get date of the oldest operation")?;
 
         if let Some(o) = oldest_operation {
             diesel::delete(operations::table)
                 .filter(operations::timestamp.lt(o.timestamp))
-                .execute(&self.connection)
+                .execute(&mut self.connection)
                 .with_context(|| "Could not delete old operations")?;
         }
 

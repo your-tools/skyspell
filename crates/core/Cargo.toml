@@ -12,8 +12,8 @@ repository.workspace = true
 
 [dependencies]
 anyhow.workspace = true
-diesel_migrations = "1.4.0"
-diesel = { version = "1.4.8", features = ["sqlite"] }
+diesel_migrations = "2.0.0"
+diesel = { version = "2.0.0", features = ["sqlite"] }
 directories-next = "2.0.0"
 enchant = "0.3.0"
 ignore = "0.4.18"

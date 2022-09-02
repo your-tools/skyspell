@@ -38,8 +38,8 @@ impl<I: Interactor, D: Dictionary> Checker for InteractiveChecker<I, D> {
         &self.dictionary
     }
 
-    fn storage_backend(&self) -> &StorageBackend {
-        &self.storage_backend
+    fn storage_backend(&mut self) -> &mut StorageBackend {
+        &mut self.storage_backend
     }
 
     fn handle_error(

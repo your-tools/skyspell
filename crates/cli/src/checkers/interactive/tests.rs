@@ -51,18 +51,18 @@ impl TestApp {
             .unwrap()
     }
 
-    fn is_ignored(&self, word: &str) -> bool {
+    fn is_ignored(&mut self, word: &str) -> bool {
         self.checker.storage_backend().is_ignored(word).unwrap()
     }
 
-    fn is_ignored_for_extension(&self, word: &str, extension: &str) -> bool {
+    fn is_ignored_for_extension(&mut self, word: &str, extension: &str) -> bool {
         self.checker
             .storage_backend()
             .is_ignored_for_extension(word, extension)
             .unwrap()
     }
 
-    fn is_ignored_for_project(&self, word: &str) -> bool {
+    fn is_ignored_for_project(&mut self, word: &str) -> bool {
         let project_id = self.checker.project().id();
         self.checker
             .storage_backend()
@@ -70,7 +70,7 @@ impl TestApp {
             .unwrap()
     }
 
-    fn is_ignored_for_path(&self, word: &str, relative_name: &str) -> bool {
+    fn is_ignored_for_path(&mut self, word: &str, relative_name: &str) -> bool {
         let project_id = self.checker.project().id();
         let relative_path = self.to_relative_path(relative_name);
         self.checker

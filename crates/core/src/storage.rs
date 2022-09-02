@@ -31,15 +31,15 @@ impl StorageBackend {
         }
     }
 
-    pub fn ignore_store(&self) -> &dyn IgnoreStore {
+    pub fn ignore_store(&mut self) -> &mut dyn IgnoreStore {
         match self {
-            StorageBackend::IgnoreStore(i) => i.as_ref(),
-            StorageBackend::Repository(r) => r.ignore_store(),
+            StorageBackend::IgnoreStore(i) => i.as_mut(),
+            StorageBackend::Repository(r) => r.ignore_store_mut(),
         }
     }
 
     pub(crate) fn should_ignore(
-        &self,
+        &mut self,
         token: &str,
         project_id: i32,
         relative_path: &crate::RelativePath,
@@ -48,20 +48,20 @@ impl StorageBackend {
             .should_ignore(token, project_id, relative_path)
     }
 
-    pub fn is_ignored(&self, word: &str) -> Result<bool> {
+    pub fn is_ignored(&mut self, word: &str) -> Result<bool> {
         self.ignore_store().is_ignored(word)
     }
 
-    pub fn is_ignored_for_extension(&self, word: &str, ext: &str) -> Result<bool> {
+    pub fn is_ignored_for_extension(&mut self, word: &str, ext: &str) -> Result<bool> {
         self.ignore_store().is_ignored_for_extension(word, ext)
     }
 
-    pub fn is_ignored_for_project(&self, word: &str, project_id: ProjectId) -> Result<bool> {
+    pub fn is_ignored_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<bool> {
         self.ignore_store().is_ignored_for_project(word, project_id)
     }
 
     pub fn is_ignored_for_path(
-        &self,
+        &mut self,
         word: &str,
         project_id: ProjectId,
         relative_path: &RelativePath,

@@ -53,8 +53,8 @@ impl<D: Dictionary, S: OperatingSystemIO> Checker for KakouneChecker<D, S> {
         Ok(())
     }
 
-    fn storage_backend(&self) -> &StorageBackend {
-        &self.storage_backend
+    fn storage_backend(&mut self) -> &mut StorageBackend {
+        &mut self.storage_backend
     }
 
     fn dictionary(&self) -> &dyn Dictionary {
