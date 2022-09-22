@@ -255,7 +255,7 @@ impl<'a> Tokenizer<'a> {
             };
 
             // PascalCase -> Pascal
-            if let Some(next_upper) = (&ident[second_pos..]).find(char::is_uppercase) {
+            if let Some(next_upper) = ident[second_pos..].find(char::is_uppercase) {
                 let res = &ident[..next_upper + second_pos];
                 return Some((res, pos));
             }
@@ -265,12 +265,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn get_python_string_prefix(&self, token: &str) -> Option<&str> {
-        for prefix in PYTHON_STRING_PREFIXES {
-            if token.starts_with(prefix) {
-                return Some(prefix);
-            }
-        }
-        None
+        PYTHON_STRING_PREFIXES.into_iter().find(|&prefix| token.starts_with(prefix))
     }
 }
 
