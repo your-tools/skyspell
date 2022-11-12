@@ -1,3 +1,8 @@
+# 1.0.1 (2022-11-12)
+
+* Bump dependencies
+* Update metadata
+
 # 1.0.0 (2022-07-17)
 
 ## Changes in configuration files
