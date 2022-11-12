@@ -1,6 +1,6 @@
 [package]
 name = "skyspell_kak"
-version = "1.0.0"
+version = "1.0.1"
 description = "skyspell - kakoune integration"
 keywords = ["kakoune", "skyspell", "spell"]
 readme = "README.md"
