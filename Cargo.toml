@@ -9,5 +9,5 @@ repository = "https://github.com/your-tools/skyspell"
 
 [workspace.dependencies]
 anyhow = "1.0.40"
-clap = { version = "3.0.0", features = ["derive"] }
+clap = { version = "4.0.0", features = ["derive"] }
 tempfile = "3.2.0"
