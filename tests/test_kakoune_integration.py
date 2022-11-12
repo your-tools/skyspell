@@ -173,6 +173,22 @@ def test_jump_to_first_error(tmp_path: Path, kak_checker: RemoteKakoune) -> None
     assert kak_checker.get_selection() == "missstake"
 
 
+def test_do_not_break_dot(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
+    original_contents = "There is a missstake here\n"
+    foo_path = tmp_path / "foo.txt"
+    open_file_with_contents(
+        kak_checker,
+        foo_path,
+        original_contents,
+    )
+    kak_checker.send_command("skyspell-list")
+    kak_checker.send_command(f"edit {foo_path}")
+    kak_checker.send_keys(".")
+    kak_checker.send_command("write")
+    new_contents = foo_path.read_text()
+    assert original_contents == new_contents
+
+
 def test_goto_next(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     open_file_with_contents(
         kak_checker,

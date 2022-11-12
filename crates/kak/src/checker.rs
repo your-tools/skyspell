@@ -132,7 +132,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
         self.print("edit -scratch *spelling*\n");
 
         // Delete everything
-        self.print(r"execute-keys \% <ret> d ");
+        self.print(r"execute-keys -draft \% <ret> d ");
 
         // Insert all errors
         self.print("i %{");
@@ -144,7 +144,8 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
         self.print("} ");
 
         // Back to top
-        self.print("<esc> gg\n");
+        self.print("\n");
+        self.print("execute-keys <esc> gg\n")
     }
 
     fn write_error(&self, error: &Error) {

@@ -57,7 +57,7 @@ fn test_write_errors_in_spelling_buffer() {
     let actual = checker.get_output();
     let expected = format!(
         "edit -scratch *spelling*
-execute-keys \\% <ret> d i %{{{}/hello.js: 2.5,2.7 foo<ret>}} <esc> gg
+execute-keys -draft \\% <ret> d i %{{{}/hello.js: 2.5,2.7 foo<ret>}} \nexecute-keys <esc> gg
 ",
         temp_dir.path().display()
     );
