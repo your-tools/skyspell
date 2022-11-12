@@ -54,7 +54,7 @@ patterns {
 In addition to storing ignore rules in an `sqlite` database, you can
 now store ignore rule in a `skyspell-ignore.kdl` file.
 
-See the [skyspell-ignore.kdl for this project](https://git.sr.ht/~your-tools/skyspell/tree/main/item/skyspell-ignore.kdl)
+See the [skyspell-ignore.kdl for this project](https://github.com/your-tools/skyspell/blob/main/skyspell-ignore.kdl)
 for an example.
 
 By default, the storage backend will be this configuration file. This

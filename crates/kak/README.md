@@ -3,7 +3,7 @@
 
 ## Installation
 
-Install [skyspell](https://git.sr.ht/~dmerej/skyspell).
+Install [skyspell](https://github.com/your-tools/skyspell).
 
 Install `skyspell_kak`:
 

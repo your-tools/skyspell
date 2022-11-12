@@ -2,7 +2,7 @@
 
 ## Changes in configuration files
 
-See [skyspell_core](https://git.sr.ht/~your-tools/skyspell/tree/main/item/crates/core/Changelog.md) changelog.
+See [skyspell_core](https://github.com/your-tools/skyspell/blob/main/crates/core/Changelog.md) changelog.
 
 ## Changes in behavior
 
