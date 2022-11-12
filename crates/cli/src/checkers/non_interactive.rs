@@ -123,7 +123,7 @@ impl<D: Dictionary> Checker for NonInteractiveChecker<D> {
             self.print_error(path, &error);
         }
         let entry = self.errors.entry(path.to_string());
-        let errors_for_entry = entry.or_insert(vec![]);
+        let errors_for_entry = entry.or_default();
         errors_for_entry.push(error);
         Ok(())
     }

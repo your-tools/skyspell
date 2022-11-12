@@ -62,7 +62,7 @@ fn test_add_global_ignore_to_empty_config() {
             }
             "#;
 
-    check(&action, input, expected);
+    check(action, input, expected);
 }
 
 #[test]
@@ -83,7 +83,7 @@ fn test_create_subsection_from_scratch() {
             }
             "#;
 
-    check(&action, input, expected);
+    check(action, input, expected);
 }
 
 #[test]
@@ -129,7 +129,7 @@ fn test_add_global_ignore_to_existing_config() {
             }
             "#;
 
-    check(&action, input, expected);
+    check(action, input, expected);
 }
 
 #[test]
@@ -173,7 +173,7 @@ fn test_remove_word_from_global() {
             }
             "#;
 
-    check(&action, input, expected);
+    check(action, input, expected);
 }
 
 #[test]
@@ -218,7 +218,7 @@ fn test_add_project_ignore() {
             }
             "#;
 
-    check(&action, input, expected);
+    check(action, input, expected);
 }
 
 #[test]
@@ -267,7 +267,7 @@ fn test_add_ignore_for_new_extension() {
             }
             "#;
 
-    check(&action, input, expected);
+    check(action, input, expected);
 }
 
 #[test]
@@ -329,7 +329,7 @@ fn test_add_ignore_for_existing_extension() {
             }
             "#;
 
-    check(&action, input, expected);
+    check(action, input, expected);
 }
 
 test_ignore_store!(IgnoreConfig);

@@ -30,7 +30,7 @@ impl SkipFile {
         if relative_path.as_str() == SKYSPELL_IGNORE_FILE {
             return true;
         }
-        match self.0.matched(&relative_path, /*is-dir*/ false) {
+        match self.0.matched(relative_path, /*is-dir*/ false) {
             Match::Ignore(_) => true,
             Match::None | Match::Whitelist(_) => false,
         }

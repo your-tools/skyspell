@@ -22,7 +22,7 @@ pub fn get_default_db_path(lang: &str) -> Result<String> {
         anyhow!("Need a home directory to get application directories for skyspell")
     })?;
     let data_dir = project_dirs.data_dir();
-    std::fs::create_dir_all(&data_dir)
+    std::fs::create_dir_all(data_dir)
         .with_context(|| format!("Could not create {}", data_dir.display()))?;
 
     let db_path = data_dir.join(format!("{}.db", lang));

@@ -37,7 +37,7 @@ impl<D: Dictionary, S: OperatingSystemIO> Checker for KakouneChecker<D, S> {
     ) -> Result<()> {
         let (buffer, line, column) = context;
         let pos = (*line, *column);
-        let full_path = self.project.path().as_ref().join(&path);
+        let full_path = self.project.path().as_ref().join(path);
         self.errors.push(Error {
             full_path,
             pos,
