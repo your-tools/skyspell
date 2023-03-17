@@ -43,7 +43,7 @@ impl TestApp {
     fn handle_token(&mut self, token: &str, relative_name: &str) {
         let project_path = self.checker.project().path();
         let full_path = project_path.as_ref().join(relative_name);
-        std::fs::write(&full_path, "").unwrap();
+        std::fs::write(full_path, "").unwrap();
         let relative_path = self.to_relative_path(relative_name);
         let context = &(3, 42);
         self.checker

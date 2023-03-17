@@ -75,7 +75,7 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
         let mut split = range_spec.split_whitespace();
         split.next();
 
-        split.into_iter().map(|x| self.parse_range(x)).collect()
+        split.map(|x| self.parse_range(x)).collect()
     }
 
     pub fn print(&self, command: &str) {

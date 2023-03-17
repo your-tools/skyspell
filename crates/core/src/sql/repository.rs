@@ -279,7 +279,7 @@ impl Repository for SQLRepository {
     fn insert_operation(&mut self, operation: &Operation) -> Result<()> {
         let as_json = serde_json::to_string(operation).expect("Could not deserialize operation");
         let now = time::OffsetDateTime::now_utc();
-        let timestamp = now.unix_timestamp() as i64;
+        let timestamp = now.unix_timestamp();
         let new_operation = NewOperation {
             json: &as_json,
             timestamp,

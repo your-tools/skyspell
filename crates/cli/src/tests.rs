@@ -282,8 +282,8 @@ fn test_reading_ignore_patterns_from_config() {
     let app = TestApp::new(&temp_dir);
     let (foo_full, _) = app.ensure_file("foo.lock");
     let (config_path, _) = app.ensure_file("skyspell-ignore.kdl");
-    std::fs::write(&foo_full, "error").unwrap();
-    std::fs::write(&config_path, "patterns {\n *.lock \n}\n").unwrap();
+    std::fs::write(foo_full, "error").unwrap();
+    std::fs::write(config_path, "patterns {\n *.lock \n}\n").unwrap();
 
     app.run(&["check", "--non-interactive"]).unwrap();
 }

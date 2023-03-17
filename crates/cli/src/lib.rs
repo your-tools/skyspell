@@ -48,16 +48,14 @@ macro_rules! print_error {
 }
 
 #[derive(Debug, PartialEq, Eq, clap::ValueEnum, Clone, Copy)]
+#[derive(Default)]
 pub enum OutputFormat {
+    #[default]
     Text,
     Json,
 }
 
-impl Default for OutputFormat {
-    fn default() -> Self {
-        OutputFormat::Text
-    }
-}
+
 
 impl OutputFormat {
     fn is_text(&self) -> bool {
