@@ -3,6 +3,8 @@
 Bug fix: use a draft context when filling up the `*spelling*` buffer.
 Original patch by @micahh2
 
+Bump `skyspell_core` to 2.0.0
+
 # 1.0.1 (2022-11-12)
 
 Bug fix: using `.` after `skyspell-check` now works as expected.
