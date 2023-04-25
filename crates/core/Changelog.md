@@ -1,3 +1,11 @@
+# 2.0.0 (2022-11-12)
+
+**Breaking** : most methods on the public traits are now `mut`, even the
+ones which do not modify the database - this was due to the diesel v2
+upgrade.
+
+Also, bump clap from v3 to v4
+
 # 1.0.3 (2022-11-12)
 
 Bump dependencies
