@@ -1,9 +1,12 @@
+# 1.0.3 (2022-04-25)
+
+Bump `skyspell_core` to 2.0.0
+
 # 1.0.2 (2022-04-25)
 
 Bug fix: use a draft context when filling up the `*spelling*` buffer.
 Original patch by @micahh2
 
-Bump `skyspell_core` to 2.0.0
 
 # 1.0.1 (2022-11-12)
 
