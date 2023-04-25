@@ -1,3 +1,7 @@
+# 1.0.2 (2023-04-25)
+
+* Bump `skyspell_core` to v2.0.0
+
 # 1.0.1 (2022-11-12)
 
 * Bump dependencies
