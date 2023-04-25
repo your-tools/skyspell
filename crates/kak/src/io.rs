@@ -50,10 +50,6 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
         self.parse_usize(&timestamp)
     }
 
-    pub fn goto_previous_buffer(&self) {
-        self.os_io.print("execute-keys ga\n")
-    }
-
     pub fn parse_cursor(&self, pos: &str) -> Result<(usize, usize)> {
         let (start, end) = pos.split_once('.').context("cursor should contain '.'")?;
         let start = start

@@ -97,7 +97,6 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
     pub fn write_code(&self) -> Result<()> {
         let kak_timestamp = self.kakoune_io.get_timestamp()?;
         self.write_spelling_buffer();
-        self.kakoune_io.goto_previous_buffer();
         self.write_ranges(kak_timestamp);
         self.write_status();
 
@@ -128,6 +127,9 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
     }
 
     fn write_spelling_buffer(&self) {
+        // Only write in draft mode
+        self.print("evaluate-commands -draft %{");
+
         // Open buffer
         self.print("edit -scratch *spelling*\n");
 
@@ -143,9 +145,9 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
         }
         self.print("} ");
 
-        // Back to top
-        self.print("\n");
-        self.print("execute-keys <esc> gg\n")
+        // End draft commands, this leaves the cursor where it was,
+        // and does not pollute buffer list or undo
+        self.print("<esc>}\n");
     }
 
     fn write_error(&self, error: &Error) {

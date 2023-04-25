@@ -144,13 +144,6 @@ fn test_get_selection_set_in_fake() {
 }
 
 #[test]
-fn test_goto_previous_buffer() {
-    let kakoune_io = new_fake_io();
-    kakoune_io.goto_previous_buffer();
-    assert_eq!(kakoune_io.get_output(), "execute-keys ga\n");
-}
-
-#[test]
 fn test_get_previous_selection_between_two_selections_other_line() {
     let kakoune_io = new_fake_io();
     let pos = (1, 21);
