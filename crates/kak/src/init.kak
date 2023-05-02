@@ -82,6 +82,7 @@ u : Undo last operation
 
 define-command skyspell-list -docstring "list spelling errors" %{
    buffer *spelling*
+   execute-keys gg
    skyspell-help
 }
 
