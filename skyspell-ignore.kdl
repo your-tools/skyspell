@@ -318,6 +318,7 @@ paths {
   }
 
   "crates/core/Changelog.md" {
+    mut
     struct
   }
 
