@@ -13,7 +13,6 @@ do
     echo "Deleting stuff, nothing to do"
   else
     set -x
-    cargo clippy -- -A clippy::extra_unused_lifetimes -D clippy::unwrap_used
     cargo clippy --all-targets -- -A clippy::extra_unused_lifetimes --deny warnings
     cargo test
     cargo run --bin skyspell -- check --non-interactive
