@@ -25,3 +25,24 @@ for_window [class="kitty-tests"] floating enable , resize set 800 700
 
 This works because the tests set the window class when they start the remote kakoune instances.
 
+## How to run the tests
+
+Make sure to:
+
+* Install `kakoune`
+* Install `skyspell-kak` from this repo and not crates.io
+
+```
+$ cargo install --locked --path ../crates/kak/
+# Re-run this each time the Rust code changes, including
+# ../crates/kak/src/init.kak
+```
+
+* Have `~/.cargo/bin/` first in your PATH
+
+Then run the tests with :
+
+```
+$ poetry install
+$ poetry run pytest
+```
