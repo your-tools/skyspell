@@ -208,7 +208,9 @@ impl<'a> Tokenizer<'a> {
             Some(c) => c,
         };
 
-        let ident_match = captures.get(index).expect("bad regex");
+        // The `index` comes for the call to `captures()` already, so this will
+        // should not panic:
+        let ident_match = captures.get(index).unwrap();
         let ident = ident_match.as_str();
         let pos = ident_match.start();
         if self.extract_mode == ExtractMode::Python {
@@ -238,13 +240,17 @@ impl<'a> Tokenizer<'a> {
         if first_char.is_uppercase() {
             // SCREAMING -> SCREAMING
             if let Some(captures) = CONSTANT_RE.captures(ident) {
-                let res = captures.get(1).expect("bad regex").as_str();
+                // CONSTANT_RE contains at least one group, so this should
+                // not panic:
+                let res = captures.get(1).unwrap().as_str();
                 return Some((res, pos));
             }
 
             // HTTPError -> HTTP
             if let Some(captures) = ABBREV_RE.captures(ident) {
-                let res = captures.get(1).expect("bad regex").as_str();
+                // ABBREV_RE contains at least one group, so this should
+                // not panic:
+                let res = captures.get(1).unwrap().as_str();
                 return Some((res, pos));
             }
 
@@ -265,7 +271,9 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn get_python_string_prefix(&self, token: &str) -> Option<&str> {
-        PYTHON_STRING_PREFIXES.into_iter().find(|&prefix| token.starts_with(prefix))
+        PYTHON_STRING_PREFIXES
+            .into_iter()
+            .find(|&prefix| token.starts_with(prefix))
     }
 }
 
@@ -279,7 +287,8 @@ impl<'a> Iterator for Tokenizer<'a> {
         //   Then we extract words out of identifiers
         loop {
             let captures = TOKEN_RE.captures(&self.input[self.pos..])?;
-            let token_match = captures.get(0).expect("bad regex");
+            // .get(0) should never panic
+            let token_match = captures.get(0).unwrap();
             let token = token_match.as_str();
             let start = token_match.range().start;
             let next_word = self.extract_word(token);
