@@ -1,8 +1,8 @@
 use tempfile::TempDir;
 
 use super::InteractiveChecker;
-use skyspell_core::tests::{FakeDictionary, FakeRepository};
-use skyspell_core::{Checker, ProjectPath, RelativePath, StorageBackend};
+use skyspell_core::tests::FakeDictionary;
+use skyspell_core::{Checker, Project, ProjectPath, RelativePath};
 
 use crate::tests::FakeInteractor;
 
@@ -14,14 +14,11 @@ struct TestApp {
 
 impl TestApp {
     fn new(temp_dir: &TempDir) -> Self {
-        let interactor = FakeInteractor::new();
-        let dictionary = FakeDictionary::new();
-        let repository = FakeRepository::new();
+        let _interactor = FakeInteractor::new();
+        let _dictionary = FakeDictionary::new();
         let project_path = ProjectPath::new(temp_dir.path()).unwrap();
-        let mut storage_backend = StorageBackend::Repository(Box::new(repository));
-        let project = storage_backend.ensure_project(&project_path).unwrap();
-        let checker = TestChecker::new(project, interactor, dictionary, storage_backend).unwrap();
-        Self { checker }
+        let _project = Project::new(0, project_path);
+        todo!()
     }
 
     fn add_known(&mut self, words: &[&str]) {
