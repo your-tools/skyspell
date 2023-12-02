@@ -83,13 +83,13 @@ impl IgnoreStore for FakeRepository {
         let entry = &mut self
             .by_extension
             .entry(extension.to_string())
-            .or_insert_with(Vec::new);
+            .or_default();
         entry.push(word.to_string());
         Ok(())
     }
 
     fn ignore_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()> {
-        let entry = &mut self.by_project.entry(project_id).or_insert_with(Vec::new);
+        let entry = &mut self.by_project.entry(project_id).or_default();
         entry.push(word.to_string());
         Ok(())
     }
@@ -103,7 +103,7 @@ impl IgnoreStore for FakeRepository {
         let entry = &mut self
             .by_project_and_path
             .entry((project_id, path.to_string()))
-            .or_insert_with(Vec::new);
+            .or_default();
         entry.push(word.to_string());
         Ok(())
     }
