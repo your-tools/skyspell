@@ -8,6 +8,7 @@ authors = ["Dimitri Merejkowsky <dimitri@dmerej.info>"]
 python = "^3.7"
 pytest = "^6.2.5"
 pytest-xdist = "^2.3.0"
+kdl-py = "^1.1.6"
 
 [tool.poetry.dev-dependencies]
 # Task runner
