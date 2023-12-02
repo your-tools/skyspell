@@ -6,7 +6,6 @@ use crate::{ProjectPath, RelativePath};
 pub mod fake_dictionary;
 pub mod fake_io;
 pub mod test_dictionary;
-pub mod test_ignore_store;
 pub mod test_repository;
 
 pub use fake_dictionary::FakeDictionary;
