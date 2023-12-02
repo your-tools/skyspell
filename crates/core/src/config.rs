@@ -29,6 +29,12 @@ pub struct IgnoreConfig {
     path: Option<PathBuf>,
 }
 
+impl Display for IgnoreConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.doc)
+    }
+}
+
 impl IgnoreConfig {
     pub fn new(path: Option<PathBuf>) -> Self {
         Self {
@@ -315,16 +321,7 @@ impl IgnoreConfig {
         };
         std::fs::write(path, self.doc.to_string()).with_context(|| "While writing")
     }
-}
 
-impl Display for IgnoreConfig {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.doc)
-    }
-}
-
-// TODO: merge two imps
-impl IgnoreConfig {
     // Should this word be ignored?
     // This is called when a word is *not* found in the spelling dictionary.
     //
