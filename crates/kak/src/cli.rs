@@ -101,20 +101,11 @@ pub fn main() -> Result<()> {
     let project_path = PathBuf::from(project_as_str);
 
     let config_path = project_path.join(SKYSPELL_IGNORE_FILE);
-    let mut ignore_config = None;
+    let kdl = std::fs::read_to_string(&config_path)
+        .with_context(|| format!("While reading {SKYSPELL_IGNORE_FILE}"))?;
+    let ignore_config = IgnoreConfig::parse(Some(config_path.clone()), &kdl)?;
 
-    if config_path.exists() {
-        let kdl = std::fs::read_to_string(&config_path)
-            .with_context(|| format!("While reading {SKYSPELL_IGNORE_FILE}"))?;
-        ignore_config = Some(IgnoreConfig::parse(Some(config_path.clone()), &kdl)?);
-    }
-
-    let mut storage_backend = {
-        let ignore_config =
-            ignore_config.expect("ignore_config should not be None when use_db is false");
-        kakoune_io.debug(&format!("Using config {:?}", config_path));
-        StorageBackend::IgnoreStore(Box::new(ignore_config))
-    };
+    let mut storage_backend = StorageBackend::new(ignore_config);
 
     let dictionary = EnchantDictionary::new(lang)?;
 

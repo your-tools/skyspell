@@ -101,10 +101,7 @@ fn test_remove_global() {
         .tempdir()
         .unwrap();
     let mut app = TestApp::new(&temp_dir);
-    app.storage_backend
-        .ignore_store_mut()
-        .ignore("foo")
-        .unwrap();
+    app.storage_backend.ignore("foo").unwrap();
 
     app.run(&["remove", "foo"]).unwrap();
 

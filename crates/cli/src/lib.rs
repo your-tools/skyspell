@@ -79,7 +79,7 @@ pub struct Opts {
 }
 
 impl Opts {
-    fn text_output(&self) -> bool {
+    pub fn text_output(&self) -> bool {
         self.output_format.unwrap_or_default() == OutputFormat::Text
     }
 }
@@ -157,18 +157,12 @@ fn add(project: Project, mut storage_backend: StorageBackend, opts: &AddOpts) ->
     let word = &opts.word;
     match (&opts.relative_path, &opts.extension, &opts.project) {
         (None, None, false) => storage_backend.ignore(word),
-        (None, Some(e), _) => storage_backend
-            .ignore_store_mut()
-            .ignore_for_extension(word, e),
+        (None, Some(e), _) => storage_backend.ignore_for_extension(word, e),
         (Some(relative_path), None, _) => {
             let relative_path = project.get_relative_path(relative_path)?;
-            storage_backend
-                .ignore_store_mut()
-                .ignore_for_path(word, project.id(), &relative_path)
+            storage_backend.ignore_for_path(word, project.id(), &relative_path)
         }
-        (None, None, true) => storage_backend
-            .ignore_store_mut()
-            .ignore_for_project(word, project.id()),
+        (None, None, true) => storage_backend.ignore_for_project(word, project.id()),
         (Some(_), Some(_), _) => bail!("Cannot use both --relative-path and --extension"),
     }
 }
@@ -182,9 +176,7 @@ fn remove(project: Project, mut storage_backend: StorageBackend, opts: &RemoveOp
             let relative_path = project.get_relative_path(relative_path)?;
             storage_backend.remove_ignored_for_path(word, project.id(), &relative_path)
         }
-        (None, None, true) => storage_backend
-            .ignore_store_mut()
-            .remove_ignored_for_project(word, project.id()),
+        (None, None, true) => storage_backend.remove_ignored_for_project(word, project.id()),
         (Some(_), Some(_), _) => bail!("Cannot use both --relative-path and --extension"),
     }
 }
@@ -308,32 +300,22 @@ pub fn main() -> Result<()> {
     };
 
     let ignore_path = project_path.join(SKYSPELL_IGNORE_FILE);
-    let mut ignore_config = None;
 
-    if ignore_path.exists() {
-        let kdl = std::fs::read_to_string(&ignore_path)
-            .with_context(|| format!("While reading {SKYSPELL_IGNORE_FILE}"))?;
-        ignore_config = Some(IgnoreConfig::parse(Some(ignore_path), &kdl)?);
-    }
+    let kdl = std::fs::read_to_string(&ignore_path)
+        .with_context(|| format!("While reading {SKYSPELL_IGNORE_FILE}"))?;
+    let ignore_config = IgnoreConfig::parse(Some(ignore_path), &kdl)?;
 
     let dictionary = EnchantDictionary::new(lang)?;
     let current_provider = dictionary.provider();
 
-    let provider_in_config = ignore_config.as_ref().and_then(|c| c.provider());
+    let provider_in_config = ignore_config.provider();
     if let Some(provider_in_config) = provider_in_config {
         if current_provider != provider_in_config {
             bail!("Using '{current_provider}' as provider but should be '{provider_in_config}'")
         }
     }
 
-    let mut storage_backend = {
-        let ignore_config =
-            ignore_config.expect("ignore_config should not be None when use_db is false");
-        if opts.text_output() {
-            info_1!("Using {SKYSPELL_IGNORE_FILE} as storage");
-        }
-        StorageBackend::IgnoreStore(Box::new(ignore_config))
-    };
+    let mut storage_backend = StorageBackend::new(ignore_config);
 
     let project_path = ProjectPath::new(&project_path)?;
     let project = storage_backend.ensure_project(&project_path)?;

@@ -1,23 +1,13 @@
 use anyhow::{bail, Result};
 
 use crate::operations::Operation;
-use crate::{IgnoreStore, Project, ProjectId, ProjectPath, RelativePath};
+use crate::{IgnoreConfig, Project, ProjectId, ProjectPath, RelativePath};
 
-pub enum StorageBackend {
-    IgnoreStore(Box<dyn IgnoreStore>),
-}
+pub struct StorageBackend(IgnoreConfig);
 
 impl StorageBackend {
-    pub fn ignore_store_mut(&mut self) -> &mut dyn IgnoreStore {
-        match self {
-            StorageBackend::IgnoreStore(i) => i.as_mut(),
-        }
-    }
-
-    pub fn ignore_store(&mut self) -> &mut dyn IgnoreStore {
-        match self {
-            StorageBackend::IgnoreStore(i) => i.as_mut(),
-        }
+    pub fn new(ignore_config: IgnoreConfig) -> Self {
+        Self(ignore_config)
     }
 
     pub(crate) fn should_ignore(
@@ -26,20 +16,19 @@ impl StorageBackend {
         project_id: i32,
         relative_path: &crate::RelativePath,
     ) -> Result<bool> {
-        self.ignore_store()
-            .should_ignore(token, project_id, relative_path)
+        self.0.should_ignore(token, project_id, relative_path)
     }
 
     pub fn is_ignored(&mut self, word: &str) -> Result<bool> {
-        self.ignore_store().is_ignored(word)
+        self.0.is_ignored(word)
     }
 
     pub fn is_ignored_for_extension(&mut self, word: &str, ext: &str) -> Result<bool> {
-        self.ignore_store().is_ignored_for_extension(word, ext)
+        self.0.is_ignored_for_extension(word, ext)
     }
 
     pub fn is_ignored_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<bool> {
-        self.ignore_store().is_ignored_for_project(word, project_id)
+        self.0.is_ignored_for_project(word, project_id)
     }
 
     pub fn is_ignored_for_path(
@@ -48,22 +37,17 @@ impl StorageBackend {
         project_id: ProjectId,
         relative_path: &RelativePath,
     ) -> Result<bool> {
-        self.ignore_store()
-            .is_ignored_for_path(word, project_id, relative_path)
+        self.0.is_ignored_for_path(word, project_id, relative_path)
     }
 
     pub fn ignore(&mut self, word: &str) -> Result<()> {
         let _operation = Operation::new_ignore(word);
-        match self {
-            StorageBackend::IgnoreStore(i) => i.ignore(word),
-        }
+        self.0.ignore(word)
     }
 
     pub fn ignore_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()> {
         let _operation = Operation::new_ignore_for_project(word, project_id);
-        match self {
-            StorageBackend::IgnoreStore(i) => i.ignore_for_project(word, project_id),
-        }
+        self.0.ignore_for_project(word, project_id)
     }
 
     pub fn ignore_for_path(
@@ -73,30 +57,24 @@ impl StorageBackend {
         relative_path: &RelativePath,
     ) -> Result<()> {
         let _operation = Operation::new_ignore_for_path(word, project_id, relative_path);
-        match self {
-            StorageBackend::IgnoreStore(i) => i.ignore_for_path(word, project_id, relative_path),
-        }
+        self.0.ignore_for_path(word, project_id, relative_path)
     }
 
     pub fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
         let _operation = Operation::new_ignore_for_extension(word, extension);
-        match self {
-            StorageBackend::IgnoreStore(i) => i.ignore_for_extension(word, extension),
-        }
+        self.0.ignore_for_extension(word, extension)
     }
 
     pub fn remove_ignored(&mut self, word: &str) -> Result<()> {
-        self.ignore_store_mut().remove_ignored(word)
+        self.0.remove_ignored(word)
     }
 
     pub fn remove_ignored_for_project(&mut self, word: &str, project_id: ProjectId) -> Result<()> {
-        self.ignore_store_mut()
-            .remove_ignored_for_project(word, project_id)
+        self.0.remove_ignored_for_project(word, project_id)
     }
 
     pub fn remove_ignored_for_extension(&mut self, word: &str, ext: &str) -> Result<()> {
-        self.ignore_store_mut()
-            .remove_ignored_for_extension(word, ext)
+        self.0.remove_ignored_for_extension(word, ext)
     }
 
     pub fn remove_ignored_for_path(
@@ -105,7 +83,7 @@ impl StorageBackend {
         project_id: ProjectId,
         relative_path: &RelativePath,
     ) -> Result<()> {
-        self.ignore_store_mut()
+        self.0
             .remove_ignored_for_path(word, project_id, relative_path)
     }
 
