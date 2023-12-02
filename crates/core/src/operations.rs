@@ -41,23 +41,23 @@ impl Operation {
         })
     }
 
-    pub fn execute(&mut self, ignore_store: &mut Config) -> Result<()> {
+    pub fn execute(&mut self, config: &mut Config) -> Result<()> {
         use Operation::*;
         match self {
-            Ignore(o) => o.execute(ignore_store),
-            IgnoreForExtension(o) => o.execute(ignore_store),
-            IgnoreForPath(o) => o.execute(ignore_store),
-            IgnoreForProject(o) => o.execute(ignore_store),
+            Ignore(o) => o.execute(config),
+            IgnoreForExtension(o) => o.execute(config),
+            IgnoreForPath(o) => o.execute(config),
+            IgnoreForProject(o) => o.execute(config),
         }
     }
 
-    pub fn undo(&mut self, ignore_store: &mut Config) -> Result<()> {
+    pub fn undo(&mut self, config: &mut Config) -> Result<()> {
         use Operation::*;
         match self {
-            Ignore(o) => o.undo(ignore_store),
-            IgnoreForExtension(o) => o.undo(ignore_store),
-            IgnoreForPath(o) => o.undo(ignore_store),
-            IgnoreForProject(o) => o.undo(ignore_store),
+            Ignore(o) => o.undo(config),
+            IgnoreForExtension(o) => o.undo(config),
+            IgnoreForPath(o) => o.undo(config),
+            IgnoreForProject(o) => o.undo(config),
         }
     }
 }
@@ -68,12 +68,12 @@ pub struct Ignore {
 }
 
 impl Ignore {
-    fn execute(&mut self, ignore_store: &mut Config) -> Result<()> {
-        ignore_store.ignore(&self.word)
+    fn execute(&mut self, config: &mut Config) -> Result<()> {
+        config.ignore(&self.word)
     }
 
-    fn undo(&mut self, ignore_store: &mut Config) -> Result<()> {
-        ignore_store.remove_ignored(&self.word)
+    fn undo(&mut self, config: &mut Config) -> Result<()> {
+        config.remove_ignored(&self.word)
     }
 }
 
@@ -84,12 +84,12 @@ pub struct IgnoreForExtension {
 }
 
 impl IgnoreForExtension {
-    fn execute(&mut self, ignore_store: &mut Config) -> Result<()> {
-        ignore_store.ignore_for_extension(&self.word, &self.extension)
+    fn execute(&mut self, config: &mut Config) -> Result<()> {
+        config.ignore_for_extension(&self.word, &self.extension)
     }
 
-    fn undo(&mut self, ignore_store: &mut Config) -> Result<()> {
-        ignore_store.remove_ignored_for_extension(&self.word, &self.extension)
+    fn undo(&mut self, config: &mut Config) -> Result<()> {
+        config.remove_ignored_for_extension(&self.word, &self.extension)
     }
 }
 
@@ -99,12 +99,12 @@ pub struct IgnoreForProject {
 }
 
 impl IgnoreForProject {
-    fn execute(&mut self, ignore_store: &mut Config) -> Result<()> {
-        ignore_store.ignore_for_project(&self.word)
+    fn execute(&mut self, config: &mut Config) -> Result<()> {
+        config.ignore_for_project(&self.word)
     }
 
-    fn undo(&mut self, ignore_store: &mut Config) -> Result<()> {
-        ignore_store.remove_ignored_for_project(&self.word)
+    fn undo(&mut self, config: &mut Config) -> Result<()> {
+        config.remove_ignored_for_project(&self.word)
     }
 }
 
@@ -115,11 +115,11 @@ pub struct IgnoreForPath {
 }
 
 impl IgnoreForPath {
-    fn execute(&mut self, ignore_store: &mut Config) -> Result<()> {
-        ignore_store.ignore_for_path(&self.word, &self.path)
+    fn execute(&mut self, config: &mut Config) -> Result<()> {
+        config.ignore_for_path(&self.word, &self.path)
     }
 
-    fn undo(&mut self, ignore_store: &mut Config) -> Result<()> {
-        ignore_store.remove_ignored_for_path(&self.word, &self.path)
+    fn undo(&mut self, config: &mut Config) -> Result<()> {
+        config.remove_ignored_for_path(&self.word, &self.path)
     }
 }

@@ -336,127 +336,127 @@ fn test_add_ignore_for_existing_extension() {
 
 #[test]
 fn test_insert_ignore() {
-    let mut ignore_store = Config::new_for_tests().unwrap();
-    ignore_store.ignore("foo").unwrap();
+    let mut config = Config::new_for_tests().unwrap();
+    config.ignore("foo").unwrap();
 
-    assert!(ignore_store.is_ignored("foo").unwrap());
-    assert!(!ignore_store.is_ignored("bar").unwrap());
+    assert!(config.is_ignored("foo").unwrap());
+    assert!(!config.is_ignored("bar").unwrap());
 }
 
 #[test]
 fn test_lookup_extension() {
-    let mut ignore_store = Config::new_for_tests().unwrap();
-    ignore_store.ignore_for_extension("dict", "py").unwrap();
+    let mut config = Config::new_for_tests().unwrap();
+    config.ignore_for_extension("dict", "py").unwrap();
 
-    assert!(ignore_store.is_ignored_for_extension("dict", "py").unwrap());
+    assert!(config.is_ignored_for_extension("dict", "py").unwrap());
 }
 
 #[test]
 fn test_insert_ignore_ignore_duplicates() {
-    let mut ignore_store = Config::new_for_tests().unwrap();
-    ignore_store.ignore("foo").unwrap();
-    ignore_store.ignore("foo").unwrap();
+    let mut config = Config::new_for_tests().unwrap();
+    config.ignore("foo").unwrap();
+    config.ignore("foo").unwrap();
 }
 
 #[test]
 fn test_ignored_for_extension_duplicates() {
-    let mut ignore_store = Config::new_for_tests().unwrap();
-    ignore_store.ignore_for_extension("dict", "py").unwrap();
-    ignore_store.ignore_for_extension("dict", "py").unwrap();
+    let mut config = Config::new_for_tests().unwrap();
+    config.ignore_for_extension("dict", "py").unwrap();
+    config.ignore_for_extension("dict", "py").unwrap();
 }
 
 #[test]
 fn test_ignored_for_project() {
-    let mut ignore_store = Config::new_for_tests().unwrap();
-    ignore_store.ignore_for_project("foo").unwrap();
+    let mut config = Config::new_for_tests().unwrap();
+    config.ignore_for_project("foo").unwrap();
 
-    assert!(ignore_store.is_ignored_for_project("foo").unwrap())
+    assert!(config.is_ignored_for_project("foo").unwrap())
 }
 
 #[test]
 fn test_ignored_for_path() {
-    let mut ignore_store = Config::new_for_tests().unwrap();
+    let mut config = Config::new_for_tests().unwrap();
     let foo_py = RelativePath::from_path_unchecked(PathBuf::from("foo.py"));
     let foo_rs = RelativePath::from_path_unchecked(PathBuf::from("foo.rs"));
 
-    ignore_store.ignore_for_path("foo", &foo_py).unwrap();
+    config.ignore_for_path("foo", &foo_py).unwrap();
 
-    assert!(ignore_store.is_ignored_for_path("foo", &foo_py).unwrap());
-    assert!(!ignore_store.is_ignored_for_path("foo", &foo_rs).unwrap());
+    assert!(config.is_ignored_for_path("foo", &foo_py).unwrap());
+    assert!(!config.is_ignored_for_path("foo", &foo_rs).unwrap());
 }
 
 #[test]
 fn test_remove_ignored_happy() {
-    let mut ignore_store = Config::new_for_tests().unwrap();
-    ignore_store.ignore("foo").unwrap();
+    let mut config = Config::new_for_tests().unwrap();
+    config.ignore("foo").unwrap();
 
-    ignore_store.remove_ignored("foo").unwrap();
+    config.remove_ignored("foo").unwrap();
 
-    assert!(!ignore_store.is_ignored("foo").unwrap());
+    assert!(!config.is_ignored("foo").unwrap());
 }
 
 #[test]
 fn test_remove_ignored_when_not_ignored() {
-    let mut ignore_store = Config::new_for_tests().unwrap();
-    assert!(!ignore_store.is_ignored("foo").unwrap());
+    let mut config = Config::new_for_tests().unwrap();
+    assert!(!config.is_ignored("foo").unwrap());
 
-    assert!(ignore_store.remove_ignored("foo").is_err());
+    assert!(config.remove_ignored("foo").is_err());
 }
 
 #[test]
 fn test_remove_ignored_for_extension_happy() {
-    let mut ignore_store = Config::new_for_tests().unwrap();
-    ignore_store.ignore_for_extension("foo", "py").unwrap();
+    let mut config = Config::new_for_tests().unwrap();
+    config.ignore_for_extension("foo", "py").unwrap();
 
-    ignore_store
+    config
         .remove_ignored_for_extension("foo", "py")
         .unwrap();
 
-    assert!(!ignore_store.is_ignored_for_extension("foo", "py").unwrap());
+    assert!(!config.is_ignored_for_extension("foo", "py").unwrap());
 }
 
 #[test]
 fn test_remove_ignored_for_extension_when_not_ignored() {
-    let mut ignore_store = Config::new_for_tests().unwrap();
-    assert!(!ignore_store.is_ignored_for_extension("foo", "py").unwrap());
+    let mut config = Config::new_for_tests().unwrap();
+    assert!(!config.is_ignored_for_extension("foo", "py").unwrap());
 
-    assert!(ignore_store
+    assert!(config
         .remove_ignored_for_extension("foo", "py")
         .is_err());
 }
 
 #[test]
 fn test_remove_ignored_for_path_happy() {
-    let mut ignore_store = Config::new_for_tests().unwrap();
+    let mut config = Config::new_for_tests().unwrap();
     let foo_py = RelativePath::from_path_unchecked(PathBuf::from("foo.py"));
 
-    ignore_store.ignore_for_path("foo", &foo_py).unwrap();
+    config.ignore_for_path("foo", &foo_py).unwrap();
 
-    ignore_store
+    config
         .remove_ignored_for_path("foo", &foo_py)
         .unwrap();
 
-    assert!(!ignore_store.is_ignored_for_path("foo", &foo_py).unwrap());
+    assert!(!config.is_ignored_for_path("foo", &foo_py).unwrap());
 }
 
 #[test]
 fn test_remove_ignored_for_path_when_not_ignored() {
-    let mut ignore_store = Config::new_for_tests().unwrap();
+    let mut config = Config::new_for_tests().unwrap();
     let foo_py = RelativePath::from_path_unchecked(PathBuf::from("foo.py"));
 
-    assert!(!ignore_store.is_ignored_for_path("foo", &foo_py).unwrap());
+    assert!(!config.is_ignored_for_path("foo", &foo_py).unwrap());
 
-    assert!(ignore_store
+    assert!(config
         .remove_ignored_for_path("foo", &foo_py)
         .is_err());
 }
 
 #[test]
 fn test_remove_ignored_for_project() {
-    let mut ignore_store = Config::new_for_tests().unwrap();
-    ignore_store.ignore_for_project("foo").unwrap();
+    let mut config = Config::new_for_tests().unwrap();
+    config.ignore_for_project("foo").unwrap();
 
-    ignore_store.remove_ignored_for_project("foo").unwrap();
+    config.remove_ignored_for_project("foo").unwrap();
 
-    assert!(!ignore_store.is_ignored_for_project("foo").unwrap());
+    assert!(!config.is_ignored_for_project("foo").unwrap());
 }
