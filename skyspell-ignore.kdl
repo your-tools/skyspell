@@ -5,6 +5,7 @@ patterns {
   mypy.ini
 }
 
+
 global {
   Backend
   Baz
@@ -349,5 +350,9 @@ paths {
 
   "tests/README.md" {
     io
+  }
+
+  bacon.toml {
+    stdout
   }
 }
