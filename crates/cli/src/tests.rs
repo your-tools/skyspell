@@ -1,18 +1,12 @@
 use super::*;
 
 use skyspell_core::tests::FakeDictionary;
-use skyspell_core::IgnoreStore;
-use skyspell_core::{ProjectId, ProjectPath, RelativePath};
-use skyspell_core::{SQLRepository, StorageBackend};
+use skyspell_core::RelativePath;
 
 use tempfile::TempDir;
 
 mod fake_interactor;
 pub use fake_interactor::FakeInteractor;
-
-fn open_repository(temp_dir: &TempDir) -> SQLRepository {
-    SQLRepository::new(&TestApp::db_path(temp_dir)).unwrap()
-}
 
 struct TestApp {
     dictionary: FakeDictionary,
@@ -21,26 +15,8 @@ struct TestApp {
 }
 
 impl TestApp {
-    fn new(temp_dir: &TempDir) -> Self {
-        let dictionary = FakeDictionary::new();
-        let db_path = Self::db_path(temp_dir);
-        let repository = SQLRepository::new(&db_path).unwrap();
-        let mut storage_backend = StorageBackend::Repository(Box::new(repository));
-
-        let project_path = temp_dir.path().join("project");
-        std::fs::create_dir(&project_path).unwrap();
-        let project_path = ProjectPath::new(&project_path).unwrap();
-        let project = storage_backend.ensure_project(&project_path).unwrap();
-
-        Self {
-            dictionary,
-            storage_backend,
-            project,
-        }
-    }
-
-    fn project_id(&self) -> ProjectId {
-        self.project.id()
+    fn new(_temp_dir: &TempDir) -> Self {
+        todo!()
     }
 
     fn ensure_file(&self, file_name: &str) -> (PathBuf, RelativePath) {
@@ -48,14 +24,6 @@ impl TestApp {
         std::fs::write(&full_path, "").unwrap();
         let relative_path = self.project.get_relative_path(&full_path).unwrap();
         (full_path, relative_path)
-    }
-
-    fn db_path(temp_dir: &TempDir) -> String {
-        temp_dir
-            .path()
-            .join("tests.db")
-            .to_string_lossy()
-            .to_string()
     }
 
     fn run(self, args: &[&str]) -> Result<()> {
@@ -80,24 +48,16 @@ fn test_add_global() {
 
     app.run(&["add", "foo"]).unwrap();
 
-    let mut repository = open_repository(&temp_dir);
-    assert!(repository.is_ignored("foo").unwrap());
+    todo!()
 }
 
 #[test]
 fn test_add_for_project_happy() {
-    let temp_dir = tempfile::Builder::new()
+    let _temp_dir = tempfile::Builder::new()
         .prefix("test-skyspell")
         .tempdir()
         .unwrap();
-    let app = TestApp::new(&temp_dir);
-    let project_id = app.project_id();
-    app.run(&["add", "foo", "--project"]).unwrap();
-
-    let mut repository = open_repository(&temp_dir);
-    assert!(repository
-        .is_ignored_for_project("foo", project_id)
-        .unwrap());
+    todo!()
 }
 
 #[test]
@@ -111,8 +71,7 @@ fn test_add_for_extension() {
 
     app.run(&["add", "foo", "--extension", "py"]).unwrap();
 
-    let mut repository = open_repository(&temp_dir);
-    assert!(repository.is_ignored_for_extension("foo", "py").unwrap());
+    todo!()
 }
 
 #[test]
@@ -122,8 +81,7 @@ fn test_add_for_relative_path() {
         .tempdir()
         .unwrap();
     let app = TestApp::new(&temp_dir);
-    let project_id = app.project_id();
-    let (full_path, rel_path) = app.ensure_file("foo.txt");
+    let (full_path, _rel_path) = app.ensure_file("foo.txt");
 
     app.run(&[
         "add",
@@ -133,10 +91,7 @@ fn test_add_for_relative_path() {
     ])
     .unwrap();
 
-    let mut repository = open_repository(&temp_dir);
-    assert!(repository
-        .is_ignored_for_path("foo", project_id, &rel_path)
-        .unwrap());
+    todo!()
 }
 
 #[test]
@@ -153,8 +108,7 @@ fn test_remove_global() {
 
     app.run(&["remove", "foo"]).unwrap();
 
-    let mut repository = open_repository(&temp_dir);
-    assert!(!repository.is_ignored("foo").unwrap());
+    todo!()
 }
 
 #[test]
@@ -163,18 +117,11 @@ fn test_remove_for_project() {
         .prefix("test-skyspell")
         .tempdir()
         .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    let project_id = app.project_id();
-    app.storage_backend
-        .ignore_for_project("foo", project_id)
-        .unwrap();
+    let app = TestApp::new(&temp_dir);
 
     app.run(&["remove", "foo", "--project"]).unwrap();
 
-    let mut repository = open_repository(&temp_dir);
-    assert!(!repository
-        .is_ignored_for_project("foo", project_id)
-        .unwrap());
+    todo!()
 }
 
 #[test]
@@ -183,25 +130,10 @@ fn test_remove_for_relative_path() {
         .prefix("test-skyspell")
         .tempdir()
         .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    let project_id = app.project_id();
-    let (full_path, rel_path) = app.ensure_file("foo.txt");
-    app.storage_backend
-        .ignore_for_path("foo", project_id, &rel_path)
-        .unwrap();
+    let app = TestApp::new(&temp_dir);
+    let (_full_path, _rel_path) = app.ensure_file("foo.txt");
 
-    app.run(&[
-        "remove",
-        "foo",
-        "--relative-path",
-        &full_path.to_string_lossy(),
-    ])
-    .unwrap();
-
-    let mut repository = open_repository(&temp_dir);
-    assert!(!repository
-        .is_ignored_for_path("foo", project_id, &rel_path)
-        .unwrap());
+    todo!();
 }
 
 #[test]
@@ -218,8 +150,7 @@ fn test_remove_for_extension() {
 
     app.run(&["remove", "foo", "--extension", "py"]).unwrap();
 
-    let mut repository = open_repository(&temp_dir);
-    assert!(!repository.is_ignored_for_extension("foo", "py").unwrap());
+    todo!()
 }
 
 #[test]
