@@ -31,7 +31,10 @@ fn test_detailed_error_when_parsing_invalid_kdl_syntax() {
         message.contains("valid node name"),
         "bad message: '{message}'"
     );
-    assert!(message.contains("12:5"), "bad message: '{message}'");
+    assert!(
+        message.contains("line 12, column 5"),
+        "bad message: '{message}'"
+    );
 }
 
 // Note: this checks that automatic formatting of the
