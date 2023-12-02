@@ -11,7 +11,6 @@ use skyspell_core::IgnoreConfig;
 use skyspell_core::SkipFile;
 use skyspell_core::StorageBackend;
 use skyspell_core::TokenProcessor;
-use skyspell_core::{get_default_db_path, SQLRepository};
 use skyspell_core::{Project, ProjectPath, SKYSPELL_IGNORE_FILE};
 
 mod checkers;
@@ -47,15 +46,12 @@ macro_rules! print_error {
     })
 }
 
-#[derive(Debug, PartialEq, Eq, clap::ValueEnum, Clone, Copy)]
-#[derive(Default)]
+#[derive(Debug, PartialEq, Eq, clap::ValueEnum, Clone, Copy, Default)]
 pub enum OutputFormat {
     #[default]
     Text,
     Json,
 }
-
-
 
 impl OutputFormat {
     fn is_text(&self) -> bool {
@@ -330,18 +326,7 @@ pub fn main() -> Result<()> {
         }
     }
 
-    let use_db = ignore_config.as_ref().map(|c| c.use_db()).unwrap_or(true);
-    let mut storage_backend = if use_db {
-        let db_path = match opts.db_path.as_ref() {
-            Some(s) => Ok(s.to_string()),
-            None => get_default_db_path(lang),
-        }?;
-        if opts.text_output() {
-            info_1!("Using {db_path} as storage");
-        }
-        let repository = SQLRepository::new(&db_path)?;
-        StorageBackend::Repository(Box::new(repository))
-    } else {
+    let mut storage_backend = {
         let ignore_config =
             ignore_config.expect("ignore_config should not be None when use_db is false");
         if opts.text_output() {

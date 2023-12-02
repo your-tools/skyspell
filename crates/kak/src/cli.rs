@@ -11,7 +11,6 @@ use skyspell_core::OperatingSystemIO;
 use skyspell_core::ProjectPath;
 use skyspell_core::TokenProcessor;
 use skyspell_core::SKYSPELL_IGNORE_FILE;
-use skyspell_core::{get_default_db_path, SQLRepository};
 use skyspell_core::{Dictionary, SkipFile, StorageBackend};
 
 use crate::{new_kakoune_io, KakouneChecker, KakouneIO};
@@ -110,20 +109,7 @@ pub fn main() -> Result<()> {
         ignore_config = Some(IgnoreConfig::parse(Some(config_path.clone()), &kdl)?);
     }
 
-    let use_db = ignore_config.as_ref().map(|c| c.use_db()).unwrap_or(true);
-
-    let db_path_option = kakoune_io.get_option("skyspell_db_path")?;
-    let db_path = if db_path_option.is_empty() {
-        get_default_db_path(lang)?
-    } else {
-        db_path_option
-    };
-
-    let mut storage_backend = if use_db {
-        kakoune_io.debug(&format!("Using db path: {}", db_path));
-        let repository = SQLRepository::new(&db_path)?;
-        StorageBackend::Repository(Box::new(repository))
-    } else {
+    let mut storage_backend = {
         let ignore_config =
             ignore_config.expect("ignore_config should not be None when use_db is false");
         kakoune_io.debug(&format!("Using config {:?}", config_path));
