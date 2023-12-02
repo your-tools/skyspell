@@ -1,7 +1,7 @@
 use super::*;
 
 use skyspell_core::tests::FakeDictionary;
-use skyspell_core::RelativePath;
+use skyspell_core::{RelativePath, SKYSPELL_CONFIG_FILE};
 
 use tempfile::TempDir;
 
@@ -244,7 +244,7 @@ fn test_reading_ignore_patterns_from_config() {
         .unwrap();
     let app = TestApp::new(&temp_dir);
     let (foo_full, _) = app.ensure_file("foo.lock");
-    let (config_path, _) = app.ensure_file("skyspell-ignore.kdl");
+    let (config_path, _) = app.ensure_file(SKYSPELL_CONFIG_FILE);
     std::fs::write(foo_full, "error").unwrap();
     std::fs::write(config_path, "patterns {\n *.lock \n}\n").unwrap();
 
