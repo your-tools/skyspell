@@ -4,7 +4,7 @@ use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
 use ignore::{Walk, WalkBuilder};
 
-use crate::project::SKYSPELL_IGNORE_FILE;
+use crate::project::SKYSPELL_CONFIG_FILE;
 use crate::IgnoreConfig;
 use crate::{Project, RelativePath};
 
@@ -25,7 +25,7 @@ impl SkipFile {
     }
 
     pub fn is_skipped(&self, relative_path: &RelativePath) -> bool {
-        if relative_path.as_str() == SKYSPELL_IGNORE_FILE {
+        if relative_path.as_str() == SKYSPELL_CONFIG_FILE {
             return true;
         }
         match self.0.matched(relative_path, /*is-dir*/ false) {

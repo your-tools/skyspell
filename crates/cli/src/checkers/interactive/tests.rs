@@ -3,7 +3,7 @@ use tempfile::TempDir;
 use super::InteractiveChecker;
 use skyspell_core::tests::FakeDictionary;
 use skyspell_core::{
-    Checker, IgnoreConfig, Project, ProjectPath, RelativePath, SKYSPELL_IGNORE_FILE,
+    Checker, IgnoreConfig, Project, ProjectPath, RelativePath, SKYSPELL_CONFIG_FILE,
 };
 
 use crate::tests::FakeInteractor;
@@ -21,7 +21,7 @@ impl TestApp {
 
         let project_path = temp_dir.path().join("project");
         std::fs::create_dir(&project_path).unwrap();
-        let config_path = project_path.join(SKYSPELL_IGNORE_FILE);
+        let config_path = project_path.join(SKYSPELL_CONFIG_FILE);
         let project_path = ProjectPath::new(&project_path).unwrap();
         let project = Project::new(project_path);
         let ignore_config = IgnoreConfig::open(&config_path).unwrap();

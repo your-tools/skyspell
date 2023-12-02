@@ -10,7 +10,7 @@ use skyspell_core::EnchantDictionary;
 use skyspell_core::IgnoreConfig;
 use skyspell_core::SkipFile;
 use skyspell_core::TokenProcessor;
-use skyspell_core::{Project, ProjectPath, SKYSPELL_IGNORE_FILE};
+use skyspell_core::{Project, ProjectPath, SKYSPELL_CONFIG_FILE};
 
 mod checkers;
 pub mod interactor;
@@ -291,7 +291,7 @@ pub fn main() -> Result<()> {
         None => std::env::current_dir().context("Could not get current working directory")?,
     };
 
-    let ignore_path = project_path.join(SKYSPELL_IGNORE_FILE);
+    let ignore_path = project_path.join(SKYSPELL_CONFIG_FILE);
 
     let ignore_config = IgnoreConfig::open(&ignore_path)?;
 

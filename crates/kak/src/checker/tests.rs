@@ -3,7 +3,7 @@ use super::*;
 use tempfile::TempDir;
 
 use skyspell_core::tests::{FakeDictionary, FakeIO};
-use skyspell_core::{ProjectPath, RelativePath, SKYSPELL_IGNORE_FILE};
+use skyspell_core::{ProjectPath, RelativePath, SKYSPELL_CONFIG_FILE};
 
 use crate::io::tests::new_fake_io;
 
@@ -33,7 +33,7 @@ impl FakeChecker {
 pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
     let dictionary = FakeDictionary::new();
     let project_path = ProjectPath::new(temp_dir.path()).unwrap();
-    let config_path = temp_dir.path().join(SKYSPELL_IGNORE_FILE);
+    let config_path = temp_dir.path().join(SKYSPELL_CONFIG_FILE);
     let ignore_config = IgnoreConfig::open(&config_path).unwrap();
     let project = Project::new(project_path);
     let mut fake_io = new_fake_io();

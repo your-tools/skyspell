@@ -11,7 +11,7 @@ use skyspell_core::OperatingSystemIO;
 use skyspell_core::Project;
 use skyspell_core::ProjectPath;
 use skyspell_core::TokenProcessor;
-use skyspell_core::SKYSPELL_IGNORE_FILE;
+use skyspell_core::SKYSPELL_CONFIG_FILE;
 use skyspell_core::{Dictionary, SkipFile};
 
 use crate::{new_kakoune_io, KakouneChecker, KakouneIO};
@@ -101,7 +101,7 @@ pub fn main() -> Result<()> {
     let project_as_str = kakoune_io.get_option("skyspell_project")?;
     let project_path = PathBuf::from(project_as_str);
 
-    let config_path = project_path.join(SKYSPELL_IGNORE_FILE);
+    let config_path = project_path.join(SKYSPELL_CONFIG_FILE);
     let ignore_config = IgnoreConfig::open(&config_path)?;
 
     let dictionary = EnchantDictionary::new(lang)?;
