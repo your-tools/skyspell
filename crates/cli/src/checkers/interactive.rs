@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use anyhow::{bail, Result};
 use colored::*;
 
-use skyspell_core::{Checker, Dictionary, IgnoreConfig};
+use skyspell_core::{Checker, Dictionary, Config};
 use skyspell_core::{Project, RelativePath};
 
 use crate::{info_1, Interactor};
@@ -13,7 +13,7 @@ pub struct InteractiveChecker<I: Interactor, D: Dictionary> {
     project: Project,
     interactor: I,
     dictionary: D,
-    ignore_config: IgnoreConfig,
+    ignore_config: Config,
     skipped: HashSet<String>,
 }
 
@@ -38,7 +38,7 @@ impl<I: Interactor, D: Dictionary> Checker for InteractiveChecker<I, D> {
         &self.dictionary
     }
 
-    fn ignore_config(&mut self) -> &mut IgnoreConfig {
+    fn ignore_config(&mut self) -> &mut Config {
         &mut self.ignore_config
     }
 
@@ -61,7 +61,7 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
         project: Project,
         interactor: I,
         dictionary: D,
-        ignore_config: IgnoreConfig,
+        ignore_config: Config,
     ) -> Result<Self> {
         info_1!(
             "Checking project {} for spelling errors",

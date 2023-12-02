@@ -34,7 +34,7 @@ pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
     let dictionary = FakeDictionary::new();
     let project_path = ProjectPath::new(temp_dir.path()).unwrap();
     let config_path = temp_dir.path().join(SKYSPELL_CONFIG_FILE);
-    let ignore_config = IgnoreConfig::open(&config_path).unwrap();
+    let ignore_config = Config::open(&config_path).unwrap();
     let project = Project::new(project_path);
     let mut fake_io = new_fake_io();
     fake_io.set_option("skyspell_project", &project.as_str());

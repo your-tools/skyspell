@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use skyspell_core::Checker;
 use skyspell_core::Dictionary;
 use skyspell_core::OperatingSystemIO;
-use skyspell_core::{IgnoreConfig, Project, RelativePath};
+use skyspell_core::{Config, Project, RelativePath};
 
 use crate::io::KakouneIO;
 
@@ -18,7 +18,7 @@ pub struct Error {
 
 pub struct KakouneChecker<D: Dictionary, S: OperatingSystemIO> {
     kakoune_io: KakouneIO<S>,
-    ignore_config: IgnoreConfig,
+    ignore_config: Config,
     project: Project,
     dictionary: D,
     errors: Vec<Error>,
@@ -52,7 +52,7 @@ impl<D: Dictionary, S: OperatingSystemIO> Checker for KakouneChecker<D, S> {
         Ok(())
     }
 
-    fn ignore_config(&mut self) -> &mut IgnoreConfig {
+    fn ignore_config(&mut self) -> &mut Config {
         &mut self.ignore_config
     }
 
@@ -69,7 +69,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
     pub fn new(
         project: Project,
         dictionary: D,
-        ignore_config: IgnoreConfig,
+        ignore_config: Config,
         kakoune_io: KakouneIO<S>,
     ) -> Result<Self> {
         Ok(Self {
@@ -89,7 +89,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
         self.kakoune_io.print(command)
     }
 
-    pub fn ignore_config(&mut self) -> &mut IgnoreConfig {
+    pub fn ignore_config(&mut self) -> &mut Config {
         &mut self.ignore_config
     }
 

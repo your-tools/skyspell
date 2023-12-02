@@ -2,7 +2,7 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use crate::IgnoreConfig;
+use crate::Config;
 use crate::RelativePath;
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -41,7 +41,7 @@ impl Operation {
         })
     }
 
-    pub fn execute(&mut self, ignore_store: &mut IgnoreConfig) -> Result<()> {
+    pub fn execute(&mut self, ignore_store: &mut Config) -> Result<()> {
         use Operation::*;
         match self {
             Ignore(o) => o.execute(ignore_store),
@@ -51,7 +51,7 @@ impl Operation {
         }
     }
 
-    pub fn undo(&mut self, ignore_store: &mut IgnoreConfig) -> Result<()> {
+    pub fn undo(&mut self, ignore_store: &mut Config) -> Result<()> {
         use Operation::*;
         match self {
             Ignore(o) => o.undo(ignore_store),
@@ -68,11 +68,11 @@ pub struct Ignore {
 }
 
 impl Ignore {
-    fn execute(&mut self, ignore_store: &mut IgnoreConfig) -> Result<()> {
+    fn execute(&mut self, ignore_store: &mut Config) -> Result<()> {
         ignore_store.ignore(&self.word)
     }
 
-    fn undo(&mut self, ignore_store: &mut IgnoreConfig) -> Result<()> {
+    fn undo(&mut self, ignore_store: &mut Config) -> Result<()> {
         ignore_store.remove_ignored(&self.word)
     }
 }
@@ -84,11 +84,11 @@ pub struct IgnoreForExtension {
 }
 
 impl IgnoreForExtension {
-    fn execute(&mut self, ignore_store: &mut IgnoreConfig) -> Result<()> {
+    fn execute(&mut self, ignore_store: &mut Config) -> Result<()> {
         ignore_store.ignore_for_extension(&self.word, &self.extension)
     }
 
-    fn undo(&mut self, ignore_store: &mut IgnoreConfig) -> Result<()> {
+    fn undo(&mut self, ignore_store: &mut Config) -> Result<()> {
         ignore_store.remove_ignored_for_extension(&self.word, &self.extension)
     }
 }
@@ -99,11 +99,11 @@ pub struct IgnoreForProject {
 }
 
 impl IgnoreForProject {
-    fn execute(&mut self, ignore_store: &mut IgnoreConfig) -> Result<()> {
+    fn execute(&mut self, ignore_store: &mut Config) -> Result<()> {
         ignore_store.ignore_for_project(&self.word)
     }
 
-    fn undo(&mut self, ignore_store: &mut IgnoreConfig) -> Result<()> {
+    fn undo(&mut self, ignore_store: &mut Config) -> Result<()> {
         ignore_store.remove_ignored_for_project(&self.word)
     }
 }
@@ -115,11 +115,11 @@ pub struct IgnoreForPath {
 }
 
 impl IgnoreForPath {
-    fn execute(&mut self, ignore_store: &mut IgnoreConfig) -> Result<()> {
+    fn execute(&mut self, ignore_store: &mut Config) -> Result<()> {
         ignore_store.ignore_for_path(&self.word, &self.path)
     }
 
-    fn undo(&mut self, ignore_store: &mut IgnoreConfig) -> Result<()> {
+    fn undo(&mut self, ignore_store: &mut Config) -> Result<()> {
         ignore_store.remove_ignored_for_path(&self.word, &self.path)
     }
 }

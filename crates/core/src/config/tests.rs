@@ -6,7 +6,7 @@ use textwrap::dedent;
 
 #[test]
 fn test_empty_config_is_valid() {
-    IgnoreConfig::parse("").unwrap();
+    Config::parse("").unwrap();
 }
 
 #[test]
@@ -24,7 +24,7 @@ fn test_detailed_error_when_parsing_invalid_kdl_syntax() {
     }
     "#;
 
-    let err = IgnoreConfig::parse(input).unwrap_err();
+    let err = Config::parse(input).unwrap_err();
     let message = err.to_string();
 
     assert!(
@@ -41,10 +41,10 @@ fn test_detailed_error_when_parsing_invalid_kdl_syntax() {
 // skyspell.kdl file is not too bad
 fn check<F>(action: F, input: &str, expected: &str)
 where
-    F: Fn(&mut IgnoreConfig) -> anyhow::Result<()>,
+    F: Fn(&mut Config) -> anyhow::Result<()>,
 {
     let input = dedent(input);
-    let mut ignore_config = IgnoreConfig::parse(&input).unwrap();
+    let mut ignore_config = Config::parse(&input).unwrap();
     let expected = dedent(expected);
     let expected = expected.trim();
     action(&mut ignore_config).unwrap();
@@ -57,7 +57,7 @@ where
 fn test_add_global_ignore_to_empty_config() {
     let input = "";
 
-    let action = |x: &mut IgnoreConfig| x.ignore("hello");
+    let action = |x: &mut Config| x.ignore("hello");
 
     let expected = r#"
             global {
@@ -72,7 +72,7 @@ fn test_add_global_ignore_to_empty_config() {
 fn test_create_subsection_from_scratch() {
     let input = "global {\n  hello\n}\n";
 
-    let action = |x: &mut IgnoreConfig| x.ignore_for_extension("fn", "rs");
+    let action = |x: &mut Config| x.ignore_for_extension("fn", "rs");
 
     let expected = r#"
             global {
@@ -110,7 +110,7 @@ fn test_add_global_ignore_to_existing_config() {
             }
             "#;
 
-    let action = |x: &mut IgnoreConfig| x.ignore("def");
+    let action = |x: &mut Config| x.ignore("def");
 
     let expected = r#"
             global {
@@ -156,7 +156,7 @@ fn test_remove_word_from_global() {
             }
             "#;
 
-    let action = |x: &mut IgnoreConfig| x.remove_ignored("def");
+    let action = |x: &mut Config| x.remove_ignored("def");
 
     let expected = r#"
             global {
@@ -200,7 +200,7 @@ fn test_add_project_ignore() {
             }
             "#;
 
-    let action = |x: &mut IgnoreConfig| x.ignore_for_project("hello");
+    let action = |x: &mut Config| x.ignore_for_project("hello");
 
     let expected = r#"
             global {
@@ -245,7 +245,7 @@ fn test_add_ignore_for_new_extension() {
             }
             "#;
 
-    let action = |x: &mut IgnoreConfig| x.ignore_for_extension("fn", "rs");
+    let action = |x: &mut Config| x.ignore_for_extension("fn", "rs");
 
     let expected = r#"
             global {
@@ -302,7 +302,7 @@ fn test_add_ignore_for_existing_extension() {
             }
             "#;
 
-    let action = |x: &mut IgnoreConfig| x.ignore_for_extension("hfill", "tex");
+    let action = |x: &mut Config| x.ignore_for_extension("hfill", "tex");
 
     let expected = r#"
             global {
@@ -335,4 +335,4 @@ fn test_add_ignore_for_existing_extension() {
     check(action, input, expected);
 }
 
-test_ignore_store!(IgnoreConfig);
+test_ignore_store!(Config);

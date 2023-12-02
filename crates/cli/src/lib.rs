@@ -7,7 +7,7 @@ use colored::*;
 use skyspell_core::Checker;
 use skyspell_core::Dictionary;
 use skyspell_core::EnchantDictionary;
-use skyspell_core::IgnoreConfig;
+use skyspell_core::Config;
 use skyspell_core::SkipFile;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{Project, ProjectPath, SKYSPELL_CONFIG_FILE};
@@ -150,7 +150,7 @@ struct RemoveOpts {
     relative_path: Option<PathBuf>,
 }
 
-fn add(project: Project, mut ignore_config: IgnoreConfig, opts: &AddOpts) -> Result<()> {
+fn add(project: Project, mut ignore_config: Config, opts: &AddOpts) -> Result<()> {
     let word = &opts.word;
     match (&opts.relative_path, &opts.extension, &opts.project) {
         (None, None, false) => ignore_config.ignore(word),
@@ -164,7 +164,7 @@ fn add(project: Project, mut ignore_config: IgnoreConfig, opts: &AddOpts) -> Res
     }
 }
 
-fn remove(project: Project, mut ignore_config: IgnoreConfig, opts: &RemoveOpts) -> Result<()> {
+fn remove(project: Project, mut ignore_config: Config, opts: &RemoveOpts) -> Result<()> {
     let word = &opts.word;
     match (&opts.relative_path, &opts.extension, &opts.project) {
         (None, None, false) => ignore_config.remove_ignored(word),
@@ -180,7 +180,7 @@ fn remove(project: Project, mut ignore_config: IgnoreConfig, opts: &RemoveOpts) 
 
 fn check(
     project: Project,
-    ignore_config: IgnoreConfig,
+    ignore_config: Config,
     dictionary: impl Dictionary,
     opts: &CheckOpts,
     output_format: OutputFormat,
@@ -244,7 +244,7 @@ where
     checker.success()
 }
 
-fn undo(mut _ignore_config: IgnoreConfig) -> Result<()> {
+fn undo(mut _ignore_config: Config) -> Result<()> {
     bail!("Undo not implemented")
 }
 
@@ -268,7 +268,7 @@ fn run<D: Dictionary>(
     project: Project,
     opts: &Opts,
     dictionary: D,
-    ignore_config: IgnoreConfig,
+    ignore_config: Config,
 ) -> Result<()> {
     let output_format = opts.output_format.unwrap_or_default();
     match &opts.action {
@@ -293,7 +293,7 @@ pub fn main() -> Result<()> {
 
     let ignore_path = project_path.join(SKYSPELL_CONFIG_FILE);
 
-    let ignore_config = IgnoreConfig::open(&ignore_path)?;
+    let ignore_config = Config::open(&ignore_path)?;
 
     let dictionary = EnchantDictionary::new(lang)?;
     let current_provider = dictionary.provider();

@@ -6,7 +6,7 @@ use directories_next::BaseDirs;
 
 use skyspell_core::Checker;
 use skyspell_core::EnchantDictionary;
-use skyspell_core::IgnoreConfig;
+use skyspell_core::Config;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::Project;
 use skyspell_core::ProjectPath;
@@ -102,7 +102,7 @@ pub fn main() -> Result<()> {
     let project_path = PathBuf::from(project_as_str);
 
     let config_path = project_path.join(SKYSPELL_CONFIG_FILE);
-    let ignore_config = IgnoreConfig::open(&config_path)?;
+    let ignore_config = Config::open(&config_path)?;
 
     let dictionary = EnchantDictionary::new(lang)?;
 
@@ -167,7 +167,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         self.checker.dictionary()
     }
 
-    fn ignore_config(&mut self) -> &mut IgnoreConfig {
+    fn ignore_config(&mut self) -> &mut Config {
         self.checker.ignore_config()
     }
 

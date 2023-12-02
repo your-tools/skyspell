@@ -13,7 +13,7 @@ pub mod tokens;
 
 pub use crate::enchant::EnchantDictionary;
 pub use checker::Checker;
-pub use config::IgnoreConfig;
+pub use config::Config;
 pub use dictionary::Dictionary;
 pub use operations::Operation;
 pub use os_io::{OperatingSystemIO, StandardIO};

@@ -2,7 +2,7 @@ use std::path::Path;
 
 use anyhow::Result;
 
-use crate::{Dictionary, IgnoreConfig};
+use crate::{Dictionary, Config};
 use crate::{Project, RelativePath};
 
 pub trait Checker {
@@ -18,7 +18,7 @@ pub trait Checker {
     // Were all the errors handled properly?
     fn success(&self) -> Result<()>;
 
-    fn ignore_config(&mut self) -> &mut IgnoreConfig;
+    fn ignore_config(&mut self) -> &mut Config;
 
     fn dictionary(&self) -> &dyn Dictionary;
 

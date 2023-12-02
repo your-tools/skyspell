@@ -3,7 +3,7 @@ use colored::*;
 use serde::Serialize;
 use std::collections::BTreeMap;
 
-use skyspell_core::{Checker, Dictionary, IgnoreConfig};
+use skyspell_core::{Checker, Dictionary, Config};
 use skyspell_core::{Project, RelativePath};
 
 use crate::{info_1, info_2, OutputFormat};
@@ -24,7 +24,7 @@ struct Error {
 pub struct NonInteractiveChecker<D: Dictionary> {
     project: Project,
     dictionary: D,
-    ignore_config: IgnoreConfig,
+    ignore_config: Config,
     output_format: OutputFormat,
     errors: BTreeMap<String, Vec<Error>>,
     num_errors: usize,
@@ -34,7 +34,7 @@ impl<D: Dictionary> NonInteractiveChecker<D> {
     pub fn new(
         project: Project,
         dictionary: D,
-        ignore_config: IgnoreConfig,
+        ignore_config: Config,
         output_format: OutputFormat,
     ) -> Result<Self> {
         if output_format.is_text() {
@@ -139,7 +139,7 @@ impl<D: Dictionary> Checker for NonInteractiveChecker<D> {
         &self.project
     }
 
-    fn ignore_config(&mut self) -> &mut IgnoreConfig {
+    fn ignore_config(&mut self) -> &mut Config {
         &mut self.ignore_config
     }
 }

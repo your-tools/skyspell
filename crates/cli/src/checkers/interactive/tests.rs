@@ -3,7 +3,7 @@ use tempfile::TempDir;
 use super::InteractiveChecker;
 use skyspell_core::tests::FakeDictionary;
 use skyspell_core::{
-    Checker, IgnoreConfig, Project, ProjectPath, RelativePath, SKYSPELL_CONFIG_FILE,
+    Checker, Config, Project, ProjectPath, RelativePath, SKYSPELL_CONFIG_FILE,
 };
 
 use crate::tests::FakeInteractor;
@@ -24,7 +24,7 @@ impl TestApp {
         let config_path = project_path.join(SKYSPELL_CONFIG_FILE);
         let project_path = ProjectPath::new(&project_path).unwrap();
         let project = Project::new(project_path);
-        let ignore_config = IgnoreConfig::open(&config_path).unwrap();
+        let ignore_config = Config::open(&config_path).unwrap();
         let checker = TestChecker::new(project, interactor, dictionary, ignore_config).unwrap();
         Self { checker }
     }

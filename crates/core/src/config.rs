@@ -20,18 +20,18 @@ fn sort_nodes(x: &KdlNode, y: &KdlNode) -> std::cmp::Ordering {
 }
 
 #[derive(Debug)]
-pub struct IgnoreConfig {
+pub struct Config {
     doc: KdlDocument,
     path: Option<PathBuf>,
 }
 
-impl Display for IgnoreConfig {
+impl Display for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.doc)
     }
 }
 
-impl IgnoreConfig {
+impl Config {
     pub fn open(config_path: &Path) -> Result<Self> {
         if !config_path.exists() {
             std::fs::write(&config_path, "").with_context(|| {
@@ -42,7 +42,7 @@ impl IgnoreConfig {
             .with_context(|| format!("While reading {}:", config_path.display()))?;
         let doc = Self::parse_doc(&contents)
             .with_context(|| format!("While parsing {}:", config_path.display()))?;
-        Ok(IgnoreConfig {
+        Ok(Config {
             path: Some(config_path.to_path_buf()),
             doc,
         })
@@ -55,7 +55,7 @@ impl IgnoreConfig {
 
     pub fn parse(contents: &str) -> Result<Self> {
         let doc: KdlDocument = Self::parse_doc(contents)?;
-        Ok(IgnoreConfig { doc, path: None })
+        Ok(Config { doc, path: None })
     }
 
     fn parse_doc(contents: &str) -> Result<KdlDocument> {
