@@ -1,11 +1,10 @@
 import os
+import kdl
 import re
-import sqlite3
 import subprocess
-import textwrap
 import time
 from pathlib import Path
-from typing import Any, Iterator, List
+from typing import Iterator
 
 import pytest
 
@@ -104,13 +103,9 @@ class RemoteKakoune:
         return self.extract_from_debug_buffer(prefix)
 
 
-def run_query(tmp_path: Path, sql: str) -> List[Any]:
-    db_path = tmp_path / "tests.db"
-    connection = sqlite3.connect(db_path)
-    cursor = connection.cursor()
-    cursor.execute(sql)
-    rows = cursor.fetchall()
-    return rows
+def parse_config(tmp_path: Path) -> kdl.Document:
+    config_path = tmp_path / "skyspell.kdl"
+    return kdl.parse(config_path.read_text())
 
 
 @pytest.fixture
@@ -219,11 +214,14 @@ def test_add_global(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     kak_checker.send_command("skyspell-list")
     kak_checker.send_keys("a")
     kak_checker.send_command("quit")
-    assert run_query(tmp_path, "SELECT word FROM ignored") == [("skyspell",)]
+
+    config = parse_config(tmp_path)
+    global_words = [node.name for node in config['global'].nodes]
+    assert "skyspell" in global_words
 
 
 def test_honor_skyspell_ignore(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
-    ignore = tmp_path / "skyspell-ignore.kdl"
+    ignore = tmp_path / "skyspell.kdl"
     ignore.write_text("patterns {\n  foo.lock\n}\n")
     open_file_with_contents(
         kak_checker, tmp_path / "foo.lock", r"I'm testing skyspell here"
@@ -243,9 +241,9 @@ def test_add_to_project(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     kak_checker.send_keys("p")
     kak_checker.send_command("quit")
 
-    assert run_query(tmp_path, "SELECT word FROM ignored_for_project") == [
-        ("skyspell",)
-    ]
+    config = parse_config(tmp_path)
+    project_words = [node.name for node in config['project'].nodes]
+    assert project_words == ["skyspell"]
 
 
 def test_add_to_file(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
@@ -257,9 +255,9 @@ def test_add_to_file(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     kak_checker.send_keys("f")
     kak_checker.send_command("quit")
 
-    assert run_query(tmp_path, "SELECT word, path FROM ignored_for_path") == [
-        ("skyspell", "foo.txt")
-    ]
+    config = parse_config(tmp_path)
+    words = [node.name for node in config['paths']['foo.txt'].nodes]
+    assert words == ["skyspell"]
 
 
 def test_add_to_extension(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
@@ -271,9 +269,9 @@ def test_add_to_extension(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     kak_checker.send_keys("e")
     kak_checker.send_command("quit")
 
-    assert run_query(tmp_path, "SELECT word, extension FROM ignored_for_extension") == [
-        ("fn", "rs")
-    ]
+    config = parse_config(tmp_path)
+    words = [node.name for node in config['extensions']['rs'].nodes]
+    assert words == ["fn"]
 
 
 def test_undo(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
@@ -286,7 +284,9 @@ def test_undo(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
     kak_checker.send_keys("u")
     kak_checker.send_command("quit")
 
-    assert run_query(tmp_path, "SELECT word FROM ignored") == []
+    config = parse_config(tmp_path)
+    words = [node.name for node in config['global'].nodes]
+    assert words == []
 
 
 def test_replace_with_suggestion(tmp_path: Path, kak_checker: RemoteKakoune) -> None:
