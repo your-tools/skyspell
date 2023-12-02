@@ -49,12 +49,12 @@ impl TestApp {
     }
 
     fn is_ignored(&mut self, word: &str) -> bool {
-        self.checker.storage_backend().is_ignored(word).unwrap()
+        self.checker.ignore_config().is_ignored(word).unwrap()
     }
 
     fn is_ignored_for_extension(&mut self, word: &str, extension: &str) -> bool {
         self.checker
-            .storage_backend()
+            .ignore_config()
             .is_ignored_for_extension(word, extension)
             .unwrap()
     }
@@ -62,7 +62,7 @@ impl TestApp {
     fn is_ignored_for_project(&mut self, word: &str) -> bool {
         let project_id = self.checker.project().id();
         self.checker
-            .storage_backend()
+            .ignore_config()
             .is_ignored_for_project(word, project_id)
             .unwrap()
     }
@@ -71,7 +71,7 @@ impl TestApp {
         let project_id = self.checker.project().id();
         let relative_path = self.to_relative_path(relative_name);
         self.checker
-            .storage_backend()
+            .ignore_config()
             .is_ignored_for_path(word, project_id, &relative_path)
             .unwrap()
     }

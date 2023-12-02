@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use anyhow::{bail, Result};
 use colored::*;
 
-use skyspell_core::{Checker, Dictionary, StorageBackend};
+use skyspell_core::{Checker, Dictionary, IgnoreConfig};
 use skyspell_core::{Project, RelativePath};
 
 use crate::{info_1, Interactor};
@@ -13,7 +13,7 @@ pub struct InteractiveChecker<I: Interactor, D: Dictionary> {
     project: Project,
     interactor: I,
     dictionary: D,
-    storage_backend: StorageBackend,
+    ignore_config: IgnoreConfig,
     skipped: HashSet<String>,
 }
 
@@ -38,8 +38,8 @@ impl<I: Interactor, D: Dictionary> Checker for InteractiveChecker<I, D> {
         &self.dictionary
     }
 
-    fn storage_backend(&mut self) -> &mut StorageBackend {
-        &mut self.storage_backend
+    fn ignore_config(&mut self) -> &mut IgnoreConfig {
+        &mut self.ignore_config
     }
 
     fn handle_error(
@@ -61,7 +61,7 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
         project: Project,
         interactor: I,
         dictionary: D,
-        storage_backend: StorageBackend,
+        ignore_config: IgnoreConfig,
     ) -> Result<Self> {
         info_1!(
             "Checking project {} for spelling errors",
@@ -71,7 +71,7 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
             project,
             dictionary,
             interactor,
-            storage_backend,
+            ignore_config,
             skipped: HashSet::new(),
         })
     }
@@ -130,7 +130,7 @@ q : Quit
     // Note: this cannot fail, but it's convenient to have it return a
     // boolean like the other on_* methods
     fn on_global_ignore(&mut self, error: &str) -> Result<bool> {
-        self.storage_backend.ignore(error)?;
+        self.ignore_config.ignore(error)?;
         info_2!("Added '{}' to the global ignore list", error);
         Ok(true)
     }
@@ -144,8 +144,7 @@ q : Quit
             Some(e) => e,
         };
 
-        self.storage_backend
-            .ignore_for_extension(error, &extension)?;
+        self.ignore_config.ignore_for_extension(error, &extension)?;
         info_2!(
             "Added '{}' to the ignore list for extension '{}'",
             error,
@@ -155,7 +154,7 @@ q : Quit
     }
 
     fn on_project_ignore(&mut self, error: &str) -> Result<bool> {
-        self.storage_backend
+        self.ignore_config
             .ignore_for_project(error, self.project.id())?;
         info_2!(
             "Added '{}' to the ignore list for the current project",
@@ -165,7 +164,7 @@ q : Quit
     }
 
     fn on_file_ignore(&mut self, error: &str, relative_path: &RelativePath) -> Result<bool> {
-        self.storage_backend
+        self.ignore_config
             .ignore_for_path(error, self.project.id(), relative_path)?;
         info_2!(
             "Added '{}' to the ignore list for path '{}'",

@@ -337,7 +337,7 @@ impl IgnoreConfig {
     //
     // Otherwise, it's *not* ignored and the Checker will call handle_error()
     //
-    pub(crate) fn should_ignore(
+    pub fn should_ignore(
         &mut self,
         word: &str,
         project_id: ProjectId,
@@ -359,18 +359,18 @@ impl IgnoreConfig {
 
         self.is_ignored_for_path(word, project_id, relative_path)
     }
-    pub(crate) fn is_ignored(&mut self, word: &str) -> Result<bool> {
+    pub fn is_ignored(&mut self, word: &str) -> Result<bool> {
         let global_words = self.global_words();
         Ok(global_words.contains(&word.to_string()))
     }
 
-    pub(crate) fn is_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<bool> {
+    pub fn is_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<bool> {
         Ok(self
             .ignored_words_for_extension(extension)
             .contains(&word.to_string()))
     }
 
-    pub(crate) fn is_ignored_for_project(
+    pub fn is_ignored_for_project(
         &mut self,
         word: &str,
         project_id: crate::ProjectId,
@@ -382,7 +382,7 @@ impl IgnoreConfig {
         Ok(project_words.contains(&word.to_string()))
     }
 
-    pub(crate) fn is_ignored_for_path(
+    pub fn is_ignored_for_path(
         &mut self,
         word: &str,
         project_id: crate::ProjectId,
@@ -395,26 +395,22 @@ impl IgnoreConfig {
         Ok(for_path.contains(&word.to_string()))
     }
 
-    pub(crate) fn ignore(&mut self, word: &str) -> Result<()> {
+    pub fn ignore(&mut self, word: &str) -> Result<()> {
         self.add_to_section("global", word)?;
         self.save()
     }
 
-    pub(crate) fn ignore_for_extension(&mut self, word: &str, ext: &str) -> Result<()> {
+    pub fn ignore_for_extension(&mut self, word: &str, ext: &str) -> Result<()> {
         self.insert_in_section_with_value(word, "extensions", ext)?;
         self.save()
     }
 
-    pub(crate) fn ignore_for_project(
-        &mut self,
-        word: &str,
-        _project_id: crate::ProjectId,
-    ) -> Result<()> {
+    pub fn ignore_for_project(&mut self, word: &str, _project_id: crate::ProjectId) -> Result<()> {
         self.add_to_section("project", word)?;
         self.save()
     }
 
-    pub(crate) fn ignore_for_path(
+    pub fn ignore_for_path(
         &mut self,
         word: &str,
         project_id: crate::ProjectId,
@@ -427,7 +423,7 @@ impl IgnoreConfig {
         self.save()
     }
 
-    pub(crate) fn remove_ignored(&mut self, word: &str) -> Result<()> {
+    pub fn remove_ignored(&mut self, word: &str) -> Result<()> {
         let ignored = match self.global_words_mut() {
             Some(n) => n,
             None => bail!("word was not globally ignored"),
@@ -442,11 +438,7 @@ impl IgnoreConfig {
         self.save()
     }
 
-    pub(crate) fn remove_ignored_for_extension(
-        &mut self,
-        word: &str,
-        extension: &str,
-    ) -> Result<()> {
+    pub fn remove_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
         let for_extension = self
             .ignored_words_for_extension_mut(extension)?
             .ok_or_else(|| anyhow!("word was not ignored for this extension"))?;
@@ -455,7 +447,7 @@ impl IgnoreConfig {
         self.save()
     }
 
-    pub(crate) fn remove_ignored_for_path(
+    pub fn remove_ignored_for_path(
         &mut self,
         word: &str,
         project_id: crate::ProjectId,
@@ -473,7 +465,7 @@ impl IgnoreConfig {
         self.save()
     }
 
-    pub(crate) fn remove_ignored_for_project(
+    pub fn remove_ignored_for_project(
         &mut self,
         word: &str,
         project_id: crate::ProjectId,

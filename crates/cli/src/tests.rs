@@ -10,7 +10,7 @@ pub use fake_interactor::FakeInteractor;
 
 struct TestApp {
     dictionary: FakeDictionary,
-    storage_backend: StorageBackend,
+    ignore_config: IgnoreConfig,
     project: Project,
 }
 
@@ -34,7 +34,7 @@ impl TestApp {
         with_arg0.extend(args);
         dbg!(&with_arg0);
         let opts = Opts::try_parse_from(with_arg0)?;
-        super::run(self.project, &opts, self.dictionary, self.storage_backend)
+        super::run(self.project, &opts, self.dictionary, self.ignore_config)
     }
 }
 
@@ -101,7 +101,7 @@ fn test_remove_global() {
         .tempdir()
         .unwrap();
     let mut app = TestApp::new(&temp_dir);
-    app.storage_backend.ignore("foo").unwrap();
+    app.ignore_config.ignore("foo").unwrap();
 
     app.run(&["remove", "foo"]).unwrap();
 
@@ -141,9 +141,7 @@ fn test_remove_for_extension() {
         .unwrap();
     let mut app = TestApp::new(&temp_dir);
     app.ensure_file("foo.py");
-    app.storage_backend
-        .ignore_for_extension("foo", "py")
-        .unwrap();
+    app.ignore_config.ignore_for_extension("foo", "py").unwrap();
 
     app.run(&["remove", "foo", "--extension", "py"]).unwrap();
 
