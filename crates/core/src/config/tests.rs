@@ -197,7 +197,7 @@ fn test_add_project_ignore() {
             }
             "#;
 
-    let action = |x: &mut IgnoreConfig| x.ignore_for_project("hello", MAGIC_PROJECT_ID);
+    let action = |x: &mut IgnoreConfig| x.ignore_for_project("hello");
 
     let expected = r#"
             global {

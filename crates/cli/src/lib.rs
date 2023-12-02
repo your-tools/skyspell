@@ -157,9 +157,9 @@ fn add(project: Project, mut ignore_config: IgnoreConfig, opts: &AddOpts) -> Res
         (None, Some(e), _) => ignore_config.ignore_for_extension(word, e),
         (Some(relative_path), None, _) => {
             let relative_path = project.get_relative_path(relative_path)?;
-            ignore_config.ignore_for_path(word, project.id(), &relative_path)
+            ignore_config.ignore_for_path(word, &relative_path)
         }
-        (None, None, true) => ignore_config.ignore_for_project(word, project.id()),
+        (None, None, true) => ignore_config.ignore_for_project(word),
         (Some(_), Some(_), _) => bail!("Cannot use both --relative-path and --extension"),
     }
 }
@@ -171,9 +171,9 @@ fn remove(project: Project, mut ignore_config: IgnoreConfig, opts: &RemoveOpts) 
         (None, Some(e), _) => ignore_config.remove_ignored_for_extension(word, e),
         (Some(relative_path), None, _) => {
             let relative_path = project.get_relative_path(relative_path)?;
-            ignore_config.remove_ignored_for_path(word, project.id(), &relative_path)
+            ignore_config.remove_ignored_for_path(word, &relative_path)
         }
-        (None, None, true) => ignore_config.remove_ignored_for_project(word, project.id()),
+        (None, None, true) => ignore_config.remove_ignored_for_project(word),
         (Some(_), Some(_), _) => bail!("Cannot use both --relative-path and --extension"),
     }
 }
@@ -308,7 +308,7 @@ pub fn main() -> Result<()> {
     }
 
     let project_path = ProjectPath::new(&project_path)?;
-    let project = Project::new(42, project_path);
+    let project = Project::new(project_path);
 
     let outcome = run(project, &opts, dictionary, ignore_config);
     if let Err(e) = outcome {

@@ -17,7 +17,7 @@ impl TestApp {
         let _interactor = FakeInteractor::new();
         let _dictionary = FakeDictionary::new();
         let project_path = ProjectPath::new(temp_dir.path()).unwrap();
-        let _project = Project::new(0, project_path);
+        let _project = Project::new(project_path);
         todo!()
     }
 
@@ -60,19 +60,17 @@ impl TestApp {
     }
 
     fn is_ignored_for_project(&mut self, word: &str) -> bool {
-        let project_id = self.checker.project().id();
         self.checker
             .ignore_config()
-            .is_ignored_for_project(word, project_id)
+            .is_ignored_for_project(word)
             .unwrap()
     }
 
     fn is_ignored_for_path(&mut self, word: &str, relative_name: &str) -> bool {
-        let project_id = self.checker.project().id();
         let relative_path = self.to_relative_path(relative_name);
         self.checker
             .ignore_config()
-            .is_ignored_for_path(word, project_id, &relative_path)
+            .is_ignored_for_path(word, &relative_path)
             .unwrap()
     }
 

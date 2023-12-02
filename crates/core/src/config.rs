@@ -7,11 +7,7 @@ use miette::{Diagnostic, SourceSpan};
 
 use kdl::{KdlDocument, KdlIdentifier, KdlNode};
 
-use crate::{ProjectId, RelativePath};
-
-// We need a project_id because it's found in the arguments of some
-// methods of the trait
-const MAGIC_PROJECT_ID: ProjectId = 42;
+use crate::RelativePath;
 
 #[derive(Debug, Clone, Copy)]
 enum IndentLevel {
@@ -334,12 +330,7 @@ impl IgnoreConfig {
     //
     // Otherwise, it's *not* ignored and the Checker will call handle_error()
     //
-    pub fn should_ignore(
-        &mut self,
-        word: &str,
-        project_id: ProjectId,
-        relative_path: &RelativePath,
-    ) -> Result<bool> {
+    pub fn should_ignore(&mut self, word: &str, relative_path: &RelativePath) -> Result<bool> {
         if self.is_ignored(word)? {
             return Ok(true);
         }
@@ -350,12 +341,13 @@ impl IgnoreConfig {
             }
         }
 
-        if self.is_ignored_for_project(word, project_id)? {
+        if self.is_ignored_for_project(word)? {
             return Ok(true);
         }
 
-        self.is_ignored_for_path(word, project_id, relative_path)
+        self.is_ignored_for_path(word, relative_path)
     }
+
     pub fn is_ignored(&mut self, word: &str) -> Result<bool> {
         let global_words = self.global_words();
         Ok(global_words.contains(&word.to_string()))
@@ -367,14 +359,7 @@ impl IgnoreConfig {
             .contains(&word.to_string()))
     }
 
-    pub fn is_ignored_for_project(
-        &mut self,
-        word: &str,
-        project_id: crate::ProjectId,
-    ) -> Result<bool> {
-        if project_id != MAGIC_PROJECT_ID {
-            return Ok(false);
-        }
+    pub fn is_ignored_for_project(&mut self, word: &str) -> Result<bool> {
         let project_words = self.project_words();
         Ok(project_words.contains(&word.to_string()))
     }
@@ -382,12 +367,8 @@ impl IgnoreConfig {
     pub fn is_ignored_for_path(
         &mut self,
         word: &str,
-        project_id: crate::ProjectId,
         relative_path: &crate::RelativePath,
     ) -> Result<bool> {
-        if project_id != MAGIC_PROJECT_ID {
-            return Ok(false);
-        }
         let for_path = self.ignored_words_for_path(&relative_path.as_str());
         Ok(for_path.contains(&word.to_string()))
     }
@@ -402,7 +383,7 @@ impl IgnoreConfig {
         self.save()
     }
 
-    pub fn ignore_for_project(&mut self, word: &str, _project_id: crate::ProjectId) -> Result<()> {
+    pub fn ignore_for_project(&mut self, word: &str) -> Result<()> {
         self.add_to_section("project", word)?;
         self.save()
     }
@@ -410,12 +391,8 @@ impl IgnoreConfig {
     pub fn ignore_for_path(
         &mut self,
         word: &str,
-        project_id: crate::ProjectId,
         relative_path: &crate::RelativePath,
     ) -> Result<()> {
-        if project_id != MAGIC_PROJECT_ID {
-            bail!("Should have called with MAGIC_PROJECT_ID");
-        }
         self.insert_in_section_with_value(word, "paths", &relative_path.as_str())?;
         self.save()
     }
@@ -447,13 +424,8 @@ impl IgnoreConfig {
     pub fn remove_ignored_for_path(
         &mut self,
         word: &str,
-        project_id: crate::ProjectId,
         relative_path: &crate::RelativePath,
     ) -> Result<()> {
-        if project_id != MAGIC_PROJECT_ID {
-            bail!("Should have called with MAGIC_PROJECT_ID");
-        }
-
         let for_path = self
             .ignored_words_for_path_mut(&relative_path.as_str())?
             .ok_or_else(|| anyhow!("word was not ignored for this path"))?;
@@ -462,14 +434,7 @@ impl IgnoreConfig {
         self.save()
     }
 
-    pub fn remove_ignored_for_project(
-        &mut self,
-        word: &str,
-        project_id: crate::ProjectId,
-    ) -> Result<()> {
-        if project_id != MAGIC_PROJECT_ID {
-            bail!("Should have called with MAGIC_PROJECT_ID");
-        }
+    pub fn remove_ignored_for_project(&mut self, word: &str) -> Result<()> {
         let ignored = match self.project_words_mut() {
             Some(i) => i,
             None => return Ok(()),

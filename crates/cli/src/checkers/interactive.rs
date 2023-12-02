@@ -154,8 +154,7 @@ q : Quit
     }
 
     fn on_project_ignore(&mut self, error: &str) -> Result<bool> {
-        self.ignore_config
-            .ignore_for_project(error, self.project.id())?;
+        self.ignore_config.ignore_for_project(error)?;
         info_2!(
             "Added '{}' to the ignore list for the current project",
             error
@@ -164,8 +163,7 @@ q : Quit
     }
 
     fn on_file_ignore(&mut self, error: &str, relative_path: &RelativePath) -> Result<bool> {
-        self.ignore_config
-            .ignore_for_path(error, self.project.id(), relative_path)?;
+        self.ignore_config.ignore_for_path(error, relative_path)?;
         info_2!(
             "Added '{}' to the ignore list for path '{}'",
             error,

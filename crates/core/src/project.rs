@@ -6,19 +6,16 @@ use anyhow::{anyhow, Context, Result};
 use ignore::{Walk, WalkBuilder};
 use serde::{Deserialize, Serialize};
 
-pub type ProjectId = i32;
-
 pub const SKYSPELL_IGNORE_FILE: &str = "skyspell-ignore.kdl";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Project {
     path: ProjectPath,
-    id: ProjectId,
 }
 
 impl Project {
-    pub fn new(id: ProjectId, path: ProjectPath) -> Self {
-        Self { id, path }
+    pub fn new(path: ProjectPath) -> Self {
+        Self { path }
     }
 
     pub fn path(&self) -> &ProjectPath {
@@ -36,10 +33,6 @@ impl Project {
 
     pub fn get_relative_path(&self, path: &Path) -> Result<RelativePath> {
         RelativePath::new(self.path(), path)
-    }
-
-    pub fn id(&self) -> ProjectId {
-        self.id
     }
 
     pub fn ignore_path(&self) -> PathBuf {

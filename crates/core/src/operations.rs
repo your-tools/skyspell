@@ -3,7 +3,6 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::IgnoreConfig;
-use crate::ProjectId;
 use crate::RelativePath;
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -22,21 +21,15 @@ impl Operation {
             word: word.to_string(),
         })
     }
-    pub(crate) fn new_ignore_for_project(word: &str, project_id: ProjectId) -> Self {
+    pub(crate) fn new_ignore_for_project(word: &str) -> Self {
         Self::IgnoreForProject(IgnoreForProject {
             word: word.to_string(),
-            project_id,
         })
     }
 
-    pub(crate) fn new_ignore_for_path(
-        word: &str,
-        project_id: ProjectId,
-        relative_path: &RelativePath,
-    ) -> Self {
+    pub(crate) fn new_ignore_for_path(word: &str, relative_path: &RelativePath) -> Self {
         Self::IgnoreForPath(IgnoreForPath {
             word: word.to_string(),
-            project_id,
             path: relative_path.clone(),
         })
     }
@@ -103,32 +96,30 @@ impl IgnoreForExtension {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct IgnoreForProject {
     word: String,
-    project_id: ProjectId,
 }
 
 impl IgnoreForProject {
     fn execute(&mut self, ignore_store: &mut IgnoreConfig) -> Result<()> {
-        ignore_store.ignore_for_project(&self.word, self.project_id)
+        ignore_store.ignore_for_project(&self.word)
     }
 
     fn undo(&mut self, ignore_store: &mut IgnoreConfig) -> Result<()> {
-        ignore_store.remove_ignored_for_project(&self.word, self.project_id)
+        ignore_store.remove_ignored_for_project(&self.word)
     }
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct IgnoreForPath {
     word: String,
-    project_id: ProjectId,
     path: RelativePath,
 }
 
 impl IgnoreForPath {
     fn execute(&mut self, ignore_store: &mut IgnoreConfig) -> Result<()> {
-        ignore_store.ignore_for_path(&self.word, self.project_id, &self.path)
+        ignore_store.ignore_for_path(&self.word, &self.path)
     }
 
     fn undo(&mut self, ignore_store: &mut IgnoreConfig) -> Result<()> {
-        ignore_store.remove_ignored_for_path(&self.word, self.project_id, &self.path)
+        ignore_store.remove_ignored_for_path(&self.word, &self.path)
     }
 }

@@ -40,10 +40,7 @@ pub trait Checker {
         if in_dict {
             return Ok(());
         }
-        let project_id = self.project().id();
-        let should_ignore = self
-            .ignore_config()
-            .should_ignore(token, project_id, relative_path)?;
+        let should_ignore = self.ignore_config().should_ignore(token, relative_path)?;
         if !should_ignore {
             self.handle_error(token, relative_path, context)?
         }

@@ -109,7 +109,7 @@ pub fn main() -> Result<()> {
     let dictionary = EnchantDictionary::new(lang)?;
 
     let project_path = ProjectPath::new(&project_path)?;
-    let project = Project::new(42, project_path);
+    let project = Project::new(project_path);
 
     let checker = KakouneChecker::new(project, dictionary, ignore_config, kakoune_io)?;
     let mut cli = KakCli::new(checker)?;
@@ -191,8 +191,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
         let project = &self.checker.project().clone();
         let relative_path = project.as_relative_path(path)?;
-        self.ignore_config()
-            .ignore_for_path(word, project.id(), &relative_path)?;
+        self.ignore_config().ignore_for_path(word, &relative_path)?;
         self.recheck();
         self.print(&format!(
             "echo '\"{}\" added to the ignore list for file: \"{}\"'",
@@ -211,8 +210,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
 
     fn add_project(&mut self) -> Result<()> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
-        let project_id = self.checker.project().id();
-        self.ignore_config().ignore_for_project(word, project_id)?;
+        self.ignore_config().ignore_for_project(word)?;
         self.recheck();
         self.print(&format!(
             "echo '\"{}\" added to ignore list for the current project'",

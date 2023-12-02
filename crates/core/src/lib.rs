@@ -17,7 +17,7 @@ pub use config::IgnoreConfig;
 pub use dictionary::Dictionary;
 pub use operations::Operation;
 pub use os_io::{OperatingSystemIO, StandardIO};
-pub use project::{Project, ProjectId, ProjectPath, RelativePath, SKYSPELL_IGNORE_FILE};
+pub use project::{Project, ProjectPath, RelativePath, SKYSPELL_IGNORE_FILE};
 pub use skip_file::SkipFile;
 pub use tokens::TokenProcessor;
 pub(crate) mod checker;
