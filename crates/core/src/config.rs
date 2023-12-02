@@ -34,7 +34,7 @@ impl Display for Config {
 impl Config {
     pub fn open(config_path: &Path) -> Result<Self> {
         if !config_path.exists() {
-            std::fs::write(&config_path, "").with_context(|| {
+            std::fs::write(config_path, "").with_context(|| {
                 format!("While creating empty config at {}:", config_path.display())
             })?;
         }
