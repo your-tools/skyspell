@@ -15,8 +15,24 @@ struct TestApp {
 }
 
 impl TestApp {
-    fn new(_temp_dir: &TempDir) -> Self {
-        todo!()
+    fn new(temp_dir: &TempDir) -> Self {
+        let dictionary = FakeDictionary::new();
+        let project_path = temp_dir.path().join("project");
+        std::fs::create_dir(&project_path).unwrap();
+        let config_path = project_path.join(&SKYSPELL_IGNORE_FILE);
+        let ignore_config = IgnoreConfig::open(&config_path).unwrap();
+        let project_path = ProjectPath::new(&project_path).unwrap();
+        let project = Project::new(project_path);
+        Self {
+            dictionary,
+            ignore_config,
+            project,
+        }
+    }
+
+    fn read_config(temp_dir: &TempDir) -> IgnoreConfig {
+        let config_path = temp_dir.path().join("project").join(&SKYSPELL_IGNORE_FILE);
+        IgnoreConfig::open(&config_path).unwrap()
     }
 
     fn ensure_file(&self, file_name: &str) -> (PathBuf, RelativePath) {
@@ -32,7 +48,6 @@ impl TestApp {
         with_arg0.push("--project-path");
         with_arg0.push(&project_path_as_str);
         with_arg0.extend(args);
-        dbg!(&with_arg0);
         let opts = Opts::try_parse_from(with_arg0)?;
         super::run(self.project, &opts, self.dictionary, self.ignore_config)
     }
@@ -48,16 +63,22 @@ fn test_add_global() {
 
     app.run(&["add", "foo"]).unwrap();
 
-    todo!()
+    let mut config = TestApp::read_config(&temp_dir);
+    assert!(config.is_ignored("foo").unwrap());
 }
 
 #[test]
-fn test_add_for_project_happy() {
-    let _temp_dir = tempfile::Builder::new()
+fn test_add_for_project() {
+    let temp_dir = tempfile::Builder::new()
         .prefix("test-skyspell")
         .tempdir()
         .unwrap();
-    todo!()
+    let app = TestApp::new(&temp_dir);
+
+    app.run(&["add", "foo", "--project"]).unwrap();
+
+    let mut config = TestApp::read_config(&temp_dir);
+    assert!(config.is_ignored_for_project("foo").unwrap());
 }
 
 #[test]
@@ -71,7 +92,8 @@ fn test_add_for_extension() {
 
     app.run(&["add", "foo", "--extension", "py"]).unwrap();
 
-    todo!()
+    let mut config = TestApp::read_config(&temp_dir);
+    assert!(config.is_ignored_for_extension("foo", "py").unwrap());
 }
 
 #[test]
@@ -81,7 +103,7 @@ fn test_add_for_relative_path() {
         .tempdir()
         .unwrap();
     let app = TestApp::new(&temp_dir);
-    let (full_path, _rel_path) = app.ensure_file("foo.txt");
+    let (full_path, rel_path) = app.ensure_file("foo.txt");
 
     app.run(&[
         "add",
@@ -91,7 +113,8 @@ fn test_add_for_relative_path() {
     ])
     .unwrap();
 
-    todo!()
+    let mut config = TestApp::read_config(&temp_dir);
+    assert!(config.is_ignored_for_path("foo", &rel_path).unwrap());
 }
 
 #[test]
@@ -105,7 +128,8 @@ fn test_remove_global() {
 
     app.run(&["remove", "foo"]).unwrap();
 
-    todo!()
+    let mut config = TestApp::read_config(&temp_dir);
+    assert!(!config.is_ignored("foo").unwrap());
 }
 
 #[test]
@@ -114,11 +138,13 @@ fn test_remove_for_project() {
         .prefix("test-skyspell")
         .tempdir()
         .unwrap();
-    let app = TestApp::new(&temp_dir);
+    let mut app = TestApp::new(&temp_dir);
+    app.ignore_config.ignore_for_project("foo").unwrap();
 
     app.run(&["remove", "foo", "--project"]).unwrap();
 
-    todo!()
+    let mut config = TestApp::read_config(&temp_dir);
+    assert!(!config.is_ignored_for_project("foo").unwrap());
 }
 
 #[test]
@@ -127,10 +153,20 @@ fn test_remove_for_relative_path() {
         .prefix("test-skyspell")
         .tempdir()
         .unwrap();
-    let app = TestApp::new(&temp_dir);
-    let (_full_path, _rel_path) = app.ensure_file("foo.txt");
+    let mut app = TestApp::new(&temp_dir);
+    let (full_path, rel_path) = app.ensure_file("foo.txt");
+    app.ignore_config.ignore_for_path("foo", &rel_path).unwrap();
 
-    todo!();
+    app.run(&[
+        "remove",
+        "foo",
+        "--relative-path",
+        &full_path.to_string_lossy(),
+    ])
+    .unwrap();
+
+    let mut config = TestApp::read_config(&temp_dir);
+    assert!(!config.is_ignored_for_path("foo", &rel_path).unwrap());
 }
 
 #[test]
@@ -145,7 +181,8 @@ fn test_remove_for_extension() {
 
     app.run(&["remove", "foo", "--extension", "py"]).unwrap();
 
-    todo!()
+    let mut config = TestApp::read_config(&temp_dir);
+    assert!(!config.is_ignored_for_extension("foo", "py").unwrap());
 }
 
 #[test]

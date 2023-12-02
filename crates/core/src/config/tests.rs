@@ -6,7 +6,7 @@ use textwrap::dedent;
 
 #[test]
 fn test_empty_config_is_valid() {
-    IgnoreConfig::parse(None, "").unwrap();
+    IgnoreConfig::parse("").unwrap();
 }
 
 #[test]
@@ -24,7 +24,7 @@ fn test_detailed_error_when_parsing_invalid_kdl_syntax() {
     }
     "#;
 
-    let err = IgnoreConfig::parse(None, input).unwrap_err();
+    let err = IgnoreConfig::parse(input).unwrap_err();
     let message = err.to_string();
 
     assert!(
@@ -41,7 +41,7 @@ where
     F: Fn(&mut IgnoreConfig) -> anyhow::Result<()>,
 {
     let input = dedent(input);
-    let mut ignore_config = IgnoreConfig::parse(None, &input).unwrap();
+    let mut ignore_config = IgnoreConfig::parse(&input).unwrap();
     let expected = dedent(expected);
     let expected = expected.trim();
     action(&mut ignore_config).unwrap();

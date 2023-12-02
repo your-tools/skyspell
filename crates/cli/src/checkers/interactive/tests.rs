@@ -2,7 +2,9 @@ use tempfile::TempDir;
 
 use super::InteractiveChecker;
 use skyspell_core::tests::FakeDictionary;
-use skyspell_core::{Checker, Project, ProjectPath, RelativePath};
+use skyspell_core::{
+    Checker, IgnoreConfig, Project, ProjectPath, RelativePath, SKYSPELL_IGNORE_FILE,
+};
 
 use crate::tests::FakeInteractor;
 
@@ -14,11 +16,17 @@ struct TestApp {
 
 impl TestApp {
     fn new(temp_dir: &TempDir) -> Self {
-        let _interactor = FakeInteractor::new();
-        let _dictionary = FakeDictionary::new();
-        let project_path = ProjectPath::new(temp_dir.path()).unwrap();
-        let _project = Project::new(project_path);
-        todo!()
+        let dictionary = FakeDictionary::new();
+        let interactor = FakeInteractor::new();
+
+        let project_path = temp_dir.path().join("project");
+        std::fs::create_dir(&project_path).unwrap();
+        let config_path = project_path.join(SKYSPELL_IGNORE_FILE);
+        let project_path = ProjectPath::new(&project_path).unwrap();
+        let project = Project::new(project_path);
+        let ignore_config = IgnoreConfig::open(&config_path).unwrap();
+        let checker = TestChecker::new(project, interactor, dictionary, ignore_config).unwrap();
+        Self { checker }
     }
 
     fn add_known(&mut self, words: &[&str]) {

@@ -245,7 +245,7 @@ where
 }
 
 fn undo(mut _ignore_config: IgnoreConfig) -> Result<()> {
-    todo!()
+    bail!("Undo not implemented")
 }
 
 fn suggest(dictionary: impl Dictionary, opts: &SuggestOpts) -> Result<()> {
@@ -293,9 +293,7 @@ pub fn main() -> Result<()> {
 
     let ignore_path = project_path.join(SKYSPELL_IGNORE_FILE);
 
-    let kdl = std::fs::read_to_string(&ignore_path)
-        .with_context(|| format!("While reading {SKYSPELL_IGNORE_FILE}"))?;
-    let ignore_config = IgnoreConfig::parse(Some(ignore_path), &kdl)?;
+    let ignore_config = IgnoreConfig::open(&ignore_path)?;
 
     let dictionary = EnchantDictionary::new(lang)?;
     let current_provider = dictionary.provider();

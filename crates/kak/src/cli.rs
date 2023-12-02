@@ -102,9 +102,7 @@ pub fn main() -> Result<()> {
     let project_path = PathBuf::from(project_as_str);
 
     let config_path = project_path.join(SKYSPELL_IGNORE_FILE);
-    let kdl = std::fs::read_to_string(&config_path)
-        .with_context(|| format!("While reading {SKYSPELL_IGNORE_FILE}"))?;
-    let ignore_config = IgnoreConfig::parse(Some(config_path.clone()), &kdl)?;
+    let ignore_config = IgnoreConfig::open(&config_path)?;
 
     let dictionary = EnchantDictionary::new(lang)?;
 
@@ -361,7 +359,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
     }
 
     fn undo(&mut self) -> Result<()> {
-        todo!()
+        bail!("Not implemented")
     }
 
     fn recheck(&self) {

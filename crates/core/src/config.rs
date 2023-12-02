@@ -1,11 +1,11 @@
 use std::fmt::Display;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use anyhow::{anyhow, bail, Result};
-use miette::{Diagnostic, SourceSpan};
 
 use kdl::{KdlDocument, KdlIdentifier, KdlNode};
+use miette::{Diagnostic, SourceSpan};
 
 use crate::RelativePath;
 
@@ -32,28 +32,37 @@ impl Display for IgnoreConfig {
 }
 
 impl IgnoreConfig {
-    pub fn new(path: Option<PathBuf>) -> Self {
-        Self {
-            path,
-            doc: KdlDocument::new(),
+    pub fn open(config_path: &Path) -> Result<Self> {
+        if !config_path.exists() {
+            std::fs::write(&config_path, "").with_context(|| {
+                format!("While creating empty config at {}:", config_path.display())
+            })?;
         }
+        let contents = std::fs::read_to_string(config_path)
+            .with_context(|| format!("While reading {}:", config_path.display()))?;
+        let doc = Self::parse_doc(&contents)
+            .with_context(|| format!("While parsing {}:", config_path.display()))?;
+        Ok(IgnoreConfig {
+            path: Some(config_path.to_path_buf()),
+            doc,
+        })
     }
 
     pub fn new_for_tests() -> Result<Self> {
-        Ok(Self::new(None))
+        let res = Self::parse("").unwrap();
+        Ok(res)
     }
 
-    pub fn parse(path: Option<PathBuf>, kdl: &str) -> Result<Self> {
-        let res = kdl.parse::<KdlDocument>();
-        let path_str = path
-            .as_ref()
-            .map(|x| x.to_string_lossy())
-            .unwrap_or_default();
-        let doc = res.map_err(move |e| {
+    pub fn parse(contents: &str) -> Result<Self> {
+        let doc: KdlDocument = Self::parse_doc(contents)?;
+        Ok(IgnoreConfig { doc, path: None })
+    }
+
+    fn parse_doc(contents: &str) -> Result<KdlDocument> {
+        contents.parse::<KdlDocument>().map_err(move |e| {
             let source = e
                 .source_code()
                 .expect("parse errors should have source code");
-            let help = e.help.unwrap_or_default();
             let span: SourceSpan = e.span;
             let contents = source
                 .read_span(&span, 0, 0)
@@ -61,11 +70,7 @@ impl IgnoreConfig {
             // miette uses 0 based indexes, but humans prefer 1-based
             let line = contents.line() + 1;
             let column = contents.column() + 1;
-            anyhow!("{path_str}:{line}:{column} {e}\n  help: {help}")
-        })?;
-        Ok(IgnoreConfig {
-            doc,
-            path: path.to_owned(),
+            anyhow!("line {line}, column {column}: {e}")
         })
     }
 

@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
@@ -16,9 +16,7 @@ impl SkipFile {
         let ignore_path = project.ignore_path();
         let mut gitignore_builder = GitignoreBuilder::new(path);
         if ignore_path.exists() {
-            let kdl = std::fs::read_to_string(&ignore_path)
-                .with_context(|| format!("While reading {SKYSPELL_IGNORE_FILE}"))?;
-            let ignore_config = IgnoreConfig::parse(Some(ignore_path), &kdl)?;
+            let ignore_config = IgnoreConfig::open(&ignore_path)?;
             for glob in ignore_config.patterns() {
                 gitignore_builder.add_line(None, glob)?;
             }

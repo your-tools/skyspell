@@ -3,7 +3,7 @@ use super::*;
 use tempfile::TempDir;
 
 use skyspell_core::tests::{FakeDictionary, FakeIO};
-use skyspell_core::{ProjectPath, RelativePath};
+use skyspell_core::{ProjectPath, RelativePath, SKYSPELL_IGNORE_FILE};
 
 use crate::io::tests::new_fake_io;
 
@@ -31,12 +31,14 @@ impl FakeChecker {
 }
 
 pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
-    let _dictionary = FakeDictionary::new();
+    let dictionary = FakeDictionary::new();
     let project_path = ProjectPath::new(temp_dir.path()).unwrap();
+    let config_path = temp_dir.path().join(SKYSPELL_IGNORE_FILE);
+    let ignore_config = IgnoreConfig::open(&config_path).unwrap();
     let project = Project::new(project_path);
     let mut fake_io = new_fake_io();
     fake_io.set_option("skyspell_project", &project.as_str());
-    todo!()
+    KakouneChecker::new(project, dictionary, ignore_config, fake_io).unwrap()
 }
 
 #[test]
