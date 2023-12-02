@@ -9,6 +9,7 @@ patterns {
 global {
   Backend
   Baz
+  CONFIG
   Cli
   Config
   Dimitri
