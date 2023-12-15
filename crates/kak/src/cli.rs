@@ -5,8 +5,8 @@ use clap::Parser;
 use directories_next::BaseDirs;
 
 use skyspell_core::Checker;
-use skyspell_core::EnchantDictionary;
 use skyspell_core::Config;
+use skyspell_core::EnchantDictionary;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::Project;
 use skyspell_core::ProjectPath;
@@ -163,7 +163,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         self.kakoune_io().print(message)
     }
 
-    fn dictionary(&self) -> &dyn Dictionary {
+    fn dictionary(&self) -> &D {
         self.checker.dictionary()
     }
 

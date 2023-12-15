@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use anyhow::{bail, Result};
 use colored::*;
 
-use skyspell_core::{Checker, Dictionary, Config};
+use skyspell_core::{Checker, Config, Dictionary};
 use skyspell_core::{Project, RelativePath};
 
 use crate::{info_1, Interactor};
@@ -17,7 +17,7 @@ pub struct InteractiveChecker<I: Interactor, D: Dictionary> {
     skipped: HashSet<String>,
 }
 
-impl<I: Interactor, D: Dictionary> Checker for InteractiveChecker<I, D> {
+impl<I: Interactor, D: Dictionary> Checker<D> for InteractiveChecker<I, D> {
     // line, column
     type Context = (usize, usize);
 
@@ -34,7 +34,7 @@ impl<I: Interactor, D: Dictionary> Checker for InteractiveChecker<I, D> {
         &self.project
     }
 
-    fn dictionary(&self) -> &dyn Dictionary {
+    fn dictionary(&self) -> &D {
         &self.dictionary
     }
 

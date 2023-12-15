@@ -2,10 +2,10 @@ use std::path::Path;
 
 use anyhow::Result;
 
-use crate::{Dictionary, Config};
+use crate::{Config, Dictionary};
 use crate::{Project, RelativePath};
 
-pub trait Checker {
+pub trait Checker<D: Dictionary> {
     type Context;
 
     fn handle_error(
@@ -20,7 +20,7 @@ pub trait Checker {
 
     fn ignore_config(&mut self) -> &mut Config;
 
-    fn dictionary(&self) -> &dyn Dictionary;
+    fn dictionary(&self) -> &D;
 
     fn project(&self) -> &Project;
 

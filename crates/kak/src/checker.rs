@@ -24,7 +24,7 @@ pub struct KakouneChecker<D: Dictionary, S: OperatingSystemIO> {
     errors: Vec<Error>,
 }
 
-impl<D: Dictionary, S: OperatingSystemIO> Checker for KakouneChecker<D, S> {
+impl<D: Dictionary, S: OperatingSystemIO> Checker<D> for KakouneChecker<D, S> {
     // bufname, line, column
     type Context = (String, usize, usize);
 
@@ -56,7 +56,7 @@ impl<D: Dictionary, S: OperatingSystemIO> Checker for KakouneChecker<D, S> {
         &mut self.ignore_config
     }
 
-    fn dictionary(&self) -> &dyn Dictionary {
+    fn dictionary(&self) -> &D {
         &self.dictionary
     }
 

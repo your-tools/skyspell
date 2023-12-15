@@ -5,9 +5,9 @@ use clap::Parser;
 use colored::*;
 
 use skyspell_core::Checker;
+use skyspell_core::Config;
 use skyspell_core::Dictionary;
 use skyspell_core::EnchantDictionary;
-use skyspell_core::Config;
 use skyspell_core::SkipFile;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{Project, ProjectPath, SKYSPELL_CONFIG_FILE};
@@ -202,9 +202,10 @@ fn check(
     }
 }
 
-fn check_with<C>(checker: &mut C, paths: &[PathBuf], output_format: OutputFormat) -> Result<()>
+fn check_with<C, D>(checker: &mut C, paths: &[PathBuf], output_format: OutputFormat) -> Result<()>
 where
-    C: Checker<Context = (usize, usize)>,
+    C: Checker<D, Context = (usize, usize)>,
+    D: Dictionary,
 {
     let project = checker.project();
     let skip_file = SkipFile::new(project)?;

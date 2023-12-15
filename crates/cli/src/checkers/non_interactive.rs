@@ -3,7 +3,7 @@ use colored::*;
 use serde::Serialize;
 use std::collections::BTreeMap;
 
-use skyspell_core::{Checker, Dictionary, Config};
+use skyspell_core::{Checker, Config, Dictionary};
 use skyspell_core::{Project, RelativePath};
 
 use crate::{info_1, info_2, OutputFormat};
@@ -92,11 +92,11 @@ impl<D: Dictionary> NonInteractiveChecker<D> {
     }
 }
 
-impl<D: Dictionary> Checker for NonInteractiveChecker<D> {
+impl<D: Dictionary> Checker<D> for NonInteractiveChecker<D> {
     // line, column
     type Context = (usize, usize);
 
-    fn dictionary(&self) -> &dyn Dictionary {
+    fn dictionary(&self) -> &D {
         &self.dictionary
     }
 
