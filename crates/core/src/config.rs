@@ -48,9 +48,11 @@ impl Config {
         })
     }
 
-    pub fn new_for_tests() -> Result<Self> {
-        let res = Self::parse("").unwrap();
-        Ok(res)
+    pub fn empty() -> Self {
+        Self {
+            path: None,
+            doc: KdlDocument::new(),
+        }
     }
 
     pub fn parse(contents: &str) -> Result<Self> {
