@@ -294,7 +294,7 @@ pub fn main() -> Result<()> {
 
     let ignore_path = project_path.join(SKYSPELL_CONFIG_FILE);
 
-    let ignore_config = Config::open(&ignore_path)?;
+    let ignore_config = Config::open_or_create(&ignore_path)?;
 
     let dictionary = EnchantDictionary::new(lang)?;
     let current_provider = dictionary.provider();

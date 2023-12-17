@@ -20,7 +20,7 @@ impl TestApp {
         let project_path = temp_dir.path().join("project");
         std::fs::create_dir(&project_path).unwrap();
         let config_path = project_path.join(SKYSPELL_CONFIG_FILE);
-        let ignore_config = Config::open(&config_path).unwrap();
+        let ignore_config = Config::open_or_create(&config_path).unwrap();
         let project_path = ProjectPath::new(&project_path).unwrap();
         let project = Project::new(project_path);
         Self {
@@ -32,7 +32,7 @@ impl TestApp {
 
     fn read_config(temp_dir: &TempDir) -> Config {
         let config_path = temp_dir.path().join("project").join(SKYSPELL_CONFIG_FILE);
-        Config::open(&config_path).unwrap()
+        Config::open_or_create(&config_path).unwrap()
     }
 
     fn ensure_file(&self, file_name: &str) -> (PathBuf, RelativePath) {

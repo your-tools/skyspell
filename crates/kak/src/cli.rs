@@ -102,7 +102,7 @@ pub fn main() -> Result<()> {
     let project_path = PathBuf::from(project_as_str);
 
     let config_path = project_path.join(SKYSPELL_CONFIG_FILE);
-    let ignore_config = Config::open(&config_path)?;
+    let ignore_config = Config::open_or_create(&config_path)?;
 
     let dictionary = EnchantDictionary::new(lang)?;
 

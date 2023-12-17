@@ -24,7 +24,7 @@ impl TestApp {
         let config_path = project_path.join(SKYSPELL_CONFIG_FILE);
         let project_path = ProjectPath::new(&project_path).unwrap();
         let project = Project::new(project_path);
-        let ignore_config = Config::open(&config_path).unwrap();
+        let ignore_config = Config::open_or_create(&config_path).unwrap();
         let checker = TestChecker::new(project, interactor, dictionary, ignore_config).unwrap();
         Self { checker }
     }
