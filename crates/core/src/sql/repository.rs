@@ -292,9 +292,6 @@ impl Repository for SQLRepository {
     }
 
     fn pop_last_operation(&mut self) -> Result<Option<Operation>> {
-        // Note: since we are going to mutate the operations table,
-        // we might as well delete old entries, making sure to only
-        // keep the most recent values
         let res = operations::table
             .order_by(operations::timestamp.desc())
             .first::<OperationModel>(&mut self.connection)
@@ -311,6 +308,9 @@ impl Repository for SQLRepository {
             .execute(&mut self.connection)
             .with_context(|| "Could not delete last operation")?;
 
+        // Note: since we are going to mutate the operations table,
+        // we might as well delete old entries, making sure to only
+        // keep the most recent values
         let oldest_operation = operations::table
             .order_by(operations::timestamp.desc())
             .offset(100)
