@@ -140,7 +140,8 @@ q : Quit
     // Note: this cannot fail, but it's convenient to have it return a
     // boolean like the other on_* methods
     fn on_global_ignore(&mut self, error: &str) -> Result<bool> {
-        self.ignore_config.ignore(error)?;
+        let operation = Operation::new_ignore(error);
+        self.apply_operation(operation)?;
         info_2!("Added '{}' to the global ignore list", error);
         Ok(true)
     }
@@ -154,7 +155,8 @@ q : Quit
             Some(e) => e,
         };
 
-        self.ignore_config.ignore_for_extension(error, &extension)?;
+        let operation = Operation::new_ignore_for_extension(error, &extension);
+        self.apply_operation(operation)?;
         info_2!(
             "Added '{}' to the ignore list for extension '{}'",
             error,
@@ -164,7 +166,8 @@ q : Quit
     }
 
     fn on_project_ignore(&mut self, error: &str) -> Result<bool> {
-        self.ignore_config.ignore_for_project(error)?;
+        let operation = Operation::new_ignore_for_project(error);
+        self.apply_operation(operation)?;
         info_2!(
             "Added '{}' to the ignore list for the current project",
             error
@@ -173,7 +176,8 @@ q : Quit
     }
 
     fn on_file_ignore(&mut self, error: &str, relative_path: &RelativePath) -> Result<bool> {
-        self.ignore_config.ignore_for_path(error, relative_path)?;
+        let operation = Operation::new_ignore_for_path(error, relative_path);
+        self.apply_operation(operation)?;
         info_2!(
             "Added '{}' to the ignore list for path '{}'",
             error,
