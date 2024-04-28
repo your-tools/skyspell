@@ -5,14 +5,14 @@ use clap::Parser;
 use directories_next::BaseDirs;
 
 use skyspell_core::Checker;
+use skyspell_core::Config;
 use skyspell_core::EnchantDictionary;
-use skyspell_core::IgnoreConfig;
 use skyspell_core::OperatingSystemIO;
+use skyspell_core::Project;
 use skyspell_core::ProjectPath;
 use skyspell_core::TokenProcessor;
-use skyspell_core::SKYSPELL_IGNORE_FILE;
-use skyspell_core::{get_default_db_path, SQLRepository};
-use skyspell_core::{Dictionary, SkipFile, StorageBackend};
+use skyspell_core::SKYSPELL_CONFIG_FILE;
+use skyspell_core::{Dictionary, SkipFile};
 
 use crate::{new_kakoune_io, KakouneChecker, KakouneIO};
 
@@ -101,41 +101,15 @@ pub fn main() -> Result<()> {
     let project_as_str = kakoune_io.get_option("skyspell_project")?;
     let project_path = PathBuf::from(project_as_str);
 
-    let config_path = project_path.join(SKYSPELL_IGNORE_FILE);
-    let mut ignore_config = None;
-
-    if config_path.exists() {
-        let kdl = std::fs::read_to_string(&config_path)
-            .with_context(|| format!("While reading {SKYSPELL_IGNORE_FILE}"))?;
-        ignore_config = Some(IgnoreConfig::parse(Some(config_path.clone()), &kdl)?);
-    }
-
-    let use_db = ignore_config.as_ref().map(|c| c.use_db()).unwrap_or(true);
-
-    let db_path_option = kakoune_io.get_option("skyspell_db_path")?;
-    let db_path = if db_path_option.is_empty() {
-        get_default_db_path(lang)?
-    } else {
-        db_path_option
-    };
-
-    let mut storage_backend = if use_db {
-        kakoune_io.debug(&format!("Using db path: {}", db_path));
-        let repository = SQLRepository::new(&db_path)?;
-        StorageBackend::Repository(Box::new(repository))
-    } else {
-        let ignore_config =
-            ignore_config.expect("ignore_config should not be None when use_db is false");
-        kakoune_io.debug(&format!("Using config {:?}", config_path));
-        StorageBackend::IgnoreStore(Box::new(ignore_config))
-    };
+    let config_path = project_path.join(SKYSPELL_CONFIG_FILE);
+    let ignore_config = Config::open_or_create(&config_path)?;
 
     let dictionary = EnchantDictionary::new(lang)?;
 
     let project_path = ProjectPath::new(&project_path)?;
-    let project = storage_backend.ensure_project(&project_path)?;
+    let project = Project::new(project_path);
 
-    let checker = KakouneChecker::new(project, dictionary, storage_backend, kakoune_io)?;
+    let checker = KakouneChecker::new(project, dictionary, ignore_config, kakoune_io)?;
     let mut cli = KakCli::new(checker)?;
 
     let outcome = match opts.action {
@@ -189,12 +163,12 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         self.kakoune_io().print(message)
     }
 
-    fn dictionary(&self) -> &dyn Dictionary {
+    fn dictionary(&self) -> &D {
         self.checker.dictionary()
     }
 
-    fn storage_mut(&mut self) -> &mut StorageBackend {
-        self.checker.storage_backend_mut()
+    fn ignore_config(&mut self) -> &mut Config {
+        self.checker.ignore_config()
     }
 
     fn add_extension(&mut self) -> Result<()> {
@@ -202,7 +176,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         let (_, ext) = path
             .rsplit_once('.')
             .ok_or_else(|| anyhow!("File has no extension"))?;
-        self.storage_mut().ignore_for_extension(word, ext)?;
+        self.ignore_config().ignore_for_extension(word, ext)?;
         self.recheck();
         self.print(&format!(
             "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
@@ -215,8 +189,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
         let project = &self.checker.project().clone();
         let relative_path = project.as_relative_path(path)?;
-        self.storage_mut()
-            .ignore_for_path(word, project.id(), &relative_path)?;
+        self.ignore_config().ignore_for_path(word, &relative_path)?;
         self.recheck();
         self.print(&format!(
             "echo '\"{}\" added to the ignore list for file: \"{}\"'",
@@ -227,7 +200,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
 
     fn add_global(&mut self) -> Result<()> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
-        self.storage_mut().ignore(word)?;
+        self.ignore_config().ignore(word)?;
         self.recheck();
         self.print(&format!("echo '\"{}\" added to global ignore list'", word));
         Ok(())
@@ -235,8 +208,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
 
     fn add_project(&mut self) -> Result<()> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
-        let project_id = self.checker.project().id();
-        self.storage_mut().ignore_for_project(word, project_id)?;
+        self.ignore_config().ignore_for_project(word)?;
         self.recheck();
         self.print(&format!(
             "echo '\"{}\" added to ignore list for the current project'",
@@ -387,7 +359,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
     }
 
     fn undo(&mut self) -> Result<()> {
-        self.storage_mut().undo()
+        bail!("Not implemented")
     }
 
     fn recheck(&self) {

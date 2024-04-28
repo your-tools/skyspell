@@ -2,10 +2,10 @@ use std::path::Path;
 
 use anyhow::Result;
 
-use crate::{Dictionary, StorageBackend};
+use crate::{Config, Dictionary};
 use crate::{Project, RelativePath};
 
-pub trait Checker {
+pub trait Checker<D: Dictionary> {
     type Context;
 
     fn handle_error(
@@ -18,9 +18,9 @@ pub trait Checker {
     // Were all the errors handled properly?
     fn success(&self) -> Result<()>;
 
-    fn storage_backend(&mut self) -> &mut StorageBackend;
+    fn ignore_config(&mut self) -> &mut Config;
 
-    fn dictionary(&self) -> &dyn Dictionary;
+    fn dictionary(&self) -> &D;
 
     fn project(&self) -> &Project;
 
@@ -40,10 +40,7 @@ pub trait Checker {
         if in_dict {
             return Ok(());
         }
-        let project_id = self.project().id();
-        let should_ignore =
-            self.storage_backend()
-                .should_ignore(token, project_id, relative_path)?;
+        let should_ignore = self.ignore_config().should_ignore(token, relative_path)?;
         if !should_ignore {
             self.handle_error(token, relative_path, context)?
         }

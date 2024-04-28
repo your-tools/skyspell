@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 from typing import Any, Iterator
 
+import kdl
 import pytest
 
 SOCKET_PATH = "unix:/tmp/kitty.sock"
@@ -104,6 +105,12 @@ class RemoteKakoune:
         return res
 
 
+def parse_config(tmp_path: Path) -> kdl.Document:
+    time.sleep(0.5)
+    config_path = tmp_path / "skyspell.kdl"
+    return kdl.parse(config_path.read_text())
+
+
 class KakChecker:
     """
     Represent an instance of kakoune running in a tmux session
@@ -165,24 +172,20 @@ class KakChecker:
         self.kakoune.send_keys(*args)
 
     def ignored(self) -> list[str]:
-        rows: list[tuple[str]] = self.run_query("SELECT word FROM ignored")
-        return [r[0] for r in rows]
+        config = parse_config(self.tmp_path)
+        return [node.name for node in config["global"].nodes]
 
     def ignored_for_project(self) -> list[str]:
-        rows: list[tuple[str]] = self.run_query("SELECT word FROM ignored_for_project")
-        return [r[0] for r in rows]
+        config = parse_config(self.tmp_path)
+        return [node.name for node in config["project"].nodes]
 
-    def ignored_for_path(self) -> list[tuple[str, str]]:
-        rows: list[tuple[str, str]] = self.run_query(
-            "SELECT word, path FROM ignored_for_path"
-        )
-        return rows
+    def ignored_for_path(self, path: str) -> list[str]:
+        config = parse_config(self.tmp_path)
+        return [node.name for node in config["paths"][path].nodes]
 
-    def ignored_for_extension(self) -> list[tuple[str, str]]:
-        rows: list[tuple[str, str]] = self.run_query(
-            "SELECT word, extension FROM ignored_for_extension"
-        )
-        return rows
+    def ignored_for_extension(self, extension: str) -> list[str]:
+        config = parse_config(self.tmp_path)
+        return [node.name for node in config["extensions"][extension].nodes]
 
     def run_query(self, sql: str) -> list[Any]:
         # Wait until kakoune has process the keys that were sent to the tmux pane
@@ -223,6 +226,16 @@ def kak_checker(tmp_path: Path, tmux_session: TmuxSession) -> Iterator[KakChecke
 
     kak_checker.check_runtime_errors()
     kak_checker.quit()
+
+
+def test_honor_skyspell_ignore(tmp_path: Path, kak_checker: KakChecker) -> None:
+    ignore = tmp_path / "skyspell.kdl"
+    ignore.write_text("patterns {\n  foo.lock\n}\n")
+    kak_checker.open_file_with_contents("foo.lock", r"I'm testing skyspell here")
+
+    kak_checker.open_error_list()
+
+    assert kak_checker.error_count == 0
 
 
 def test_no_spelling_errors(kak_checker: KakChecker) -> None:
@@ -280,16 +293,6 @@ def test_goto_previous(kak_checker: KakChecker) -> None:
     assert kak_checker.get_selection() == "missstake"
 
 
-def test_honor_skyspell_ignore(tmp_path: Path, kak_checker: KakChecker) -> None:
-    ignore = tmp_path / "skyspell-ignore.kdl"
-    ignore.write_text("patterns {\n  foo.lock\n}\n")
-    kak_checker.open_file_with_contents("foo.lock", r"I'm testing skyspell here")
-
-    kak_checker.open_error_list()
-
-    assert kak_checker.error_count == 0
-
-
 def test_add_global(kak_checker: KakChecker) -> None:
     kak_checker.open_file_with_contents("foo.txt", "I'm testing skyspell here")
     kak_checker.open_error_list()
@@ -311,7 +314,7 @@ def test_add_to_file(kak_checker: KakChecker) -> None:
     kak_checker.open_error_list()
     kak_checker.send_keys("f")
 
-    assert kak_checker.ignored_for_path() == [("skyspell", "foo.txt")]
+    assert kak_checker.ignored_for_path("foo.txt") == ["skyspell"]
 
 
 def test_add_to_extension(kak_checker: KakChecker) -> None:
@@ -320,7 +323,7 @@ def test_add_to_extension(kak_checker: KakChecker) -> None:
     kak_checker.open_error_list()
     kak_checker.send_keys("e")
 
-    assert kak_checker.ignored_for_extension() == [("skyspell", "rs")]
+    assert kak_checker.ignored_for_extension("rs") == ["skyspell"]
 
 
 def test_undo(tmp_path: Path, kak_checker: KakChecker) -> None:

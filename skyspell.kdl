@@ -5,9 +5,11 @@ patterns {
   mypy.ini
 }
 
+
 global {
   Backend
   Baz
+  CONFIG
   Cli
   Config
   Dimitri
@@ -353,5 +355,9 @@ paths {
 
   "tests/README.md" {
     io
+  }
+
+  bacon.toml {
+    stdout
   }
 }

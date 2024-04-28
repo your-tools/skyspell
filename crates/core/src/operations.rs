@@ -1,8 +1,8 @@
+#![allow(dead_code)]
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use crate::IgnoreStore;
-use crate::ProjectId;
+use crate::Config;
 use crate::RelativePath;
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -21,21 +21,15 @@ impl Operation {
             word: word.to_string(),
         })
     }
-    pub(crate) fn new_ignore_for_project(word: &str, project_id: ProjectId) -> Self {
+    pub(crate) fn new_ignore_for_project(word: &str) -> Self {
         Self::IgnoreForProject(IgnoreForProject {
             word: word.to_string(),
-            project_id,
         })
     }
 
-    pub(crate) fn new_ignore_for_path(
-        word: &str,
-        project_id: ProjectId,
-        relative_path: &RelativePath,
-    ) -> Self {
+    pub(crate) fn new_ignore_for_path(word: &str, relative_path: &RelativePath) -> Self {
         Self::IgnoreForPath(IgnoreForPath {
             word: word.to_string(),
-            project_id,
             path: relative_path.clone(),
         })
     }
@@ -47,23 +41,23 @@ impl Operation {
         })
     }
 
-    pub fn execute(&mut self, ignore_store: &mut dyn IgnoreStore) -> Result<()> {
+    pub fn execute(&mut self, config: &mut Config) -> Result<()> {
         use Operation::*;
         match self {
-            Ignore(o) => o.execute(ignore_store),
-            IgnoreForExtension(o) => o.execute(ignore_store),
-            IgnoreForPath(o) => o.execute(ignore_store),
-            IgnoreForProject(o) => o.execute(ignore_store),
+            Ignore(o) => o.execute(config),
+            IgnoreForExtension(o) => o.execute(config),
+            IgnoreForPath(o) => o.execute(config),
+            IgnoreForProject(o) => o.execute(config),
         }
     }
 
-    pub fn undo(&mut self, ignore_store: &mut dyn IgnoreStore) -> Result<()> {
+    pub fn undo(&mut self, config: &mut Config) -> Result<()> {
         use Operation::*;
         match self {
-            Ignore(o) => o.undo(ignore_store),
-            IgnoreForExtension(o) => o.undo(ignore_store),
-            IgnoreForPath(o) => o.undo(ignore_store),
-            IgnoreForProject(o) => o.undo(ignore_store),
+            Ignore(o) => o.undo(config),
+            IgnoreForExtension(o) => o.undo(config),
+            IgnoreForPath(o) => o.undo(config),
+            IgnoreForProject(o) => o.undo(config),
         }
     }
 }
@@ -74,12 +68,12 @@ pub struct Ignore {
 }
 
 impl Ignore {
-    fn execute(&mut self, ignore_store: &mut dyn IgnoreStore) -> Result<()> {
-        ignore_store.ignore(&self.word)
+    fn execute(&mut self, config: &mut Config) -> Result<()> {
+        config.ignore(&self.word)
     }
 
-    fn undo(&mut self, ignore_store: &mut dyn IgnoreStore) -> Result<()> {
-        ignore_store.remove_ignored(&self.word)
+    fn undo(&mut self, config: &mut Config) -> Result<()> {
+        config.remove_ignored(&self.word)
     }
 }
 
@@ -90,44 +84,42 @@ pub struct IgnoreForExtension {
 }
 
 impl IgnoreForExtension {
-    fn execute(&mut self, ignore_store: &mut dyn IgnoreStore) -> Result<()> {
-        ignore_store.ignore_for_extension(&self.word, &self.extension)
+    fn execute(&mut self, config: &mut Config) -> Result<()> {
+        config.ignore_for_extension(&self.word, &self.extension)
     }
 
-    fn undo(&mut self, ignore_store: &mut dyn IgnoreStore) -> Result<()> {
-        ignore_store.remove_ignored_for_extension(&self.word, &self.extension)
+    fn undo(&mut self, config: &mut Config) -> Result<()> {
+        config.remove_ignored_for_extension(&self.word, &self.extension)
     }
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct IgnoreForProject {
     word: String,
-    project_id: ProjectId,
 }
 
 impl IgnoreForProject {
-    fn execute(&mut self, ignore_store: &mut dyn IgnoreStore) -> Result<()> {
-        ignore_store.ignore_for_project(&self.word, self.project_id)
+    fn execute(&mut self, config: &mut Config) -> Result<()> {
+        config.ignore_for_project(&self.word)
     }
 
-    fn undo(&mut self, ignore_store: &mut dyn IgnoreStore) -> Result<()> {
-        ignore_store.remove_ignored_for_project(&self.word, self.project_id)
+    fn undo(&mut self, config: &mut Config) -> Result<()> {
+        config.remove_ignored_for_project(&self.word)
     }
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct IgnoreForPath {
     word: String,
-    project_id: ProjectId,
     path: RelativePath,
 }
 
 impl IgnoreForPath {
-    fn execute(&mut self, ignore_store: &mut dyn IgnoreStore) -> Result<()> {
-        ignore_store.ignore_for_path(&self.word, self.project_id, &self.path)
+    fn execute(&mut self, config: &mut Config) -> Result<()> {
+        config.ignore_for_path(&self.word, &self.path)
     }
 
-    fn undo(&mut self, ignore_store: &mut dyn IgnoreStore) -> Result<()> {
-        ignore_store.remove_ignored_for_path(&self.word, self.project_id, &self.path)
+    fn undo(&mut self, config: &mut Config) -> Result<()> {
+        config.remove_ignored_for_path(&self.word, &self.path)
     }
 }

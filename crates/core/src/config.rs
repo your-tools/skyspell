@@ -1,18 +1,13 @@
 use std::fmt::Display;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use anyhow::{anyhow, bail, Result};
-use miette::{Diagnostic, SourceSpan};
 
 use kdl::{KdlDocument, KdlIdentifier, KdlNode};
+use miette::{Diagnostic, SourceSpan};
 
-use crate::IgnoreStore;
-use crate::ProjectId;
-
-// We need a project_id because it's found in the arguments of some
-// methods of the trait
-const MAGIC_PROJECT_ID: ProjectId = 42;
+use crate::RelativePath;
 
 #[derive(Debug, Clone, Copy)]
 enum IndentLevel {
@@ -25,34 +20,51 @@ fn sort_nodes(x: &KdlNode, y: &KdlNode) -> std::cmp::Ordering {
 }
 
 #[derive(Debug)]
-pub struct IgnoreConfig {
+pub struct Config {
     doc: KdlDocument,
     path: Option<PathBuf>,
 }
 
-impl IgnoreConfig {
-    pub fn new(path: Option<PathBuf>) -> Self {
+impl Display for Config {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.doc)
+    }
+}
+
+impl Config {
+    pub fn open_or_create(config_path: &Path) -> Result<Self> {
+        if !config_path.exists() {
+            std::fs::write(config_path, "").with_context(|| {
+                format!("While creating empty config at {}:", config_path.display())
+            })?;
+        }
+        let contents = std::fs::read_to_string(config_path)
+            .with_context(|| format!("While reading {}:", config_path.display()))?;
+        let doc = Self::parse_doc(&contents)
+            .with_context(|| format!("While parsing {}:", config_path.display()))?;
+        Ok(Config {
+            path: Some(config_path.to_path_buf()),
+            doc,
+        })
+    }
+
+    pub fn empty() -> Self {
         Self {
-            path,
+            path: None,
             doc: KdlDocument::new(),
         }
     }
 
-    pub fn new_for_tests() -> Result<Self> {
-        Ok(Self::new(None))
+    pub fn parse(contents: &str) -> Result<Self> {
+        let doc: KdlDocument = Self::parse_doc(contents)?;
+        Ok(Config { doc, path: None })
     }
 
-    pub fn parse(path: Option<PathBuf>, kdl: &str) -> Result<Self> {
-        let res = kdl.parse::<KdlDocument>();
-        let path_str = path
-            .as_ref()
-            .map(|x| x.to_string_lossy())
-            .unwrap_or_default();
-        let doc = res.map_err(move |e| {
+    fn parse_doc(contents: &str) -> Result<KdlDocument> {
+        contents.parse::<KdlDocument>().map_err(move |e| {
             let source = e
                 .source_code()
                 .expect("parse errors should have source code");
-            let help = e.help.unwrap_or_default();
             let span: SourceSpan = e.span;
             let contents = source
                 .read_span(&span, 0, 0)
@@ -60,11 +72,7 @@ impl IgnoreConfig {
             // miette uses 0 based indexes, but humans prefer 1-based
             let line = contents.line() + 1;
             let column = contents.column() + 1;
-            anyhow!("{path_str}:{line}:{column} {e}\n  help: {help}")
-        })?;
-        Ok(IgnoreConfig {
-            doc,
-            path: path.to_owned(),
+            anyhow!("line {line}, column {column}: {e}")
         })
     }
 
@@ -316,83 +324,87 @@ impl IgnoreConfig {
         };
         std::fs::write(path, self.doc.to_string()).with_context(|| "While writing")
     }
-}
 
-impl Display for IgnoreConfig {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.doc)
+    // Should this word be ignored?
+    // This is called when a word is *not* found in the spelling dictionary.
+    //
+    // A word is ignored if:
+    //   * it's in the global ignore list
+    //   * the relative path has an extension and it's in the ignore list
+    //     for this extension
+    //   * it's in the ignore list for the project
+    //   * it's in the ignore list for the relative path
+    //
+    // Otherwise, it's *not* ignored and the Checker will call handle_error()
+    //
+    pub fn should_ignore(&mut self, word: &str, relative_path: &RelativePath) -> Result<bool> {
+        if self.is_ignored(word)? {
+            return Ok(true);
+        }
+
+        if let Some(e) = relative_path.extension() {
+            if self.is_ignored_for_extension(word, &e)? {
+                return Ok(true);
+            }
+        }
+
+        if self.is_ignored_for_project(word)? {
+            return Ok(true);
+        }
+
+        self.is_ignored_for_path(word, relative_path)
     }
-}
 
-impl IgnoreStore for IgnoreConfig {
-    fn is_ignored(&mut self, word: &str) -> Result<bool> {
+    pub fn is_ignored(&mut self, word: &str) -> Result<bool> {
         let global_words = self.global_words();
         Ok(global_words.contains(&word.to_string()))
     }
 
-    fn is_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<bool> {
+    pub fn is_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<bool> {
         Ok(self
             .ignored_words_for_extension(extension)
             .contains(&word.to_string()))
     }
 
-    fn is_ignored_for_project(&mut self, word: &str, project_id: crate::ProjectId) -> Result<bool> {
-        if project_id != MAGIC_PROJECT_ID {
-            return Ok(false);
-        }
+    pub fn is_ignored_for_project(&mut self, word: &str) -> Result<bool> {
         let project_words = self.project_words();
         Ok(project_words.contains(&word.to_string()))
     }
 
-    fn is_ignored_for_path(
+    pub fn is_ignored_for_path(
         &mut self,
         word: &str,
-        project_id: crate::ProjectId,
         relative_path: &crate::RelativePath,
     ) -> Result<bool> {
-        if project_id != MAGIC_PROJECT_ID {
-            return Ok(false);
-        }
         let for_path = self.ignored_words_for_path(&relative_path.as_str());
         Ok(for_path.contains(&word.to_string()))
     }
 
-    fn insert_ignored_words(&mut self, words: &[&str]) -> Result<()> {
-        for word in words {
-            self.add_to_section("project", word)?
-        }
-        self.save()
-    }
-
-    fn ignore(&mut self, word: &str) -> Result<()> {
+    pub fn ignore(&mut self, word: &str) -> Result<()> {
         self.add_to_section("global", word)?;
         self.save()
     }
 
-    fn ignore_for_extension(&mut self, word: &str, ext: &str) -> Result<()> {
+    pub fn ignore_for_extension(&mut self, word: &str, ext: &str) -> Result<()> {
         self.insert_in_section_with_value(word, "extensions", ext)?;
         self.save()
     }
 
-    fn ignore_for_project(&mut self, word: &str, _project_id: crate::ProjectId) -> Result<()> {
+    pub fn ignore_for_project(&mut self, word: &str) -> Result<()> {
         self.add_to_section("project", word)?;
         self.save()
     }
 
-    fn ignore_for_path(
+    pub fn ignore_for_path(
         &mut self,
         word: &str,
-        project_id: crate::ProjectId,
         relative_path: &crate::RelativePath,
     ) -> Result<()> {
-        if project_id != MAGIC_PROJECT_ID {
-            bail!("Should have called with MAGIC_PROJECT_ID");
-        }
         self.insert_in_section_with_value(word, "paths", &relative_path.as_str())?;
         self.save()
     }
 
-    fn remove_ignored(&mut self, word: &str) -> Result<()> {
+    pub fn remove_ignored(&mut self, word: &str) -> Result<()> {
         let ignored = match self.global_words_mut() {
             Some(n) => n,
             None => bail!("word was not globally ignored"),
@@ -407,7 +419,7 @@ impl IgnoreStore for IgnoreConfig {
         self.save()
     }
 
-    fn remove_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
+    pub fn remove_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
         let for_extension = self
             .ignored_words_for_extension_mut(extension)?
             .ok_or_else(|| anyhow!("word was not ignored for this extension"))?;
@@ -416,16 +428,11 @@ impl IgnoreStore for IgnoreConfig {
         self.save()
     }
 
-    fn remove_ignored_for_path(
+    pub fn remove_ignored_for_path(
         &mut self,
         word: &str,
-        project_id: crate::ProjectId,
         relative_path: &crate::RelativePath,
     ) -> Result<()> {
-        if project_id != MAGIC_PROJECT_ID {
-            bail!("Should have called with MAGIC_PROJECT_ID");
-        }
-
         let for_path = self
             .ignored_words_for_path_mut(&relative_path.as_str())?
             .ok_or_else(|| anyhow!("word was not ignored for this path"))?;
@@ -434,14 +441,7 @@ impl IgnoreStore for IgnoreConfig {
         self.save()
     }
 
-    fn remove_ignored_for_project(
-        &mut self,
-        word: &str,
-        project_id: crate::ProjectId,
-    ) -> Result<()> {
-        if project_id != MAGIC_PROJECT_ID {
-            bail!("Should have called with MAGIC_PROJECT_ID");
-        }
+    pub fn remove_ignored_for_project(&mut self, word: &str) -> Result<()> {
         let ignored = match self.project_words_mut() {
             Some(i) => i,
             None => return Ok(()),

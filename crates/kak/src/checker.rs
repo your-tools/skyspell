@@ -5,8 +5,7 @@ use std::path::PathBuf;
 use skyspell_core::Checker;
 use skyspell_core::Dictionary;
 use skyspell_core::OperatingSystemIO;
-use skyspell_core::StorageBackend;
-use skyspell_core::{Project, RelativePath};
+use skyspell_core::{Config, Project, RelativePath};
 
 use crate::io::KakouneIO;
 
@@ -19,13 +18,13 @@ pub struct Error {
 
 pub struct KakouneChecker<D: Dictionary, S: OperatingSystemIO> {
     kakoune_io: KakouneIO<S>,
-    storage_backend: StorageBackend,
+    ignore_config: Config,
     project: Project,
     dictionary: D,
     errors: Vec<Error>,
 }
 
-impl<D: Dictionary, S: OperatingSystemIO> Checker for KakouneChecker<D, S> {
+impl<D: Dictionary, S: OperatingSystemIO> Checker<D> for KakouneChecker<D, S> {
     // bufname, line, column
     type Context = (String, usize, usize);
 
@@ -53,11 +52,11 @@ impl<D: Dictionary, S: OperatingSystemIO> Checker for KakouneChecker<D, S> {
         Ok(())
     }
 
-    fn storage_backend(&mut self) -> &mut StorageBackend {
-        &mut self.storage_backend
+    fn ignore_config(&mut self) -> &mut Config {
+        &mut self.ignore_config
     }
 
-    fn dictionary(&self) -> &dyn Dictionary {
+    fn dictionary(&self) -> &D {
         &self.dictionary
     }
 
@@ -70,14 +69,14 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
     pub fn new(
         project: Project,
         dictionary: D,
-        storage_backend: StorageBackend,
+        ignore_config: Config,
         kakoune_io: KakouneIO<S>,
     ) -> Result<Self> {
         Ok(Self {
             project,
             dictionary,
             kakoune_io,
-            storage_backend,
+            ignore_config,
             errors: vec![],
         })
     }
@@ -90,8 +89,8 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
         self.kakoune_io.print(command)
     }
 
-    pub fn storage_backend_mut(&mut self) -> &mut StorageBackend {
-        &mut self.storage_backend
+    pub fn ignore_config(&mut self) -> &mut Config {
+        &mut self.ignore_config
     }
 
     pub fn write_code(&self) -> Result<()> {

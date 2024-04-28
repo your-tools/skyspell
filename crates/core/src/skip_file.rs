@@ -1,11 +1,11 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::Match;
 use ignore::{Walk, WalkBuilder};
 
-use crate::project::SKYSPELL_IGNORE_FILE;
-use crate::IgnoreConfig;
+use crate::project::SKYSPELL_CONFIG_FILE;
+use crate::Config;
 use crate::{Project, RelativePath};
 
 pub struct SkipFile(Gitignore);
@@ -16,9 +16,7 @@ impl SkipFile {
         let ignore_path = project.ignore_path();
         let mut gitignore_builder = GitignoreBuilder::new(path);
         if ignore_path.exists() {
-            let kdl = std::fs::read_to_string(&ignore_path)
-                .with_context(|| format!("While reading {SKYSPELL_IGNORE_FILE}"))?;
-            let ignore_config = IgnoreConfig::parse(Some(ignore_path), &kdl)?;
+            let ignore_config = Config::open_or_create(&ignore_path)?;
             for glob in ignore_config.patterns() {
                 gitignore_builder.add_line(None, glob)?;
             }
@@ -27,7 +25,7 @@ impl SkipFile {
     }
 
     pub fn is_skipped(&self, relative_path: &RelativePath) -> bool {
-        if relative_path.as_str() == SKYSPELL_IGNORE_FILE {
+        if relative_path.as_str() == SKYSPELL_CONFIG_FILE {
             return true;
         }
         match self.0.matched(relative_path, /*is-dir*/ false) {
