@@ -28,6 +28,7 @@ global = [
     "TODO",
     "Tmux",
     "UTF",
+    "XDG",
     "api",
     "args",
     "backend",

@@ -1,5 +1,4 @@
 import os
-import sqlite3
 import subprocess
 import time
 import tomllib
@@ -10,11 +9,12 @@ import pytest
 
 
 class TmuxSession:
-    def __init__(self, *, socket_path: Path) -> None:
-        self.socket_path = socket_path
+    def __init__(self, *, tmp_path: Path) -> None:
+        self.socket_path = tmp_path / "tmux.sock"
         env = os.environ.copy()
         env["PS1"] = r"\w$ "
         env["PATH"] = os.environ["PATH"]
+        env["XDG_DATA_HOME"] = str(tmp_path / "data")
         print(f"tmux listening on {self.socket_path}")
         self.session = "session"
         self.pane = "skyspell-tests"
@@ -61,8 +61,7 @@ class TmuxSession:
 
 @pytest.fixture()
 def tmux_session(tmp_path: Path) -> Iterator[TmuxSession]:
-    socket_path = tmp_path / "tmux.sock"
-    session = TmuxSession(socket_path=socket_path)
+    session = TmuxSession(tmp_path=tmp_path)
     yield session
     session.terminate()
 
@@ -324,7 +323,6 @@ def test_add_to_extension(kak_checker: KakChecker) -> None:
     assert kak_checker.ignored_for_extension("rs") == ["skyspell"]
 
 
-@pytest.mark.xfail
 def test_undo(tmp_path: Path, kak_checker: KakChecker) -> None:
     kak_checker.open_file_with_contents("foo.txt", "I'm testing skyspell here")
     kak_checker.open_error_list()
