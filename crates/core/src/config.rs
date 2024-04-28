@@ -89,10 +89,6 @@ impl Config {
         self.inner.ignore.patterns.iter().collect::<Vec<_>>()
     }
 
-    pub fn use_db(&self) -> bool {
-        self.inner.use_db
-    }
-
     fn save(&self) -> Result<()> {
         let path = match &self.path {
             None => return Ok(()),
