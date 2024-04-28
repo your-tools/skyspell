@@ -240,10 +240,6 @@ toml = ["pathdiff"]
     "png",
     "sh",
 ]
-TODO = [
-    "enum",
-    "struct",
-]
 "bacon.toml" = ["stdout"]
 "crates/cli/Cargo.toml" = ["md"]
 "crates/cli/src/checkers/interactive.rs" = ["aepfnsxq"]
