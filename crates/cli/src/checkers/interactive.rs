@@ -1,19 +1,18 @@
-use std::collections::HashSet;
-
-use anyhow::{bail, Result};
-use colored::*;
-
-use skyspell_core::{Checker, Config, Dictionary};
-use skyspell_core::{Project, RelativePath};
-
 use crate::{info_1, Interactor};
 use crate::{info_2, print_error};
+use anyhow::{bail, Result};
+use colored::*;
+use skyspell_core::Operation;
+use skyspell_core::{Checker, CheckerState, Config, Dictionary};
+use skyspell_core::{Project, RelativePath};
+use std::collections::HashSet;
 
 pub struct InteractiveChecker<I: Interactor, D: Dictionary> {
     project: Project,
     interactor: I,
     dictionary: D,
     ignore_config: Config,
+    state: CheckerState,
     skipped: HashSet<String>,
 }
 
@@ -42,6 +41,10 @@ impl<I: Interactor, D: Dictionary> Checker<D> for InteractiveChecker<I, D> {
         &mut self.ignore_config
     }
 
+    fn state(&mut self) -> Option<&mut CheckerState> {
+        Some(&mut self.state)
+    }
+
     fn handle_error(
         &mut self,
         error: &str,
@@ -53,6 +56,11 @@ impl<I: Interactor, D: Dictionary> Checker<D> for InteractiveChecker<I, D> {
             return Ok(());
         }
         self.on_error(path, (line, column), error)
+    }
+
+    fn apply_operation(&mut self, mut operation: Operation) -> Result<()> {
+        operation.execute(&mut self.ignore_config)?;
+        self.state.set_last_operation(operation.clone())
     }
 }
 
@@ -67,12 +75,14 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
             "Checking project {} for spelling errors",
             project.path().as_str().bold()
         );
+        let state = CheckerState::load()?;
         Ok(Self {
             project,
             dictionary,
             interactor,
             ignore_config,
             skipped: HashSet::new(),
+            state,
         })
     }
 

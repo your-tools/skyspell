@@ -1,10 +1,8 @@
-use tempfile::TempDir;
-
 use super::InteractiveChecker;
+use crate::tests::FakeInteractor;
 use skyspell_core::tests::FakeDictionary;
 use skyspell_core::{Checker, Config, Project, ProjectPath, RelativePath, SKYSPELL_CONFIG_FILE};
-
-use crate::tests::FakeInteractor;
+use tempfile::TempDir;
 
 type TestChecker = InteractiveChecker<FakeInteractor, FakeDictionary>;
 

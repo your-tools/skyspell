@@ -1,11 +1,8 @@
 use super::*;
-
-use tempfile::TempDir;
-
+use crate::io::tests::new_fake_io;
 use skyspell_core::tests::{FakeDictionary, FakeIO};
 use skyspell_core::{ProjectPath, RelativePath, SKYSPELL_CONFIG_FILE};
-
-use crate::io::tests::new_fake_io;
+use tempfile::TempDir;
 
 pub(crate) type FakeChecker = KakouneChecker<FakeDictionary, FakeIO>;
 

@@ -1,20 +1,18 @@
-use std::path::{Path, PathBuf};
-
+use crate::{new_kakoune_io, KakouneChecker, KakouneIO};
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
 use directories_next::BaseDirs;
-
 use skyspell_core::Checker;
 use skyspell_core::Config;
 use skyspell_core::EnchantDictionary;
 use skyspell_core::OperatingSystemIO;
+use skyspell_core::Operation;
 use skyspell_core::Project;
 use skyspell_core::ProjectPath;
 use skyspell_core::TokenProcessor;
 use skyspell_core::SKYSPELL_CONFIG_FILE;
 use skyspell_core::{Dictionary, SkipFile};
-
-use crate::{new_kakoune_io, KakouneChecker, KakouneIO};
+use std::path::{Path, PathBuf};
 
 // Warning: most of the things written to stdout while this code is
 // called will be interpreted as a Kakoune command. Use the debug()
@@ -122,7 +120,7 @@ pub fn main() -> Result<()> {
         Action::NextError(opts) => cli.goto_next_error(opts),
         Action::PreviousError(opts) => cli.goto_previous_error(opts),
         Action::Suggest => cli.suggest(),
-        Action::Undo => cli.undo(),
+        Action::Undo => cli.checker.undo(),
         _ => unreachable!(),
     };
 
@@ -134,7 +132,8 @@ pub fn main() -> Result<()> {
 }
 
 struct KakCli<D: Dictionary, S: OperatingSystemIO> {
-    checker: KakouneChecker<D, S>,
+    // TODO: remove pub(crate)
+    pub(crate) checker: KakouneChecker<D, S>,
     home_dir: String,
     skip_file: SkipFile,
 }
@@ -167,16 +166,13 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         self.checker.dictionary()
     }
 
-    fn ignore_config(&mut self) -> &mut Config {
-        self.checker.ignore_config()
-    }
-
     fn add_extension(&mut self) -> Result<()> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
         let (_, ext) = path
             .rsplit_once('.')
             .ok_or_else(|| anyhow!("File has no extension"))?;
-        self.ignore_config().ignore_for_extension(word, ext)?;
+        let operation = Operation::new_ignore_for_extension(word, ext);
+        self.checker.apply_operation(operation)?;
         self.recheck();
         self.print(&format!(
             "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
@@ -189,7 +185,8 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
         let project = &self.checker.project().clone();
         let relative_path = project.as_relative_path(path)?;
-        self.ignore_config().ignore_for_path(word, &relative_path)?;
+        let operation = Operation::new_ignore_for_path(word, &relative_path);
+        self.checker.apply_operation(operation)?;
         self.recheck();
         self.print(&format!(
             "echo '\"{}\" added to the ignore list for file: \"{}\"'",
@@ -200,7 +197,8 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
 
     fn add_global(&mut self) -> Result<()> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
-        self.ignore_config().ignore(word)?;
+        let operation = Operation::new_ignore(word);
+        self.checker.apply_operation(operation)?;
         self.recheck();
         self.print(&format!("echo '\"{}\" added to global ignore list'", word));
         Ok(())
@@ -208,7 +206,8 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
 
     fn add_project(&mut self) -> Result<()> {
         let LineSelection { word, .. } = &self.parse_line_selection()?;
-        self.ignore_config().ignore_for_project(word)?;
+        let operation = Operation::new_ignore_for_project(word);
+        self.checker.apply_operation(operation)?;
         self.recheck();
         self.print(&format!(
             "echo '\"{}\" added to ignore list for the current project'",
@@ -356,10 +355,6 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         }
 
         Ok(())
-    }
-
-    fn undo(&mut self) -> Result<()> {
-        bail!("Not implemented")
     }
 
     fn recheck(&self) {

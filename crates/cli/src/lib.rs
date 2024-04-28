@@ -245,8 +245,10 @@ where
     checker.success()
 }
 
-fn undo(mut _ignore_config: Config) -> Result<()> {
-    bail!("Undo not implemented")
+fn undo(project: Project, dictionary: impl Dictionary, ignore_config: Config) -> Result<()> {
+    let interactor = ConsoleInteractor;
+    let mut checker = InteractiveChecker::new(project, interactor, dictionary, ignore_config)?;
+    checker.undo()
 }
 
 fn suggest(dictionary: impl Dictionary, opts: &SuggestOpts) -> Result<()> {
@@ -277,7 +279,7 @@ fn run<D: Dictionary>(
         Action::Remove(opts) => remove(project, ignore_config, opts),
         Action::Check(opts) => check(project, ignore_config, dictionary, opts, output_format),
         Action::Suggest(opts) => suggest(dictionary, opts),
-        Action::Undo => undo(ignore_config),
+        Action::Undo => undo(project, dictionary, ignore_config),
     }
 }
 pub fn main() -> Result<()> {

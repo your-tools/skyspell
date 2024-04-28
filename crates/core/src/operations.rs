@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::Config;
 use crate::RelativePath;
 
-#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Eq, PartialEq, Clone)]
 pub enum Operation {
     Ignore(Ignore),
     IgnoreForExtension(IgnoreForExtension),
@@ -16,25 +16,25 @@ pub enum Operation {
 // Note: this is a bit verbose but less than coming up with a trait
 // that must be implemented for each variant
 impl Operation {
-    pub(crate) fn new_ignore(word: &str) -> Self {
+    pub fn new_ignore(word: &str) -> Self {
         Self::Ignore(Ignore {
             word: word.to_string(),
         })
     }
-    pub(crate) fn new_ignore_for_project(word: &str) -> Self {
+    pub fn new_ignore_for_project(word: &str) -> Self {
         Self::IgnoreForProject(IgnoreForProject {
             word: word.to_string(),
         })
     }
 
-    pub(crate) fn new_ignore_for_path(word: &str, relative_path: &RelativePath) -> Self {
+    pub fn new_ignore_for_path(word: &str, relative_path: &RelativePath) -> Self {
         Self::IgnoreForPath(IgnoreForPath {
             word: word.to_string(),
             path: relative_path.clone(),
         })
     }
 
-    pub(crate) fn new_ignore_for_extension(word: &str, extension: &str) -> Self {
+    pub fn new_ignore_for_extension(word: &str, extension: &str) -> Self {
         Self::IgnoreForExtension(IgnoreForExtension {
             word: word.to_string(),
             extension: extension.to_string(),
@@ -62,7 +62,7 @@ impl Operation {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Ignore {
     pub word: String,
 }
@@ -77,7 +77,7 @@ impl Ignore {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct IgnoreForExtension {
     word: String,
     extension: String,
@@ -93,7 +93,7 @@ impl IgnoreForExtension {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct IgnoreForProject {
     word: String,
 }
@@ -108,7 +108,7 @@ impl IgnoreForProject {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct IgnoreForPath {
     word: String,
     path: RelativePath,

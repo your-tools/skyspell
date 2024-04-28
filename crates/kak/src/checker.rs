@@ -1,13 +1,13 @@
+use crate::io::KakouneIO;
 use anyhow::Result;
 use itertools::Itertools;
-use std::path::PathBuf;
-
 use skyspell_core::Checker;
+use skyspell_core::CheckerState;
 use skyspell_core::Dictionary;
 use skyspell_core::OperatingSystemIO;
+use skyspell_core::Operation;
 use skyspell_core::{Config, Project, RelativePath};
-
-use crate::io::KakouneIO;
+use std::path::PathBuf;
 
 pub struct Error {
     pub pos: (usize, usize),
@@ -22,6 +22,8 @@ pub struct KakouneChecker<D: Dictionary, S: OperatingSystemIO> {
     project: Project,
     dictionary: D,
     errors: Vec<Error>,
+    // TODO: not pub(crate)
+    pub(crate) state: CheckerState,
 }
 
 impl<D: Dictionary, S: OperatingSystemIO> Checker<D> for KakouneChecker<D, S> {
@@ -63,6 +65,15 @@ impl<D: Dictionary, S: OperatingSystemIO> Checker<D> for KakouneChecker<D, S> {
     fn project(&self) -> &Project {
         &self.project
     }
+
+    fn apply_operation(&mut self, mut operation: Operation) -> Result<()> {
+        operation.execute(&mut self.ignore_config)?;
+        self.state.set_last_operation(operation.clone())
+    }
+
+    fn state(&mut self) -> Option<&mut CheckerState> {
+        Some(&mut self.state)
+    }
 }
 
 impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
@@ -72,12 +83,14 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
         ignore_config: Config,
         kakoune_io: KakouneIO<S>,
     ) -> Result<Self> {
+        let state = CheckerState::load()?;
         Ok(Self {
             project,
             dictionary,
             kakoune_io,
             ignore_config,
             errors: vec![],
+            state,
         })
     }
 

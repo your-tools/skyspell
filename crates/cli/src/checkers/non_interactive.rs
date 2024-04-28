@@ -1,12 +1,10 @@
+use crate::{info_1, info_2, OutputFormat};
 use anyhow::{bail, Result};
 use colored::*;
 use serde::Serialize;
-use std::collections::BTreeMap;
-
-use skyspell_core::{Checker, Config, Dictionary};
+use skyspell_core::{Checker, Config, Dictionary, Operation};
 use skyspell_core::{Project, RelativePath};
-
-use crate::{info_1, info_2, OutputFormat};
+use std::collections::BTreeMap;
 
 #[derive(Debug, Serialize)]
 struct Range {
@@ -141,5 +139,9 @@ impl<D: Dictionary> Checker<D> for NonInteractiveChecker<D> {
 
     fn ignore_config(&mut self) -> &mut Config {
         &mut self.ignore_config
+    }
+
+    fn apply_operation(&mut self, mut operation: Operation) -> Result<()> {
+        operation.execute(&mut self.ignore_config)
     }
 }
