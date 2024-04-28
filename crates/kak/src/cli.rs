@@ -132,8 +132,7 @@ pub fn main() -> Result<()> {
 }
 
 struct KakCli<D: Dictionary, S: OperatingSystemIO> {
-    // TODO: remove pub(crate)
-    pub(crate) checker: KakouneChecker<D, S>,
+    checker: KakouneChecker<D, S>,
     home_dir: String,
     skip_file: SkipFile,
 }

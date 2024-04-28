@@ -22,8 +22,7 @@ pub struct KakouneChecker<D: Dictionary, S: OperatingSystemIO> {
     project: Project,
     dictionary: D,
     errors: Vec<Error>,
-    // TODO: not pub(crate)
-    pub(crate) state: CheckerState,
+    state: CheckerState,
 }
 
 impl<D: Dictionary, S: OperatingSystemIO> Checker<D> for KakouneChecker<D, S> {
