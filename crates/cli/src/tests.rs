@@ -63,7 +63,7 @@ fn test_add_global() {
 
     app.run(&["add", "foo"]).unwrap();
 
-    let mut config = TestApp::read_config(&temp_dir);
+    let config = TestApp::read_config(&temp_dir);
     assert!(config.is_ignored("foo").unwrap());
 }
 
@@ -77,7 +77,7 @@ fn test_add_for_project() {
 
     app.run(&["add", "foo", "--project"]).unwrap();
 
-    let mut config = TestApp::read_config(&temp_dir);
+    let config = TestApp::read_config(&temp_dir);
     assert!(config.is_ignored_for_project("foo").unwrap());
 }
 
@@ -92,7 +92,7 @@ fn test_add_for_extension() {
 
     app.run(&["add", "foo", "--extension", "py"]).unwrap();
 
-    let mut config = TestApp::read_config(&temp_dir);
+    let config = TestApp::read_config(&temp_dir);
     assert!(config.is_ignored_for_extension("foo", "py").unwrap());
 }
 
@@ -113,7 +113,7 @@ fn test_add_for_relative_path() {
     ])
     .unwrap();
 
-    let mut config = TestApp::read_config(&temp_dir);
+    let config = TestApp::read_config(&temp_dir);
     assert!(config.is_ignored_for_path("foo", &rel_path).unwrap());
 }
 
@@ -128,7 +128,7 @@ fn test_remove_global() {
 
     app.run(&["remove", "foo"]).unwrap();
 
-    let mut config = TestApp::read_config(&temp_dir);
+    let config = TestApp::read_config(&temp_dir);
     assert!(!config.is_ignored("foo").unwrap());
 }
 
@@ -143,7 +143,7 @@ fn test_remove_for_project() {
 
     app.run(&["remove", "foo", "--project"]).unwrap();
 
-    let mut config = TestApp::read_config(&temp_dir);
+    let config = TestApp::read_config(&temp_dir);
     assert!(!config.is_ignored_for_project("foo").unwrap());
 }
 
@@ -165,7 +165,7 @@ fn test_remove_for_relative_path() {
     ])
     .unwrap();
 
-    let mut config = TestApp::read_config(&temp_dir);
+    let config = TestApp::read_config(&temp_dir);
     assert!(!config.is_ignored_for_path("foo", &rel_path).unwrap());
 }
 
@@ -181,7 +181,7 @@ fn test_remove_for_extension() {
 
     app.run(&["remove", "foo", "--extension", "py"]).unwrap();
 
-    let mut config = TestApp::read_config(&temp_dir);
+    let config = TestApp::read_config(&temp_dir);
     assert!(!config.is_ignored_for_extension("foo", "py").unwrap());
 }
 

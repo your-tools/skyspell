@@ -117,7 +117,7 @@ impl Config {
     //
     // Otherwise, it's *not* ignored and the Checker will call handle_error()
     //
-    pub fn should_ignore(&mut self, word: &str, relative_path: &RelativePath) -> Result<bool> {
+    pub fn should_ignore(&self, word: &str, relative_path: &RelativePath) -> Result<bool> {
         if self.is_ignored(word)? {
             return Ok(true);
         }
@@ -135,11 +135,11 @@ impl Config {
         self.is_ignored_for_path(word, relative_path)
     }
 
-    pub fn is_ignored(&mut self, word: &str) -> Result<bool> {
+    pub fn is_ignored(&self, word: &str) -> Result<bool> {
         Ok(self.inner.ignore.global.contains(word))
     }
 
-    pub fn is_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<bool> {
+    pub fn is_ignored_for_extension(&self, word: &str, extension: &str) -> Result<bool> {
         let for_extension = self.inner.ignore.extensions.get(extension);
         Ok(match for_extension {
             Some(s) => s.contains(word),
@@ -147,12 +147,12 @@ impl Config {
         })
     }
 
-    pub fn is_ignored_for_project(&mut self, word: &str) -> Result<bool> {
+    pub fn is_ignored_for_project(&self, word: &str) -> Result<bool> {
         Ok(self.inner.ignore.project.contains(word))
     }
 
     pub fn is_ignored_for_path(
-        &mut self,
+        &self,
         word: &str,
         relative_path: &crate::RelativePath,
     ) -> Result<bool> {
