@@ -231,8 +231,8 @@ fn test_check_errors_in_two_files() {
     let mut app = TestApp::new(&temp_dir);
     let (foo_full, _) = app.ensure_file("foo.md");
     let (bar_full, _) = app.ensure_file("bar.md");
-    std::fs::write(&foo_full, "This is foo").unwrap();
-    std::fs::write(&bar_full, "This is bar and it contains baz").unwrap();
+    std::fs::write(foo_full, "This is foo").unwrap();
+    std::fs::write(bar_full, "This is bar and it contains baz").unwrap();
     for word in &["This", "is", "and", "it", "contains"] {
         app.dictionary.add_known(word);
     }
@@ -251,8 +251,8 @@ fn test_check_happy() {
     let mut app = TestApp::new(&temp_dir);
     let (foo_full, _) = app.ensure_file("foo.md");
     let (bar_full, _) = app.ensure_file("bar.md");
-    std::fs::write(&foo_full, "This is fine").unwrap();
-    std::fs::write(&bar_full, "This is also fine").unwrap();
+    std::fs::write(foo_full, "This is fine").unwrap();
+    std::fs::write(bar_full, "This is also fine").unwrap();
     for word in &["This", "is", "also", "fine"] {
         app.dictionary.add_known(word);
     }
