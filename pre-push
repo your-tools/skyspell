@@ -18,6 +18,12 @@ do
     cargo run --bin skyspell -- check --non-interactive
     cargo install --locked --path crates/cli/
     cargo install --locked --path crates/kak/
+    (
+      cd tests
+      poetry install
+      poetry run pytest
+    )
+
   fi
 done
 
