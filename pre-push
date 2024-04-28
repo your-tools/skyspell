@@ -21,7 +21,7 @@ do
     (
       cd tests
       poetry install
-      poetry run pytest
+      poetry run pytest -v
     )
 
   fi
