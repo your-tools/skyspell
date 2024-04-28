@@ -11,8 +11,6 @@ pytest = "^6.2.5"
 pytest-xdist = "^2.3.0"
 
 [tool.poetry.dev-dependencies]
-# Task runner
-invoke = "^2.2.0"
 
 # Linters
 black = "21.5b0"
