@@ -8,12 +8,14 @@ use std::path::{Path, PathBuf};
 pub trait Checker<D: Dictionary> {
     type Context;
 
-    fn handle_error(
-        &mut self,
-        error: &str,
-        path: &RelativePath,
-        context: &Self::Context,
-    ) -> Result<()>;
+    fn dictionary(&self) -> &D;
+
+    fn project(&self) -> &Project;
+
+    fn to_relative_path(&self, path: &Path) -> Result<RelativePath> {
+        let project_path = self.project().path();
+        RelativePath::new(project_path, path)
+    }
 
     // Were all the errors handled properly?
     fn success(&self) -> Result<()>;
@@ -22,6 +24,31 @@ pub trait Checker<D: Dictionary> {
 
     fn state(&mut self) -> Option<&mut CheckerState> {
         None
+    }
+
+    fn handle_error(
+        &mut self,
+        error: &str,
+        path: &RelativePath,
+        context: &Self::Context,
+    ) -> Result<()>;
+
+    fn handle_token(
+        &mut self,
+        token: &str,
+        relative_path: &RelativePath,
+        context: &Self::Context,
+    ) -> Result<()> {
+        let dictionary = self.dictionary();
+        let in_dict = dictionary.check(token)?;
+        if in_dict {
+            return Ok(());
+        }
+        let should_ignore = self.ignore_config().should_ignore(token, relative_path)?;
+        if !should_ignore {
+            self.handle_error(token, relative_path, context)?
+        }
+        Ok(())
     }
 
     fn apply_operation(&mut self, mut operation: Operation) -> Result<()> {
@@ -45,33 +72,6 @@ pub trait Checker<D: Dictionary> {
         };
         let config = self.ignore_config();
         last_operation.undo(config)
-    }
-
-    fn dictionary(&self) -> &D;
-
-    fn project(&self) -> &Project;
-
-    fn to_relative_path(&self, path: &Path) -> Result<RelativePath> {
-        let project_path = self.project().path();
-        RelativePath::new(project_path, path)
-    }
-
-    fn handle_token(
-        &mut self,
-        token: &str,
-        relative_path: &RelativePath,
-        context: &Self::Context,
-    ) -> Result<()> {
-        let dictionary = self.dictionary();
-        let in_dict = dictionary.check(token)?;
-        if in_dict {
-            return Ok(());
-        }
-        let should_ignore = self.ignore_config().should_ignore(token, relative_path)?;
-        if !should_ignore {
-            self.handle_error(token, relative_path, context)?
-        }
-        Ok(())
     }
 }
 
