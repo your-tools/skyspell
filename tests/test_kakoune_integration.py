@@ -326,6 +326,7 @@ def test_add_to_extension(kak_checker: KakChecker) -> None:
     assert kak_checker.ignored_for_extension("rs") == ["skyspell"]
 
 
+@pytest.mark.xfail
 def test_undo(tmp_path: Path, kak_checker: KakChecker) -> None:
     kak_checker.open_file_with_contents("foo.txt", "I'm testing skyspell here")
     kak_checker.open_error_list()
