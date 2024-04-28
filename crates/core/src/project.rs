@@ -6,7 +6,7 @@ use anyhow::{anyhow, Context, Result};
 use ignore::{Walk, WalkBuilder};
 use serde::{Deserialize, Serialize};
 
-pub const SKYSPELL_CONFIG_FILE: &str = "skyspell.kdl";
+pub const SKYSPELL_CONFIG_FILE: &str = "skyspell.toml";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Project {

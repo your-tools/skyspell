@@ -17,7 +17,8 @@ impl SkipFile {
         let mut gitignore_builder = GitignoreBuilder::new(path);
         if ignore_path.exists() {
             let ignore_config = Config::open_or_create(&ignore_path)?;
-            for glob in ignore_config.patterns() {
+            let patterns = ignore_config.patterns();
+            for glob in patterns {
                 gitignore_builder.add_line(None, glob)?;
             }
         }

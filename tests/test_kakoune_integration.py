@@ -2,13 +2,11 @@ import os
 import sqlite3
 import subprocess
 import time
+import tomllib
 from pathlib import Path
 from typing import Any, Iterator
 
-import kdl
 import pytest
-
-SOCKET_PATH = "unix:/tmp/kitty.sock"
 
 
 class TmuxSession:
@@ -105,10 +103,11 @@ class RemoteKakoune:
         return res
 
 
-def parse_config(tmp_path: Path) -> kdl.Document:
+def parse_config(tmp_path: Path) -> dict[str, Any]:
     time.sleep(0.5)
-    config_path = tmp_path / "skyspell.kdl"
-    return kdl.parse(config_path.read_text())
+    config_path = tmp_path / "skyspell.toml"
+    config: dict[str, Any] = tomllib.loads(config_path.read_text())
+    return config
 
 
 class KakChecker:
@@ -173,29 +172,23 @@ class KakChecker:
 
     def ignored(self) -> list[str]:
         config = parse_config(self.tmp_path)
-        return [node.name for node in config["global"].nodes]
+        res: list[str] = config["ignore"]["global"]
+        return res
 
     def ignored_for_project(self) -> list[str]:
         config = parse_config(self.tmp_path)
-        return [node.name for node in config["project"].nodes]
+        res: list[str] = config["ignore"]["project"]
+        return res
 
     def ignored_for_path(self, path: str) -> list[str]:
         config = parse_config(self.tmp_path)
-        return [node.name for node in config["paths"][path].nodes]
+        res: list[str] = config["ignore"]["paths"][path]
+        return res
 
     def ignored_for_extension(self, extension: str) -> list[str]:
         config = parse_config(self.tmp_path)
-        return [node.name for node in config["extensions"][extension].nodes]
-
-    def run_query(self, sql: str) -> list[Any]:
-        # Wait until kakoune has process the keys that were sent to the tmux pane
-        time.sleep(0.5)
-        db_path = self.tmp_path / "tests.db"
-        with sqlite3.connect(db_path) as connection:
-            cursor = connection.cursor()
-            cursor.execute(sql)
-            rows = cursor.fetchall()
-            return rows
+        res: list[str] = config["ignore"]["extensions"][extension]
+        return res
 
     def move_cursor(self, line: int, column: int) -> None:
         self.kakoune.send_keys(f"{line}g")
@@ -229,8 +222,13 @@ def kak_checker(tmp_path: Path, tmux_session: TmuxSession) -> Iterator[KakChecke
 
 
 def test_honor_skyspell_ignore(tmp_path: Path, kak_checker: KakChecker) -> None:
-    ignore = tmp_path / "skyspell.kdl"
-    ignore.write_text("patterns {\n  foo.lock\n}\n")
+    ignore = tmp_path / "skyspell.toml"
+    ignore.write_text(
+        """
+        [ignore]
+        patterns = ["*.lock"]
+        """
+    )
     kak_checker.open_file_with_contents("foo.lock", r"I'm testing skyspell here")
 
     kak_checker.open_error_list()

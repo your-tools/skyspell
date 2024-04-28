@@ -246,7 +246,14 @@ fn test_reading_ignore_patterns_from_config() {
     let (foo_full, _) = app.ensure_file("foo.lock");
     let (config_path, _) = app.ensure_file(SKYSPELL_CONFIG_FILE);
     std::fs::write(foo_full, "error").unwrap();
-    std::fs::write(config_path, "patterns {\n *.lock \n}\n").unwrap();
+    std::fs::write(
+        config_path,
+        r#"
+        [ignore]
+        patterns = ["*.lock"]
+        "#,
+    )
+    .unwrap();
 
     app.run(&["check", "--non-interactive"]).unwrap();
 }
