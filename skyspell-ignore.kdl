@@ -24,6 +24,7 @@ global {
   Redistributions
   Sqlite
   TODO
+  Tmux
   UTF
   api
   args
@@ -60,6 +61,7 @@ global {
   svg
   textwrap
   tmp
+  tmux
   txt
   unicode
   unix
@@ -137,8 +139,10 @@ extensions {
   py {
     Popen
     args
+    breakpoint
     env
     fetchall
+    fmt
     len
     os
     pathlib
