@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use anyhow::Result;
 use crate::Dictionary;
+use anyhow::Result;
 
 #[derive(Default)]
 pub struct FakeDictionary {

@@ -80,10 +80,7 @@ impl IgnoreStore for FakeRepository {
     }
 
     fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
-        let entry = &mut self
-            .by_extension
-            .entry(extension.to_string())
-            .or_default();
+        let entry = &mut self.by_extension.entry(extension.to_string()).or_default();
         entry.push(word.to_string());
         Ok(())
     }
