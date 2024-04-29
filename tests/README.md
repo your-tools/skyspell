@@ -3,7 +3,7 @@
 ## Kakoune integration tests
 
 Testing kakoune integration is a bit hard using just Rust code, so instead we use end-to-end testing
-via the remote control protocol of tmux.
+using the tmux command line.
 
 They are a bit fragile because they rely on what is actually *displayed on screen*,
 but on the other hand they are fun to write and easy to debug - and they sometimes can catch regressions 😎
