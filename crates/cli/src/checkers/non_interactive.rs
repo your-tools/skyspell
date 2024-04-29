@@ -75,7 +75,7 @@ impl<D: Dictionary> NonInteractiveChecker<D> {
                 Ok(())
             }
             1 => bail!("Found just one tiny spelling error"),
-            n => bail!("Found {} spelling errors", n),
+            n => bail!("Found {n} spelling errors"),
         }
     }
 

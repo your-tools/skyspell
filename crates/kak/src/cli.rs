@@ -324,7 +324,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
             bail!("Selection is blank");
         }
         if self.dictionary().check(selection)? {
-            bail!("Selection: `{}` is not an error", selection);
+            bail!("Selection: `{selection}` is not an error");
         }
 
         let suggestions = self.dictionary().suggest(selection);
