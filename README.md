@@ -76,61 +76,47 @@ q : Quit
 ```
 
 Note that by default, skyspell will try to read *every* file in the project.
-To prevent skyspell from trying to read certain file, create a `skyspell-ignore` [kdl](https://kdl.dev/) file containing something like this:
+To prevent skyspell from trying to read certain file, create a `skyspell.toml` file containing something like this:
 
-```kdl
-patterns {
-   Cargo.lock  // no point in checking auto-generated files
-   logo.png    // no point in trying to read non-text files
-}
+```toml
+[ignore]
+patterns = [
+   "Cargo.lock",
+   "logo.png ",
+]
 ```
 
 By default, ignore rules will be automatically added to this file when
 your run the above session, resulting in a file looking like this:
 
-```kdl
-patterns {
-  // same as above
-}
+```toml
+[ignore]
+patterns = [
+  # ...
+]
 
-global {
-  // always ignored
-  your-name
-}
+global = [
+  # always ignored
+  "your-name"
+]
 
+project = [
+  # ignored just for this project
+  "your-project-name"
+]
 
-project {
-  // ignored just for this project
-  your-project-name
-}
-
-extension "rs" {
-  // ignored for this extension
-  fn
-  impl
-}
+[ignore.extension]
+"rs" = [
+  # ignored for this extension
+  "fn",
+  "impl",
+]
 ```
 
 so that you can share your ignore rules with others.
 
 By the way, there's a `--non-interactive` option to run `skyspell check`
 as part of your continuous integration.
-
-## Using an sqlite3 db instead
-
-If you don't want the above behavior, you can tell skyspell to store
-ignore rules in a global sqlite3 database by using:
-
-```kdl
-patterns {
-   // Same patterns as above
-}
-
-use_db
-```
-
-By default, the path will be `~/.local/share/skyspell/<lang>.db`, but you
-can use `--db-path` to change it.
 
 ## Comparison with scspell
 
