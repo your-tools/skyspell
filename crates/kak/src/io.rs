@@ -18,7 +18,7 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
     }
 
     pub fn debug(&self, message: &str) {
-        self.os_io.print(&format!("echo -debug {}\n", message));
+        self.os_io.print(&format!("echo -debug {message}\n"));
     }
 
     pub fn get_variable(&self, key: &str) -> Result<String> {
@@ -26,7 +26,7 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
     }
 
     pub fn get_option(&self, name: &str) -> Result<String> {
-        let key = format!("kak_opt_{}", name);
+        let key = format!("kak_opt_{name}");
         self.os_io.get_env_var(&key)
     }
 

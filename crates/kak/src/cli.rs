@@ -174,8 +174,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         self.checker.apply_operation(operation)?;
         self.recheck();
         self.print(&format!(
-            "echo '\"{}\" added to the ignore list for  extension: \"{}\"'",
-            word, ext,
+            "echo '\"{word}\" added to the ignore list for  extension: \"{ext}\"'"
         ));
         Ok(())
     }
@@ -188,8 +187,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         self.checker.apply_operation(operation)?;
         self.recheck();
         self.print(&format!(
-            "echo '\"{}\" added to the ignore list for file: \"{}\"'",
-            word, relative_path
+            "echo '\"{word}\" added to the ignore list for file: \"{relative_path}\"'"
         ));
         Ok(())
     }
@@ -199,7 +197,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         let operation = Operation::new_ignore(word);
         self.checker.apply_operation(operation)?;
         self.recheck();
-        self.print(&format!("echo '\"{}\" added to global ignore list'", word));
+        self.print(&format!("echo '\"{word}\" added to global ignore list'"));
         Ok(())
     }
 
@@ -209,8 +207,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         self.checker.apply_operation(operation)?;
         self.recheck();
         self.print(&format!(
-            "echo '\"{}\" added to ignore list for the current project'",
-            word
+            "echo '\"{word}\" added to ignore list for the current project'"
         ));
         Ok(())
     }
@@ -219,8 +216,8 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         let LineSelection {
             path, selection, ..
         } = self.parse_line_selection()?;
-        self.print(&format!("edit {}\n", path));
-        self.print(&format!("select {}\n", selection));
+        self.print(&format!("edit {path}\n"));
+        self.print(&format!("select {selection}\n"));
         Ok(())
     }
 
@@ -247,8 +244,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
 
             // cleanup any errors that may have been set during last run
             self.print(&format!(
-                "unset-option %{{buffer={}}} skyspell_errors\n",
-                bufname
+                "unset-option %{{buffer={bufname}}} skyspell_errors\n"
             ));
 
             let full_path = bufname.replace('~', &self.home_dir);
@@ -310,12 +306,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
             None => return Ok(()),
             Some(x) => x,
         };
-        self.print(&format!(
-            "select {line}.{start},{line}.{end}\n",
-            line = line,
-            start = start,
-            end = end
-        ));
+        self.print(&format!("select {line}.{start},{line}.{end}\n",));
         Ok(())
     }
 
@@ -344,10 +335,9 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
 
         self.print("menu ");
         for suggestion in suggestions.iter() {
-            self.print(&format!("%{{{}}} ", suggestion));
+            self.print(&format!("%{{{suggestion}}} "));
             self.print(&format!(
-                "%{{execute-keys -itersel %{{c{}<esc>be}} ",
-                suggestion
+                "%{{execute-keys -itersel %{{c{suggestion}<esc>be}} ",
             ));
             self.print(":write <ret> :skyspell-check <ret>}");
             self.print(" ");

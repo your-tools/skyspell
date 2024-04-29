@@ -88,7 +88,7 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
 
     fn on_error(&mut self, path: &RelativePath, pos: (usize, usize), error: &str) -> Result<()> {
         let (lineno, column) = pos;
-        let prefix = format!("{}:{}:{}", path, lineno, column);
+        let prefix = format!("{path}:{lineno}:{column}");
         println!("{} {}", prefix, error.red());
         let prompt = r#"What to do?
 a : Add word to global ignore list

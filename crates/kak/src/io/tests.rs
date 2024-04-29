@@ -14,7 +14,7 @@ impl FakeKakouneIO {
     }
 
     pub(crate) fn set_option(&mut self, key: &str, value: &str) {
-        let key = format!("kak_opt_{}", key);
+        let key = format!("kak_opt_{key}");
         self.os_io.set_env_var(&key, value);
     }
 

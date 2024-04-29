@@ -58,7 +58,7 @@ impl<D: Dictionary> NonInteractiveChecker<D> {
             start_column,
             end_column,
         } = range;
-        let prefix = format!("{}:{}:{}:{}", path, line, start_column, end_column);
+        let prefix = format!("{path}:{line}:{start_column}:{end_column}");
         println!(
             "{}: {}: {}: {}",
             prefix,

@@ -117,22 +117,16 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
     pub fn write_status(&self) {
         let project_path = &self.project.path();
         let errors_count = self.errors.len();
-        self.print(&format!(
-            "set global skyspell_error_count {}\n",
-            errors_count
-        ));
+        self.print(&format!("set global skyspell_error_count {errors_count}\n"));
         match errors_count {
             0 => self.print(&format!(
-                "echo -markup {}: {{green}}No spelling errors\n",
-                project_path
+                "echo -markup {project_path}: {{green}}No spelling errors\n"
             )),
             1 => self.print(&format!(
-                "echo -markup {}: {{red}}1 spelling error\n",
-                project_path
+                "echo -markup {project_path}: {{red}}1 spelling error\n"
             )),
             n => self.print(&format!(
-                "echo -markup {}: {{red}}{} spelling errors\n",
-                project_path, n,
+                "echo -markup {project_path}: {{red}}{n} spelling errors\n"
             )),
         }
     }
