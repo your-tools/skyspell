@@ -32,7 +32,7 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
 
     pub(crate) fn parse_usize(&self, v: &str) -> Result<usize> {
         v.parse()
-            .map_err(|_| anyhow!("could not parse '{}' as a positive number", v))
+            .map_err(|_| anyhow!("could not parse '{v}' as a positive number"))
     }
 
     pub fn get_cursor(&self) -> Result<(usize, usize)> {

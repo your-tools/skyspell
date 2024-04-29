@@ -10,7 +10,7 @@ pub struct StandardIO;
 
 impl OperatingSystemIO for StandardIO {
     fn get_env_var(&self, key: &str) -> Result<String> {
-        std::env::var(key).map_err(|_| anyhow!("{} not found in environment", key))
+        std::env::var(key).map_err(|_| anyhow!("{key} not found in environment"))
     }
 
     fn print(&self, text: &str) {

@@ -38,7 +38,7 @@ impl OperatingSystemIO for FakeIO {
         let res = self
             .env
             .get(key)
-            .ok_or_else(|| anyhow!("No such key: {}", key))?;
+            .ok_or_else(|| anyhow!("No such key: {key}"))?;
         Ok(res.to_owned())
     }
 
