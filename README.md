@@ -75,47 +75,26 @@ q : Quit
 ```
 
 Note that by default, skyspell will try to read *every* file in the project.
-To prevent skyspell from trying to read certain file, create a `skyspell.toml` file containing something like this:
+To prevent skyspell from trying to read certain file, create a
+`skyspell-ignore.toml` file  at the root of your project containing
+something like this:
 
 ```toml
-[ignore]
 patterns = [
    "Cargo.lock",
    "logo.png ",
 ]
 ```
 
-By default, ignore rules will be automatically added to this file when
-your run the above session, resulting in a file looking like this:
+Ignore rules will be automatically added to either:
 
-```toml
-[ignore]
-patterns = [
-  # ...
-]
+- `skyspell-ignore.toml`, the local file, if the word is ignored for the project or for a path
+- or in `~/.local/share/skyspell/global.toml`, the global file, if the word is ignored globally
+  or for a given extension.
 
-global = [
-  # always ignored
-  "your-name"
-]
-
-project = [
-  # ignored just for this project
-  "your-project-name"
-]
-
-[ignore.extension]
-"rs" = [
-  # ignored for this extension
-  "fn",
-  "impl",
-]
-```
-
-so that you can share your ignore rules with others.
-
-By the way, there's a `--non-interactive` option to run `skyspell check`
-as part of your continuous integration.
+That way you can share your ignore rules with other users - For
+instance, you can use the `preset.toml` file in this repository as a
+starting point for your global ignore file.
 
 ## Comparison with scspell
 
