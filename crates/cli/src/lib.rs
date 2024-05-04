@@ -7,9 +7,9 @@ use colored::*;
 use skyspell_core::Checker;
 use skyspell_core::Dictionary;
 use skyspell_core::EnchantDictionary;
-use skyspell_core::IgnoreStore;
 use skyspell_core::SkipFile;
 use skyspell_core::TokenProcessor;
+use skyspell_core::{preset_path, IgnoreStore};
 use skyspell_core::{Project, ProjectPath, SKYSPELL_LOCAL_IGNORE};
 
 mod checkers;
@@ -292,8 +292,7 @@ pub fn main() -> Result<()> {
     };
 
     let ignore_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
-    // TODO
-    let preset_path = PathBuf::from("preset.toml");
+    let preset_path = preset_path()?;
 
     let ignore_store = IgnoreStore::load(preset_path, ignore_path)?;
 

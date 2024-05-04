@@ -2,6 +2,7 @@ use crate::{new_kakoune_io, KakouneChecker, KakouneIO};
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
 use directories_next::BaseDirs;
+use skyspell_core::preset_path;
 use skyspell_core::Checker;
 use skyspell_core::EnchantDictionary;
 use skyspell_core::IgnoreStore;
@@ -100,8 +101,7 @@ pub fn main() -> Result<()> {
     let project_path = PathBuf::from(project_as_str);
 
     let config_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
-    // TODO!
-    let preset_path = PathBuf::from("preset.toml");
+    let preset_path = preset_path()?;
     let ignore_store = IgnoreStore::load(preset_path, config_path)?;
 
     let dictionary = EnchantDictionary::new(lang)?;

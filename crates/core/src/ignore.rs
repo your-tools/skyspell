@@ -1,6 +1,5 @@
-#![allow(dead_code)]
-
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
+use directories_next::BaseDirs;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -67,6 +66,14 @@ fn save<T: Serialize>(name: &'static str, value: T, path: &Path) -> Result<()> {
     std::fs::write(path, contents)
         .with_context(|| format!("while writing to {}", path.display()))?;
     Ok(())
+}
+
+pub fn preset_path() -> Result<PathBuf> {
+    let base_dirs = BaseDirs::new().ok_or_else(|| anyhow!("Could not get home directory"))?;
+    let data_dir = base_dirs.data_dir().join("skyspell");
+    std::fs::create_dir_all(&data_dir)
+        .with_context(|| format!("Could not create data dir {}", data_dir.display()))?;
+    Ok(data_dir.join("preset.toml"))
 }
 
 impl IgnoreStore {
