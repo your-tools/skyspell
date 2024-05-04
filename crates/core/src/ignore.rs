@@ -10,7 +10,7 @@ use toml;
 use crate::RelativePath;
 
 #[derive(Serialize, Deserialize, Debug, Default)]
-pub struct PresetIgnore {
+pub struct GlobalIgnore {
     #[serde(default)]
     global: BTreeSet<String>,
 
@@ -42,7 +42,7 @@ impl LocalIgnore {
 
 #[derive(Debug)]
 pub struct IgnoreStore {
-    preset: PresetIgnore,
+    global: GlobalIgnore,
     local: LocalIgnore,
     global_toml: PathBuf,
     local_toml: PathBuf,
@@ -75,10 +75,10 @@ pub fn global_path() -> Result<PathBuf> {
 
 impl IgnoreStore {
     pub fn load(global_toml: PathBuf, local_toml: PathBuf) -> Result<Self> {
-        let preset = load(&global_toml)?;
+        let global = load(&global_toml)?;
         let local = load(&local_toml)?;
         Ok(Self {
-            preset,
+            global,
             local,
             global_toml,
             local_toml,
@@ -126,16 +126,16 @@ impl IgnoreStore {
     }
 
     pub fn ignore(&mut self, word: &str) -> Result<()> {
-        self.preset.global.insert(word.to_owned());
-        self.save_preset()
+        self.global.global.insert(word.to_owned());
+        self.save_global()
     }
 
     pub fn is_ignored(&self, word: &str) -> bool {
-        self.preset.global.contains(word)
+        self.global.global.contains(word)
     }
 
     pub fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
-        let for_extension = self.preset.extensions.get_mut(extension);
+        let for_extension = self.global.extensions.get_mut(extension);
         match for_extension {
             Some(s) => {
                 s.insert(word.to_owned());
@@ -143,14 +143,14 @@ impl IgnoreStore {
             None => {
                 let mut set = BTreeSet::new();
                 set.insert(word.to_owned());
-                self.preset.extensions.insert(extension.to_owned(), set);
+                self.global.extensions.insert(extension.to_owned(), set);
             }
         };
-        self.save_preset()
+        self.save_global()
     }
 
     pub fn is_ignored_for_extension(&self, word: &str, extension: &str) -> bool {
-        let for_extension = self.preset.extensions.get(extension);
+        let for_extension = self.global.extensions.get(extension);
         match for_extension {
             Some(s) => s.contains(word),
             None => false,
@@ -191,21 +191,21 @@ impl IgnoreStore {
     }
 
     pub fn remove_ignored(&mut self, word: &str) -> Result<()> {
-        let present = self.preset.global.remove(word);
+        let present = self.global.global.remove(word);
         if !present {
             bail!("word {word} was not ignored");
         }
-        self.save_preset()
+        self.save_global()
     }
 
     pub fn remove_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
-        match self.preset.extensions.get_mut(extension) {
+        match self.global.extensions.get_mut(extension) {
             Some(set) => {
                 set.remove(word);
             }
             None => bail!("{word} is not ignored for {extension}"),
         }
-        self.save_preset()
+        self.save_global()
     }
 
     pub fn remove_ignored_for_path(
@@ -231,8 +231,8 @@ impl IgnoreStore {
         self.save_local()
     }
 
-    fn save_preset(&self) -> Result<()> {
-        save("preset", &self.preset, &self.global_toml)
+    fn save_global(&self) -> Result<()> {
+        save("global", &self.global, &self.global_toml)
     }
 
     fn save_local(&self) -> Result<()> {
