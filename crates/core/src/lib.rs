@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate lazy_static;
 
-pub mod config;
 mod dictionary;
 pub mod enchant;
 pub mod ignore;
