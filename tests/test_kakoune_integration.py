@@ -102,9 +102,16 @@ class RemoteKakoune:
         return res
 
 
-def parse_config(tmp_path: Path) -> dict[str, Any]:
+def parse_local(tmp_path: Path) -> dict[str, Any]:
     time.sleep(0.5)
-    config_path = tmp_path / "skyspell.toml"
+    config_path = tmp_path / "skyspell-ignore.toml"
+    config: dict[str, Any] = tomllib.loads(config_path.read_text())
+    return config
+
+
+def parse_global(tmp_path: Path) -> dict[str, Any]:
+    time.sleep(0.5)
+    config_path = tmp_path / "data" / "skyspell" / "preset.toml"
     config: dict[str, Any] = tomllib.loads(config_path.read_text())
     return config
 
@@ -166,23 +173,23 @@ class KakChecker:
         self.kakoune.send_keys(*args)
 
     def ignored(self) -> list[str]:
-        config = parse_config(self.tmp_path)
-        res: list[str] = config["ignore"]["global"]
+        config = parse_global(self.tmp_path)
+        res: list[str] = config["global"]
         return res
 
     def ignored_for_project(self) -> list[str]:
-        config = parse_config(self.tmp_path)
-        res: list[str] = config["ignore"]["project"]
+        config = parse_local(self.tmp_path)
+        res: list[str] = config["project"]
         return res
 
     def ignored_for_path(self, path: str) -> list[str]:
-        config = parse_config(self.tmp_path)
-        res: list[str] = config["ignore"]["paths"][path]
+        config = parse_local(self.tmp_path)
+        res: list[str] = config["paths"][path]
         return res
 
     def ignored_for_extension(self, extension: str) -> list[str]:
-        config = parse_config(self.tmp_path)
-        res: list[str] = config["ignore"]["extensions"][extension]
+        config = parse_global(self.tmp_path)
+        res: list[str] = config["extensions"][extension]
         return res
 
     def move_cursor(self, line: int, column: int) -> None:
@@ -216,11 +223,10 @@ def kak_checker(tmp_path: Path, tmux_session: TmuxSession) -> Iterator[KakChecke
     kak_checker.quit()
 
 
-def test_honor_skyspell_ignore(tmp_path: Path, kak_checker: KakChecker) -> None:
-    ignore = tmp_path / "skyspell.toml"
-    ignore.write_text(
+def test_skip_patterns(tmp_path: Path, kak_checker: KakChecker) -> None:
+    local_toml = tmp_path / "skyspell-ignore.toml"
+    local_toml.write_text(
         """
-        [ignore]
         patterns = ["*.lock"]
         """
     )
