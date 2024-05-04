@@ -4,9 +4,10 @@ use itertools::Itertools;
 use skyspell_core::Checker;
 use skyspell_core::CheckerState;
 use skyspell_core::Dictionary;
+use skyspell_core::IgnoreStore;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::Operation;
-use skyspell_core::{Config, Project, RelativePath};
+use skyspell_core::{Project, RelativePath};
 use std::path::PathBuf;
 
 pub struct Error {
@@ -18,7 +19,7 @@ pub struct Error {
 
 pub struct KakouneChecker<D: Dictionary, S: OperatingSystemIO> {
     kakoune_io: KakouneIO<S>,
-    ignore_config: Config,
+    ignore_store: IgnoreStore,
     project: Project,
     dictionary: D,
     errors: Vec<Error>,
@@ -53,8 +54,8 @@ impl<D: Dictionary, S: OperatingSystemIO> Checker<D> for KakouneChecker<D, S> {
         Ok(())
     }
 
-    fn ignore_config(&mut self) -> &mut Config {
-        &mut self.ignore_config
+    fn ignore_store(&mut self) -> &mut IgnoreStore {
+        &mut self.ignore_store
     }
 
     fn dictionary(&self) -> &D {
@@ -66,7 +67,7 @@ impl<D: Dictionary, S: OperatingSystemIO> Checker<D> for KakouneChecker<D, S> {
     }
 
     fn apply_operation(&mut self, mut operation: Operation) -> Result<()> {
-        operation.execute(&mut self.ignore_config)?;
+        operation.execute(&mut self.ignore_store)?;
         self.state.set_last_operation(operation.clone())
     }
 
@@ -79,7 +80,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
     pub fn new(
         project: Project,
         dictionary: D,
-        ignore_config: Config,
+        ignore_store: IgnoreStore,
         kakoune_io: KakouneIO<S>,
         state_toml: Option<PathBuf>,
     ) -> Result<Self> {
@@ -88,7 +89,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
             project,
             dictionary,
             kakoune_io,
-            ignore_config,
+            ignore_store,
             errors: vec![],
             state,
         })
@@ -102,8 +103,8 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
         self.kakoune_io.print(command)
     }
 
-    pub fn ignore_config(&mut self) -> &mut Config {
-        &mut self.ignore_config
+    pub fn ignore_store(&mut self) -> &mut IgnoreStore {
+        &mut self.ignore_store
     }
 
     pub fn write_code(&self) -> Result<()> {

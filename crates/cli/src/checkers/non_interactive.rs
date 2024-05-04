@@ -2,7 +2,7 @@ use crate::{info_1, info_2, OutputFormat};
 use anyhow::{bail, Result};
 use colored::*;
 use serde::Serialize;
-use skyspell_core::{Checker, Config, Dictionary, Operation};
+use skyspell_core::{Checker, Dictionary, IgnoreStore, Operation};
 use skyspell_core::{Project, RelativePath};
 use std::collections::BTreeMap;
 
@@ -22,7 +22,7 @@ struct Error {
 pub struct NonInteractiveChecker<D: Dictionary> {
     project: Project,
     dictionary: D,
-    ignore_config: Config,
+    ignore_store: IgnoreStore,
     output_format: OutputFormat,
     errors: BTreeMap<String, Vec<Error>>,
     num_errors: usize,
@@ -32,7 +32,7 @@ impl<D: Dictionary> NonInteractiveChecker<D> {
     pub fn new(
         project: Project,
         dictionary: D,
-        ignore_config: Config,
+        ignore_store: IgnoreStore,
         output_format: OutputFormat,
     ) -> Result<Self> {
         if output_format.is_text() {
@@ -44,7 +44,7 @@ impl<D: Dictionary> NonInteractiveChecker<D> {
         Ok(Self {
             project,
             dictionary,
-            ignore_config,
+            ignore_store,
             output_format,
             errors: BTreeMap::new(),
             num_errors: 0,
@@ -137,11 +137,11 @@ impl<D: Dictionary> Checker<D> for NonInteractiveChecker<D> {
         &self.project
     }
 
-    fn ignore_config(&mut self) -> &mut Config {
-        &mut self.ignore_config
+    fn ignore_store(&mut self) -> &mut IgnoreStore {
+        &mut self.ignore_store
     }
 
     fn apply_operation(&mut self, mut operation: Operation) -> Result<()> {
-        operation.execute(&mut self.ignore_config)
+        operation.execute(&mut self.ignore_store)
     }
 }

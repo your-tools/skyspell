@@ -1,7 +1,8 @@
 use super::*;
 use crate::io::tests::new_fake_io;
 use skyspell_core::tests::{FakeDictionary, FakeIO};
-use skyspell_core::{ProjectPath, RelativePath, SKYSPELL_CONFIG_FILE};
+use skyspell_core::IgnoreStore;
+use skyspell_core::{ProjectPath, RelativePath};
 use tempfile::TempDir;
 
 pub(crate) type FakeChecker = KakouneChecker<FakeDictionary, FakeIO>;
@@ -30,20 +31,14 @@ impl FakeChecker {
 pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
     let dictionary = FakeDictionary::new();
     let project_path = ProjectPath::new(temp_dir.path()).unwrap();
-    let config_path = temp_dir.path().join(SKYSPELL_CONFIG_FILE);
-    let ignore_config = Config::open_or_create(&config_path).unwrap();
     let project = Project::new(project_path);
     let mut fake_io = new_fake_io();
     fake_io.set_option("skyspell_project", &project.as_str());
     let state_toml = temp_dir.path().join("state.toml");
-    KakouneChecker::new(
-        project,
-        dictionary,
-        ignore_config,
-        fake_io,
-        Some(state_toml),
-    )
-    .unwrap()
+    let preset_toml = temp_dir.path().join("preset.toml");
+    let local_toml = temp_dir.path().join("skyspell.toml");
+    let ignore_store = IgnoreStore::load(preset_toml, local_toml).unwrap();
+    KakouneChecker::new(project, dictionary, ignore_store, fake_io, Some(state_toml)).unwrap()
 }
 
 #[test]

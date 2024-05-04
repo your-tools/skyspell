@@ -2,8 +2,8 @@ use crate::{info_1, Interactor};
 use crate::{info_2, print_error};
 use anyhow::{bail, Result};
 use colored::*;
-use skyspell_core::Operation;
-use skyspell_core::{Checker, CheckerState, Config, Dictionary};
+use skyspell_core::{Checker, CheckerState, Dictionary};
+use skyspell_core::{IgnoreStore, Operation};
 use skyspell_core::{Project, RelativePath};
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -12,7 +12,7 @@ pub struct InteractiveChecker<I: Interactor, D: Dictionary> {
     project: Project,
     interactor: I,
     dictionary: D,
-    ignore_config: Config,
+    ignore_store: IgnoreStore,
     state: CheckerState,
     skipped: HashSet<String>,
 }
@@ -38,8 +38,8 @@ impl<I: Interactor, D: Dictionary> Checker<D> for InteractiveChecker<I, D> {
         &self.dictionary
     }
 
-    fn ignore_config(&mut self) -> &mut Config {
-        &mut self.ignore_config
+    fn ignore_store(&mut self) -> &mut IgnoreStore {
+        &mut self.ignore_store
     }
 
     fn state(&mut self) -> Option<&mut CheckerState> {
@@ -60,7 +60,7 @@ impl<I: Interactor, D: Dictionary> Checker<D> for InteractiveChecker<I, D> {
     }
 
     fn apply_operation(&mut self, mut operation: Operation) -> Result<()> {
-        operation.execute(&mut self.ignore_config)?;
+        operation.execute(&mut self.ignore_store)?;
         self.state.set_last_operation(operation.clone())
     }
 }
@@ -70,7 +70,7 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
         project: Project,
         interactor: I,
         dictionary: D,
-        ignore_config: Config,
+        ignore_store: IgnoreStore,
         state_toml: Option<PathBuf>,
     ) -> Result<Self> {
         info_1!(
@@ -82,7 +82,7 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
             project,
             dictionary,
             interactor,
-            ignore_config,
+            ignore_store,
             skipped: HashSet::new(),
             state,
         })

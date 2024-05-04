@@ -14,8 +14,8 @@ pub mod tokens;
 
 pub use crate::enchant::EnchantDictionary;
 pub use checker::{Checker, CheckerState};
-pub use config::Config;
 pub use dictionary::Dictionary;
+pub use ignore::{IgnoreStore, LocalIgnore, PresetIgnore};
 pub use operations::Operation;
 pub use os_io::{OperatingSystemIO, StandardIO};
 pub use project::{Project, ProjectPath, RelativePath, SKYSPELL_CONFIG_FILE};

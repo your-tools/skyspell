@@ -5,7 +5,7 @@ use ignore::Match;
 use ignore::{Walk, WalkBuilder};
 
 use crate::project::SKYSPELL_CONFIG_FILE;
-use crate::Config;
+use crate::LocalIgnore;
 use crate::{Project, RelativePath};
 
 pub struct SkipFile(Gitignore);
@@ -15,12 +15,10 @@ impl SkipFile {
         let path = project.path().as_ref();
         let ignore_path = project.ignore_path();
         let mut gitignore_builder = GitignoreBuilder::new(path);
-        if ignore_path.exists() {
-            let ignore_config = Config::open_or_create(&ignore_path)?;
-            let patterns = ignore_config.patterns();
-            for glob in patterns {
-                gitignore_builder.add_line(None, glob)?;
-            }
+        let local = LocalIgnore::load(&ignore_path)?;
+        let patterns = local.patterns;
+        for glob in patterns {
+            gitignore_builder.add_line(None, &glob)?;
         }
         Ok(Self(gitignore_builder.build()?))
     }

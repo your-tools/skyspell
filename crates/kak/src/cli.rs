@@ -3,8 +3,8 @@ use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
 use directories_next::BaseDirs;
 use skyspell_core::Checker;
-use skyspell_core::Config;
 use skyspell_core::EnchantDictionary;
+use skyspell_core::IgnoreStore;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::Operation;
 use skyspell_core::Project;
@@ -100,14 +100,16 @@ pub fn main() -> Result<()> {
     let project_path = PathBuf::from(project_as_str);
 
     let config_path = project_path.join(SKYSPELL_CONFIG_FILE);
-    let ignore_config = Config::open_or_create(&config_path)?;
+    // TODO!
+    let preset_path = PathBuf::from("preset.toml");
+    let ignore_store = IgnoreStore::load(preset_path, config_path)?;
 
     let dictionary = EnchantDictionary::new(lang)?;
 
     let project_path = ProjectPath::new(&project_path)?;
     let project = Project::new(project_path);
 
-    let checker = KakouneChecker::new(project, dictionary, ignore_config, kakoune_io, None)?;
+    let checker = KakouneChecker::new(project, dictionary, ignore_store, kakoune_io, None)?;
     let mut cli = KakCli::new(checker)?;
 
     let outcome = match opts.action {

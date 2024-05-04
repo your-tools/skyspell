@@ -11,13 +11,13 @@ fn get_test_dir() -> TempDir {
         .unwrap()
 }
 
-fn create_store(temp_dir: &TempDir, preset: &str, local: &str) -> Store {
+fn create_store(temp_dir: &TempDir, preset: &str, local: &str) -> IgnoreStore {
     let temp_path = temp_dir.path();
     let preset_toml = temp_path.join("preset.toml");
     std::fs::write(&preset_toml, preset).unwrap();
     let local_toml = temp_path.join("skyspell.toml");
     std::fs::write(&local_toml, local).unwrap();
-    Store::load(preset_toml, local_toml).unwrap()
+    IgnoreStore::load(preset_toml, local_toml).unwrap()
 }
 
 #[test]
@@ -39,14 +39,14 @@ fn test_add_for_extension_writes_in_preset_toml() {
     store.ignore_for_extension("impl", "rs").unwrap();
 
     let preset_toml = temp_dir.path().join("preset.toml");
-    let actual: Preset = load(&preset_toml).unwrap();
+    let actual: PresetIgnore = load(&preset_toml).unwrap();
     assert_eq!(
         actual.extensions["rs"].iter().collect::<Vec<_>>(),
         vec!["fn", "impl"]
     );
 }
 
-fn get_empty_store(temp_dir: &TempDir) -> Store {
+fn get_empty_store(temp_dir: &TempDir) -> IgnoreStore {
     create_store(temp_dir, "", "")
 }
 

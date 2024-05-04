@@ -5,9 +5,9 @@ use clap::Parser;
 use colored::*;
 
 use skyspell_core::Checker;
-use skyspell_core::Config;
 use skyspell_core::Dictionary;
 use skyspell_core::EnchantDictionary;
+use skyspell_core::IgnoreStore;
 use skyspell_core::SkipFile;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{Project, ProjectPath, SKYSPELL_CONFIG_FILE};
@@ -147,37 +147,37 @@ struct RemoveOpts {
     relative_path: Option<PathBuf>,
 }
 
-fn add(project: Project, mut ignore_config: Config, opts: &AddOpts) -> Result<()> {
+fn add(project: Project, mut ignore_store: IgnoreStore, opts: &AddOpts) -> Result<()> {
     let word = &opts.word;
     match (&opts.relative_path, &opts.extension, &opts.project) {
-        (None, None, false) => ignore_config.ignore(word),
-        (None, Some(e), _) => ignore_config.ignore_for_extension(word, e),
+        (None, None, false) => ignore_store.ignore(word),
+        (None, Some(e), _) => ignore_store.ignore_for_extension(word, e),
         (Some(relative_path), None, _) => {
             let relative_path = project.get_relative_path(relative_path)?;
-            ignore_config.ignore_for_path(word, &relative_path)
+            ignore_store.ignore_for_path(word, &relative_path)
         }
-        (None, None, true) => ignore_config.ignore_for_project(word),
+        (None, None, true) => ignore_store.ignore_for_project(word),
         (Some(_), Some(_), _) => bail!("Cannot use both --relative-path and --extension"),
     }
 }
 
-fn remove(project: Project, mut ignore_config: Config, opts: &RemoveOpts) -> Result<()> {
+fn remove(project: Project, mut ignore_store: IgnoreStore, opts: &RemoveOpts) -> Result<()> {
     let word = &opts.word;
     match (&opts.relative_path, &opts.extension, &opts.project) {
-        (None, None, false) => ignore_config.remove_ignored(word),
-        (None, Some(e), _) => ignore_config.remove_ignored_for_extension(word, e),
+        (None, None, false) => ignore_store.remove_ignored(word),
+        (None, Some(e), _) => ignore_store.remove_ignored_for_extension(word, e),
         (Some(relative_path), None, _) => {
             let relative_path = project.get_relative_path(relative_path)?;
-            ignore_config.remove_ignored_for_path(word, &relative_path)
+            ignore_store.remove_ignored_for_path(word, &relative_path)
         }
-        (None, None, true) => ignore_config.remove_ignored_for_project(word),
+        (None, None, true) => ignore_store.remove_ignored_for_project(word),
         (Some(_), Some(_), _) => bail!("Cannot use both --relative-path and --extension"),
     }
 }
 
 fn check(
     project: Project,
-    ignore_config: Config,
+    ignore_store: IgnoreStore,
     dictionary: impl Dictionary,
     opts: &CheckOpts,
     output_format: OutputFormat,
@@ -187,13 +187,13 @@ fn check(
     match interactive {
         false => {
             let mut checker =
-                NonInteractiveChecker::new(project, dictionary, ignore_config, output_format)?;
+                NonInteractiveChecker::new(project, dictionary, ignore_store, output_format)?;
             check_with(&mut checker, &opts.paths, output_format)
         }
         true => {
             let interactor = ConsoleInteractor;
             let mut checker =
-                InteractiveChecker::new(project, interactor, dictionary, ignore_config, None)?;
+                InteractiveChecker::new(project, interactor, dictionary, ignore_store, None)?;
             check_with(&mut checker, &opts.paths, output_format)
         }
     }
@@ -242,10 +242,9 @@ where
     checker.success()
 }
 
-fn undo(project: Project, dictionary: impl Dictionary, ignore_config: Config) -> Result<()> {
+fn undo(project: Project, dictionary: impl Dictionary, ignore_store: IgnoreStore) -> Result<()> {
     let interactor = ConsoleInteractor;
-    let mut checker =
-        InteractiveChecker::new(project, interactor, dictionary, ignore_config, None)?;
+    let mut checker = InteractiveChecker::new(project, interactor, dictionary, ignore_store, None)?;
     checker.undo()
 }
 
@@ -269,15 +268,15 @@ fn run<D: Dictionary>(
     project: Project,
     opts: &Opts,
     dictionary: D,
-    ignore_config: Config,
+    ignore_store: IgnoreStore,
 ) -> Result<()> {
     let output_format = opts.output_format.unwrap_or_default();
     match &opts.action {
-        Action::Add(opts) => add(project, ignore_config, opts),
-        Action::Remove(opts) => remove(project, ignore_config, opts),
-        Action::Check(opts) => check(project, ignore_config, dictionary, opts, output_format),
+        Action::Add(opts) => add(project, ignore_store, opts),
+        Action::Remove(opts) => remove(project, ignore_store, opts),
+        Action::Check(opts) => check(project, ignore_store, dictionary, opts, output_format),
         Action::Suggest(opts) => suggest(dictionary, opts),
-        Action::Undo => undo(project, dictionary, ignore_config),
+        Action::Undo => undo(project, dictionary, ignore_store),
     }
 }
 pub fn main() -> Result<()> {
@@ -293,13 +292,15 @@ pub fn main() -> Result<()> {
     };
 
     let ignore_path = project_path.join(SKYSPELL_CONFIG_FILE);
+    // TODO
+    let preset_path = PathBuf::from("preset.toml");
 
-    let ignore_config = Config::open_or_create(&ignore_path)?;
+    let ignore_store = IgnoreStore::load(preset_path, ignore_path)?;
 
     let dictionary = EnchantDictionary::new(lang)?;
     let current_provider = dictionary.provider();
 
-    let provider_in_config = ignore_config.provider();
+    let provider_in_config = ignore_store.provider();
     if let Some(provider_in_config) = provider_in_config {
         if current_provider != provider_in_config {
             bail!("Using '{current_provider}' as provider but should be '{provider_in_config}'")
@@ -309,7 +310,7 @@ pub fn main() -> Result<()> {
     let project_path = ProjectPath::new(&project_path)?;
     let project = Project::new(project_path);
 
-    let outcome = run(project, &opts, dictionary, ignore_config);
+    let outcome = run(project, &opts, dictionary, ignore_store);
     if let Err(e) = outcome {
         print_error!("{}", e);
         std::process::exit(1);

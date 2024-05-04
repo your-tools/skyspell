@@ -35,18 +35,18 @@ struct Ignore {
 }
 
 #[derive(Debug, Default)]
-pub struct Config {
+pub struct IgnoreStore {
     inner: InnerConfig,
     path: Option<PathBuf>,
 }
 
-impl Display for Config {
+impl Display for IgnoreStore {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.inner)
     }
 }
 
-impl Config {
+impl IgnoreStore {
     pub fn open_or_create(config_path: &Path) -> Result<Self> {
         if !config_path.exists() {
             std::fs::write(config_path, "").with_context(|| {
@@ -57,7 +57,7 @@ impl Config {
             .with_context(|| format!("While reading {}:", config_path.display()))?;
         let config: InnerConfig = toml_edit::de::from_str(&contents)
             .with_context(|| format!("While parsing {}:", config_path.display()))?;
-        Ok(Config {
+        Ok(IgnoreStore {
             path: Some(config_path.to_path_buf()),
             inner: config,
         })
@@ -72,7 +72,7 @@ impl Config {
 
     pub fn parse(contents: &str) -> Result<Self> {
         let ignore: InnerConfig = toml_edit::de::from_str(contents)?;
-        Ok(Config {
+        Ok(IgnoreStore {
             inner: ignore,
             path: None,
         })

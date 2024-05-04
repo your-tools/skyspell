@@ -1,7 +1,7 @@
 use super::InteractiveChecker;
 use crate::tests::FakeInteractor;
 use skyspell_core::tests::FakeDictionary;
-use skyspell_core::{Checker, Config, Project, ProjectPath, RelativePath, SKYSPELL_CONFIG_FILE};
+use skyspell_core::{Checker, IgnoreStore, Project, ProjectPath, RelativePath};
 use tempfile::TempDir;
 
 type TestChecker = InteractiveChecker<FakeInteractor, FakeDictionary>;
@@ -17,16 +17,17 @@ impl TestApp {
 
         let project_path = temp_dir.path().join("project");
         std::fs::create_dir(&project_path).unwrap();
-        let config_path = project_path.join(SKYSPELL_CONFIG_FILE);
         let project_path = ProjectPath::new(&project_path).unwrap();
         let project = Project::new(project_path);
-        let ignore_config = Config::open_or_create(&config_path).unwrap();
         let state_toml = temp_dir.path().join("state.toml");
+        let preset_toml = temp_dir.path().join("preset.toml");
+        let local_toml = temp_dir.path().join("skyspell.toml");
+        let ignore_store = IgnoreStore::load(preset_toml, local_toml).unwrap();
         let checker = TestChecker::new(
             project,
             interactor,
             dictionary,
-            ignore_config,
+            ignore_store,
             Some(state_toml),
         )
         .unwrap();
@@ -61,29 +62,24 @@ impl TestApp {
     }
 
     fn is_ignored(&mut self, word: &str) -> bool {
-        self.checker.ignore_config().is_ignored(word).unwrap()
+        self.checker.ignore_store().is_ignored(word)
     }
 
     fn is_ignored_for_extension(&mut self, word: &str, extension: &str) -> bool {
         self.checker
-            .ignore_config()
+            .ignore_store()
             .is_ignored_for_extension(word, extension)
-            .unwrap()
     }
 
     fn is_ignored_for_project(&mut self, word: &str) -> bool {
-        self.checker
-            .ignore_config()
-            .is_ignored_for_project(word)
-            .unwrap()
+        self.checker.ignore_store().is_ignored_for_project(word)
     }
 
     fn is_ignored_for_path(&mut self, word: &str, relative_name: &str) -> bool {
         let relative_path = self.to_relative_path(relative_name);
         self.checker
-            .ignore_config()
+            .ignore_store()
             .is_ignored_for_path(word, &relative_path)
-            .unwrap()
     }
 
     fn end(&self) {

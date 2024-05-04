@@ -1,4 +1,4 @@
-use crate::{Config, Dictionary, Operation};
+use crate::{Dictionary, IgnoreStore, Operation};
 use crate::{Project, RelativePath};
 use anyhow::{anyhow, bail, Context, Result};
 use directories_next::BaseDirs;
@@ -20,7 +20,7 @@ pub trait Checker<D: Dictionary> {
     // Were all the errors handled properly?
     fn success(&self) -> Result<()>;
 
-    fn ignore_config(&mut self) -> &mut Config;
+    fn ignore_store(&mut self) -> &mut IgnoreStore;
 
     fn state(&mut self) -> Option<&mut CheckerState> {
         None
@@ -44,7 +44,7 @@ pub trait Checker<D: Dictionary> {
         if in_dict {
             return Ok(());
         }
-        let should_ignore = self.ignore_config().should_ignore(token, relative_path)?;
+        let should_ignore = self.ignore_store().should_ignore(token, relative_path);
         if !should_ignore {
             self.handle_error(token, relative_path, context)?
         }
@@ -52,8 +52,8 @@ pub trait Checker<D: Dictionary> {
     }
 
     fn apply_operation(&mut self, mut operation: Operation) -> Result<()> {
-        let config = self.ignore_config();
-        operation.execute(config)?;
+        let store = self.ignore_store();
+        operation.execute(store)?;
         if let Some(state) = self.state() {
             state.set_last_operation(operation.clone())?;
         }
@@ -70,8 +70,8 @@ pub trait Checker<D: Dictionary> {
             None => bail!("Nothing to undo"),
             Some(o) => o,
         };
-        let config = self.ignore_config();
-        last_operation.undo(config)
+        let store = self.ignore_store();
+        last_operation.undo(store)
     }
 }
 

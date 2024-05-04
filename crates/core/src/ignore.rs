@@ -11,7 +11,7 @@ use toml;
 use crate::RelativePath;
 
 #[derive(Serialize, Deserialize, Debug, Default)]
-struct Preset {
+pub struct PresetIgnore {
     #[serde(default)]
     global: BTreeSet<String>,
 
@@ -23,9 +23,9 @@ struct Preset {
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
-struct Local {
+pub struct LocalIgnore {
     #[serde(default)]
-    patterns: BTreeSet<String>,
+    pub patterns: BTreeSet<String>,
 
     #[serde(default)]
     project: BTreeSet<String>,
@@ -34,14 +34,28 @@ struct Local {
     paths: BTreeMap<String, BTreeSet<String>>,
 }
 
-struct Store {
-    preset: Preset,
-    local: Local,
+impl LocalIgnore {
+    pub fn load(path: &Path) -> Result<Self> {
+        if path.exists() {
+            load(path)
+        } else {
+            Ok(Default::default())
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct IgnoreStore {
+    preset: PresetIgnore,
+    local: LocalIgnore,
     preset_toml: PathBuf,
     local_toml: PathBuf,
 }
 
-fn load<T: DeserializeOwned>(path: &Path) -> Result<T> {
+fn load<T: DeserializeOwned + Default>(path: &Path) -> Result<T> {
+    if !path.exists() {
+        return Ok(Default::default());
+    }
     let contents = std::fs::read_to_string(path)
         .with_context(|| format!("While reading {}:", path.display()))?;
     toml::from_str(&contents).with_context(|| format!("While parsing {}:", path.display()))
@@ -55,17 +69,24 @@ fn save<T: Serialize>(name: &'static str, value: T, path: &Path) -> Result<()> {
     Ok(())
 }
 
-impl Store {
-    fn load(preset_toml: PathBuf, project_toml: PathBuf) -> Result<Self> {
+impl IgnoreStore {
+    pub fn load(preset_toml: PathBuf, local_toml: PathBuf) -> Result<Self> {
         let preset = load(&preset_toml)?;
-        let local = load(&project_toml)?;
+        let local = load(&local_toml)?;
         Ok(Self {
             preset,
             local,
             preset_toml,
-            local_toml: project_toml,
+            local_toml,
         })
     }
+
+    // TODO: keep this? It's only useful when using
+    // skyspell in a CI context ...
+    pub fn provider(&self) -> Option<String> {
+        None
+    }
+
     // Should this word be ignored?
     // This is called when a word is *not* found in the spelling dictionary.
     //
@@ -109,7 +130,7 @@ impl Store {
         self.preset.global.contains(word)
     }
 
-    fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
+    pub fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
         let for_extension = self.preset.extensions.get_mut(extension);
         match for_extension {
             Some(s) => {
@@ -170,7 +191,7 @@ impl Store {
         if !present {
             bail!("word {word} was not ignored");
         }
-        self.save_local()
+        self.save_preset()
     }
 
     pub fn remove_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
