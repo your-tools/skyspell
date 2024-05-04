@@ -102,18 +102,23 @@ class RemoteKakoune:
         return res
 
 
-def parse_local(tmp_path: Path) -> dict[str, Any]:
+def parse_config(path: Path) -> dict[str, Any]:
+    # Note: we need to sleep because there's a delay between
+    #   - the key has been sent to the tmux window
+    #   - it has been processed by kakoune
+    #   - and the file has been written
     time.sleep(0.5)
-    config_path = tmp_path / "skyspell-ignore.toml"
-    config: dict[str, Any] = tomllib.loads(config_path.read_text())
+    contents = path.read_text()
+    config: dict[str, Any] = tomllib.loads(contents)
     return config
+
+
+def parse_local(tmp_path: Path) -> dict[str, Any]:
+    return parse_config(tmp_path / "skyspell-ignore.toml")
 
 
 def parse_global(tmp_path: Path) -> dict[str, Any]:
-    time.sleep(0.5)
-    config_path = tmp_path / "data" / "skyspell" / "preset.toml"
-    config: dict[str, Any] = tomllib.loads(config_path.read_text())
-    return config
+    return parse_config(tmp_path / "data" / "skyspell" / "preset.toml")
 
 
 class KakChecker:
