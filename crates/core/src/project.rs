@@ -6,7 +6,7 @@ use anyhow::{anyhow, Context, Result};
 use ignore::{Walk, WalkBuilder};
 use serde::{Deserialize, Serialize};
 
-pub const SKYSPELL_CONFIG_FILE: &str = "skyspell.toml";
+pub const SKYSPELL_LOCAL_IGNORE: &str = "skyspell.toml";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Project {
@@ -37,7 +37,7 @@ impl Project {
 
     pub fn ignore_path(&self) -> PathBuf {
         let path = self.path().as_ref();
-        path.join(SKYSPELL_CONFIG_FILE)
+        path.join(SKYSPELL_LOCAL_IGNORE)
     }
 
     pub fn walk(&self) -> Result<Walk> {

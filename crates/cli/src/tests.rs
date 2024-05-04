@@ -1,7 +1,7 @@
 use super::*;
 
 use skyspell_core::tests::FakeDictionary;
-use skyspell_core::{RelativePath, SKYSPELL_CONFIG_FILE};
+use skyspell_core::{RelativePath, SKYSPELL_LOCAL_IGNORE};
 
 use tempfile::TempDir;
 
@@ -19,7 +19,7 @@ impl TestApp {
         let dictionary = FakeDictionary::new();
         let project_path = temp_dir.path().join("project");
         std::fs::create_dir(&project_path).unwrap();
-        let local_path = project_path.join(SKYSPELL_CONFIG_FILE);
+        let local_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
         let preset_path = temp_dir.path().join("preset.toml");
         let ignore_store = IgnoreStore::load(preset_path, local_path).unwrap();
         let project_path = ProjectPath::new(&project_path).unwrap();
@@ -33,7 +33,7 @@ impl TestApp {
 
     fn load_store(temp_dir: &TempDir) -> IgnoreStore {
         let preset_path = temp_dir.path().join("preset.toml");
-        let local_path = temp_dir.path().join("project").join(SKYSPELL_CONFIG_FILE);
+        let local_path = temp_dir.path().join("project").join(SKYSPELL_LOCAL_IGNORE);
         IgnoreStore::load(preset_path, local_path).unwrap()
     }
 
@@ -247,7 +247,7 @@ fn test_reading_ignore_patterns_from_store() {
         .unwrap();
     let app = TestApp::new(&temp_dir);
     let (foo_full, _) = app.ensure_file("foo.lock");
-    let (local_path, _) = app.ensure_file(SKYSPELL_CONFIG_FILE);
+    let (local_path, _) = app.ensure_file(SKYSPELL_LOCAL_IGNORE);
     std::fs::write(foo_full, "error").unwrap();
     std::fs::write(
         local_path,

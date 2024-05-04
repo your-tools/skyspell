@@ -10,7 +10,7 @@ use skyspell_core::Operation;
 use skyspell_core::Project;
 use skyspell_core::ProjectPath;
 use skyspell_core::TokenProcessor;
-use skyspell_core::SKYSPELL_CONFIG_FILE;
+use skyspell_core::SKYSPELL_LOCAL_IGNORE;
 use skyspell_core::{Dictionary, SkipFile};
 use std::path::{Path, PathBuf};
 
@@ -99,7 +99,7 @@ pub fn main() -> Result<()> {
     let project_as_str = kakoune_io.get_option("skyspell_project")?;
     let project_path = PathBuf::from(project_as_str);
 
-    let config_path = project_path.join(SKYSPELL_CONFIG_FILE);
+    let config_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
     // TODO!
     let preset_path = PathBuf::from("preset.toml");
     let ignore_store = IgnoreStore::load(preset_path, config_path)?;
