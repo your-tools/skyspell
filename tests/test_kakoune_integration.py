@@ -118,7 +118,7 @@ def parse_local(tmp_path: Path) -> dict[str, Any]:
 
 
 def parse_global(tmp_path: Path) -> dict[str, Any]:
-    return parse_config(tmp_path / "data" / "skyspell" / "preset.toml")
+    return parse_config(tmp_path / "data" / "skyspell" / "global.toml")
 
 
 class KakChecker:

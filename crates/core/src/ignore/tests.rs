@@ -13,15 +13,15 @@ fn get_test_dir() -> TempDir {
 
 fn create_store(temp_dir: &TempDir, preset: &str, local: &str) -> IgnoreStore {
     let temp_path = temp_dir.path();
-    let preset_toml = temp_path.join("preset.toml");
-    std::fs::write(&preset_toml, preset).unwrap();
+    let global_toml = temp_path.join("global.toml");
+    std::fs::write(&global_toml, preset).unwrap();
     let local_toml = temp_path.join("skyspell.toml");
     std::fs::write(&local_toml, local).unwrap();
-    IgnoreStore::load(preset_toml, local_toml).unwrap()
+    IgnoreStore::load(global_toml, local_toml).unwrap()
 }
 
 #[test]
-fn test_add_for_extension_writes_in_preset_toml() {
+fn test_add_for_extension_writes_in_global_toml() {
     let temp_dir = get_test_dir();
     let mut store = create_store(
         &temp_dir,
@@ -38,8 +38,8 @@ fn test_add_for_extension_writes_in_preset_toml() {
 
     store.ignore_for_extension("impl", "rs").unwrap();
 
-    let preset_toml = temp_dir.path().join("preset.toml");
-    let actual: PresetIgnore = load(&preset_toml).unwrap();
+    let global_toml = temp_dir.path().join("global.toml");
+    let actual: PresetIgnore = load(&global_toml).unwrap();
     assert_eq!(
         actual.extensions["rs"].iter().collect::<Vec<_>>(),
         vec!["fn", "impl"]

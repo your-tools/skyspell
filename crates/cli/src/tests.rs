@@ -20,8 +20,8 @@ impl TestApp {
         let project_path = temp_dir.path().join("project");
         std::fs::create_dir(&project_path).unwrap();
         let local_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
-        let preset_path = temp_dir.path().join("preset.toml");
-        let ignore_store = IgnoreStore::load(preset_path, local_path).unwrap();
+        let global_path = temp_dir.path().join("global.toml");
+        let ignore_store = IgnoreStore::load(global_path, local_path).unwrap();
         let project_path = ProjectPath::new(&project_path).unwrap();
         let project = Project::new(project_path);
         Self {
@@ -32,9 +32,9 @@ impl TestApp {
     }
 
     fn load_store(temp_dir: &TempDir) -> IgnoreStore {
-        let preset_path = temp_dir.path().join("preset.toml");
+        let global_path = temp_dir.path().join("global.toml");
         let local_path = temp_dir.path().join("project").join(SKYSPELL_LOCAL_IGNORE);
-        IgnoreStore::load(preset_path, local_path).unwrap()
+        IgnoreStore::load(global_path, local_path).unwrap()
     }
 
     fn ensure_file(&self, file_name: &str) -> (PathBuf, RelativePath) {

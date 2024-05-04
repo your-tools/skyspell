@@ -20,9 +20,9 @@ impl TestApp {
         let project_path = ProjectPath::new(&project_path).unwrap();
         let project = Project::new(project_path);
         let state_toml = temp_dir.path().join("state.toml");
-        let preset_toml = temp_dir.path().join("preset.toml");
+        let global_toml = temp_dir.path().join("global.toml");
         let local_toml = temp_dir.path().join("skyspell.toml");
-        let ignore_store = IgnoreStore::load(preset_toml, local_toml).unwrap();
+        let ignore_store = IgnoreStore::load(global_toml, local_toml).unwrap();
         let checker = TestChecker::new(
             project,
             interactor,

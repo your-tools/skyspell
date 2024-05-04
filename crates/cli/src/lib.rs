@@ -9,7 +9,7 @@ use skyspell_core::Dictionary;
 use skyspell_core::EnchantDictionary;
 use skyspell_core::SkipFile;
 use skyspell_core::TokenProcessor;
-use skyspell_core::{preset_path, IgnoreStore};
+use skyspell_core::{global_path, IgnoreStore};
 use skyspell_core::{Project, ProjectPath, SKYSPELL_LOCAL_IGNORE};
 
 mod checkers;
@@ -291,10 +291,10 @@ pub fn main() -> Result<()> {
         None => std::env::current_dir().context("Could not get current working directory")?,
     };
 
-    let ignore_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
-    let preset_path = preset_path()?;
+    let local_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
+    let global_path = global_path()?;
 
-    let ignore_store = IgnoreStore::load(preset_path, ignore_path)?;
+    let ignore_store = IgnoreStore::load(global_path, local_path)?;
 
     let dictionary = EnchantDictionary::new(lang)?;
     let current_provider = dictionary.provider();

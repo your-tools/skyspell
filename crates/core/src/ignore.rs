@@ -47,7 +47,7 @@ impl LocalIgnore {
 pub struct IgnoreStore {
     preset: PresetIgnore,
     local: LocalIgnore,
-    preset_toml: PathBuf,
+    global_toml: PathBuf,
     local_toml: PathBuf,
 }
 
@@ -68,22 +68,22 @@ fn save<T: Serialize>(name: &'static str, value: T, path: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn preset_path() -> Result<PathBuf> {
+pub fn global_path() -> Result<PathBuf> {
     let base_dirs = BaseDirs::new().ok_or_else(|| anyhow!("Could not get home directory"))?;
     let data_dir = base_dirs.data_dir().join("skyspell");
     std::fs::create_dir_all(&data_dir)
         .with_context(|| format!("Could not create data dir {}", data_dir.display()))?;
-    Ok(data_dir.join("preset.toml"))
+    Ok(data_dir.join("global.toml"))
 }
 
 impl IgnoreStore {
-    pub fn load(preset_toml: PathBuf, local_toml: PathBuf) -> Result<Self> {
-        let preset = load(&preset_toml)?;
+    pub fn load(global_toml: PathBuf, local_toml: PathBuf) -> Result<Self> {
+        let preset = load(&global_toml)?;
         let local = load(&local_toml)?;
         Ok(Self {
             preset,
             local,
-            preset_toml,
+            global_toml,
             local_toml,
         })
     }
@@ -235,7 +235,7 @@ impl IgnoreStore {
     }
 
     fn save_preset(&self) -> Result<()> {
-        save("preset", &self.preset, &self.preset_toml)
+        save("preset", &self.preset, &self.global_toml)
     }
 
     fn save_local(&self) -> Result<()> {

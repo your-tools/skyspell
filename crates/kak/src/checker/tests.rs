@@ -35,9 +35,9 @@ pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
     let mut fake_io = new_fake_io();
     fake_io.set_option("skyspell_project", &project.as_str());
     let state_toml = temp_dir.path().join("state.toml");
-    let preset_toml = temp_dir.path().join("preset.toml");
+    let global_toml = temp_dir.path().join("global.toml");
     let local_toml = temp_dir.path().join("skyspell.toml");
-    let ignore_store = IgnoreStore::load(preset_toml, local_toml).unwrap();
+    let ignore_store = IgnoreStore::load(global_toml, local_toml).unwrap();
     KakouneChecker::new(project, dictionary, ignore_store, fake_io, Some(state_toml)).unwrap()
 }
 
