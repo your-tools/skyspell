@@ -15,9 +15,6 @@ pub struct PresetIgnore {
     global: BTreeSet<String>,
 
     #[serde(default)]
-    project: BTreeSet<String>,
-
-    #[serde(default)]
     extensions: BTreeMap<String, BTreeSet<String>>,
 }
 
