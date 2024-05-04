@@ -6,6 +6,7 @@ use skyspell_core::Operation;
 use skyspell_core::{Checker, CheckerState, Config, Dictionary};
 use skyspell_core::{Project, RelativePath};
 use std::collections::HashSet;
+use std::path::PathBuf;
 
 pub struct InteractiveChecker<I: Interactor, D: Dictionary> {
     project: Project,
@@ -70,12 +71,13 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
         interactor: I,
         dictionary: D,
         ignore_config: Config,
+        state_toml: Option<PathBuf>,
     ) -> Result<Self> {
         info_1!(
             "Checking project {} for spelling errors",
             project.path().as_str().bold()
         );
-        let state = CheckerState::load()?;
+        let state = CheckerState::load(state_toml)?;
         Ok(Self {
             project,
             dictionary,

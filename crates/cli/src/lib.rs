@@ -196,7 +196,7 @@ fn check(
         true => {
             let interactor = ConsoleInteractor;
             let mut checker =
-                InteractiveChecker::new(project, interactor, dictionary, ignore_config)?;
+                InteractiveChecker::new(project, interactor, dictionary, ignore_config, None)?;
             check_with(&mut checker, &opts.paths, output_format)
         }
     }
@@ -247,7 +247,8 @@ where
 
 fn undo(project: Project, dictionary: impl Dictionary, ignore_config: Config) -> Result<()> {
     let interactor = ConsoleInteractor;
-    let mut checker = InteractiveChecker::new(project, interactor, dictionary, ignore_config)?;
+    let mut checker =
+        InteractiveChecker::new(project, interactor, dictionary, ignore_config, None)?;
     checker.undo()
 }
 

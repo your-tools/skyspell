@@ -107,7 +107,7 @@ pub fn main() -> Result<()> {
     let project_path = ProjectPath::new(&project_path)?;
     let project = Project::new(project_path);
 
-    let checker = KakouneChecker::new(project, dictionary, ignore_config, kakoune_io)?;
+    let checker = KakouneChecker::new(project, dictionary, ignore_config, kakoune_io, None)?;
     let mut cli = KakCli::new(checker)?;
 
     let outcome = match opts.action {

@@ -81,8 +81,9 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
         dictionary: D,
         ignore_config: Config,
         kakoune_io: KakouneIO<S>,
+        state_toml: Option<PathBuf>,
     ) -> Result<Self> {
-        let state = CheckerState::load()?;
+        let state = CheckerState::load(state_toml)?;
         Ok(Self {
             project,
             dictionary,

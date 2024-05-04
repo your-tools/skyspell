@@ -86,12 +86,18 @@ struct StateInner {
 }
 
 impl CheckerState {
-    pub fn load() -> Result<Self> {
-        let base_dirs = BaseDirs::new().ok_or_else(|| anyhow!("Could not get home directory"))?;
-        let data_dir = base_dirs.data_dir().join("skyspell");
-        std::fs::create_dir_all(&data_dir)
-            .with_context(|| format!("Could not create data dir {}", data_dir.display()))?;
-        let state_toml = data_dir.join("state.toml");
+    pub fn load(state_toml: Option<PathBuf>) -> Result<Self> {
+        let state_toml = match state_toml {
+            None => {
+                let base_dirs =
+                    BaseDirs::new().ok_or_else(|| anyhow!("Could not get home directory"))?;
+                let data_dir = base_dirs.data_dir().join("skyspell");
+                std::fs::create_dir_all(&data_dir)
+                    .with_context(|| format!("Could not create data dir {}", data_dir.display()))?;
+                data_dir.join("state.toml")
+            }
+            Some(p) => p,
+        };
         let inner: StateInner = if state_toml.exists() {
             let contents = std::fs::read_to_string(&state_toml)
                 .with_context(|| format!("Could not read from {}", state_toml.display()))?;

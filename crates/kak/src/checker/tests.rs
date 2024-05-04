@@ -35,7 +35,15 @@ pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
     let project = Project::new(project_path);
     let mut fake_io = new_fake_io();
     fake_io.set_option("skyspell_project", &project.as_str());
-    KakouneChecker::new(project, dictionary, ignore_config, fake_io).unwrap()
+    let state_toml = temp_dir.path().join("state.toml");
+    KakouneChecker::new(
+        project,
+        dictionary,
+        ignore_config,
+        fake_io,
+        Some(state_toml),
+    )
+    .unwrap()
 }
 
 #[test]
