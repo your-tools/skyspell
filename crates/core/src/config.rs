@@ -153,7 +153,7 @@ impl Config {
         relative_path: &crate::RelativePath,
     ) -> Result<bool> {
         let path: &str = &relative_path.as_str();
-        let for_path = self.inner.ignore.paths.get(&path.to_owned());
+        let for_path = self.inner.ignore.paths.get(path);
         Ok(match for_path {
             Some(s) => s.contains(word),
             None => false,
