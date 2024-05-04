@@ -1,0 +1,219 @@
+#![allow(dead_code)]
+
+use anyhow::{bail, Context, Result};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    path::{Path, PathBuf},
+};
+use toml;
+
+use crate::RelativePath;
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+struct Preset {
+    #[serde(default)]
+    global: BTreeSet<String>,
+
+    #[serde(default)]
+    project: BTreeSet<String>,
+
+    #[serde(default)]
+    extensions: BTreeMap<String, BTreeSet<String>>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+struct Local {
+    #[serde(default)]
+    patterns: BTreeSet<String>,
+
+    #[serde(default)]
+    project: BTreeSet<String>,
+
+    #[serde(default)]
+    paths: BTreeMap<String, BTreeSet<String>>,
+}
+
+struct Store {
+    preset: Preset,
+    local: Local,
+    preset_toml: PathBuf,
+    local_toml: PathBuf,
+}
+
+fn load<T: DeserializeOwned>(path: &Path) -> Result<T> {
+    let contents = std::fs::read_to_string(path)
+        .with_context(|| format!("While reading {}:", path.display()))?;
+    toml::from_str(&contents).with_context(|| format!("While parsing {}:", path.display()))
+}
+
+fn save<T: Serialize>(name: &'static str, value: T, path: &Path) -> Result<()> {
+    let contents = toml::ser::to_string_pretty(&value)
+        .with_context(|| format!("while serializing {name} values"))?;
+    std::fs::write(path, contents)
+        .with_context(|| format!("while writing to {}", path.display()))?;
+    Ok(())
+}
+
+impl Store {
+    fn load(preset_toml: PathBuf, project_toml: PathBuf) -> Result<Self> {
+        let preset = load(&preset_toml)?;
+        let local = load(&project_toml)?;
+        Ok(Self {
+            preset,
+            local,
+            preset_toml,
+            local_toml: project_toml,
+        })
+    }
+    // Should this word be ignored?
+    // This is called when a word is *not* found in the spelling dictionary.
+    //
+    // A word is ignored if:
+    //   * it's in the global ignore list
+    //   * the relative path has an extension and it's in the ignore list
+    //     for this extension
+    //   * it's in the ignore list for the project
+    //   * it's in the ignore list for the relative path
+    //
+    // Otherwise, it's *not* ignored and the Checker will call handle_error()
+    //
+    pub fn should_ignore(&self, word: &str, relative_path: &RelativePath) -> bool {
+        if self.is_ignored(word) {
+            return true;
+        }
+
+        if let Some(e) = relative_path.extension() {
+            if self.is_ignored_for_extension(word, &e) {
+                return true;
+            }
+        }
+
+        if self.is_ignored_for_project(word) {
+            return true;
+        }
+
+        if self.is_ignored_for_path(word, relative_path) {
+            return true;
+        }
+
+        false
+    }
+
+    pub fn ignore(&mut self, word: &str) -> Result<()> {
+        self.preset.global.insert(word.to_owned());
+        self.save_preset()
+    }
+
+    pub fn is_ignored(&self, word: &str) -> bool {
+        self.preset.global.contains(word)
+    }
+
+    fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
+        let for_extension = self.preset.extensions.get_mut(extension);
+        match for_extension {
+            Some(s) => {
+                s.insert(word.to_owned());
+            }
+            None => {
+                let mut set = BTreeSet::new();
+                set.insert(word.to_owned());
+                self.preset.extensions.insert(extension.to_owned(), set);
+            }
+        };
+        self.save_preset()
+    }
+
+    pub fn is_ignored_for_extension(&self, word: &str, extension: &str) -> bool {
+        let for_extension = self.preset.extensions.get(extension);
+        match for_extension {
+            Some(s) => s.contains(word),
+            None => false,
+        }
+    }
+
+    pub fn ignore_for_project(&mut self, word: &str) -> Result<()> {
+        self.local.project.insert(word.to_owned());
+        self.save_local()
+    }
+
+    pub fn is_ignored_for_project(&self, word: &str) -> bool {
+        self.local.project.contains(word)
+    }
+
+    pub fn ignore_for_path(&mut self, word: &str, relative_path: &RelativePath) -> Result<()> {
+        let path: &str = &relative_path.as_str();
+        let for_path = self.local.paths.get_mut(path);
+        match for_path {
+            Some(s) => {
+                s.insert(word.to_owned());
+            }
+            None => {
+                let mut set = BTreeSet::new();
+                set.insert(word.to_owned());
+                self.local.paths.insert(path.to_owned(), set);
+            }
+        };
+        self.save_local()
+    }
+    pub fn is_ignored_for_path(&self, word: &str, relative_path: &RelativePath) -> bool {
+        let path: &str = &relative_path.as_str();
+        let for_path = self.local.paths.get(path);
+        match for_path {
+            Some(s) => s.contains(word),
+            None => false,
+        }
+    }
+
+    pub fn remove_ignored(&mut self, word: &str) -> Result<()> {
+        let present = self.preset.global.remove(word);
+        if !present {
+            bail!("word {word} was not ignored");
+        }
+        self.save_local()
+    }
+
+    pub fn remove_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
+        match self.preset.extensions.get_mut(extension) {
+            Some(set) => {
+                set.remove(word);
+            }
+            None => bail!("{word} is not ignored for {extension}"),
+        }
+        self.save_preset()
+    }
+
+    pub fn remove_ignored_for_path(
+        &mut self,
+        word: &str,
+        relative_path: &crate::RelativePath,
+    ) -> Result<()> {
+        let path: &str = &relative_path.as_str();
+        match self.local.paths.get_mut(path) {
+            Some(set) => {
+                set.remove(word);
+            }
+            None => bail!("{word} is not ignored path {path}"),
+        }
+        self.save_local()
+    }
+
+    pub fn remove_ignored_for_project(&mut self, word: &str) -> Result<()> {
+        let present = self.local.project.remove(word);
+        if !present {
+            bail!("word {word} was not ignored");
+        }
+        self.save_local()
+    }
+
+    fn save_preset(&self) -> Result<()> {
+        save("preset", &self.preset, &self.preset_toml)
+    }
+
+    fn save_local(&self) -> Result<()> {
+        save("local", &self.local, &self.local_toml)
+    }
+}
+
+#[cfg(test)]
+mod tests;
