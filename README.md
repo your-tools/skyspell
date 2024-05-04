@@ -18,14 +18,13 @@ A fast and handy spell checker for the command line.
 * Skip list per file names (like always skipping files named `Cargo.lock`)
 * Skip list per relative path inside a project (like `image.svg`)
 * [Kakoune integration](https://github.com/your-tools/skyspell/blob/main/crates/kak/README.md)
-* Ignore rules stored either in a global sqlite3 db (useful for personal files and such) - or in a configuration file (useful for CI and the like).
+* Ignore rules stored either in a huamn-readable configuration file (useful for CI and the like).
 
 ## Installation
 
 You will need:
 
 * The C Enchant library installed, with its development headers
-* The sqlite3 library installed, which its development headers
 * One of Enchant's backends (aspell, hunspell, nuspell)
 * A dictionary for the language you'll be using matching one of
   the above backends (like `aspell-en` or `hunspell-fr`).
