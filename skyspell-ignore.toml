@@ -1,7 +1,3 @@
-provider = "aspell"
-use_db = false
-
-[ignore]
 patterns = [
     "*.lock",
     "mypy.ini",
@@ -138,7 +134,7 @@ project = [
     "xdist",
 ]
 
-[ignore.extensions]
+[extensions]
 kak = [
     "Buf",
     "Gl",
@@ -226,7 +222,7 @@ rs = [
 sql = ["BIGINT"]
 toml = ["pathdiff"]
 
-[ignore.paths]
+[paths]
 "Changelog.md" = [
     "buflist",
     "ga",
