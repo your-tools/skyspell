@@ -118,7 +118,6 @@ class KakChecker:
     def __init__(self, kakoune: RemoteKakoune, tmp_path: Path) -> None:
         self.kakoune = kakoune
         self.tmp_path = tmp_path
-        self.db_path = tmp_path / "tests.db"
         self.kakoune.send_command(
             "hook",
             "global",
@@ -127,9 +126,6 @@ class KakChecker:
             "%{echo -to-file err.txt %val{hook_param}}",
         )
         self.kakoune.send_command("evaluate-commands", "%sh{ skyspell-kak init }")
-        self.kakoune.send_command(
-            "set-option", "global", "skyspell_db_path", str(self.db_path)
-        )
         self.kakoune.send_command("skyspell-enable", "en_US")
 
     def debug(self) -> None:
