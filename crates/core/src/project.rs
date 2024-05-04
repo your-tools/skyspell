@@ -6,7 +6,7 @@ use anyhow::{anyhow, Context, Result};
 use ignore::{Walk, WalkBuilder};
 use serde::{Deserialize, Serialize};
 
-pub const SKYSPELL_LOCAL_IGNORE: &str = "skyspell.toml";
+pub const SKYSPELL_LOCAL_IGNORE: &str = "skyspell-ignore.toml";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Project {
