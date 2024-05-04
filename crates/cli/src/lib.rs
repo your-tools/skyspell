@@ -64,9 +64,6 @@ pub struct Opts {
     #[clap(long, help = "Language to use")]
     pub lang: Option<String>,
 
-    #[clap(long, help = "Path of the ignore repository")]
-    pub db_path: Option<String>,
-
     #[clap(long, help = "Project path")]
     project_path: Option<PathBuf>,
 

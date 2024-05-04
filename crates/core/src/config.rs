@@ -13,9 +13,6 @@ struct InnerConfig {
     provider: Option<String>,
 
     #[serde(default)]
-    use_db: bool,
-
-    #[serde(default)]
     ignore: Ignore,
 }
 
