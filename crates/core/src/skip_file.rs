@@ -1,7 +1,6 @@
 use anyhow::Result;
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
-use ignore::Match;
 use ignore::{Walk, WalkBuilder};
 
 use crate::project::SKYSPELL_LOCAL_IGNORE;
@@ -27,13 +26,15 @@ impl SkipFile {
         if relative_path.as_str() == SKYSPELL_LOCAL_IGNORE {
             return true;
         }
-        match self.0.matched(relative_path, /*is-dir*/ false) {
-            Match::Ignore(_) => true,
-            Match::None | Match::Whitelist(_) => false,
-        }
+        self.0
+            .matched_path_or_any_parents(relative_path, false)
+            .is_ignore()
     }
 }
 
 pub fn walk(project: &Project) -> Result<Walk> {
     Ok(WalkBuilder::new(project.path().as_ref()).build())
 }
+
+#[cfg(test)]
+mod tests;
