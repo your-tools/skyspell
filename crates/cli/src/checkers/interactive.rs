@@ -139,8 +139,6 @@ q : Quit
         Ok(())
     }
 
-    // Note: this cannot fail, but it's convenient to have it return a
-    // boolean like the other on_* methods
     fn on_global_ignore(&mut self, error: &str) -> Result<bool> {
         let operation = Operation::new_ignore(error);
         self.apply_operation(operation)?;

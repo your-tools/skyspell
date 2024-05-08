@@ -13,8 +13,6 @@ pub enum Operation {
     IgnoreForProject(IgnoreForProject),
 }
 
-// Note: this is a bit verbose but less than coming up with a trait
-// that must be implemented for each variant
 impl Operation {
     pub fn new_ignore(word: &str) -> Self {
         Self::Ignore(Ignore {

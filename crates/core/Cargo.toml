@@ -22,7 +22,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 # Note: the 'core' crate also contains code that's used to
 # *test* the skyspell and skyspell_kak crates, so this
-# is not a dev-dependencies
+# is not a dev-dependency
 tempfile.workspace = true
 textwrap = "0.16.0"
 time = { version = "0.3.5", features = ["std"] }

@@ -263,7 +263,6 @@ fn suggest(dictionary: impl Dictionary, opts: &SuggestOpts) -> Result<()> {
     Ok(())
 }
 
-// NOTE: we use this function to test the cli using a FakeDictionary
 fn run<D: Dictionary>(
     project: Project,
     opts: &Opts,
