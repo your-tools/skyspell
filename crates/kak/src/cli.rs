@@ -31,6 +31,9 @@ pub struct Opts {
 
 #[derive(Parser)]
 enum Action {
+    #[clap(about = "Dump initial kakoune script")]
+    Init,
+
     #[clap(about = "Add selection to the global ignore list")]
     AddGlobal,
     #[clap(about = "Add selection to the ignore list for the given extension")]
@@ -39,18 +42,11 @@ enum Action {
     AddFile,
     #[clap(about = "Add selection to the ignore list for the given project")]
     AddProject,
+
     #[clap(about = "Spell check every open buffer that belongs to the current project")]
     Check(CheckOpts),
-
     #[clap(about = "Display a menu containing suggestions")]
     Suggest,
-    #[clap(about = "Skip the file name matching the selection")]
-    SkipName,
-    #[clap(about = "Skip the file path matching the selection")]
-    SkipFile,
-
-    #[clap(about = "Dump initial kakoune script")]
-    Init,
 
     #[clap(about = "Jump to the selected error")]
     Jump,
@@ -123,7 +119,7 @@ pub fn main() -> Result<()> {
         Action::PreviousError(opts) => cli.goto_previous_error(opts),
         Action::Suggest => cli.suggest(),
         Action::Undo => cli.checker.undo(),
-        _ => unreachable!(),
+        Action::Init => Ok(()), // handled above
     };
 
     if let Err(e) = outcome {
