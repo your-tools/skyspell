@@ -1,7 +1,6 @@
 patterns = [
     "*.lock",
     "mypy.ini",
-    "preset.toml",
 ]
 
 project = [

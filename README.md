@@ -92,9 +92,7 @@ Ignore rules will be automatically added to either:
 - or in `~/.local/share/skyspell/global.toml`, the global file, if the word is ignored globally
   or for a given extension.
 
-That way you can share your ignore rules with other users - For
-instance, you can use the `preset.toml` file in this repository as a
-starting point for your global ignore file.
+That way you can share your ignore rules with other users, or back them up anyway you like.
 
 ## Comparison with scspell
 
