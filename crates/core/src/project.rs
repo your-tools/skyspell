@@ -100,7 +100,7 @@ impl RelativePath {
     /// Returns a relative path without checking that
     ///  - it's relative to an existing project
     ///  - it exists
-    /// Mainly used for testing
+    #[cfg(test)]
     pub fn from_path_unchecked(path: PathBuf) -> Self {
         Self(path)
     }
