@@ -2,7 +2,6 @@ patterns = [
     "*.lock",
     "mypy.ini",
 ]
-
 project = [
     "Enchant's",
     "Enum",
@@ -102,6 +101,7 @@ project = [
     "tex",
     "vfill",
 ]
+"crates/core/src/enchant/tests.rs" = ["missstake"]
 "crates/core/src/tests/fake_dictionary.rs" = [
     "asntoehsauh",
     "missstake",
