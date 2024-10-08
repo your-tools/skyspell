@@ -14,7 +14,7 @@ pub mod tokens;
 pub use crate::enchant::EnchantDictionary;
 pub use checker::{Checker, CheckerState};
 pub use dictionary::Dictionary;
-pub use ignore::{global_path, IgnoreStore, LocalIgnore, GlobalIgnore};
+pub use ignore::{global_path, GlobalIgnore, IgnoreStore, LocalIgnore};
 pub use operations::Operation;
 pub use os_io::{OperatingSystemIO, StandardIO};
 pub use project::{Project, ProjectPath, RelativePath, SKYSPELL_LOCAL_IGNORE};
