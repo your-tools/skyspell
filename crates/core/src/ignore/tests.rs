@@ -182,3 +182,49 @@ fn test_remove_ignored_for_project_when_not_ignored() {
 
     store.remove_ignored_for_project("foo").unwrap_err();
 }
+
+fn relative_path(path: &str) -> RelativePath {
+    RelativePath::from_path_unchecked(path.into())
+}
+
+#[test]
+fn test_should_ignore_global() {
+    let temp_dir = get_test_dir();
+    let mut store = get_empty_store(&temp_dir);
+
+    store.ignore("foo").unwrap();
+
+    assert!(store.should_ignore("foo", &relative_path("foo.py")));
+}
+
+#[test]
+fn test_should_ignore_extension() {
+    let temp_dir = get_test_dir();
+    let mut store = get_empty_store(&temp_dir);
+
+    store.ignore_for_extension("foo", "py").unwrap();
+
+    assert!(store.should_ignore("foo", &relative_path("foo.py")));
+}
+
+#[test]
+fn test_should_ignore_path() {
+    let temp_dir = get_test_dir();
+    let mut store = get_empty_store(&temp_dir);
+    let foo_py = relative_path("foo.py");
+
+    store.ignore_for_path("foo", &foo_py).unwrap();
+
+    assert!(store.should_ignore("foo", &foo_py));
+}
+
+#[test]
+fn test_should_ignore_project() {
+    let temp_dir = get_test_dir();
+    let mut store = get_empty_store(&temp_dir);
+    let foo_py = relative_path("foo.py");
+
+    store.ignore_for_project("foo").unwrap();
+
+    assert!(store.should_ignore("foo", &foo_py));
+}
