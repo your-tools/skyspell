@@ -134,6 +134,14 @@ impl IgnoreStore {
         self.global.global.contains(word)
     }
 
+    pub fn remove_ignored(&mut self, word: &str) -> Result<()> {
+        let present = self.global.global.remove(word);
+        if !present {
+            bail!("word {word} was not ignored");
+        }
+        self.save_global()
+    }
+
     pub fn ignore_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
         let for_extension = self.global.extensions.get_mut(extension);
         match for_extension {
@@ -157,6 +165,16 @@ impl IgnoreStore {
         }
     }
 
+    pub fn remove_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
+        match self.global.extensions.get_mut(extension) {
+            Some(set) => {
+                set.remove(word);
+            }
+            None => bail!("{word} is not ignored for {extension}"),
+        }
+        self.save_global()
+    }
+
     pub fn ignore_for_project(&mut self, word: &str) -> Result<()> {
         self.local.project.insert(word.to_owned());
         self.save_local()
@@ -164,6 +182,14 @@ impl IgnoreStore {
 
     pub fn is_ignored_for_project(&self, word: &str) -> bool {
         self.local.project.contains(word)
+    }
+
+    pub fn remove_ignored_for_project(&mut self, word: &str) -> Result<()> {
+        let present = self.local.project.remove(word);
+        if !present {
+            bail!("word {word} was not ignored");
+        }
+        self.save_local()
     }
 
     pub fn ignore_for_path(&mut self, word: &str, relative_path: &RelativePath) -> Result<()> {
@@ -190,24 +216,6 @@ impl IgnoreStore {
         }
     }
 
-    pub fn remove_ignored(&mut self, word: &str) -> Result<()> {
-        let present = self.global.global.remove(word);
-        if !present {
-            bail!("word {word} was not ignored");
-        }
-        self.save_global()
-    }
-
-    pub fn remove_ignored_for_extension(&mut self, word: &str, extension: &str) -> Result<()> {
-        match self.global.extensions.get_mut(extension) {
-            Some(set) => {
-                set.remove(word);
-            }
-            None => bail!("{word} is not ignored for {extension}"),
-        }
-        self.save_global()
-    }
-
     pub fn remove_ignored_for_path(
         &mut self,
         word: &str,
@@ -219,14 +227,6 @@ impl IgnoreStore {
                 set.remove(word);
             }
             None => bail!("{word} is not ignored path {path}"),
-        }
-        self.save_local()
-    }
-
-    pub fn remove_ignored_for_project(&mut self, word: &str) -> Result<()> {
-        let present = self.local.project.remove(word);
-        if !present {
-            bail!("word {word} was not ignored");
         }
         self.save_local()
     }
