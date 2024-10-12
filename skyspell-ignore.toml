@@ -1,68 +1,127 @@
 patterns = [
     "*.lock",
+    "data/",
     "mypy.ini",
 ]
 project = [
+    "Baz",
+    "Cli",
+    "Dimitri",
+    "Dirs",
     "Enchant's",
     "Enum",
     "Gitignore",
+    "HEXA",
+    "Http",
+    "Init",
     "Insertable",
     "Interactor",
     "Json",
     "Kak",
     "Kakoune",
     "Kdl",
+    "Linters",
+    "MERCHANTABILITY",
+    "Merejkowsky",
     "Queryable",
+    "README",
+    "Redistributions",
     "SKYSPELL",
     "Skyspell",
+    "Sqlite",
+    "TODO",
+    "Tmux",
     "Tokenizer",
+    "UTF",
     "Undoer",
+    "XDG",
+    "api",
+    "args",
     "aspell",
+    "autoload",
+    "backend",
+    "backends",
+    "baz",
     "buflist",
     "bufname",
+    "cd",
+    "changelog",
+    "chrono",
+    "cli",
     "clippy",
+    "config",
     "desc",
+    "dev",
     "dialoguer",
+    "dir",
+    "dirs",
     "dmerej",
     "docstring",
     "dsl",
+    "environ",
     "esc",
     "f'input",
+    "favicon",
     "ga",
     "gg",
     "gitignore",
+    "goto",
     "hunspell",
+    "ico",
     "ident",
+    "init",
     "interactor",
     "isort",
     "itersel",
     "itertools",
+    "js",
+    "json",
     "kak",
     "kakoune",
     "kakrc",
     "kdl",
     "lang",
+    "lineno",
+    "lossy",
+    "md",
     "miette",
     "mypy",
     "nuspell",
+    "param",
+    "py",
     "pytest",
+    "readme",
+    "repo",
     "ret",
     "rustfmt",
     "scspell",
     "serde",
+    "sha",
     "skyspell",
     "snailquote",
     "sql",
     "sqlite",
+    "src",
     "subcommand",
+    "subdir",
+    "svg",
     "tempdir",
     "tempfile",
+    "textwrap",
+    "tmp",
+    "tmux",
     "tokenizer",
+    "toml",
+    "txt",
     "undoer",
     "unescape",
+    "unicode",
     "unskip",
     "url",
+    "urls",
     "utc",
+    "uuid",
+    "whitespace",
     "xdist",
 ]
 
@@ -82,16 +141,17 @@ project = [
 ]
 "bacon.toml" = ["stdout"]
 "crates/cli/Cargo.toml" = ["md"]
-"crates/cli/src/checkers/interactive.rs" = [
-    "aepfnsxq",
-    "alepfnsxq",
-]
+"crates/cli/src/checkers/interactive.rs" = ["alepfnsxq"]
 "crates/cli/src/checkers/interactive/tests.rs" = [
     "defaultdict",
     "py",
 ]
 "crates/cli/src/lib.rs" = ["Buf"]
-"crates/cli/src/tests.rs" = ["hel"]
+"crates/cli/src/tests.rs" = [
+    "baz",
+    "hel",
+    "py",
+]
 "crates/cli/src/tests/fake_interactor.rs" = ["qyn"]
 "crates/core/Changelog.md" = [
     "mut",
@@ -112,6 +172,7 @@ project = [
 "crates/core/src/tests/test_dictionary.rs" = ["missstake"]
 "crates/core/src/tokens.rs" = [
     "EDITMSG",
+    "IDENT",
     "br",
     "nrt",
     "r'foo",
@@ -130,6 +191,7 @@ project = [
     "xy",
     "youtube",
 ]
+"crates/kak/Cargo.toml" = ["md"]
 "crates/kak/src/cli/tests.rs" = [
     "chell",
     "chello",
@@ -140,7 +202,10 @@ project = [
 ]
 "crates/kak/src/init.kak" = ["ne"]
 "crates/kak/src/io/tests.rs" = ["ga"]
-pre-push = ["fi"]
+pre-push = [
+    "fi",
+    "pwd",
+]
 "tests/README.md" = ["io"]
 "tests/test_kakoune_integration.py" = [
     "fn",
