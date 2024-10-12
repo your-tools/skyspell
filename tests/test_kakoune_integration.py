@@ -346,7 +346,9 @@ def test_replace_with_suggestion(tmp_path: Path, kak_checker: KakChecker) -> Non
     kak_checker.jump_next()
 
     kak_checker.send_command("skyspell-replace")
+    time.sleep(0.5)
     kak_checker.send_keys("Enter")  # select first menu entry
+    time.sleep(0.5)
     kak_checker.send_command("write-quit")
 
     time.sleep(0.5)
