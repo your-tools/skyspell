@@ -1,3 +1,5 @@
+require-module menu
+
 declare-option str skyspell_lang
 declare-option str skyspell_project
 declare-option range-specs skyspell_errors
