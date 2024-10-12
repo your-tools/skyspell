@@ -137,6 +137,7 @@ class KakChecker:
             ".+",
             "%{echo -to-file err.txt %val{hook_param}}",
         )
+        self.kakoune.send_command("source", '"%val{runtime}/autoload/tools/menu.kak"')
         self.kakoune.send_command("evaluate-commands", "%sh{ skyspell-kak init }")
         self.kakoune.send_command("skyspell-enable", "en_US")
 
