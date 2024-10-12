@@ -82,7 +82,10 @@ project = [
 ]
 "bacon.toml" = ["stdout"]
 "crates/cli/Cargo.toml" = ["md"]
-"crates/cli/src/checkers/interactive.rs" = ["aepfnsxq"]
+"crates/cli/src/checkers/interactive.rs" = [
+    "aepfnsxq",
+    "alepfnsxq",
+]
 "crates/cli/src/checkers/interactive/tests.rs" = [
     "defaultdict",
     "py",
@@ -135,6 +138,7 @@ project = [
     "hllo",
     "itersel",
 ]
+"crates/kak/src/init.kak" = ["ne"]
 "crates/kak/src/io/tests.rs" = ["ga"]
 pre-push = ["fi"]
 "tests/README.md" = ["io"]

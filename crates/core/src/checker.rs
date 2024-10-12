@@ -40,11 +40,14 @@ pub trait Checker<D: Dictionary> {
         context: &Self::Context,
     ) -> Result<()> {
         let dictionary = self.dictionary();
+        let lang = dictionary.lang().to_owned();
         let in_dict = dictionary.check(token)?;
         if in_dict {
             return Ok(());
         }
-        let should_ignore = self.ignore_store().should_ignore(token, relative_path);
+        let should_ignore = self
+            .ignore_store()
+            .should_ignore(token, relative_path, &lang);
         if !should_ignore {
             self.handle_error(token, relative_path, context)?
         }

@@ -11,6 +11,7 @@ pub enum Operation {
     IgnoreForExtension(IgnoreForExtension),
     IgnoreForPath(IgnoreForPath),
     IgnoreForProject(IgnoreForProject),
+    IgnoreForLang(IgnoreForLang),
 }
 
 impl Operation {
@@ -39,11 +40,19 @@ impl Operation {
         })
     }
 
+    pub fn new_ignore_for_lang(word: &str, lang: &str) -> Self {
+        Self::IgnoreForLang(IgnoreForLang {
+            word: word.to_string(),
+            lang: lang.to_string(),
+        })
+    }
+
     pub fn execute(&mut self, ignore_store: &mut IgnoreStore) -> Result<()> {
         use Operation::*;
         match self {
             Ignore(o) => o.execute(ignore_store),
             IgnoreForExtension(o) => o.execute(ignore_store),
+            IgnoreForLang(o) => o.execute(ignore_store),
             IgnoreForPath(o) => o.execute(ignore_store),
             IgnoreForProject(o) => o.execute(ignore_store),
         }
@@ -54,6 +63,7 @@ impl Operation {
         match self {
             Ignore(o) => o.undo(ignore_store),
             IgnoreForExtension(o) => o.undo(ignore_store),
+            IgnoreForLang(o) => o.undo(ignore_store),
             IgnoreForPath(o) => o.undo(ignore_store),
             IgnoreForProject(o) => o.undo(ignore_store),
         }
@@ -92,6 +102,22 @@ impl IgnoreForExtension {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub struct IgnoreForLang {
+    word: String,
+    lang: String,
+}
+
+impl IgnoreForLang {
+    fn execute(&mut self, ignore_store: &mut IgnoreStore) -> Result<()> {
+        ignore_store.ignore_for_lang(&self.word, &self.lang)
+    }
+
+    fn undo(&mut self, ignore_store: &mut IgnoreStore) -> Result<()> {
+        ignore_store.remove_ignored_for_lang(&self.word, &self.lang)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct IgnoreForProject {
     word: String,
 }
@@ -121,3 +147,6 @@ impl IgnoreForPath {
         ignore_store.remove_ignored_for_path(&self.word, &self.path)
     }
 }
+
+#[cfg(test)]
+mod tests;

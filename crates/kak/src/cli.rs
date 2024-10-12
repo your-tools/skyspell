@@ -39,6 +39,8 @@ enum Action {
     #[clap(about = "Add selection to the ignore list for the given extension")]
     AddExtension,
     #[clap(about = "Add selection to the ignore list for the given file")]
+    AddLang,
+    #[clap(about = "Add selection to the ignore list for the current lang")]
     AddFile,
     #[clap(about = "Add selection to the ignore list for the given project")]
     AddProject,
@@ -110,6 +112,7 @@ pub fn main() -> Result<()> {
 
     let outcome = match opts.action {
         Action::AddExtension => cli.add_extension(),
+        Action::AddLang => cli.add_lang(),
         Action::AddFile => cli.add_file(),
         Action::AddGlobal => cli.add_global(),
         Action::AddProject => cli.add_project(),
@@ -173,6 +176,18 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         self.recheck();
         self.print(&format!(
             "echo '\"{word}\" added to the ignore list for  extension: \"{ext}\"'"
+        ));
+        Ok(())
+    }
+
+    fn add_lang(&mut self) -> Result<()> {
+        let lang = self.dictionary().lang().to_owned();
+        let LineSelection { word, .. } = &self.parse_line_selection()?;
+        let operation = Operation::new_ignore_for_lang(word, &lang);
+        self.checker.apply_operation(operation)?;
+        self.recheck();
+        self.print(&format!(
+            "echo '\"{word}\" added to the ignore list for \"{lang}\"'"
         ));
         Ok(())
     }

@@ -1,24 +1,11 @@
 use tempfile::TempDir;
 
-use crate::RelativePath;
+use crate::{
+    tests::{create_store, get_test_dir},
+    RelativePath,
+};
 
 use super::*;
-
-fn get_test_dir() -> TempDir {
-    tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap()
-}
-
-fn create_store(temp_dir: &TempDir, global: &str, local: &str) -> IgnoreStore {
-    let temp_path = temp_dir.path();
-    let global_toml = temp_path.join("global.toml");
-    std::fs::write(&global_toml, global).unwrap();
-    let local_toml = temp_path.join("skyspell.toml");
-    std::fs::write(&local_toml, local).unwrap();
-    IgnoreStore::load(global_toml, local_toml).unwrap()
-}
 
 #[test]
 fn test_add_for_extension_writes_in_global_toml() {
@@ -191,20 +178,22 @@ fn relative_path(path: &str) -> RelativePath {
 fn test_should_ignore_global() {
     let temp_dir = get_test_dir();
     let mut store = get_empty_store(&temp_dir);
+    let foo_py = relative_path("foo.py");
 
     store.ignore("foo").unwrap();
 
-    assert!(store.should_ignore("foo", &relative_path("foo.py")));
+    assert!(store.should_ignore("foo", &foo_py, "en_US"));
 }
 
 #[test]
 fn test_should_ignore_extension() {
     let temp_dir = get_test_dir();
     let mut store = get_empty_store(&temp_dir);
+    let foo_py = relative_path("foo.py");
 
     store.ignore_for_extension("foo", "py").unwrap();
 
-    assert!(store.should_ignore("foo", &relative_path("foo.py")));
+    assert!(store.should_ignore("foo", &foo_py, "en_US"));
 }
 
 #[test]
@@ -215,7 +204,7 @@ fn test_should_ignore_path() {
 
     store.ignore_for_path("foo", &foo_py).unwrap();
 
-    assert!(store.should_ignore("foo", &foo_py));
+    assert!(store.should_ignore("foo", &foo_py, "en_US"));
 }
 
 #[test]
@@ -226,5 +215,16 @@ fn test_should_ignore_project() {
 
     store.ignore_for_project("foo").unwrap();
 
-    assert!(store.should_ignore("foo", &foo_py));
+    assert!(store.should_ignore("foo", &foo_py, "en_US"));
+}
+
+#[test]
+fn test_should_ignore_lang() {
+    let temp_dir = get_test_dir();
+    let mut store = get_empty_store(&temp_dir);
+    let foo_py = relative_path("foo.py");
+
+    store.ignore_for_lang("foo", "en_US").unwrap();
+
+    assert!(store.should_ignore("foo", &foo_py, "en_US"));
 }

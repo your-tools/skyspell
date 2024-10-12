@@ -1,7 +1,8 @@
 #![allow(clippy::unwrap_used)] // this is test code, it's ok to unwrap
+#![allow(dead_code)] // we have a public core::tests module that is only used by tests
 use tempfile::TempDir;
 
-use crate::{ProjectPath, RelativePath};
+use crate::{IgnoreStore, ProjectPath, RelativePath};
 
 pub mod fake_dictionary;
 pub mod fake_io;
@@ -19,4 +20,28 @@ pub fn new_relative_path(project_path: &ProjectPath, name: &'static str) -> Rela
     let rel_path = project_path.as_ref().join(name);
     std::fs::write(&rel_path, "").unwrap();
     RelativePath::new(project_path, &rel_path).unwrap()
+}
+
+pub(crate) fn get_test_dir() -> TempDir {
+    tempfile::Builder::new()
+        .prefix("test-skyspell")
+        .tempdir()
+        .unwrap()
+}
+
+pub(crate) fn create_store(temp_dir: &TempDir, global: &str, local: &str) -> IgnoreStore {
+    let temp_path = temp_dir.path();
+    let global_toml = temp_path.join("global.toml");
+    std::fs::write(&global_toml, global).unwrap();
+    let local_toml = temp_path.join("skyspell.toml");
+    std::fs::write(&local_toml, local).unwrap();
+    IgnoreStore::load(global_toml, local_toml).unwrap()
+}
+
+pub(crate) fn get_empty_store(temp_dir: &TempDir) -> IgnoreStore {
+    create_store(temp_dir, "", "")
+}
+
+pub(crate) fn relative_path(path: &str) -> RelativePath {
+    RelativePath::from_path_unchecked(path.into())
 }

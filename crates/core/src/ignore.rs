@@ -16,6 +16,9 @@ pub struct GlobalIgnore {
 
     #[serde(default)]
     extensions: BTreeMap<String, BTreeSet<String>>,
+
+    #[serde(default)]
+    lang: BTreeMap<String, BTreeSet<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -103,8 +106,12 @@ impl IgnoreStore {
     //
     // Otherwise, it's *not* ignored and the Checker will call handle_error()
     //
-    pub fn should_ignore(&self, word: &str, relative_path: &RelativePath) -> bool {
+    pub fn should_ignore(&self, word: &str, relative_path: &RelativePath, lang: &str) -> bool {
         if self.is_ignored(word) {
+            return true;
+        }
+
+        if self.is_ignored_for_lang(word, lang) {
             return true;
         }
 
@@ -175,6 +182,39 @@ impl IgnoreStore {
         self.save_global()
     }
 
+    pub fn ignore_for_lang(&mut self, word: &str, lang: &str) -> Result<()> {
+        let for_lang = self.global.lang.get_mut(lang);
+        match for_lang {
+            Some(s) => {
+                s.insert(word.to_owned());
+            }
+            None => {
+                let mut set = BTreeSet::new();
+                set.insert(word.to_owned());
+                self.global.lang.insert(lang.to_owned(), set);
+            }
+        };
+        self.save_global()
+    }
+
+    pub fn is_ignored_for_lang(&self, word: &str, lang: &str) -> bool {
+        let for_lang = self.global.lang.get(lang);
+        match for_lang {
+            Some(s) => s.contains(word),
+            None => false,
+        }
+    }
+
+    pub fn remove_ignored_for_lang(&mut self, word: &str, lang: &str) -> Result<()> {
+        match self.global.lang.get_mut(lang) {
+            Some(set) => {
+                set.remove(word);
+            }
+            None => bail!("{word} is not ignored for {lang}"),
+        }
+        self.save_global()
+    }
+
     pub fn ignore_for_project(&mut self, word: &str) -> Result<()> {
         self.local.project.insert(word.to_owned());
         self.save_local()
@@ -207,6 +247,7 @@ impl IgnoreStore {
         };
         self.save_local()
     }
+
     pub fn is_ignored_for_path(&self, word: &str, relative_path: &RelativePath) -> bool {
         let path: &str = &relative_path.as_str();
         let for_path = self.local.paths.get(path);

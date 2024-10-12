@@ -198,6 +198,11 @@ class KakChecker:
         res: list[str] = config["extensions"][extension]
         return res
 
+    def ignored_for_lang(self, lang: str) -> list[str]:
+        config = parse_global(self.tmp_path)
+        res: list[str] = config["lang"][lang]
+        return res
+
     def move_cursor(self, line: int, column: int) -> None:
         self.kakoune.send_keys(f"{line}g")
         self.kakoune.send_keys(f"{column}l")
@@ -329,6 +334,15 @@ def test_add_to_extension(kak_checker: KakChecker) -> None:
     kak_checker.send_keys("e")
 
     assert kak_checker.ignored_for_extension("rs") == ["skyspell"]
+
+
+def test_add_to_lang(kak_checker: KakChecker) -> None:
+    kak_checker.open_file_with_contents("foo.rs", r"I'm testing skyspell here")
+
+    kak_checker.open_error_list()
+    kak_checker.send_keys("l")
+
+    assert kak_checker.ignored_for_lang("en_US") == ["skyspell"]
 
 
 def test_undo(tmp_path: Path, kak_checker: KakChecker) -> None:

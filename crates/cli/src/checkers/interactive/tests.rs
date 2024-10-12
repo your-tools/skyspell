@@ -71,6 +71,10 @@ impl TestApp {
             .is_ignored_for_extension(word, extension)
     }
 
+    fn is_ignored_for_lang(&mut self, word: &str, lang: &str) -> bool {
+        self.checker.ignore_store().is_ignored_for_lang(word, lang)
+    }
+
     fn is_ignored_for_project(&mut self, word: &str) -> bool {
         self.checker.ignore_store().is_ignored_for_project(word)
     }
@@ -121,6 +125,23 @@ fn test_adding_token_to_extension() {
 
     assert!(app.is_ignored_for_extension("defaultdict", "py"));
     app.handle_token("defaultdict", "bar.py");
+
+    app.end();
+}
+
+#[test]
+fn test_adding_token_to_lang() {
+    let temp_dir = tempfile::Builder::new()
+        .prefix("test-skyspell")
+        .tempdir()
+        .unwrap();
+    let mut app = TestApp::new(&temp_dir);
+    app.add_known(&["hello", "world"]);
+    app.push_text("l");
+
+    app.handle_token("foo", "hello.py");
+
+    assert!(app.is_ignored_for_lang("foo", "en_US"));
 
     app.end();
 }

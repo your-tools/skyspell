@@ -89,6 +89,7 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
     }
 
     fn on_error(&mut self, path: &RelativePath, pos: (usize, usize), error: &str) -> Result<()> {
+        let lang = self.dictionary().lang().to_owned();
         let (lineno, column) = pos;
         let prefix = format!("{path}:{lineno}:{column}");
         println!("{} {}", prefix, error.red());
@@ -102,10 +103,15 @@ q : Quit
 > "#;
 
         loop {
-            let letter = self.interactor.input_letter(prompt, "aepfnsxq");
+            let letter = self.interactor.input_letter(prompt, "alepfnsxq");
             match letter.as_ref() {
                 "a" => {
                     if self.on_global_ignore(error)? {
+                        break;
+                    }
+                }
+                "l" => {
+                    if self.on_lang(error, &lang)? {
                         break;
                     }
                 }
@@ -162,6 +168,13 @@ q : Quit
             error,
             extension
         );
+        Ok(true)
+    }
+
+    fn on_lang(&mut self, error: &str, lang: &str) -> Result<bool> {
+        let operation = Operation::new_ignore_for_lang(error, lang);
+        self.apply_operation(operation)?;
+        info_2!("Added '{}' to the ignore list for '{}'", error, lang);
         Ok(true)
     }
 
