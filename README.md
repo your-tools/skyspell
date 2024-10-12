@@ -17,8 +17,9 @@ A fast and handy spell checker for the command line.
   relative path inside projects
 * Skip list per file names (like always skipping files named `Cargo.lock`)
 * Skip list per relative path inside a project (like `image.svg`)
+* All of the above are stored in a toml files, which makes it easy to backup/restore
+  your ignore rules, or use them for CI.
 * [Kakoune integration](https://github.com/your-tools/skyspell/blob/main/crates/kak/README.md)
-* Ignore rules stored either in a huamn-readable configuration file (useful for CI and the like).
 
 ## Installation
 
@@ -55,27 +56,40 @@ LICENSE:9:2 Redistributions
 What to do?
 a : Add word to global ignore list
 e : Add word to ignore list for this extension
-p : Add word to ignore list for the current project
-f : Add word to ignore list for the current file
+...
 x : Skip this error
 q : Quit
-> : g
+> : a
 => Added 'Redistributions' to the global ignore list
 
 foo.rs:32:2 fn
 What to do?
 a : Add word to global ignore list
 e : Add word to ignore list for this extension
-p : Add word to ignore list for the current project
-f : Add word to ignore list for the current file
-x : Skip this error
+...
 q : Quit
+x : Skip this error
 > : e
 => Added 'fn' to the ignore list for '.rs' files
 ```
 
-Note that by default, skyspell will try to read *every* file in the project.
-To prevent skyspell from trying to read certain file, create a
+Ignore rules will be automatically added to either:
+
+- `skyspell-ignore.toml`, the local file, if the word is ignored for the project or for a path
+- or in `~/.local/share/skyspell/global.toml`, the global file, if the word is ignored globally
+  or for a given extension.
+
+That way you can share your ignore rules with other users, or back them up anyway you like.
+
+Note that skyspell will honor `XDG_DATA_DIR` when looking for the global file.
+
+## Excluding files from the check
+
+Note that by default, skyspell will try to read *every* file in the
+project, or if the project is using git, every file not ignored by git.
+This may include for instance binary files.
+
+To prevent skyspell from trying to read those files, create a
 `skyspell-ignore.toml` file  at the root of your project containing
 something like this:
 
@@ -86,13 +100,6 @@ patterns = [
 ]
 ```
 
-Ignore rules will be automatically added to either:
-
-- `skyspell-ignore.toml`, the local file, if the word is ignored for the project or for a path
-- or in `~/.local/share/skyspell/global.toml`, the global file, if the word is ignored globally
-  or for a given extension.
-
-That way you can share your ignore rules with other users, or back them up anyway you like.
 
 ## Comparison with scspell
 
