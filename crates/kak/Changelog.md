@@ -1,3 +1,9 @@
+# 2.0.0 (2024-10-15)
+
+Bump `skyspell_core` to 3.0.0
+
+See [skyspell_core](https://github.com/your-tools/skyspell/blob/main/crates/core/Changelog.md#300-2024-10-15) changelog.
+
 # 1.0.3 (2022-04-25)
 
 Bump `skyspell_core` to 2.0.0
