@@ -1,3 +1,10 @@
+# 3.0.0 (2024-10-15)
+
+**Breaking** : remove SQL storage - all the ignore rules are now stored in plain `toml` files.
+
+New feature: allow to ignore words based on the current lang
+
+
 # 2.0.0 (2022-11-12)
 
 **Breaking** : most methods on the public traits are now `mut`, even the
