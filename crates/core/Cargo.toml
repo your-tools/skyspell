@@ -3,6 +3,8 @@ name = "skyspell_core"
 version = "3.0.0"
 publish = true
 description = "skyspell core library"
+categories = ["text-processing"]
+keywords = ["spell-check"]
 
 authors.workspace = true
 edition.workspace = true
