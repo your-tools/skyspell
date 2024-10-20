@@ -2,14 +2,11 @@ use crate::{new_kakoune_io, KakouneChecker, KakouneIO};
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
 use directories_next::BaseDirs;
-use skyspell_core::global_path;
 use skyspell_core::Checker;
 use skyspell_core::EnchantDictionary;
-use skyspell_core::IgnoreStore;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::Operation;
 use skyspell_core::Project;
-use skyspell_core::SKYSPELL_LOCAL_IGNORE;
 use skyspell_core::{Dictionary, SkipFile};
 use std::path::{Path, PathBuf};
 
@@ -92,17 +89,12 @@ pub fn main() -> Result<()> {
     let kakoune_io = new_kakoune_io();
 
     let lang = &kakoune_io.get_option("skyspell_lang")?;
-
-    let project_as_str = kakoune_io.get_option("skyspell_project")?;
-    let project_path = PathBuf::from(project_as_str);
-
-    let config_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
-    let global_path = global_path()?;
-    let ignore_store = IgnoreStore::load(global_path, config_path)?;
-
     let dictionary = EnchantDictionary::new(lang)?;
 
+    let project_path = kakoune_io.get_option("skyspell_project")?;
+    let project_path = PathBuf::from(project_path);
     let project = Project::new(&project_path)?;
+    let ignore_store = project.ignore_store()?;
 
     let checker = KakouneChecker::new(project, dictionary, ignore_store, kakoune_io, None)?;
     let mut cli = KakCli::new(checker)?;

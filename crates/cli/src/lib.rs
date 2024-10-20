@@ -7,9 +7,9 @@ use colored::*;
 use skyspell_core::Checker;
 use skyspell_core::Dictionary;
 use skyspell_core::EnchantDictionary;
+use skyspell_core::IgnoreStore;
+use skyspell_core::Project;
 use skyspell_core::SkipFile;
-use skyspell_core::{global_path, IgnoreStore};
-use skyspell_core::{Project, SKYSPELL_LOCAL_IGNORE};
 
 mod checkers;
 pub mod interactor;
@@ -286,13 +286,9 @@ pub fn main() -> Result<()> {
         None => std::env::current_dir().context("Could not get current working directory")?,
     };
 
-    let local_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
-    let global_path = global_path()?;
-
-    let ignore_store = IgnoreStore::load(global_path, local_path)?;
-
     let dictionary = EnchantDictionary::new(lang)?;
     let project = Project::new(&project_path)?;
+    let ignore_store = project.ignore_store()?;
 
     let outcome = run(project, &opts, dictionary, ignore_store);
     if let Err(e) = outcome {
