@@ -8,8 +8,8 @@ use skyspell_core::Checker;
 use skyspell_core::Dictionary;
 use skyspell_core::EnchantDictionary;
 use skyspell_core::IgnoreStore;
+use skyspell_core::ProcessOutcome;
 use skyspell_core::Project;
-use skyspell_core::SkipFile;
 
 mod checkers;
 pub mod interactor;
@@ -204,7 +204,6 @@ where
     D: Dictionary,
 {
     let project = checker.project();
-    let skip_file = SkipFile::new(project)?;
     let mut paths = paths.to_vec();
     if paths.is_empty() {
         let walker = project.walk()?;
@@ -222,12 +221,10 @@ where
     let mut checked = 0;
     let mut skipped = 0;
     for path in paths {
-        let relative_path = checker.to_relative_path(&path)?;
-        if skip_file.is_skipped(&relative_path) {
-            skipped += 1;
-        } else {
-            checker.process(&path, &())?;
-            checked += 1;
+        let outcome = checker.process(&path, &())?;
+        match outcome {
+            ProcessOutcome::Skipped => skipped += 1,
+            ProcessOutcome::Checked => checked += 1,
         }
     }
 

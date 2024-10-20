@@ -33,6 +33,12 @@ impl SpellingError {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum ProcessOutcome {
+    Skipped,
+    Checked,
+}
+
 pub trait Checker<D: Dictionary> {
     type SourceContext;
 
@@ -54,13 +60,21 @@ pub trait Checker<D: Dictionary> {
         None
     }
 
-    fn process(&mut self, source_path: &Path, context: &Self::SourceContext) -> Result<()> {
+    fn process(
+        &mut self,
+        source_path: &Path,
+        context: &Self::SourceContext,
+    ) -> Result<ProcessOutcome> {
+        let skip_file = self.project().skip_file();
         let relative_path = self.to_relative_path(source_path)?;
+        if skip_file.is_skipped(&relative_path) {
+            return Ok(ProcessOutcome::Skipped);
+        }
         let token_processor = TokenProcessor::new(source_path);
         token_processor.each_token(|token, line, column| {
             self.handle_token(token, &relative_path, (line, column), context)
         })?;
-        Ok(())
+        Ok(ProcessOutcome::Checked)
     }
 
     fn handle_error(&mut self, error: &SpellingError, context: &Self::SourceContext) -> Result<()>;

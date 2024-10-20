@@ -12,7 +12,7 @@ pub mod tests;
 pub mod tokens;
 
 pub use crate::enchant::EnchantDictionary;
-pub use checker::{Checker, CheckerState, SpellingError};
+pub use checker::{Checker, CheckerState, ProcessOutcome, SpellingError};
 pub use dictionary::Dictionary;
 pub use ignore::{global_path, GlobalIgnore, IgnoreStore, LocalIgnore};
 pub use operations::Operation;

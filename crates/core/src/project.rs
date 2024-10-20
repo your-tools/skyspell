@@ -6,19 +6,21 @@ use anyhow::{anyhow, Context, Result};
 use ignore::{Walk, WalkBuilder};
 use serde::{Deserialize, Serialize};
 
-use crate::{global_path, IgnoreStore};
+use crate::{global_path, IgnoreStore, SkipFile};
 
 pub const SKYSPELL_LOCAL_IGNORE: &str = "skyspell-ignore.toml";
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct Project {
     path: ProjectPath,
+    skip_file: SkipFile,
 }
 
 impl Project {
     pub fn new(path: &Path) -> Result<Self> {
+        let skip_file = SkipFile::new(path)?;
         let path = ProjectPath::new(path)?;
-        Ok(Self { path })
+        Ok(Self { path, skip_file })
     }
 
     pub fn path(&self) -> &ProjectPath {
@@ -47,6 +49,10 @@ impl Project {
         let global_path = global_path()?;
 
         IgnoreStore::load(global_path, local_path)
+    }
+
+    pub fn skip_file(&self) -> &SkipFile {
+        &self.skip_file
     }
 
     pub fn walk(&self) -> Result<Walk> {

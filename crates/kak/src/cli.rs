@@ -3,11 +3,11 @@ use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
 use directories_next::BaseDirs;
 use skyspell_core::Checker;
+use skyspell_core::Dictionary;
 use skyspell_core::EnchantDictionary;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::Operation;
 use skyspell_core::Project;
-use skyspell_core::{Dictionary, SkipFile};
 use std::path::{Path, PathBuf};
 
 // Warning: most of the things written to stdout while this code is
@@ -124,7 +124,6 @@ pub fn main() -> Result<()> {
 struct KakCli<D: Dictionary, S: OperatingSystemIO> {
     checker: KakouneChecker<D, S>,
     home_dir: String,
-    skip_file: SkipFile,
 }
 
 impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
@@ -134,12 +133,9 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
             .home_dir()
             .to_str()
             .ok_or_else(|| anyhow!("Non-UTF8 chars in home dir"))?;
-        let project = checker.project();
-        let ignore_file = SkipFile::new(project)?;
         Ok(Self {
             home_dir: home_dir.to_string(),
             checker,
-            skip_file: ignore_file,
         })
     }
 
@@ -261,10 +257,6 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
 
             if relative_path.as_str().starts_with("..") {
                 // Buffer is outside the current project
-                continue;
-            }
-
-            if self.skip_file.is_skipped(&relative_path) {
                 continue;
             }
 

@@ -18,7 +18,7 @@ impl TestApp {
     fn new(temp_dir: &TempDir) -> Self {
         let dictionary = FakeDictionary::new();
         let project_path = temp_dir.path().join("project");
-        std::fs::create_dir(&project_path).unwrap();
+        std::fs::create_dir_all(&project_path).unwrap();
         let local_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
         let global_path = temp_dir.path().join("global.toml");
         let ignore_store = IgnoreStore::load(global_path, local_path).unwrap();
@@ -49,7 +49,6 @@ impl TestApp {
         with_arg0.push("--project-path");
         with_arg0.push(&project_path_as_str);
         with_arg0.extend(args);
-        dbg!(&with_arg0);
         let opts = Opts::try_parse_from(with_arg0)?;
         super::run(self.project, &opts, self.dictionary, self.ignore_store)
     }
@@ -245,17 +244,20 @@ fn test_reading_ignore_patterns_from_store() {
         .prefix("test-skyspell")
         .tempdir()
         .unwrap();
-    let app = TestApp::new(&temp_dir);
-    let (foo_full, _) = app.ensure_file("foo.lock");
-    let (local_path, _) = app.ensure_file(SKYSPELL_LOCAL_IGNORE);
-    std::fs::write(foo_full, "error").unwrap();
+    let project_path = temp_dir.path().join("project");
+    std::fs::create_dir(&project_path).unwrap();
+    let ignore_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
     std::fs::write(
-        local_path,
+        ignore_path,
         r#"
         patterns = ["*.lock"]
         "#,
     )
     .unwrap();
+
+    let app = TestApp::new(&temp_dir);
+    let (foo_full, _) = app.ensure_file("foo.lock");
+    std::fs::write(foo_full, "error").unwrap();
 
     app.run(&["check", "--non-interactive"]).unwrap();
 }
