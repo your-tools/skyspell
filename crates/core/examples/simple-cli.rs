@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use anyhow::{bail, Result};
-use skyspell_core::{Checker, IgnoreStore, SpellingError};
+use skyspell_core::{Checker, IgnoreStore, ProcessOutcome, SpellingError, SKYSPELL_LOCAL_IGNORE};
 use skyspell_core::{EnchantDictionary, Project};
 
 struct ExampleChecker {
@@ -67,5 +67,9 @@ fn main() -> Result<()> {
     let source_path = Path::new("README.md");
     checker.process(source_path, &())?;
     checker.success()?;
+    let skipped = Path::new(SKYSPELL_LOCAL_IGNORE);
+    let outcome = checker.process(skipped, &())?;
+    assert_eq!(outcome, ProcessOutcome::Skipped);
+    println!("No errors found");
     Ok(())
 }

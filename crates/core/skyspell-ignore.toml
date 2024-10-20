@@ -1,0 +1,9 @@
+patterns = []
+
+project = [
+  "skyspell",
+  "CLI",
+]
+
+[paths]
+"README.md" = ["kak", "structs"]
