@@ -1,3 +1,8 @@
+# 2.0.1 (2024-10-20)
+
+* Fix crate metadata
+* Bump `dialoguer` dependency
+
 # 2.0.0 (2024-10-15)
 
 See [skyspell_core](https://github.com/your-tools/skyspell/blob/main/crates/core/Changelog.md#300-2024-10-15) changelog.
