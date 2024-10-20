@@ -49,6 +49,7 @@ impl TestApp {
         with_arg0.push("--project-path");
         with_arg0.push(&project_path_as_str);
         with_arg0.extend(args);
+        dbg!(&with_arg0);
         let opts = Opts::try_parse_from(with_arg0)?;
         super::run(self.project, &opts, self.dictionary, self.ignore_store)
     }

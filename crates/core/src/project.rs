@@ -6,6 +6,8 @@ use anyhow::{anyhow, Context, Result};
 use ignore::{Walk, WalkBuilder};
 use serde::{Deserialize, Serialize};
 
+use crate::{global_path, IgnoreStore};
+
 pub const SKYSPELL_LOCAL_IGNORE: &str = "skyspell-ignore.toml";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -38,6 +40,13 @@ impl Project {
     pub fn ignore_path(&self) -> PathBuf {
         let path = self.path().as_ref();
         path.join(SKYSPELL_LOCAL_IGNORE)
+    }
+
+    pub fn ignore_store(&self) -> Result<IgnoreStore> {
+        let local_path = self.path.0.join(SKYSPELL_LOCAL_IGNORE);
+        let global_path = global_path()?;
+
+        IgnoreStore::load(global_path, local_path)
     }
 
     pub fn walk(&self) -> Result<Walk> {

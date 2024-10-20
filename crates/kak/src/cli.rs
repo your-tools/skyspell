@@ -9,7 +9,6 @@ use skyspell_core::IgnoreStore;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::Operation;
 use skyspell_core::Project;
-use skyspell_core::TokenProcessor;
 use skyspell_core::SKYSPELL_LOCAL_IGNORE;
 use skyspell_core::{Dictionary, SkipFile};
 use std::path::{Path, PathBuf};
@@ -277,14 +276,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
                 continue;
             }
 
-            let token_processor = TokenProcessor::new(source_path);
-            token_processor.each_token(|word, line, column| {
-                self.checker.handle_token(
-                    word,
-                    &relative_path,
-                    &(bufname.to_string(), line, column),
-                )
-            })?;
+            self.checker.process(source_path, &bufname)?;
         }
 
         self.checker.write_code()

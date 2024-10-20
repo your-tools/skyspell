@@ -2,7 +2,7 @@ use crate::{info_1, Interactor};
 use crate::{info_2, print_error};
 use anyhow::{bail, Result};
 use colored::*;
-use skyspell_core::{Checker, CheckerState, Dictionary};
+use skyspell_core::{Checker, CheckerState, Dictionary, SpellingError};
 use skyspell_core::{IgnoreStore, Operation};
 use skyspell_core::{Project, RelativePath};
 use std::collections::HashSet;
@@ -18,8 +18,7 @@ pub struct InteractiveChecker<I: Interactor, D: Dictionary> {
 }
 
 impl<I: Interactor, D: Dictionary> Checker<D> for InteractiveChecker<I, D> {
-    // line, column
-    type Context = (usize, usize);
+    type SourceContext = ();
 
     fn success(&self) -> Result<()> {
         if !self.skipped.is_empty() {
@@ -48,15 +47,16 @@ impl<I: Interactor, D: Dictionary> Checker<D> for InteractiveChecker<I, D> {
 
     fn handle_error(
         &mut self,
-        error: &str,
-        path: &RelativePath,
-        context: &Self::Context,
+        error: &SpellingError,
+        _context: &Self::SourceContext,
     ) -> Result<()> {
-        let &(line, column) = context;
-        if self.skipped.contains(error) {
+        let (line, column) = error.pos();
+        let word = error.word();
+        if self.skipped.contains(word) {
             return Ok(());
         }
-        self.on_error(path, (line, column), error)
+        let relative_path = error.relative_path();
+        self.on_error(&relative_path, (line, column), word)
     }
 
     fn apply_operation(&mut self, mut operation: Operation) -> Result<()> {

@@ -7,7 +7,8 @@ use skyspell_core::Dictionary;
 use skyspell_core::IgnoreStore;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::Operation;
-use skyspell_core::{Project, RelativePath};
+use skyspell_core::Project;
+use skyspell_core::SpellingError;
 use std::path::PathBuf;
 
 pub struct Error {
@@ -27,23 +28,21 @@ pub struct KakouneChecker<D: Dictionary, S: OperatingSystemIO> {
 }
 
 impl<D: Dictionary, S: OperatingSystemIO> Checker<D> for KakouneChecker<D, S> {
-    // bufname, line, column
-    type Context = (String, usize, usize);
+    // We need kakoune buffer name in addition to its path for the rest
+    // of the kakoune plugin to work as expected
+    type SourceContext = String;
 
-    fn handle_error(
-        &mut self,
-        error: &str,
-        path: &RelativePath,
-        context: &Self::Context,
-    ) -> Result<()> {
-        let (buffer, line, column) = context;
-        let pos = (*line, *column);
+    fn handle_error(&mut self, error: &SpellingError, context: &Self::SourceContext) -> Result<()> {
+        let pos = error.pos();
+        let buffer = context;
+        let path = error.relative_path();
         let full_path = self.project.path().as_ref().join(path);
+        let word = error.word();
         self.errors.push(Error {
             full_path,
             pos,
             buffer: buffer.to_string(),
-            token: error.to_string(),
+            token: word.to_string(),
         });
         Ok(())
     }

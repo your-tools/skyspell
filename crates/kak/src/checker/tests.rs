@@ -41,6 +41,11 @@ pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
     KakouneChecker::new(project, dictionary, ignore_store, fake_io, Some(state_toml)).unwrap()
 }
 
+fn make_error(word: &str, relative_path: &RelativePath, pos: (usize, usize)) -> SpellingError {
+    let source_path = relative_path.as_ref();
+    SpellingError::new(word.to_owned(), pos, source_path.to_path_buf())
+}
+
 #[test]
 fn test_write_errors_in_spelling_buffer() {
     let temp_dir = tempfile::Builder::new()
@@ -50,9 +55,8 @@ fn test_write_errors_in_spelling_buffer() {
     let mut checker = new_fake_checker(&temp_dir);
     let hello_js = checker.ensure_path("hello.js");
     checker.ensure_path("hello.js");
-    checker
-        .handle_error("foo", &hello_js, &(hello_js.to_string(), 2, 4))
-        .unwrap();
+    let error = make_error("foo", &hello_js, (2, 4));
+    checker.handle_error(&error, &hello_js.to_string()).unwrap();
     checker.write_spelling_buffer();
     let actual = checker.get_output();
     let expected = format!(
@@ -73,17 +77,14 @@ fn test_write_errors_as_buffer_options() {
     let mut checker = new_fake_checker(&temp_dir);
     let foo_js = checker.ensure_path("foo.js");
     let bar_js = checker.ensure_path("bar.js");
-    checker
-        .handle_error("foo", &foo_js, &(foo_js.to_string(), 2, 4))
-        .unwrap();
+    let error = make_error("foo", &foo_js, (2, 4));
+    checker.handle_error(&error, &foo_js.to_string()).unwrap();
 
-    checker
-        .handle_error("bar", &foo_js, &(foo_js.to_string(), 3, 6))
-        .unwrap();
+    let error = make_error("bar", &foo_js, (3, 6));
+    checker.handle_error(&error, &foo_js.to_string()).unwrap();
 
-    checker
-        .handle_error("spam", &bar_js, &(bar_js.to_string(), 1, 5))
-        .unwrap();
+    let error = make_error("spam", &bar_js, (1, 5));
+    checker.handle_error(&error, &bar_js.to_string()).unwrap();
 
     let timestamp = 42;
     checker.write_ranges(timestamp);

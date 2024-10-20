@@ -1,12 +1,40 @@
-use crate::{Dictionary, IgnoreStore, Operation};
+use crate::{Dictionary, IgnoreStore, Operation, TokenProcessor};
 use crate::{Project, RelativePath};
 use anyhow::{anyhow, bail, Context, Result};
 use directories_next::BaseDirs;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
+pub struct SpellingError {
+    word: String,
+    source_path: PathBuf,
+    pos: (usize, usize),
+}
+
+impl SpellingError {
+    pub fn new(word: String, pos: (usize, usize), source_path: PathBuf) -> Self {
+        Self {
+            word,
+            pos,
+            source_path,
+        }
+    }
+
+    pub fn word(&self) -> &str {
+        &self.word
+    }
+
+    pub fn relative_path(&self) -> RelativePath {
+        RelativePath::from_path_unchecked(self.source_path.to_path_buf())
+    }
+
+    pub fn pos(&self) -> (usize, usize) {
+        self.pos
+    }
+}
+
 pub trait Checker<D: Dictionary> {
-    type Context;
+    type SourceContext;
 
     fn dictionary(&self) -> &D;
 
@@ -26,18 +54,23 @@ pub trait Checker<D: Dictionary> {
         None
     }
 
-    fn handle_error(
-        &mut self,
-        error: &str,
-        path: &RelativePath,
-        context: &Self::Context,
-    ) -> Result<()>;
+    fn process(&mut self, source_path: &Path, context: &Self::SourceContext) -> Result<()> {
+        let relative_path = self.to_relative_path(source_path)?;
+        let token_processor = TokenProcessor::new(source_path);
+        token_processor.each_token(|token, line, column| {
+            self.handle_token(token, &relative_path, (line, column), context)
+        })?;
+        Ok(())
+    }
+
+    fn handle_error(&mut self, error: &SpellingError, context: &Self::SourceContext) -> Result<()>;
 
     fn handle_token(
         &mut self,
         token: &str,
         relative_path: &RelativePath,
-        context: &Self::Context,
+        pos: (usize, usize),
+        context: &Self::SourceContext,
     ) -> Result<()> {
         let dictionary = self.dictionary();
         let lang = dictionary.lang().to_owned();
@@ -48,9 +81,12 @@ pub trait Checker<D: Dictionary> {
         let should_ignore = self
             .ignore_store()
             .should_ignore(token, relative_path, &lang);
-        if !should_ignore {
-            self.handle_error(token, relative_path, context)?
+        if should_ignore {
+            return Ok(());
         }
+        let path = relative_path.as_ref();
+        let error = SpellingError::new(token.to_owned(), pos, path.to_path_buf());
+        self.handle_error(&error, context)?;
         Ok(())
     }
 

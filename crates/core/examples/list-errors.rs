@@ -1,9 +1,7 @@
 use std::path::Path;
 
 use anyhow::{bail, Result};
-use skyspell_core::{
-    global_path, Checker, IgnoreStore, TokenProcessor, SKYSPELL_LOCAL_IGNORE,
-};
+use skyspell_core::{Checker, IgnoreStore, SpellingError};
 use skyspell_core::{EnchantDictionary, Project};
 
 struct SimpleChecker {
@@ -16,12 +14,8 @@ struct SimpleChecker {
 impl SimpleChecker {
     fn try_new() -> Result<Self> {
         let dictionary = EnchantDictionary::new("en_US")?;
-        let project_path = Path::new(".");
-        let local_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
-        let project = Project::new(project_path)?;
-        let global_path = global_path()?;
-
-        let ignore_store = IgnoreStore::load(global_path, local_path)?;
+        let project = Project::new(Path::new("."))?;
+        let ignore_store = project.ignore_store()?;
         Ok(Self {
             dictionary,
             project,
@@ -32,7 +26,9 @@ impl SimpleChecker {
 }
 
 impl Checker<EnchantDictionary> for SimpleChecker {
-    type Context = (usize, usize); // line, column
+    // This can be used to give the handle_error() method additional context
+    // while parsing processing paths
+    type SourceContext = ();
 
     fn dictionary(&self) -> &EnchantDictionary {
         &self.dictionary
@@ -42,6 +38,10 @@ impl Checker<EnchantDictionary> for SimpleChecker {
         &self.project
     }
 
+    fn ignore_store(&mut self) -> &mut IgnoreStore {
+        &mut self.ignore_store
+    }
+
     fn success(&self) -> Result<()> {
         if self.error_count != 0 {
             bail!("Found some errors");
@@ -49,18 +49,11 @@ impl Checker<EnchantDictionary> for SimpleChecker {
         Ok(())
     }
 
-    fn ignore_store(&mut self) -> &mut IgnoreStore {
-        &mut self.ignore_store
-    }
-
-    fn handle_error(
-        &mut self,
-        error: &str,
-        path: &skyspell_core::RelativePath,
-        context: &Self::Context,
-    ) -> Result<()> {
-        let (line, column) = context;
-        println!("{path}:{line}:{column} {error}");
+    fn handle_error(&mut self, error: &SpellingError, _context: &()) -> Result<()> {
+        let (line, column) = error.pos();
+        let path = error.relative_path();
+        let word = error.word();
+        println!("{}:{line}:{column} {word}", path.as_str());
         self.error_count += 1;
         Ok(())
     }
@@ -69,11 +62,7 @@ impl Checker<EnchantDictionary> for SimpleChecker {
 fn main() -> Result<()> {
     let mut checker = SimpleChecker::try_new()?;
     let source_path = Path::new("README.md");
-    let token_processor = TokenProcessor::new(source_path);
-    let relative_path = checker.to_relative_path(source_path)?;
-    token_processor.each_token(|token, line, column| {
-        checker.handle_token(token, &relative_path, &(line, column))
-    })?;
+    checker.process(source_path, &())?;
     checker.success()?;
     Ok(())
 }

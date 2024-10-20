@@ -8,7 +8,6 @@ use skyspell_core::Checker;
 use skyspell_core::Dictionary;
 use skyspell_core::EnchantDictionary;
 use skyspell_core::SkipFile;
-use skyspell_core::TokenProcessor;
 use skyspell_core::{global_path, IgnoreStore};
 use skyspell_core::{Project, SKYSPELL_LOCAL_IGNORE};
 
@@ -201,7 +200,7 @@ fn check(
 
 fn check_with<C, D>(checker: &mut C, paths: &[PathBuf], output_format: OutputFormat) -> Result<()>
 where
-    C: Checker<D, Context = (usize, usize)>,
+    C: Checker<D, SourceContext = ()>,
     D: Dictionary,
 {
     let project = checker.project();
@@ -227,10 +226,7 @@ where
         if skip_file.is_skipped(&relative_path) {
             skipped += 1;
         } else {
-            let token_processor = TokenProcessor::new(&path);
-            token_processor.each_token(|word, line, column| {
-                checker.handle_token(word, &relative_path, &(line, column))
-            })?;
+            checker.process(&path, &())?;
             checked += 1;
         }
     }

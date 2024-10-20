@@ -2,7 +2,7 @@ use crate::{info_1, info_2, OutputFormat};
 use anyhow::{bail, Result};
 use colored::*;
 use serde::Serialize;
-use skyspell_core::{Checker, Dictionary, IgnoreStore, Operation};
+use skyspell_core::{Checker, Dictionary, IgnoreStore, Operation, SpellingError};
 use skyspell_core::{Project, RelativePath};
 use std::collections::BTreeMap;
 
@@ -91,8 +91,7 @@ impl<D: Dictionary> NonInteractiveChecker<D> {
 }
 
 impl<D: Dictionary> Checker<D> for NonInteractiveChecker<D> {
-    // line, column
-    type Context = (usize, usize);
+    type SourceContext = ();
 
     fn dictionary(&self) -> &D {
         &self.dictionary
@@ -100,13 +99,14 @@ impl<D: Dictionary> Checker<D> for NonInteractiveChecker<D> {
 
     fn handle_error(
         &mut self,
-        token: &str,
-        path: &RelativePath,
-        context: &Self::Context,
+        error: &SpellingError,
+        _context: &Self::SourceContext,
     ) -> Result<()> {
         self.num_errors += 1;
-        let &(line, column) = context;
+        let (line, column) = error.pos();
         let start_column = column + 1;
+        let token = error.word();
+        let path = error.relative_path();
         let end_column = start_column + token.chars().count() - 1;
         let range = Range {
             line,
@@ -118,7 +118,7 @@ impl<D: Dictionary> Checker<D> for NonInteractiveChecker<D> {
             range,
         };
         if self.output_format == OutputFormat::Text {
-            self.print_error(path, &error);
+            self.print_error(&path, &error);
         }
         let entry = self.errors.entry(path.to_string());
         let errors_for_entry = entry.or_default();

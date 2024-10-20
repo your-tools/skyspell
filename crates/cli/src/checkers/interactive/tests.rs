@@ -54,9 +54,8 @@ impl TestApp {
         let full_path = project_path.as_ref().join(relative_name);
         std::fs::write(full_path, "").unwrap();
         let relative_path = self.to_relative_path(relative_name);
-        let context = &(3, 42);
         self.checker
-            .handle_token(token, &relative_path, context)
+            .handle_token(token, &relative_path, (3, 42), &())
             .unwrap()
     }
 
