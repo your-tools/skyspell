@@ -5,6 +5,7 @@ patterns = [
 ]
 project = [
     "Baz",
+    "CLI",
     "Cli",
     "Dimitri",
     "Dirs",
@@ -63,6 +64,7 @@ project = [
     "f'input",
     "favicon",
     "ga",
+    "getter",
     "gg",
     "gitignore",
     "goto",
@@ -157,6 +159,7 @@ project = [
     "mut",
     "struct",
 ]
+"crates/core/README.md" = ["structs"]
 "crates/core/src/config/tests.rs" = [
     "abc",
     "ghi",

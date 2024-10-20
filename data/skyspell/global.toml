@@ -1,6 +1,4 @@
-global = []
-
-[lang]
+global = ["monorepo"]
 
 [extensions]
 kak = [
@@ -151,3 +149,4 @@ sh = [
 sql = ["BIGINT"]
 toml = ["pathdiff"]
 
+[lang]
