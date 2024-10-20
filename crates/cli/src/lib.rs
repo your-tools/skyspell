@@ -292,15 +292,6 @@ pub fn main() -> Result<()> {
     let ignore_store = IgnoreStore::load(global_path, local_path)?;
 
     let dictionary = EnchantDictionary::new(lang)?;
-    let current_provider = dictionary.provider();
-
-    let provider_in_config = ignore_store.provider();
-    if let Some(provider_in_config) = provider_in_config {
-        if current_provider != provider_in_config {
-            bail!("Using '{current_provider}' as provider but should be '{provider_in_config}'")
-        }
-    }
-
     let project = Project::new(&project_path)?;
 
     let outcome = run(project, &opts, dictionary, ignore_store);

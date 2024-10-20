@@ -88,12 +88,6 @@ impl IgnoreStore {
         })
     }
 
-    // TODO: keep this? It's only useful when using
-    // skyspell in a CI context ...
-    pub fn provider(&self) -> Option<String> {
-        None
-    }
-
     // Should this word be ignored?
     // This is called when a word is *not* found in the spelling dictionary.
     //
