@@ -22,8 +22,7 @@ impl TestApp {
         let local_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
         let global_path = temp_dir.path().join("global.toml");
         let ignore_store = IgnoreStore::load(global_path, local_path).unwrap();
-        let project_path = ProjectPath::new(&project_path).unwrap();
-        let project = Project::new(project_path);
+        let project = Project::new(&project_path).unwrap();
         Self {
             dictionary,
             ignore_store,

@@ -30,8 +30,8 @@ impl FakeChecker {
 
 pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
     let dictionary = FakeDictionary::new();
-    let project_path = ProjectPath::new(temp_dir.path()).unwrap();
-    let project = Project::new(project_path);
+    let project_path = temp_dir.path();
+    let project = Project::new(project_path).unwrap();
     let mut fake_io = new_fake_io();
     fake_io.set_option("skyspell_project", &project.as_str());
     let state_toml = temp_dir.path().join("state.toml");

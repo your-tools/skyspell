@@ -104,8 +104,7 @@ pub fn main() -> Result<()> {
 
     let dictionary = EnchantDictionary::new(lang)?;
 
-    let project_path = ProjectPath::new(&project_path)?;
-    let project = Project::new(project_path);
+    let project = Project::new(&project_path)?;
 
     let checker = KakouneChecker::new(project, dictionary, ignore_store, kakoune_io, None)?;
     let mut cli = KakCli::new(checker)?;

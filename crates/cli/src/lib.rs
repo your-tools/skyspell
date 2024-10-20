@@ -305,8 +305,7 @@ pub fn main() -> Result<()> {
         }
     }
 
-    let project_path = ProjectPath::new(&project_path)?;
-    let project = Project::new(project_path);
+    let project = Project::new(&project_path)?;
 
     let outcome = run(project, &opts, dictionary, ignore_store);
     if let Err(e) = outcome {

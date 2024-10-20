@@ -17,8 +17,7 @@ impl TestApp {
 
         let project_path = temp_dir.path().join("project");
         std::fs::create_dir(&project_path).unwrap();
-        let project_path = ProjectPath::new(&project_path).unwrap();
-        let project = Project::new(project_path);
+        let project = Project::new(&project_path).unwrap();
         let state_toml = temp_dir.path().join("state.toml");
         let global_toml = temp_dir.path().join("global.toml");
         let local_toml = temp_dir.path().join("skyspell.toml");

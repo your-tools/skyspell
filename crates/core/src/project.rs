@@ -14,8 +14,9 @@ pub struct Project {
 }
 
 impl Project {
-    pub fn new(path: ProjectPath) -> Self {
-        Self { path }
+    pub fn new(path: &Path) -> Result<Self> {
+        let path = ProjectPath::new(path)?;
+        Ok(Self { path })
     }
 
     pub fn path(&self) -> &ProjectPath {
