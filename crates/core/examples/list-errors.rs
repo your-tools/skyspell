@@ -4,15 +4,17 @@ use anyhow::{bail, Result};
 use skyspell_core::{Checker, IgnoreStore, SpellingError};
 use skyspell_core::{EnchantDictionary, Project};
 
-struct SimpleChecker {
+struct ExampleChecker {
     dictionary: EnchantDictionary,
     project: Project,
     ignore_store: IgnoreStore,
     error_count: usize,
 }
 
-impl SimpleChecker {
+impl ExampleChecker {
     fn try_new() -> Result<Self> {
+        // This must match a dictionary installed on your operating system,
+        // that Enchant can find, like aspell-en on Linux
         let dictionary = EnchantDictionary::new("en_US")?;
         let project = Project::new(Path::new("."))?;
         let ignore_store = project.ignore_store()?;
@@ -25,11 +27,12 @@ impl SimpleChecker {
     }
 }
 
-impl Checker<EnchantDictionary> for SimpleChecker {
+impl Checker<EnchantDictionary> for ExampleChecker {
     // This can be used to give the handle_error() method additional context
-    // while parsing processing paths
+    // while processing paths
     type SourceContext = ();
 
+    // You have to implement those getter methods
     fn dictionary(&self) -> &EnchantDictionary {
         &self.dictionary
     }
@@ -60,7 +63,7 @@ impl Checker<EnchantDictionary> for SimpleChecker {
 }
 
 fn main() -> Result<()> {
-    let mut checker = SimpleChecker::try_new()?;
+    let mut checker = ExampleChecker::try_new()?;
     let source_path = Path::new("README.md");
     checker.process(source_path, &())?;
     checker.success()?;
