@@ -1,0 +1,3 @@
+# skyspell core library
+
+
