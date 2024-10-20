@@ -1,3 +1,7 @@
+# 3.0.1 (2024-10-20)
+
+* Fix crate metadata
+
 # 3.0.0 (2024-10-15)
 
 **Breaking** : remove SQL storage - all the ignore rules are now stored in plain `toml` files.
