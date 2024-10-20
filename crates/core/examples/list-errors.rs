@@ -2,7 +2,7 @@ use std::path::Path;
 
 use anyhow::{bail, Result};
 use skyspell_core::{
-    global_path, Checker, IgnoreStore, ProjectPath, TokenProcessor, SKYSPELL_LOCAL_IGNORE,
+    global_path, Checker, IgnoreStore, TokenProcessor, SKYSPELL_LOCAL_IGNORE,
 };
 use skyspell_core::{EnchantDictionary, Project};
 
@@ -69,8 +69,8 @@ impl Checker<EnchantDictionary> for SimpleChecker {
 fn main() -> Result<()> {
     let mut checker = SimpleChecker::try_new()?;
     let source_path = Path::new("README.md");
-    let token_processor = TokenProcessor::new(&source_path);
-    let relative_path = checker.to_relative_path(&source_path)?;
+    let token_processor = TokenProcessor::new(source_path);
+    let relative_path = checker.to_relative_path(source_path)?;
     token_processor.each_token(|token, line, column| {
         checker.handle_token(token, &relative_path, &(line, column))
     })?;

@@ -10,7 +10,7 @@ use skyspell_core::EnchantDictionary;
 use skyspell_core::SkipFile;
 use skyspell_core::TokenProcessor;
 use skyspell_core::{global_path, IgnoreStore};
-use skyspell_core::{Project, ProjectPath, SKYSPELL_LOCAL_IGNORE};
+use skyspell_core::{Project, SKYSPELL_LOCAL_IGNORE};
 
 mod checkers;
 pub mod interactor;

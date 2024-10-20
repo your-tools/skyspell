@@ -1,7 +1,7 @@
 use super::InteractiveChecker;
 use crate::tests::FakeInteractor;
 use skyspell_core::tests::FakeDictionary;
-use skyspell_core::{Checker, IgnoreStore, Project, ProjectPath, RelativePath};
+use skyspell_core::{Checker, IgnoreStore, Project, RelativePath};
 use tempfile::TempDir;
 
 type TestChecker = InteractiveChecker<FakeInteractor, FakeDictionary>;

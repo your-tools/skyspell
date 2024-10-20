@@ -9,7 +9,6 @@ use skyspell_core::IgnoreStore;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::Operation;
 use skyspell_core::Project;
-use skyspell_core::ProjectPath;
 use skyspell_core::TokenProcessor;
 use skyspell_core::SKYSPELL_LOCAL_IGNORE;
 use skyspell_core::{Dictionary, SkipFile};
