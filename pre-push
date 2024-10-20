@@ -23,6 +23,10 @@ do
       poetry install
       poetry run pytest -v
     )
+    (
+      cd crates/core/
+      cargo run --example simple-cli
+    )
 
   fi
 done
