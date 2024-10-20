@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use anyhow::{bail, Result};
-use skyspell_core::{Checker, IgnoreStore, ProcessOutcome, SpellingError, SKYSPELL_LOCAL_IGNORE};
+use skyspell_core::{Checker, IgnoreStore, SpellingError};
 use skyspell_core::{EnchantDictionary, Project};
 
 struct ExampleChecker {
