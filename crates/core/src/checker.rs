@@ -154,7 +154,7 @@ impl CheckerState {
         let inner: StateInner = if state_toml.exists() {
             let contents = std::fs::read_to_string(&state_toml)
                 .with_context(|| format!("Could not read from {}", state_toml.display()))?;
-            toml_edit::de::from_str(&contents)
+            toml::from_str(&contents)
                 .with_context(|| format!("Could not parse {}", state_toml.display()))?
         } else {
             Default::default()
