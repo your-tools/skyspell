@@ -99,7 +99,7 @@ pub fn main() -> Result<()> {
     let checker = KakouneChecker::new(project, dictionary, ignore_store, kakoune_io, None)?;
     let mut cli = KakCli::new(checker)?;
 
-    let outcome = match opts.action {
+    match opts.action {
         Action::AddExtension => cli.add_extension(),
         Action::AddLang => cli.add_lang(),
         Action::AddFile => cli.add_file(),
@@ -112,13 +112,7 @@ pub fn main() -> Result<()> {
         Action::Suggest => cli.suggest(),
         Action::Undo => cli.checker.undo(),
         Action::Init => Ok(()), // handled above
-    };
-
-    if let Err(e) = outcome {
-        println!("fail skyspell error: {}", e);
-        return Err(e);
     }
-    Ok(())
 }
 
 struct KakCli<D: Dictionary, S: OperatingSystemIO> {

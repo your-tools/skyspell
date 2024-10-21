@@ -287,12 +287,7 @@ pub fn main() -> Result<()> {
     let project = Project::new(&project_path)?;
     let ignore_store = project.ignore_store()?;
 
-    let outcome = run(project, &opts, dictionary, ignore_store);
-    if let Err(e) = outcome {
-        print_error!("{}", e);
-        std::process::exit(1);
-    }
-    Ok(())
+    run(project, &opts, dictionary, ignore_store)
 }
 
 #[cfg(test)]
