@@ -117,6 +117,10 @@ def parse_local_ignore(tmp_path: Path) -> dict[str, Any]:
     return parse_config(tmp_path / "skyspell-ignore.toml")
 
 
+def write_local_ignore(tmp_path: Path, contents: str) -> dict[str, Any]:
+    (tmp_path / "skyspell-ignore.toml").write_text(contents)
+
+
 def parse_global_ignore(tmp_path: Path) -> dict[str, Any]:
     return parse_config(tmp_path / "data" / "skyspell" / "global.toml")
 
@@ -125,21 +129,31 @@ class KakChecker:
     """
     Represent an instance of kakoune running in a tmux session
 
+    Note that all runtime errors are caught and written to a file named 'err.txt'
     """
 
     def __init__(self, kakoune: RemoteKakoune, tmp_path: Path) -> None:
         self.kakoune = kakoune
         self.tmp_path = tmp_path
+        hook_command = "%{echo -to-file @runtime_errors_path@ %val{hook_param}}"
+        hook_command = hook_command.replace(
+            "@runtime_errors_path@", str(self.runtime_errors_path)
+        )
         self.kakoune.send_command(
             "hook",
             "global",
             "RuntimeError",
             ".+",
-            "%{echo -to-file err.txt %val{hook_param}}",
+            hook_command,
         )
         self.kakoune.send_command("source", '"%val{runtime}/autoload/tools/menu.kak"')
         self.kakoune.send_command("evaluate-commands", "%sh{ skyspell-kak init }")
         self.kakoune.send_command("skyspell-enable", "en_US")
+        self._errors_expected = False
+
+    @property
+    def runtime_errors_path(self) -> Path:
+        return self.tmp_path / "runtime_errors.txt"
 
     def debug(self) -> None:
         subprocess.run(
@@ -207,11 +221,18 @@ class KakChecker:
         self.kakoune.send_keys(f"{line}g")
         self.kakoune.send_keys(f"{column}l")
 
+    def expect_runtime_error(self, expected_message):
+        self._errors_expected = True
+        all_errors = self.runtime_errors_path.read_text()
+        assert expected_message in all_errors
+
     def check_runtime_errors(self) -> None:
-        err_txt = self.tmp_path / "err.txt"
-        if err_txt.exists():
+        if self._errors_expected:
+            return
+
+        if self.runtime_errors_path.exists():
             pytest.fail(
-                f"Some kakoune errors occurred during the test:\n{err_txt.read_text()}"
+                f"Some kakoune errors occurred during the test:\n{self.runtime_errors_path.read_text()}"
             )
 
     @property
@@ -235,11 +256,11 @@ def kak_checker(tmp_path: Path, tmux_session: TmuxSession) -> Iterator[KakChecke
 
 
 def test_skip_patterns(tmp_path: Path, kak_checker: KakChecker) -> None:
-    local_toml = tmp_path / "skyspell-ignore.toml"
-    local_toml.write_text(
+    write_local_ignore(
+        tmp_path,
         """
         patterns = ["*.lock"]
-        """
+        """,
     )
     kak_checker.open_file_with_contents("foo.lock", r"I'm testing skyspell here")
 
@@ -368,3 +389,17 @@ def test_replace_with_suggestion(tmp_path: Path, kak_checker: KakChecker) -> Non
     time.sleep(0.5)
     actual = (tmp_path / "foo.txt").read_text()
     assert actual == "There is a mistake here\n"
+
+
+def test_on_skyspell_failure(tmp_path: Path, kak_checker: KakChecker) -> None:
+    write_local_ignore(
+        tmp_path,
+        """
+        syntax_error = [
+        """,
+    )
+
+    kak_checker.open_file_with_contents("foo.txt", "There is a missstake here")
+    time.sleep(0.5)
+
+    kak_checker.expect_runtime_error("skyspell-kak failed")
