@@ -137,5 +137,8 @@ define-command skyspell-replace -docstring "replace the selection with a suggest
     : $kak_opt_skyspell_project
     : $kak_selection
     skyspell-kak --lang $kak_opt_skyspell_lang suggest
+     if [ $? -ne 0 ]; then
+       echo skyspell-kak-on-failure
+     fi
   }
 }
