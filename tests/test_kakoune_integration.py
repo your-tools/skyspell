@@ -113,11 +113,11 @@ def parse_config(path: Path) -> dict[str, Any]:
     return config
 
 
-def parse_local(tmp_path: Path) -> dict[str, Any]:
+def parse_local_ignore(tmp_path: Path) -> dict[str, Any]:
     return parse_config(tmp_path / "skyspell-ignore.toml")
 
 
-def parse_global(tmp_path: Path) -> dict[str, Any]:
+def parse_global_ignore(tmp_path: Path) -> dict[str, Any]:
     return parse_config(tmp_path / "data" / "skyspell" / "global.toml")
 
 
@@ -179,27 +179,27 @@ class KakChecker:
         self.kakoune.send_keys(*args)
 
     def ignored(self) -> list[str]:
-        config = parse_global(self.tmp_path)
+        config = parse_global_ignore(self.tmp_path)
         res: list[str] = config["global"]
         return res
 
     def ignored_for_project(self) -> list[str]:
-        config = parse_local(self.tmp_path)
+        config = parse_local_ignore(self.tmp_path)
         res: list[str] = config["project"]
         return res
 
     def ignored_for_path(self, path: str) -> list[str]:
-        config = parse_local(self.tmp_path)
+        config = parse_local_ignore(self.tmp_path)
         res: list[str] = config["paths"][path]
         return res
 
     def ignored_for_extension(self, extension: str) -> list[str]:
-        config = parse_global(self.tmp_path)
+        config = parse_global_ignore(self.tmp_path)
         res: list[str] = config["extensions"][extension]
         return res
 
     def ignored_for_lang(self, lang: str) -> list[str]:
-        config = parse_global(self.tmp_path)
+        config = parse_global_ignore(self.tmp_path)
         res: list[str] = config["lang"][lang]
         return res
 
