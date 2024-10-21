@@ -1,5 +1,5 @@
 use crate::{new_kakoune_io, KakouneChecker, KakouneIO};
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{anyhow, Context, Result};
 use clap::Parser;
 use directories_next::BaseDirs;
 use skyspell_core::Checker;
@@ -139,6 +139,11 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
 
     fn print(&self, message: &str) {
         self.kakoune_io().print(message)
+    }
+
+    fn print_error(&self, error: &str) {
+        self.kakoune_io()
+            .print(&format!("echo -markup {{Error}} {error}"))
     }
 
     fn dictionary(&self) -> &D {
@@ -302,16 +307,19 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
     fn suggest(&mut self) -> Result<()> {
         let selection = &self.kakoune_io().get_selection()?;
         if selection.trim().is_empty() {
-            bail!("Selection is blank");
+            self.print_error("Selection is empty");
+            return Ok(());
         }
         if self.dictionary().check(selection)? {
-            bail!("Selection: `{selection}` is not an error");
+            self.print_error(&format!("Selection `{selection}` is not an error"));
+            return Ok(());
         }
 
         let suggestions = self.dictionary().suggest(selection);
 
         if suggestions.is_empty() {
-            bail!("No suggestions found");
+            self.print_error("No suggestions found");
+            return Ok(());
         }
 
         self.print("menu ");

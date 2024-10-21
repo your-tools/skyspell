@@ -41,11 +41,18 @@ define-command skyspell-disable %{
   remove-hooks global skyspell
 }
 
+define-command -hidden skyspell-kak-on-failure %{
+ fail "skyspell-kak failed - see *debug* for details"
+}
+
 define-command skyspell-check -docstring "check the open buffers for spelling errors" %{
   evaluate-commands %sh{
     : $kak_timestamp
     : $kak_opt_skyspell_project
     skyspell-kak --lang $kak_opt_skyspell_lang check $kak_quoted_buflist
+    if [ $? -ne 0 ]; then
+      echo skyspell-kak-on-failure
+    fi
   }
 }
 
@@ -67,7 +74,7 @@ define-command -hidden -params 1.. skyspell-action %{
     : $kak_opt_skyspell_project
     skyspell-kak --lang $kak_opt_skyspell_lang $*
     if [ $? -ne 0 ]; then
-      printf %s\\n 'echo -markup {Error}skyspell-kak failed'
+      echo skyspell-kak-on-failure
     fi
   }
 }
@@ -95,6 +102,9 @@ define-command skyspell-next -docstring "go to the next spelling error" %{
      : $kak_cursor_line
      : $kak_cursor_column
      skyspell-kak --lang $kak_opt_skyspell_lang next-error "${kak_opt_skyspell_errors}"
+     if [ $? -ne 0 ]; then
+       echo skyspell-kak-on-failure
+     fi
    }
 }
 
@@ -104,6 +114,9 @@ define-command skyspell-previous -docstring "go to the previous spelling error" 
      : $kak_cursor_line
      : $kak_cursor_column
      skyspell-kak --lang $kak_opt_skyspell_lang previous-error "${kak_opt_skyspell_errors}"
+     if [ $? -ne 0 ]; then
+       echo skyspell-kak-on-failure
+     fi
    }
 }
 
