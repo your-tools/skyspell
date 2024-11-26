@@ -92,7 +92,7 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
         let lang = self.dictionary().lang().to_owned();
         let (lineno, column) = pos;
         let prefix = format!("{path}:{lineno}:{column}");
-        println!("{} {}", prefix, error.red());
+        println!("{} {}", prefix, error.bold().red());
         let prompt = r#"What to do?
 a : Add word to global ignore list
 e : Add word to ignore list for this extension
