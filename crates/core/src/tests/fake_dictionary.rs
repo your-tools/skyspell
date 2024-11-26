@@ -29,8 +29,8 @@ impl Dictionary for FakeDictionary {
         Ok(self.known.contains(&word.to_string()))
     }
 
-    fn suggest(&self, error: &str) -> Vec<String> {
-        self.suggestions.get(error).map_or(vec![], |v| v.to_vec())
+    fn suggest(&self, error: &str) -> Result<Vec<String>> {
+        Ok(self.suggestions.get(error).map_or(vec![], |v| v.to_vec()))
     }
 
     fn lang(&self) -> &str {
@@ -57,6 +57,6 @@ fn test_fake_dictionary_suggest() {
     fake_dictionary.add_known("hello");
     fake_dictionary.add_suggestions("missstake", &["mistake".to_string()]);
 
-    assert_eq!(&fake_dictionary.suggest("missstake"), &["mistake"]);
-    assert!(&fake_dictionary.suggest("asntoehsauh").is_empty());
+    assert_eq!(&fake_dictionary.suggest("missstake").unwrap(), &["mistake"]);
+    assert!(&fake_dictionary.suggest("asntoehsauh").unwrap().is_empty());
 }

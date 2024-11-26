@@ -4,10 +4,14 @@ extern crate lazy_static;
 mod dictionary;
 
 #[cfg(target_family = "unix")]
-pub mod enchant;
+#[path = "system_dictionary/unix.rs"]
+mod system_dictionary;
 
 #[cfg(target_family = "windows")]
-pub mod winspell;
+#[path = "system_dictionary/windows.rs"]
+mod system_dictionary;
+
+pub use system_dictionary::SystemDictionary;
 
 pub mod ignore;
 pub mod operations;
@@ -16,9 +20,6 @@ pub mod project;
 pub mod skip_file;
 pub mod tests;
 pub mod tokens;
-
-#[cfg(target_family = "unix")]
-pub use crate::enchant::EnchantDictionary;
 
 pub use checker::{Checker, CheckerState, ProcessOutcome, SpellingError};
 pub use dictionary::Dictionary;
