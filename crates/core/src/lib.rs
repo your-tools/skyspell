@@ -10,6 +10,7 @@ pub mod project;
 pub mod skip_file;
 pub mod tests;
 pub mod tokens;
+pub mod tokens2;
 
 pub use crate::enchant::EnchantDictionary;
 pub use checker::{Checker, CheckerState, ProcessOutcome, SpellingError};
