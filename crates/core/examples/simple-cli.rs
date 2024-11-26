@@ -2,10 +2,12 @@ use std::path::Path;
 
 use anyhow::{bail, Result};
 use skyspell_core::{Checker, IgnoreStore, SpellingError};
-use skyspell_core::{EnchantDictionary, Project};
+use skyspell_core::{Project, SystemDictionary};
+#[cfg(target_family = "windows")]
+use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
 
 struct ExampleChecker {
-    dictionary: EnchantDictionary,
+    dictionary: SystemDictionary,
     project: Project,
     ignore_store: IgnoreStore,
     error_count: usize,
@@ -13,9 +15,8 @@ struct ExampleChecker {
 
 impl ExampleChecker {
     fn try_new() -> Result<Self> {
-        // This must match a dictionary installed on your operating system,
-        // that Enchant can find, like aspell-en on Linux
-        let dictionary = EnchantDictionary::new("en_US")?;
+        // This must match a dictionary installed on your operating system.
+        let dictionary = SystemDictionary::new("en_US")?;
         let project = Project::new(Path::new("."))?;
         let ignore_store = project.ignore_store()?;
         Ok(Self {
@@ -27,13 +28,13 @@ impl ExampleChecker {
     }
 }
 
-impl Checker<EnchantDictionary> for ExampleChecker {
+impl Checker<SystemDictionary> for ExampleChecker {
     // This can be used to give the handle_error() method additional context
     // while processing paths
     type SourceContext = ();
 
     // You have to implement those getter methods
-    fn dictionary(&self) -> &EnchantDictionary {
+    fn dictionary(&self) -> &SystemDictionary {
         &self.dictionary
     }
 
@@ -63,6 +64,11 @@ impl Checker<EnchantDictionary> for ExampleChecker {
 }
 
 fn main() -> Result<()> {
+    #[cfg(target_family = "windows")]
+    unsafe {
+        CoInitializeEx(None, COINIT_MULTITHREADED).ok()?;
+    }
+
     let mut checker = ExampleChecker::try_new()?;
     let source_path = Path::new("README.md");
     checker.process(source_path, &())?;

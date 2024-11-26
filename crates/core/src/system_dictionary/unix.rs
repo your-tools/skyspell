@@ -1,13 +1,14 @@
+/// Export a SystemDictionary that relies on Enchant Rust wrapper
 use anyhow::{anyhow, Result};
 
 use crate::Dictionary;
 
-pub struct EnchantDictionary {
+pub struct SystemDictionary {
     dict: enchant::Dict,
     lang: String,
 }
 
-impl EnchantDictionary {
+impl SystemDictionary {
     pub fn new(lang: &str) -> Result<Self> {
         let mut broker = enchant::Broker::new();
         let dict = broker
@@ -20,15 +21,15 @@ impl EnchantDictionary {
     }
 }
 
-impl Dictionary for EnchantDictionary {
+impl Dictionary for SystemDictionary {
     fn check(&self, word: &str) -> Result<bool> {
         self.dict
             .check(word)
             .map_err(|e| anyhow!("Could not check '{word}' with enchant: {e}"))
     }
 
-    fn suggest(&self, error: &str) -> Vec<String> {
-        self.dict.suggest(error)
+    fn suggest(&self, error: &str) -> Result<Vec<String>> {
+        Ok(self.dict.suggest(error))
     }
 
     fn lang(&self) -> &str {
@@ -39,6 +40,3 @@ impl Dictionary for EnchantDictionary {
         self.dict.get_provider_name()
     }
 }
-
-#[cfg(test)]
-mod tests;

@@ -1,31 +1,23 @@
-use std::sync::Once;
-
+/// Export a SystemDictionary that relies on Win32 Globalization API
 use anyhow::{bail, Result};
+use windows::Win32::System::Com::CLSCTX_ALL;
 use windows::{
     core::{HSTRING, PWSTR},
     Win32::{
         Globalization::{ISpellChecker, ISpellCheckerFactory, SpellCheckerFactory},
-        System::Com::{
-            CoCreateInstance, CoInitializeEx, CoTaskMemFree, CLSCTX_ALL, COINIT_MULTITHREADED,
-        },
+        System::Com::CoCreateInstance,
     },
 };
 
-struct SpellClient {
+use crate::Dictionary;
+
+pub struct SystemDictionary {
     spell_checker: ISpellChecker,
+    lang: String,
 }
 
-static INIT: Once = Once::new();
-
-pub fn initialize_com() {
-    INIT.call_once(|| unsafe {
-        CoInitializeEx(None, COINIT_MULTITHREADED).unwrap();
-    });
-}
-
-impl SpellClient {
-    fn new(lang: &str) -> Result<Self> {
-        initialize_com();
+impl SystemDictionary {
+    pub fn new(lang: &str) -> Result<Self> {
         let spell_checker = unsafe {
             let language_tag = HSTRING::from(lang);
             let spell_checker_factory: ISpellCheckerFactory =
@@ -37,9 +29,14 @@ impl SpellClient {
 
             spell_checker_factory.CreateSpellChecker(&language_tag)?
         };
-        Ok(Self { spell_checker })
+        Ok(Self {
+            spell_checker,
+            lang: lang.to_owned(),
+        })
     }
+}
 
+impl Dictionary for SystemDictionary {
     fn check(&self, word: &str) -> anyhow::Result<bool> {
         let error = unsafe {
             let text = HSTRING::from(word);
@@ -71,12 +68,17 @@ impl SpellClient {
                 let as_string = wstring_pointers[0].to_string()?;
                 suggestions.push(as_string);
 
-                CoTaskMemFree(Some(wstring_pointers[0].as_ptr() as *mut _));
+                // CoTaskMemFree(Some(wstring_pointers[0].as_ptr() as *mut _));
             }
         }
         Ok(suggestions)
     }
-}
 
-#[cfg(test)]
-mod tests;
+    fn lang(&self) -> &str {
+        &self.lang
+    }
+
+    fn provider(&self) -> &str {
+        "windows"
+    }
+}

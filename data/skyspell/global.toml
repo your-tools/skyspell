@@ -1,4 +1,7 @@
-global = ["monorepo"]
+global = [
+    "monorepo",
+    "unix",
+]
 
 [extensions]
 kak = [

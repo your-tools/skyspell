@@ -6,10 +6,10 @@ use colored::*;
 
 use skyspell_core::Checker;
 use skyspell_core::Dictionary;
-use skyspell_core::EnchantDictionary;
 use skyspell_core::IgnoreStore;
 use skyspell_core::ProcessOutcome;
 use skyspell_core::Project;
+use skyspell_core::SystemDictionary;
 
 mod checkers;
 pub mod interactor;
@@ -247,7 +247,7 @@ fn suggest(dictionary: impl Dictionary, opts: &SuggestOpts) -> Result<()> {
         return Ok(());
     }
 
-    let suggestions = dictionary.suggest(word);
+    let suggestions = dictionary.suggest(word)?;
 
     for suggestion in suggestions.iter() {
         println!("{}", suggestion);
@@ -283,7 +283,7 @@ pub fn main() -> Result<()> {
         None => std::env::current_dir().context("Could not get current working directory")?,
     };
 
-    let dictionary = EnchantDictionary::new(lang)?;
+    let dictionary = SystemDictionary::new(lang)?;
     let project = Project::new(&project_path)?;
     let ignore_store = project.ignore_store()?;
 

@@ -4,10 +4,10 @@ use clap::Parser;
 use directories_next::BaseDirs;
 use skyspell_core::Checker;
 use skyspell_core::Dictionary;
-use skyspell_core::EnchantDictionary;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::Operation;
 use skyspell_core::Project;
+use skyspell_core::SystemDictionary;
 use std::path::{Path, PathBuf};
 
 // Warning: most of the things written to stdout while this code is
@@ -89,7 +89,7 @@ pub fn main() -> Result<()> {
     let kakoune_io = new_kakoune_io();
 
     let lang = &kakoune_io.get_option("skyspell_lang")?;
-    let dictionary = EnchantDictionary::new(lang)?;
+    let dictionary = SystemDictionary::new(lang)?;
 
     let project_path = kakoune_io.get_option("skyspell_project")?;
     let project_path = PathBuf::from(project_path);
@@ -315,7 +315,10 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
             return Ok(());
         }
 
-        let suggestions = self.dictionary().suggest(selection);
+        let suggestions = self
+            .dictionary()
+            .suggest(selection)
+            .context("While getting suggestions")?;
 
         if suggestions.is_empty() {
             self.print_error("No suggestions found");
