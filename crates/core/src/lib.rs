@@ -2,7 +2,13 @@
 extern crate lazy_static;
 
 mod dictionary;
+
+#[cfg(target_family = "unix")]
 pub mod enchant;
+
+#[cfg(target_family = "windows")]
+pub mod winspell;
+
 pub mod ignore;
 pub mod operations;
 pub mod os_io;
@@ -11,7 +17,9 @@ pub mod skip_file;
 pub mod tests;
 pub mod tokens;
 
+#[cfg(target_family = "unix")]
 pub use crate::enchant::EnchantDictionary;
+
 pub use checker::{Checker, CheckerState, ProcessOutcome, SpellingError};
 pub use dictionary::Dictionary;
 pub use ignore::{global_path, GlobalIgnore, IgnoreStore, LocalIgnore};
