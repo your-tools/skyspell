@@ -1,15 +1,8 @@
-#[cfg(target_family = "windows")]
-use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
-
 use anyhow::{bail, Result};
 use skyspell_core::{Dictionary, SystemDictionary};
 
 fn main() -> Result<()> {
-    #[cfg(target_family = "windows")]
-    unsafe {
-        CoInitializeEx(None, COINIT_MULTITHREADED).ok()?;
-    }
-
+    SystemDictionary::init();
     let args: Vec<_> = std::env::args().collect();
     if args.len() != 3 {
         bail!("Usage: system-dictionary <lang> <word>")

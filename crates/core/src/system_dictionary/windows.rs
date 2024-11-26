@@ -1,6 +1,7 @@
 /// Export a SystemDictionary that relies on Win32 Globalization API
 use anyhow::{bail, Result};
 use windows::Win32::System::Com::CLSCTX_ALL;
+use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
 use windows::{
     core::{HSTRING, PWSTR},
     Win32::{
@@ -17,6 +18,13 @@ pub struct SystemDictionary {
 }
 
 impl SystemDictionary {
+    /// Must be called in main() - will panic in case of failure
+    pub fn init() {
+        unsafe {
+            CoInitializeEx(None, COINIT_MULTITHREADED).unwrap();
+        }
+    }
+
     pub fn new(lang: &str) -> Result<Self> {
         let spell_checker = unsafe {
             let language_tag = HSTRING::from(lang);

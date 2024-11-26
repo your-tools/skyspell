@@ -272,6 +272,8 @@ fn run<D: Dictionary>(
     }
 }
 pub fn main() -> Result<()> {
+    SystemDictionary::init();
+
     let opts: Opts = Opts::parse();
     let lang = match &opts.lang {
         Some(s) => s,

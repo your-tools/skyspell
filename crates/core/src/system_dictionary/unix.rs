@@ -9,6 +9,9 @@ pub struct SystemDictionary {
 }
 
 impl SystemDictionary {
+    /// Must be called in main()
+    pub fn init() {}
+
     pub fn new(lang: &str) -> Result<Self> {
         let mut broker = enchant::Broker::new();
         let dict = broker

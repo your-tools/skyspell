@@ -3,8 +3,6 @@ use std::path::Path;
 use anyhow::{bail, Result};
 use skyspell_core::{Checker, IgnoreStore, SpellingError};
 use skyspell_core::{Project, SystemDictionary};
-#[cfg(target_family = "windows")]
-use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
 
 struct ExampleChecker {
     dictionary: SystemDictionary,
@@ -64,11 +62,7 @@ impl Checker<SystemDictionary> for ExampleChecker {
 }
 
 fn main() -> Result<()> {
-    #[cfg(target_family = "windows")]
-    unsafe {
-        CoInitializeEx(None, COINIT_MULTITHREADED).ok()?;
-    }
-
+    SystemDictionary::init();
     let mut checker = ExampleChecker::try_new()?;
     let source_path = Path::new("README.md");
     checker.process(source_path, &())?;

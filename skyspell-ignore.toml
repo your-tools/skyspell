@@ -161,14 +161,6 @@ project = [
     "struct",
 ]
 "crates/core/README.md" = ["structs"]
-"crates/core/examples/simple-cli.rs" = [
-    "COINIT",
-    "MULTITHREADED",
-]
-"crates/core/examples/system-dictionary.rs" = [
-    "COINIT",
-    "MULTITHREADED",
-]
 "crates/core/src/config/tests.rs" = [
     "abc",
     "ghi",
@@ -179,7 +171,9 @@ project = [
 "crates/core/src/enchant/tests.rs" = ["missstake"]
 "crates/core/src/system_dictionary/windows.rs" = [
     "CLSCTX",
+    "COINIT",
     "HSTRING",
+    "MULTITHREADED",
     "Mem",
     "PWSTR",
     "ptr",
