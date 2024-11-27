@@ -48,6 +48,11 @@ impl TestApp {
         let mut with_arg0 = vec!["skyspell"];
         with_arg0.push("--project-path");
         with_arg0.push(&project_path_as_str);
+        // Note: the --lang option here is not really used because we use a FakeDictionary
+        // for testing but we still want to go trough the option parsing
+        with_arg0.push("--lang");
+        with_arg0.push("en_US");
+
         with_arg0.extend(args);
         let opts = Opts::try_parse_from(with_arg0)?;
         super::run(self.project, &opts, self.dictionary, self.ignore_store)

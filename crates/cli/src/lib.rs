@@ -61,7 +61,7 @@ impl OutputFormat {
 #[clap(version)]
 pub struct Opts {
     #[clap(long, help = "Language to use")]
-    pub lang: Option<String>,
+    pub lang: String,
 
     #[clap(long, help = "Project path")]
     project_path: Option<PathBuf>,
@@ -275,11 +275,7 @@ pub fn main() -> Result<()> {
     SystemDictionary::init();
 
     let opts: Opts = Opts::parse();
-    let lang = match &opts.lang {
-        Some(s) => s,
-        None => "en_US",
-    };
-
+    let lang = &opts.lang;
     let project_path = match opts.project_path.clone() {
         Some(p) => p,
         None => std::env::current_dir().context("Could not get current working directory")?,
