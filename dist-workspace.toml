@@ -15,3 +15,5 @@ targets = ["x86_64-pc-windows-msvc"]
 install-path = "CARGO_HOME"
 # Whether to install an updater program
 install-updater = false
+# A prefix git tags must include for dist to care about them
+tag-namespace = "v"
