@@ -254,7 +254,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
 
             let relative_path = self.checker.to_relative_path(source_path)?;
 
-            if relative_path.as_str().starts_with("..") {
+            if relative_path.to_string().starts_with("..") {
                 // Buffer is outside the current project
                 continue;
             }

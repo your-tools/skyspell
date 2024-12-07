@@ -119,8 +119,8 @@ impl RelativePath {
         Self(path)
     }
 
-    pub fn as_str(&self) -> Cow<str> {
-        self.0.to_string_lossy()
+    pub fn to_string(&self) -> String {
+        self.0.to_string_lossy().replace("\\", "/")
     }
 
     pub fn file_name(&self) -> Option<Cow<str>> {

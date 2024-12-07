@@ -25,7 +25,7 @@ impl SkipFile {
     }
 
     pub fn is_skipped(&self, relative_path: &RelativePath) -> bool {
-        if relative_path.as_str().ends_with(SKYSPELL_LOCAL_IGNORE) {
+        if relative_path.to_string().ends_with(SKYSPELL_LOCAL_IGNORE) {
             return true;
         }
         self.0
