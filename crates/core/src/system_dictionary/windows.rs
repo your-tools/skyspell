@@ -1,7 +1,7 @@
 /// Export a SystemDictionary that relies on Win32 Globalization API
 use anyhow::{bail, Result};
-use windows::Win32::System::Com::CLSCTX_ALL;
 use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
+use windows::Win32::System::Com::{CoTaskMemFree, CLSCTX_ALL};
 use windows::{
     core::{HSTRING, PWSTR},
     Win32::{
@@ -76,7 +76,7 @@ impl Dictionary for SystemDictionary {
                 let as_string = wstring_pointers[0].to_string()?;
                 suggestions.push(as_string);
 
-                // CoTaskMemFree(Some(wstring_pointers[0].as_ptr() as *mut _));
+                CoTaskMemFree(Some(wstring_pointers[0].as_ptr() as *mut _));
             }
         }
         Ok(suggestions)
