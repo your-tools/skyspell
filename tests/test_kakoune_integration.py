@@ -148,7 +148,7 @@ class KakChecker:
         )
         self.kakoune.send_command("source", '"%val{runtime}/autoload/tools/menu.kak"')
         self.kakoune.send_command("evaluate-commands", "%sh{ skyspell-kak init }")
-        self.kakoune.send_command("skyspell-enable", "en_US")
+        self.kakoune.send_command("skyspell-enable", "en")
         self._errors_expected = False
 
     @property
@@ -363,7 +363,7 @@ def test_add_to_lang(kak_checker: KakChecker) -> None:
     kak_checker.open_error_list()
     kak_checker.send_keys("l")
 
-    assert kak_checker.ignored_for_lang("en_US") == ["skyspell"]
+    assert kak_checker.ignored_for_lang("en") == ["skyspell"]
 
 
 def test_undo(tmp_path: Path, kak_checker: KakChecker) -> None:
