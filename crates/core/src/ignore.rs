@@ -86,7 +86,7 @@ pub fn global_path() -> Result<PathBuf> {
 /// we remove only keep the stuff before `-` or `_` before storing them
 /// in the global configuration file
 fn short_lang(lang: &str) -> &str {
-    lang.split(|c| c == '-' || c == '_')
+    lang.split(['-', '_'])
         .next()
         .expect("calling next() after split() should always work")
 }
