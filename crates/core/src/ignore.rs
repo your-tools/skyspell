@@ -69,6 +69,12 @@ fn save<T: Serialize>(name: &'static str, value: T, path: &Path) -> Result<()> {
 }
 
 pub fn global_path() -> Result<PathBuf> {
+    let from_env = std::env::var("SKYSPELL_GLOBAL_PATH");
+    if let Ok(value) = from_env {
+        println!("Using {value} as global configuration file");
+        return Ok(PathBuf::from(value));
+    }
+
     let base_dirs = BaseDirs::new().ok_or_else(|| anyhow!("Could not get home directory"))?;
     let data_dir = base_dirs.data_dir().join("skyspell");
     std::fs::create_dir_all(&data_dir)
