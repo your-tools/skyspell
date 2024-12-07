@@ -82,6 +82,15 @@ pub fn global_path() -> Result<PathBuf> {
     Ok(data_dir.join("global.toml"))
 }
 
+/// Since the Win32 API and Enchant do not use the same language tags,
+/// we remove only keep the stuff before `-` or `_` before storing them
+/// in the global configuration file
+fn short_lang(lang: &str) -> &str {
+    lang.split(|c| c == '-' || c == '_')
+        .next()
+        .expect("calling next() after split() should always work")
+}
+
 impl IgnoreStore {
     pub fn load(global_toml: PathBuf, local_toml: PathBuf) -> Result<Self> {
         let global = load(&global_toml)?;
@@ -183,6 +192,7 @@ impl IgnoreStore {
     }
 
     pub fn ignore_for_lang(&mut self, word: &str, lang: &str) -> Result<()> {
+        let lang = short_lang(lang);
         let for_lang = self.global.lang.get_mut(lang);
         match for_lang {
             Some(s) => {
@@ -198,6 +208,7 @@ impl IgnoreStore {
     }
 
     pub fn is_ignored_for_lang(&self, word: &str, lang: &str) -> bool {
+        let lang = short_lang(lang);
         let for_lang = self.global.lang.get(lang);
         match for_lang {
             Some(s) => s.contains(word),
@@ -206,6 +217,7 @@ impl IgnoreStore {
     }
 
     pub fn remove_ignored_for_lang(&mut self, word: &str, lang: &str) -> Result<()> {
+        let lang = short_lang(lang);
         match self.global.lang.get_mut(lang) {
             Some(set) => {
                 set.remove(word);
