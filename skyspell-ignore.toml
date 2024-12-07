@@ -1,6 +1,7 @@
 patterns = [
     "*.lock",
     "data/",
+    "dist-workspace.toml",
     "mypy.ini",
 ]
 project = [
