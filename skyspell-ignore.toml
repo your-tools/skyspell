@@ -136,12 +136,12 @@ project = [
 ]
 
 [paths]
-"Cargo.toml" = ["lto"]
-"Changelog.md" = [
+"CHANGELOG.md" = [
     "buflist",
     "ga",
     "subcommand",
 ]
+"Cargo.toml" = ["lto"]
 "README.md" = [
     "fn",
     "helllo",
@@ -164,11 +164,11 @@ project = [
     "py",
 ]
 "crates/cli/src/tests/fake_interactor.rs" = ["qyn"]
-"crates/core/Cargo.toml" = ["cfg"]
-"crates/core/Changelog.md" = [
+"crates/core/CHANGELOG.md" = [
     "mut",
     "struct",
 ]
+"crates/core/Cargo.toml" = ["cfg"]
 "crates/core/README.md" = ["structs"]
 "crates/core/src/config/tests.rs" = [
     "abc",
