@@ -1,5 +1,12 @@
 global = [
+    "Dict",
+    "Os",
+    "db",
+    "dict",
+    "github",
     "monorepo",
+    "msvc",
+    "powershell",
     "unix",
 ]
 
@@ -153,3 +160,9 @@ sql = ["BIGINT"]
 toml = ["pathdiff"]
 
 [lang]
+en = [
+    "Opts",
+    "boolean",
+    "dist",
+    "keybindings",
+]

@@ -59,10 +59,13 @@ project = [
     "dmerej",
     "docstring",
     "dsl",
+    "en",
     "environ",
     "esc",
+    "ext",
     "f'input",
     "favicon",
+    "fr",
     "ga",
     "getter",
     "gg",
@@ -93,11 +96,14 @@ project = [
     "py",
     "pytest",
     "readme",
+    "rel",
     "repo",
     "ret",
+    "rs",
     "rustfmt",
     "scspell",
     "serde",
+    "sh",
     "sha",
     "skyspell",
     "snailquote",
@@ -123,11 +129,13 @@ project = [
     "urls",
     "utc",
     "uuid",
+    "val",
     "whitespace",
     "xdist",
 ]
 
 [paths]
+"Cargo.toml" = ["lto"]
 "Changelog.md" = [
     "buflist",
     "ga",
@@ -187,6 +195,7 @@ project = [
 "crates/core/src/tokens.rs" = [
     "EDITMSG",
     "IDENT",
+    "Ll",
     "br",
     "nrt",
     "r'foo",
@@ -195,6 +204,7 @@ project = [
     "tex",
 ]
 "crates/core/src/tokens/tests.rs" = [
+    "Ll",
     "ada",
     "ewpage",
     "f'hello",
