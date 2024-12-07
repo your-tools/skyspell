@@ -95,6 +95,7 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
         println!("{} {}", prefix, error.bold().red());
         let prompt = r#"What to do?
 a : Add word to global ignore list
+l : Add word to the ignore list for the current language
 e : Add word to ignore list for this extension
 p : Add word to ignore list for the current project
 f : Add word to ignore list for the current file
