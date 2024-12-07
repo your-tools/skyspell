@@ -1,5 +1,6 @@
 use super::*;
-use crate::io::tests::new_fake_io;
+
+use crate::kak::io::tests::new_fake_io;
 use skyspell_core::tests::{FakeDictionary, FakeIO};
 use skyspell_core::IgnoreStore;
 use skyspell_core::RelativePath;
@@ -10,14 +11,6 @@ pub(crate) type FakeChecker = KakouneChecker<FakeDictionary, FakeIO>;
 impl FakeChecker {
     pub(crate) fn get_output(self) -> String {
         self.kakoune_io.get_output()
-    }
-
-    pub fn add_known(&mut self, word: &str) {
-        self.dictionary.add_known(word);
-    }
-
-    pub fn add_suggestions(&mut self, error: &str, suggestions: &[String]) {
-        self.dictionary.add_suggestions(error, suggestions);
     }
 
     pub(crate) fn ensure_path(&self, relative_name: &str) -> RelativePath {

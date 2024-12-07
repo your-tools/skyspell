@@ -1,7 +1,9 @@
-pub(crate) mod checker;
-pub(crate) mod cli;
-pub(crate) mod io;
+#[cfg(target_family = "unix")]
+#[path = "unix.rs"]
+mod kak;
 
-pub use crate::checker::KakouneChecker;
-pub use cli::main;
-pub use io::{new_kakoune_io, KakouneIO, StdKakouneIO};
+#[cfg(target_family = "windows")]
+#[path = "windows.rs"]
+mod kak;
+
+pub use kak::main;

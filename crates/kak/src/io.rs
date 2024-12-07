@@ -17,6 +17,7 @@ impl<S: OperatingSystemIO> KakouneIO<S> {
         Self { os_io }
     }
 
+    #[allow(dead_code)]
     pub fn debug(&self, message: &str) {
         self.os_io.print(&format!("echo -debug {message}\n"));
     }

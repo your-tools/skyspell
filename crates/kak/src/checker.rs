@@ -1,4 +1,4 @@
-use crate::io::KakouneIO;
+use crate::kak::io::KakouneIO;
 use anyhow::Result;
 use itertools::Itertools;
 use skyspell_core::Checker;
@@ -100,10 +100,6 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
 
     pub fn print(&self, command: &str) {
         self.kakoune_io.print(command)
-    }
-
-    pub fn ignore_store(&mut self) -> &mut IgnoreStore {
-        &mut self.ignore_store
     }
 
     pub fn write_code(&self) -> Result<()> {

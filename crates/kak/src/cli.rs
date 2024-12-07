@@ -1,4 +1,4 @@
-use crate::{new_kakoune_io, KakouneChecker, KakouneIO};
+use crate::kak::{new_kakoune_io, KakouneChecker, KakouneIO};
 use anyhow::{anyhow, Context, Result};
 use clap::Parser;
 use directories_next::BaseDirs;
