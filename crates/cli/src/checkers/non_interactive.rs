@@ -120,7 +120,7 @@ impl<D: Dictionary> Checker<D> for NonInteractiveChecker<D> {
         if self.output_format == OutputFormat::Text {
             self.print_error(&path, &error);
         }
-        let entry = self.errors.entry(path.to_string());
+        let entry = self.errors.entry(path.normalize());
         let errors_for_entry = entry.or_default();
         errors_for_entry.push(error);
         Ok(())

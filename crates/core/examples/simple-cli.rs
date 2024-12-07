@@ -55,7 +55,7 @@ impl Checker<SystemDictionary> for ExampleChecker {
         let (line, column) = error.pos();
         let path = error.relative_path();
         let word = error.word();
-        println!("{}:{line}:{column} {word}", path.to_string());
+        println!("{}:{line}:{column} {word}", path.normalize());
         self.error_count += 1;
         Ok(())
     }

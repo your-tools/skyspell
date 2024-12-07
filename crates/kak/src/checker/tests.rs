@@ -56,7 +56,7 @@ fn test_write_errors_in_spelling_buffer() {
     let hello_js = checker.ensure_path("hello.js");
     checker.ensure_path("hello.js");
     let error = make_error("foo", &hello_js, (2, 4));
-    checker.handle_error(&error, &hello_js.to_string()).unwrap();
+    checker.handle_error(&error, &hello_js.normalize()).unwrap();
     checker.write_spelling_buffer();
     let actual = checker.get_output();
     let expected = format!(
@@ -78,13 +78,13 @@ fn test_write_errors_as_buffer_options() {
     let foo_js = checker.ensure_path("foo.js");
     let bar_js = checker.ensure_path("bar.js");
     let error = make_error("foo", &foo_js, (2, 4));
-    checker.handle_error(&error, &foo_js.to_string()).unwrap();
+    checker.handle_error(&error, &foo_js.normalize()).unwrap();
 
     let error = make_error("bar", &foo_js, (3, 6));
-    checker.handle_error(&error, &foo_js.to_string()).unwrap();
+    checker.handle_error(&error, &foo_js.normalize()).unwrap();
 
     let error = make_error("spam", &bar_js, (1, 5));
-    checker.handle_error(&error, &bar_js.to_string()).unwrap();
+    checker.handle_error(&error, &bar_js.normalize()).unwrap();
 
     let timestamp = 42;
     checker.write_ranges(timestamp);

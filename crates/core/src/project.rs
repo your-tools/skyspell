@@ -119,7 +119,7 @@ impl RelativePath {
         Self(path)
     }
 
-    pub fn to_string(&self) -> String {
+    pub fn normalize(&self) -> String {
         self.0.to_string_lossy().replace("\\", "/")
     }
 

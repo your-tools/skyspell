@@ -245,7 +245,7 @@ impl IgnoreStore {
     }
 
     pub fn ignore_for_path(&mut self, word: &str, relative_path: &RelativePath) -> Result<()> {
-        let path: &str = &relative_path.to_string();
+        let path: &str = &relative_path.normalize();
         let for_path = self.local.paths.get_mut(path);
         match for_path {
             Some(s) => {
@@ -261,7 +261,7 @@ impl IgnoreStore {
     }
 
     pub fn is_ignored_for_path(&self, word: &str, relative_path: &RelativePath) -> bool {
-        let path: &str = &relative_path.to_string();
+        let path: &str = &relative_path.normalize();
         let for_path = self.local.paths.get(path);
         match for_path {
             Some(s) => s.contains(word),
@@ -274,7 +274,7 @@ impl IgnoreStore {
         word: &str,
         relative_path: &crate::RelativePath,
     ) -> Result<()> {
-        let path: &str = &relative_path.to_string();
+        let path: &str = &relative_path.normalize();
         match self.local.paths.get_mut(path) {
             Some(set) => {
                 set.remove(word);
