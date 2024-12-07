@@ -1,3 +1,9 @@
+# 3.0.1 (2024-12-07)
+
+Fix help message when using the interactive checker.
+
+Also, bump `skyspell_core` to 4.0.1, which allows using the same config files from Unix and Windows.
+
 # 3.0.0 (2024-12-07)
 
 Bump `skyspell_core` to 4.0.0

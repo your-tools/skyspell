@@ -1,3 +1,9 @@
+# 4.0.1 (2024-12-07)
+
+* Normalize 'lang' when reading/writing in the `global.toml` configuration file
+* Normalize relative paths when reading/writing in the `skyspell-ignore.toml` configuration file
+* Allow to specify `global.toml` path the `SKYSPELL_GLOBAL_PATH` environment variable
+
 # 4.0.0 (2024-12-07)
 
 * Add support for Windows. The spell checking is done by using the Win32 APIs, instead of
