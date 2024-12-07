@@ -22,3 +22,6 @@ skyspell_core = { version = "3.0.0", path = "../core" }
 
 [dev-dependencies]
 tempfile.workspace = true
+
+[package.metadata.dist]
+dist = false
