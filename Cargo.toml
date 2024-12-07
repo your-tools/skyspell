@@ -12,3 +12,8 @@ repository = "https://github.com/your-tools/skyspell"
 anyhow = "1.0.40"
 clap = { version = "4.0.0", features = ["derive"] }
 tempfile = "3.2.0"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
