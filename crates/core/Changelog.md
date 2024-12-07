@@ -1,3 +1,8 @@
+# 4.0.0 (2024-12-07)
+
+* Add support for Windows. The spell checking is done by using the Win32 APIs, instead of
+  Enchant (which is hard to build and distribute on this platform)
+
 # 3.0.1 (2024-10-20)
 
 * Fix crate metadata
