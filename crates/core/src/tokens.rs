@@ -1,10 +1,7 @@
-use std::ffi::OsStr;
-use std::fs::File;
-use std::io::{BufRead, BufReader, Lines};
-use std::path::{Path, PathBuf};
-
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, Result};
 use regex::{Regex, RegexBuilder};
+use std::collections::HashSet;
+use std::io::BufRead;
 
 const GIT_SCISSORS: &str = "# ------------------------ >8 ------------------------";
 
@@ -88,12 +85,8 @@ pub enum ExtractMode {
 }
 
 impl ExtractMode {
-    fn from_path_ext(p: &Path) -> Self {
-        let ext = match p.extension() {
-            None => return ExtractMode::Default,
-            Some(e) => e,
-        };
-        match ext.to_string_lossy().as_ref() {
+    fn from_extension(extension: &str) -> Self {
+        match extension {
             "tex" => ExtractMode::Latex,
             "py" => ExtractMode::Python,
             _ => ExtractMode::Default,
@@ -101,84 +94,28 @@ impl ExtractMode {
     }
 }
 
-pub struct TokenProcessor {
-    path: PathBuf,
-    extract_mode: ExtractMode,
-}
-
-impl TokenProcessor {
-    pub fn new(path: &Path) -> Self {
-        Self {
-            path: path.to_path_buf(),
-            extract_mode: ExtractMode::from_path_ext(path),
-        }
-    }
-
-    pub fn each_token<F>(&self, mut f: F) -> Result<()>
-    where
-        F: FnMut(&str, usize, usize) -> Result<()>,
-    {
-        let source = File::open(&self.path)
-            .with_context(|| format!("Could not open '{}' for reading", self.path.display()))?;
-        let lines = RelevantLines::new(source, self.path.file_name());
-        for (i, line) in lines.enumerate() {
-            let line = line
-                .map_err(|e| anyhow!("When reading line from '{}': {}", self.path.display(), e))?;
-            let tokenizer = Tokenizer::new(&line, self.extract_mode);
-            for (word, pos) in tokenizer {
-                f(word, i + 1, pos)?
-            }
-        }
-        Ok(())
-    }
-}
-
-struct RelevantLines {
-    lines: Lines<BufReader<File>>,
-    is_git_message: bool,
-}
-
-impl RelevantLines {
-    fn new(source: File, filename: Option<&OsStr>) -> Self {
-        let is_git_message = filename == Some(OsStr::new("COMMIT_EDITMSG"));
-        let reader = BufReader::new(source);
-        let lines = reader.lines();
-        Self {
-            lines,
-            is_git_message,
-        }
-    }
-}
-
-impl Iterator for RelevantLines {
-    type Item = Result<String, std::io::Error>;
-
-    fn next(&mut self) -> Option<<Self as Iterator>::Item> {
-        let line_result = self.lines.next()?;
-        match line_result {
-            e @ Err(_) => Some(e),
-            Ok(s) if self.is_git_message && s == GIT_SCISSORS => None,
-            x => Some(x),
-        }
-    }
-}
-
-struct Tokenizer<'a> {
-    input: &'a str,
+struct Tokenizer<'input, 'skipped> {
+    input: &'input str,
     pos: usize,
     extract_mode: ExtractMode,
+    skipped: &'skipped HashSet<String>,
 }
 
-impl<'a> Tokenizer<'a> {
-    fn new(input: &'a str, extract_mode: ExtractMode) -> Self {
+impl<'input, 'skipped> Tokenizer<'input, 'skipped> {
+    fn new(
+        input: &'input str,
+        extract_mode: ExtractMode,
+        skipped: &'skipped HashSet<String>,
+    ) -> Self {
         Self {
             input,
             pos: 0,
             extract_mode,
+            skipped,
         }
     }
 
-    fn extract_word(&self, token: &'a str) -> Option<(&'a str, usize)> {
+    fn extract_word(&self, token: &'input str) -> Option<(&'input str, usize)> {
         // Plural constants
         if token == "s" {
             return None;
@@ -227,7 +164,10 @@ impl<'a> Tokenizer<'a> {
         self.word_from_ident(ident, pos)
     }
 
-    fn word_from_ident(&self, ident: &'a str, pos: usize) -> Option<(&'a str, usize)> {
+    fn word_from_ident(&self, ident: &'input str, pos: usize) -> Option<(&'input str, usize)> {
+        if self.skipped.contains(ident) {
+            return None;
+        }
         let mut iter = ident.char_indices();
         // We know the ident cannot be empty because of IDENT_RE
         let (_, first_char) = iter.next().expect("empty ident");
@@ -277,8 +217,8 @@ impl<'a> Tokenizer<'a> {
     }
 }
 
-impl<'a> Iterator for Tokenizer<'a> {
-    type Item = (&'a str, usize);
+impl<'input, 'skipped> Iterator for Tokenizer<'input, 'skipped> {
+    type Item = (&'input str, usize);
 
     fn next(&mut self) -> Option<<Self as Iterator>::Item> {
         // Algorithm:
@@ -298,6 +238,126 @@ impl<'a> Iterator for Tokenizer<'a> {
                 return Some(res);
             } else {
                 self.pos += start + token.len();
+            }
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Token {
+    pub text: String,
+    pub pos: (usize, usize),
+}
+
+impl Token {
+    pub(crate) fn new(text: &str, pos: (usize, usize)) -> Self {
+        Self {
+            text: text.to_string(),
+            pos,
+        }
+    }
+
+    fn cloned(&self) -> Self {
+        Self {
+            text: self.text.to_string(),
+            pos: self.pos,
+        }
+    }
+}
+
+pub struct TokenProcessor<R: BufRead> {
+    reader: R,
+    file_name: String,
+    current_line: String,
+    current_tokens: Vec<Token>,
+    extract_mode: ExtractMode,
+    word_index: usize,
+    line_index: usize,
+    skipped_tokens: HashSet<String>,
+    is_git_message: bool,
+}
+
+impl<R: BufRead> TokenProcessor<R> {
+    pub fn new(reader: R, file_name: &str) -> Self {
+        let is_git_message = file_name == "COMMIT_EDITMSG";
+        let extension = file_name.rsplit(".").next().unwrap_or_default();
+        let extract_mode = ExtractMode::from_extension(extension);
+
+        Self {
+            reader,
+            file_name: file_name.to_owned(),
+            extract_mode,
+            current_line: String::new(),
+            current_tokens: Vec::new(),
+            word_index: 0,
+            line_index: 0,
+            skipped_tokens: HashSet::new(),
+            is_git_message,
+        }
+    }
+
+    pub fn skip_token(&mut self, token: &str) {
+        self.skipped_tokens.insert(token.to_owned());
+    }
+
+    // Return Ok(true) if reached end of file
+    fn read_next_line(&mut self) -> Result<bool> {
+        self.current_line.clear();
+        self.line_index += 1;
+        let bytes_read = self.reader.read_line(&mut self.current_line);
+        match bytes_read {
+            Err(read_error) => Err(anyhow!(
+                "Error when reading: '{}': {read_error}",
+                self.file_name,
+            )),
+            Ok(n) => Ok(n == 0),
+        }
+    }
+
+    // Return Ok(true) if reached end of file
+    fn on_last_token(&mut self) -> Result<bool> {
+        let is_end_of_file = self.read_next_line()?;
+        if is_end_of_file {
+            return Ok(true);
+        }
+        if self.is_git_message && self.current_line.trim() == GIT_SCISSORS {
+            return Ok(true);
+        }
+        self.extract_tokens();
+        Ok(false)
+    }
+
+    fn extract_tokens(&mut self) {
+        self.word_index = 0;
+        let tokenizer = Tokenizer::new(&self.current_line, self.extract_mode, &self.skipped_tokens);
+        self.current_tokens = tokenizer
+            .map(|(token, column)| Token::new(token, (self.line_index, column)))
+            .collect();
+    }
+}
+
+impl<R: BufRead> Iterator for TokenProcessor<R> {
+    type Item = Result<Token>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            let next_token = self.current_tokens.get(self.word_index);
+            match next_token {
+                None => {
+                    let on_last_token = self.on_last_token();
+                    if let Err(e) = on_last_token {
+                        return Some(Err(e));
+                    }
+                    let is_end_of_file = on_last_token.unwrap();
+                    if is_end_of_file {
+                        return None;
+                    }
+                }
+                Some(token) => {
+                    let token = token.cloned();
+                    self.word_index += 1;
+                    return Some(Ok(token));
+                }
             }
         }
     }

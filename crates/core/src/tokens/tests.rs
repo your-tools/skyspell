@@ -1,7 +1,8 @@
 use super::*;
 
 fn extract_word_default(word: &str) -> Option<(&str, usize)> {
-    let tokenizer = Tokenizer::new(word, ExtractMode::Default);
+    let skipped = HashSet::new();
+    let tokenizer = Tokenizer::new(word, ExtractMode::Default, &skipped);
     tokenizer.extract_word(word)
 }
 
@@ -80,7 +81,8 @@ fn test_pascal_case() {
 }
 
 fn get_tokens_default(text: &str) -> Vec<&str> {
-    let tokenizer = Tokenizer::new(text, ExtractMode::Default);
+    let skipped = HashSet::new();
+    let tokenizer = Tokenizer::new(text, ExtractMode::Default, &skipped);
     tokenizer.map(|(x, _index)| x).collect()
 }
 
@@ -196,7 +198,8 @@ fn test_use_sqlite() {
 }
 
 fn get_tokens_latex(text: &str) -> Vec<&str> {
-    let tokenizer = Tokenizer::new(text, ExtractMode::Latex);
+    let skipped = HashSet::new();
+    let tokenizer = Tokenizer::new(text, ExtractMode::Latex, &skipped);
     tokenizer.map(|(x, _index)| x).collect()
 }
 
@@ -209,12 +212,12 @@ fn test_latex_escape() {
 
 #[test]
 fn test_extract_mode_for_tex_extension() {
-    let p = Path::new("foo.tex");
-    assert_eq!(ExtractMode::from_path_ext(p), ExtractMode::Latex);
+    assert_eq!(ExtractMode::from_extension("tex"), ExtractMode::Latex);
 }
 
 fn get_tokens_python(text: &str) -> Vec<&str> {
-    let tokenizer = Tokenizer::new(text, ExtractMode::Python);
+    let skipped = HashSet::new();
+    let tokenizer = Tokenizer::new(text, ExtractMode::Python, &skipped);
     tokenizer.map(|(x, _index)| x).collect()
 }
 
@@ -231,4 +234,63 @@ fn test_python_string_prefix_2() {
     let actual = get_tokens_python(text);
     // TODO: this should be just ["path"]
     assert_eq!(&actual, &["r", "path"]);
+}
+use std::{
+    collections::HashSet,
+    io::{BufReader, Cursor},
+};
+
+fn collect_tokens(contents: &str, file_name: &str, skipped: &[&str]) -> Vec<String> {
+    let file = Cursor::new(contents.as_bytes());
+    let reader = BufReader::new(file);
+    let mut processor = TokenProcessor::new(reader, file_name);
+    for token in skipped {
+        processor.skip_token(token);
+    }
+
+    processor
+        .map(|token| token.unwrap().text.to_owned())
+        .collect()
+}
+
+#[test]
+fn test_parsing_tokens() {
+    let contents = "one two\nthree";
+
+    let actual = collect_tokens(contents, "file.txt", &[]);
+
+    assert_eq!(actual, &["one", "two", "three"]);
+}
+
+#[test]
+fn test_skip_tokens() {
+    let contents = r#"
+        // This is the first line
+        const base64Value = "DeadBeef==";
+        /* end of file */
+        "#;
+
+    let actual = collect_tokens(contents, "file.txt", &["DeadBeef"]);
+
+    #[rustfmt::skip]
+        let expected = vec![
+            "This", "is", "the", "first", "line",
+            "const", "base", "Value",
+            "end" , "of", "file",
+        ];
+    assert_eq!(actual, expected);
+}
+
+#[test]
+fn test_skip_scissors() {
+    let contents = format!(
+        "This is a git message
+
+{GIT_SCISSORS}
+Some irrelevant stuff here
+"
+    );
+
+    let actual = collect_tokens(&contents, "COMMIT_EDITMSG", &[]);
+    assert_eq!(actual, &["This", "is", "a", "git", "message"]);
 }

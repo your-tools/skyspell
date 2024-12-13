@@ -3,6 +3,8 @@ use crate::{Project, RelativePath};
 use anyhow::{anyhow, bail, Context, Result};
 use directories_next::BaseDirs;
 use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::BufReader;
 use std::path::{Path, PathBuf};
 
 pub struct SpellingError {
@@ -70,10 +72,17 @@ pub trait Checker<D: Dictionary> {
         if skip_file.is_skipped(&relative_path) {
             return Ok(ProcessOutcome::Skipped);
         }
-        let token_processor = TokenProcessor::new(source_path);
-        token_processor.each_token(|token, line, column| {
-            self.handle_token(token, &relative_path, (line, column), context)
-        })?;
+        let file = File::open(source_path)?;
+        let reader = BufReader::new(&file);
+        let file_name = source_path
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy();
+        let token_processor = TokenProcessor::new(reader, &file_name);
+        for token in token_processor {
+            let token = token?;
+            self.handle_token(&token.text, &relative_path, token.pos, context)?;
+        }
         Ok(ProcessOutcome::Checked)
     }
 
