@@ -208,9 +208,9 @@ impl<'a> Tokenizer<'a> {
             Some(c) => c,
         };
 
-        // The `index` comes for the call to `captures()` already, so this will
+        // The `index` comes for the call to `captures()` already, so this
         // should not panic:
-        let ident_match = captures.get(index).unwrap();
+        let ident_match = captures.get(index).expect("index should match captures");
         let ident = ident_match.as_str();
         let pos = ident_match.start();
         if self.extract_mode == ExtractMode::Python {
