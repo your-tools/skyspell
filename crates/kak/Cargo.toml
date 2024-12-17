@@ -18,7 +18,7 @@ clap.workspace = true
 directories-next = "2.0.0"
 itertools = "0.10.0"
 snailquote = "0.3"
-skyspell_core = { version = "4.0.0", path = "../core" }
+skyspell_core = { version = "5.0.0", path = "../core" }
 
 [dev-dependencies]
 tempfile.workspace = true

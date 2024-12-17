@@ -1,6 +1,6 @@
 [package]
 name = "skyspell_core"
-version = "4.0.1"
+version = "5.0.0"
 publish = true
 description = "skyspell core library"
 categories = ["text-processing"]
