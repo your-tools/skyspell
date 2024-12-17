@@ -271,6 +271,7 @@ fn run<D: Dictionary>(
         Action::Undo => undo(project, dictionary, ignore_store),
     }
 }
+
 pub fn main() -> Result<()> {
     SystemDictionary::init();
 
