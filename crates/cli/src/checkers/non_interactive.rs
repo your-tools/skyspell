@@ -145,3 +145,6 @@ impl<D: Dictionary> Checker<D> for NonInteractiveChecker<D> {
         operation.execute(&mut self.ignore_store)
     }
 }
+
+#[cfg(test)]
+mod tests;
