@@ -92,7 +92,7 @@ impl TestApp {
 }
 
 #[test]
-fn test_adding_token_to_global_ignore() {
+fn test_adding_word_to_global_ignore() {
     let temp_dir = tempfile::Builder::new()
         .prefix("test-skyspell")
         .tempdir()
@@ -110,7 +110,7 @@ fn test_adding_token_to_global_ignore() {
 }
 
 #[test]
-fn test_adding_token_to_extension() {
+fn test_adding_word_to_extension() {
     let temp_dir = tempfile::Builder::new()
         .prefix("test-skyspell")
         .tempdir()
@@ -128,7 +128,7 @@ fn test_adding_token_to_extension() {
 }
 
 #[test]
-fn test_adding_token_to_lang() {
+fn test_adding_word_to_lang() {
     let temp_dir = tempfile::Builder::new()
         .prefix("test-skyspell")
         .tempdir()
@@ -145,7 +145,7 @@ fn test_adding_token_to_lang() {
 }
 
 #[test]
-fn test_adding_token_to_project() {
+fn test_adding_word_to_project() {
     let temp_dir = tempfile::Builder::new()
         .prefix("test-skyspell")
         .tempdir()
@@ -162,7 +162,7 @@ fn test_adding_token_to_project() {
 }
 
 #[test]
-fn test_ignore_token_to_project_file() {
+fn test_ignore_word_to_project_file() {
     let temp_dir = tempfile::Builder::new()
         .prefix("test-skyspell")
         .tempdir()
@@ -179,7 +179,7 @@ fn test_ignore_token_to_project_file() {
 }
 
 #[test]
-fn test_remember_skipped_tokens() {
+fn test_remember_skipped_words() {
     let temp_dir = tempfile::Builder::new()
         .prefix("test-skyspell")
         .tempdir()
