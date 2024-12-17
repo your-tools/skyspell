@@ -165,9 +165,6 @@ impl<'input, 'skipped> Tokenizer<'input, 'skipped> {
     }
 
     fn word_from_ident(&self, ident: &'input str, pos: usize) -> Option<(&'input str, usize)> {
-        if self.skipped.contains(ident) {
-            return None;
-        }
         let mut iter = ident.char_indices();
         // We know the ident cannot be empty because of IDENT_RE
         let (_, first_char) = iter.next().expect("empty ident");
@@ -231,6 +228,10 @@ impl<'input, 'skipped> Iterator for Tokenizer<'input, 'skipped> {
             let token_match = captures.get(0).unwrap();
             let token = token_match.as_str();
             let start = token_match.range().start;
+            if self.skipped.contains(token) {
+                self.pos += start + token.len();
+                continue;
+            }
             let next_word = self.extract_word(token);
             if let Some((w, pos)) = next_word {
                 let res = (w, self.pos + start + pos);

@@ -268,7 +268,7 @@ fn test_skip_tokens() {
         /* end of file */
         "#;
 
-    let actual = collect_tokens(contents, "file.txt", &["DeadBeef".to_owned()]);
+    let actual = collect_tokens(contents, "file.txt", &["DeadBeef==".to_owned()]);
 
     #[rustfmt::skip]
         let expected = vec![

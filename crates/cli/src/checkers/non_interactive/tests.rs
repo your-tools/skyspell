@@ -37,7 +37,7 @@ fn test_read_skipped_tokens() {
         .tempdir()
         .unwrap();
     let contents = "First line
-SKIPPED
+SKIP_THIS
 last line";
     let mut app = TestApp::new(&temp_dir);
     app.checker.dictionary.add_known("First");
@@ -50,7 +50,7 @@ last line";
     let foo_py = app.to_relative_path("foo.py");
     app.checker
         .ignore_store()
-        .skip_token("SKIPPED", &foo_py)
+        .skip_token("SKIP_THIS", &foo_py)
         .unwrap();
     app.checker.process(&foo_py_path, &()).unwrap();
     assert!(app.checker.errors.is_empty());
