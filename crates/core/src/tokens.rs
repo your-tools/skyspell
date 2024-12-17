@@ -296,8 +296,10 @@ impl<R: BufRead> TokenProcessor<R> {
         }
     }
 
-    pub fn skip_token(&mut self, token: &str) {
-        self.skipped_tokens.insert(token.to_owned());
+    pub fn skip_tokens(&mut self, tokens: &[String]) {
+        for token in tokens {
+            self.skipped_tokens.insert(token.to_string());
+        }
     }
 
     // Return Ok(true) if reached end of file

@@ -228,3 +228,14 @@ fn test_should_ignore_lang() {
 
     assert!(store.should_ignore("foo", &foo_py, "en_US"));
 }
+
+#[test]
+fn test_skip_tokens() {
+    let temp_dir = get_test_dir();
+    let mut store = get_empty_store(&temp_dir);
+    let foo_py = relative_path("foo.py");
+
+    store.skip_token("SOMETHING", &foo_py).unwrap();
+
+    assert_eq!(store.skipped_tokens(&foo_py), &["SOMETHING"]);
+}

@@ -31,6 +31,9 @@ pub struct LocalIgnore {
 
     #[serde(default)]
     paths: BTreeMap<String, BTreeSet<String>>,
+
+    #[serde(default)]
+    skipped: BTreeMap<String, BTreeSet<String>>,
 }
 
 impl LocalIgnore {
@@ -266,6 +269,32 @@ impl IgnoreStore {
         match for_path {
             Some(s) => s.contains(word),
             None => false,
+        }
+    }
+
+    pub fn skip_token(&mut self, token: &str, relative_path: &RelativePath) -> Result<()> {
+        let path: &str = &relative_path.normalize();
+        let for_path = self.local.skipped.get_mut(path);
+        match for_path {
+            Some(s) => {
+                s.insert(token.to_owned());
+            }
+            None => {
+                let mut set = BTreeSet::new();
+                set.insert(token.to_owned());
+                self.local.skipped.insert(path.to_owned(), set);
+            }
+        };
+        dbg!(&self.local.skipped);
+        self.save_local()
+    }
+
+    pub fn skipped_tokens(&self, relative_path: &RelativePath) -> Vec<String> {
+        let path: &str = &relative_path.normalize();
+        let for_path = self.local.skipped.get(path);
+        match for_path {
+            Some(s) => s.iter().map(|s| s.to_owned()).collect(),
+            None => vec![],
         }
     }
 

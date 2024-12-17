@@ -78,7 +78,9 @@ pub trait Checker<D: Dictionary> {
             .file_name()
             .unwrap_or_default()
             .to_string_lossy();
-        let token_processor = TokenProcessor::new(reader, &file_name);
+        let mut token_processor = TokenProcessor::new(reader, &file_name);
+        let skipped_tokens = self.ignore_store().skipped_tokens(&relative_path);
+        token_processor.skip_tokens(&skipped_tokens);
         for token in token_processor {
             let token = token?;
             self.handle_token(&token.text, &relative_path, token.pos, context)?;

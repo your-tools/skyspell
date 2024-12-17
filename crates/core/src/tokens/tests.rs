@@ -240,13 +240,11 @@ use std::{
     io::{BufReader, Cursor},
 };
 
-fn collect_tokens(contents: &str, file_name: &str, skipped: &[&str]) -> Vec<String> {
+fn collect_tokens(contents: &str, file_name: &str, skipped: &[String]) -> Vec<String> {
     let file = Cursor::new(contents.as_bytes());
     let reader = BufReader::new(file);
     let mut processor = TokenProcessor::new(reader, file_name);
-    for token in skipped {
-        processor.skip_token(token);
-    }
+    processor.skip_tokens(skipped);
 
     processor
         .map(|token| token.unwrap().text.to_owned())
@@ -270,7 +268,7 @@ fn test_skip_tokens() {
         /* end of file */
         "#;
 
-    let actual = collect_tokens(contents, "file.txt", &["DeadBeef"]);
+    let actual = collect_tokens(contents, "file.txt", &["DeadBeef".to_owned()]);
 
     #[rustfmt::skip]
         let expected = vec![
