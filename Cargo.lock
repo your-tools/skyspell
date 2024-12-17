@@ -565,7 +565,7 @@ checksum = "24188a676b6ae68c3b2cb3a01be17fbf7240ce009799bb56d5b1409051e78fde"
 
 [[package]]
 name = "skyspell"
-version = "3.0.1"
+version = "4.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -579,7 +579,7 @@ dependencies = [
 
 [[package]]
 name = "skyspell_core"
-version = "4.0.1"
+version = "5.0.0"
 dependencies = [
  "anyhow",
  "directories-next",
