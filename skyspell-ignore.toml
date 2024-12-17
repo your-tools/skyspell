@@ -205,6 +205,7 @@ project = [
     "tex",
 ]
 "crates/core/src/tokens/tests.rs" = [
+    "EDITMSG",
     "Ll",
     "ada",
     "ewpage",
