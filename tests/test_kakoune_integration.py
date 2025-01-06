@@ -336,7 +336,7 @@ def test_goto_previous(kak_checker: KakChecker) -> None:
 def test_add_global(kak_checker: KakChecker) -> None:
     kak_checker.open_file_with_contents("foo.txt", "I'm testing skyspell here")
     kak_checker.open_error_list()
-    kak_checker.send_keys("a")
+    kak_checker.send_keys("g")
 
     assert kak_checker.ignored() == ["skyspell"]
 
@@ -378,7 +378,7 @@ def test_add_to_lang(kak_checker: KakChecker) -> None:
 def test_undo(tmp_path: Path, kak_checker: KakChecker) -> None:
     kak_checker.open_file_with_contents("foo.txt", "I'm testing skyspell here")
     kak_checker.open_error_list()
-    kak_checker.send_keys("a")
+    kak_checker.send_keys("g")
     kak_checker.send_keys("u")
 
     assert kak_checker.ignored() == []
