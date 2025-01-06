@@ -33,6 +33,29 @@ for token in token_processor {
 
 This also seems to improve performance a bit.
 
+## New feature: skipping entire tokens
+
+The first thing skyspell does while cheeking a text file is to split the contents into "tokens".
+Then it tries to split tokens into individual words to be checked, for instance the token
+`TokenProcessor` gives the words `Token` and `Processor`.
+
+But sometimes you need to skip a token completely, like if you have a base64 string:
+
+```js
+// in tests.js
+base64value = 'DeadBeef==';
+```
+
+In this case, you can skip the token in `skyspell-ignore.toml`, like this:
+
+```toml
+[skipped]
+"tests.js" = [
+  "DeadBeef==",
+]
+```
+
+
 # 4.0.1 (2024-12-07)
 
 * Normalize 'lang' when reading/writing in the `global.toml` configuration file
