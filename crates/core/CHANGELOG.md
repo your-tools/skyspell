@@ -1,3 +1,38 @@
+# 5.0.0 (2025-01-06)
+
+## Breaking: new `TokenProcessor` API
+
+`TokenProcessor::new()` now takes a file name and a `BufReader`,
+instead of just `Path`
+
+Implement `Iterator` for TokenProcessor. TokenProcessor::Item is a
+Result<Token>, where `Token` is a new struct containing the word and its
+position (line and column number)
+
+Get rid of `TokenProcessor::each_token`
+
+This makes the API more idiomatic:
+
+```rust
+// Old API, for skyspell_core <= 4.0.0
+let relative_path = RelativePath::new(project_path, source_path)?;
+let token_processor = TokenProcessor::new(source_path);
+token_processor.each_token(|token, line, column| {
+    // Do something with token, line, column
+ })?;
+
+// New API: for skyspell_core >= 5.0.0
+let reader = BufReader::new(...);
+let file_name = ...;
+let mut token_processor = TokenProcessor::new(reader, &file_name);
+for token in token_processor {
+    let token = token?;
+    // Do something with token.text, token.pos
+}
+```
+
+This also seems to improve performance a bit.
+
 # 4.0.1 (2024-12-07)
 
 * Normalize 'lang' when reading/writing in the `global.toml` configuration file

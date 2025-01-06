@@ -165,6 +165,7 @@ project = [
 ]
 "crates/cli/src/tests/fake_interactor.rs" = ["qyn"]
 "crates/core/CHANGELOG.md" = [
+    "Buf",
     "mut",
     "struct",
 ]
@@ -240,3 +241,5 @@ pre-push = [
     "othhher",
     "rf",
 ]
+
+[skipped]
