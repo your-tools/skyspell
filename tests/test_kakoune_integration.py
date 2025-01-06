@@ -287,17 +287,17 @@ def test_no_spelling_errors(kak_checker: KakChecker) -> None:
 def test_jump_to_first_error(kak_checker: KakChecker) -> None:
     kak_checker.open_file_with_contents(
         "foo.txt",
-        "There is a missstake here\nand an othhher one there",
+        "There is a misstake here\nand an othhher one there",
     )
     assert kak_checker.error_count == 2
     kak_checker.open_error_list()
 
     kak_checker.send_keys("Enter")
-    assert kak_checker.get_selection() == "missstake"
+    assert kak_checker.get_selection() == "misstake"
 
 
 def test_do_not_break_dot(tmp_path: Path, kak_checker: KakChecker) -> None:
-    original_contents = "There is a missstake here\n"
+    original_contents = "There is a misstake here\n"
     foo_path = tmp_path / "foo.txt"
     kak_checker.open_file_with_contents(
         "foo.txt",
@@ -314,7 +314,7 @@ def test_do_not_break_dot(tmp_path: Path, kak_checker: KakChecker) -> None:
 def test_goto_next(kak_checker: KakChecker) -> None:
     kak_checker.open_file_with_contents(
         "foo.txt",
-        "There is a missstake here\nand an othhher one there",
+        "There is a misstake here\nand an othhher one there",
     )
     # Make sure we are between the first and the second error
     kak_checker.move_cursor(1, 22)
@@ -325,12 +325,12 @@ def test_goto_next(kak_checker: KakChecker) -> None:
 def test_goto_previous(kak_checker: KakChecker) -> None:
     kak_checker.open_file_with_contents(
         "foo.txt",
-        "There is a missstake here\nand an othhher one there",
+        "There is a misstake here\nand an othhher one there",
     )
     # Make sure we are between the first and the second error
     kak_checker.move_cursor(1, 22)
     kak_checker.jump_previous()
-    assert kak_checker.get_selection() == "missstake"
+    assert kak_checker.get_selection() == "misstake"
 
 
 def test_add_global(kak_checker: KakChecker) -> None:
@@ -385,7 +385,7 @@ def test_undo(tmp_path: Path, kak_checker: KakChecker) -> None:
 
 
 def test_replace_with_suggestion(tmp_path: Path, kak_checker: KakChecker) -> None:
-    kak_checker.open_file_with_contents("foo.txt", "There is a missstake here")
+    kak_checker.open_file_with_contents("foo.txt", "There is a mistake here")
 
     kak_checker.jump_next()
 
@@ -408,7 +408,7 @@ def test_on_skyspell_failure(tmp_path: Path, kak_checker: KakChecker) -> None:
         """,
     )
 
-    kak_checker.open_file_with_contents("foo.txt", "There is a missstake here")
+    kak_checker.open_file_with_contents("foo.txt", "There is a misstake here")
     time.sleep(0.5)
 
     kak_checker.expect_runtime_error("skyspell-kak failed")

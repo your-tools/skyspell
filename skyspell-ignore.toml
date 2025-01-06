@@ -237,7 +237,7 @@ pre-push = [
 "tests/test_kakoune_integration.py" = [
     "fn",
     "gg",
-    "missstake",
+    "misstake",
     "othhher",
     "rf",
 ]
