@@ -1,3 +1,12 @@
+# 4.0.0 (2025-01-06)
+
+This releases allows to skip entire tokens while processing text files.
+
+See [skyspell_core](https://github.com/your-tools/skyspell/blob/main/crates/core/CHANGELOG.md#new-feature-skipping-entire-tokens) for details.
+
+Also, you must press 'g' instead of 'a' when using the interactive checker to add a word to the global
+ignore list.
+
 # 3.0.1 (2024-12-07)
 
 Fix help message when using the interactive checker.
