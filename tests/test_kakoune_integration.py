@@ -84,17 +84,25 @@ class RemoteKakoune:
     def get_option(self, option: str) -> str:
         prefix = f"option : {option} => "
         self.send_command("echo", "-debug", prefix, f"%opt[{option}]")
-        return self.extract_from_debug_buffer(prefix)
+        extracted = self.extract_from_debug_buffer(prefix)
+        if not extracted:
+            pytest.fail(f"Kakoune option '{option}' not found")
+        return extracted
 
     def get_selection(self) -> str:
         prefix = "selection => "
         self.send_command("echo", "-debug", prefix, "%val{selection}")
-        return self.extract_from_debug_buffer(prefix)
+        extracted = self.extract_from_debug_buffer(prefix)
+        if not extracted:
+            pytest.fail(f"No value fond for kakoune selection")
+        return extracted
 
-    def extract_from_debug_buffer(self, prefix: str) -> str:
+    def extract_from_debug_buffer(self, prefix: str) -> str  | None:
         self.send_command("edit", "-existing", "*debug*")
         text = self.tmux_session.get_text()
         matching_lines = [x for x in text.splitlines() if x.startswith(prefix)]
+        if not matching_lines:
+            return None
         # If the value has changed, we want the latest
         line = matching_lines[-1]
         res = line[len(prefix) :]
@@ -117,7 +125,7 @@ def parse_local_ignore(tmp_path: Path) -> dict[str, Any]:
     return parse_config(tmp_path / "skyspell-ignore.toml")
 
 
-def write_local_ignore(tmp_path: Path, contents: str) -> dict[str, Any]:
+def write_local_ignore(tmp_path: Path, contents: str) -> None:
     (tmp_path / "skyspell-ignore.toml").write_text(contents)
 
 
@@ -221,7 +229,7 @@ class KakChecker:
         self.kakoune.send_keys(f"{line}g")
         self.kakoune.send_keys(f"{column}l")
 
-    def expect_runtime_error(self, expected_message):
+    def expect_runtime_error(self, expected_message: str) -> None:
         self._errors_expected = True
         all_errors = self.runtime_errors_path.read_text()
         assert expected_message in all_errors
