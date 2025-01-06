@@ -21,7 +21,7 @@ do
     (
       cd tests
       poetry install
-      poetry run pytest -v
+      poetry run pytest -n 4
     )
     (
       cd crates/core/
