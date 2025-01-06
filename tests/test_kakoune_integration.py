@@ -98,6 +98,7 @@ class RemoteKakoune:
         return extracted
 
     def extract_from_debug_buffer(self, prefix: str) -> str  | None:
+        time.sleep(0.5)
         self.send_command("edit", "-existing", "*debug*")
         text = self.tmux_session.get_text()
         matching_lines = [x for x in text.splitlines() if x.startswith(prefix)]
