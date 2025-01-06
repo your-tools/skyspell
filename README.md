@@ -116,9 +116,3 @@ spell provider.
 On the other hand, scspell can apply replacements in a file automatically,
 a feature `skyspell` does not have.
 
-## Local development
-
-To build faster and run the tests faster, you can use
-
-* [mold](https://github.com/rui314/mold/)
-* [cargo nextest](https://nexte.st/)
