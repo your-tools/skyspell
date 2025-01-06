@@ -66,7 +66,7 @@ fn main() -> Result<()> {
     let mut checker = ExampleChecker::try_new()?;
     let source_path = Path::new("README.md");
     checker.process(source_path, &())?;
-    checker.success()?;
-    println!("No errors found");
+    let error_count = checker.error_count;
+    println!("Found {error_count} errors");
     Ok(())
 }
