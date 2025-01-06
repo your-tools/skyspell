@@ -19,7 +19,7 @@ Bump `skyspell_core` to 4.0.0
 
 This release adds support for Windows.
 
-See [skyspell_core](https://github.com/your-tools/skyspell/blob/main/crates/core/Changelog.md#400-2024-12-07) for details.
+See [skyspell_core changelog](https://github.com/your-tools/skyspell/blob/main/crates/core/Changelog.md#400-2024-12-07) for details.
 
 **Breaking**: The `--lang` option is now required. Note that for "English US", it should look like
 `--lang=en_US` if using Enchant (on Unix), or just `--lang=en` on Windows.
