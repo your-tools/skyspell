@@ -74,7 +74,6 @@ fn save<T: Serialize>(name: &'static str, value: T, path: &Path) -> Result<()> {
 pub fn global_path() -> Result<PathBuf> {
     let from_env = std::env::var("SKYSPELL_GLOBAL_PATH");
     if let Ok(value) = from_env {
-        println!("Using {value} as global configuration file");
         return Ok(PathBuf::from(value));
     }
 
