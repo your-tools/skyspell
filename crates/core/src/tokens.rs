@@ -214,7 +214,7 @@ impl<'input, 'skipped> Tokenizer<'input, 'skipped> {
     }
 }
 
-impl<'input, 'skipped> Iterator for Tokenizer<'input, 'skipped> {
+impl<'input> Iterator for Tokenizer<'input, '_> {
     type Item = (&'input str, usize);
 
     fn next(&mut self) -> Option<<Self as Iterator>::Item> {
