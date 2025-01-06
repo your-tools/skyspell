@@ -1,6 +1,6 @@
 # 4.0.0 (2025-01-06)
 
-This releases allows to skip entire tokens while processing text files.
+This release allows to skip entire tokens while processing text files.
 
 See [skyspell_core](https://github.com/your-tools/skyspell/blob/main/crates/core/CHANGELOG.md#new-feature-skipping-entire-tokens) for details.
 
