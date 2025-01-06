@@ -54,7 +54,7 @@ project files:
 $ skyspell check
 LICENSE:9:2 Redistributions
 What to do?
-a : Add word to global ignore list
+g : Add word to global ignore list
 e : Add word to ignore list for this extension
 ...
 x : Skip this error
@@ -64,7 +64,7 @@ q : Quit
 
 foo.rs:32:2 fn
 What to do?
-a : Add word to global ignore list
+g : Add word to global ignore list
 e : Add word to ignore list for this extension
 ...
 q : Quit

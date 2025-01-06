@@ -94,7 +94,7 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
         let prefix = format!("{path}:{lineno}:{column}");
         println!("{} {}", prefix, error.bold().red());
         let prompt = r#"What to do?
-a : Add word to global ignore list
+g : Add word to global ignore list
 l : Add word to the ignore list for the current language
 e : Add word to ignore list for this extension
 p : Add word to ignore list for the current project
@@ -104,9 +104,9 @@ q : Quit
 > "#;
 
         loop {
-            let letter = self.interactor.input_letter(prompt, "alepfnsxq");
+            let letter = self.interactor.input_letter(prompt, "glepfnsxq");
             match letter.as_ref() {
-                "a" => {
+                "g" => {
                     if self.on_global_ignore(error)? {
                         break;
                     }

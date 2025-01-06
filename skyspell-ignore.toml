@@ -152,7 +152,7 @@ project = [
 ]
 "bacon.toml" = ["stdout"]
 "crates/cli/Cargo.toml" = ["md"]
-"crates/cli/src/checkers/interactive.rs" = ["alepfnsxq"]
+"crates/cli/src/checkers/interactive.rs" = ["glepfnsxq"]
 "crates/cli/src/checkers/interactive/tests.rs" = [
     "defaultdict",
     "py",

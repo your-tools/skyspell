@@ -99,7 +99,7 @@ fn test_adding_word_to_global_ignore() {
         .unwrap();
     let mut app = TestApp::new(&temp_dir);
     app.add_known(&["hello", "world"]);
-    app.push_text("a");
+    app.push_text("g");
 
     app.handle_token("foo", "foo.txt");
 
