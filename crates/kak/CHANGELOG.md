@@ -4,7 +4,7 @@ This release allows to skip entire tokens while processing text files.
 
 See [skyspell_core](https://github.com/your-tools/skyspell/blob/main/crates/core/CHANGELOG.md#new-feature-skipping-entire-tokens) for details.
 
-Also, you must press 'g' instead of 'a' when using the interactive checker to add a word to the global
+Also, you must press 'g' instead of 'a' when using the `*spelling*` buffer to add a word to the global
 ignore list.
 
 # 2.0.1 (2024-10-20)
