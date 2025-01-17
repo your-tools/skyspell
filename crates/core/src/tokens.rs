@@ -139,11 +139,7 @@ impl<'input, 'skipped> Tokenizer<'input, 'skipped> {
             ExtractMode::Latex => (IDENT_RE_LATEX.captures(token), 0),
             ExtractMode::Default | ExtractMode::Python => (IDENT_RE_DEFAULT.captures(token), 2),
         };
-
-        let captures = match captures {
-            None => return None,
-            Some(c) => c,
-        };
+        let captures = captures?;
 
         // The `index` comes for the call to `captures()` already, so this
         // should not panic:
