@@ -21,6 +21,10 @@ pep8-naming = "^0.11.1"
 isort = "^5.6.4"
 mypy = "^1.10"
 
+[tool.mypy]
+strict = true
+files = "*.py"
+
 [tool.pytest]
 log_cli = true
 
