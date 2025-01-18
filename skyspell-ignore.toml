@@ -234,12 +234,32 @@ pre-push = [
     "pwd",
 ]
 "tests/README.md" = ["io"]
+"tests/pyproject.toml" = ["addopts"]
+"tests/scenarios/01-jump-to-first-error.kak" = [
+    "misstake",
+    "othher",
+]
+"tests/scenarios/02-do-not-break-dot.kak" = [
+    "misstake",
+    "othher",
+]
+"tests/scenarios/03-goto-next-previous.kak" = [
+    "misstake",
+    "othher",
+]
+"tests/scenarios/04-add-global.kak" = ["othher"]
+"tests/scenarios/07-add-to-extension.kak" = ["fn"]
+"tests/scenarios/10-replace-with-suggestion.kak" = [
+    "misstake",
+    "othher",
+]
 "tests/test_kakoune_integration.py" = [
     "fn",
     "gg",
     "misstake",
     "othhher",
     "rf",
+    "ui",
 ]
 
 [skipped]

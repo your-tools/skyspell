@@ -27,6 +27,8 @@ files = "*.py"
 
 [tool.pytest]
 log_cli = true
+[tool.pytest.ini_options]
+addopts = "--verbose --capture=no"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
