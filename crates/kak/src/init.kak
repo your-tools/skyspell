@@ -26,7 +26,7 @@ define-command -params 1 skyspell-enable %{
 
 define-command skyspell-hooks %{
   map buffer normal '<ret>'  ':<space>skyspell-action jump<ret>'
-  map buffer normal 'g'      ':<space>skyspell-action add-global<ret>'
+  map buffer normal 'a'      ':<space>skyspell-action add-global<ret>'
   map buffer normal 'l'      ':<space>skyspell-action add-lang<ret>'
   map buffer normal 'e'      ':<space>skyspell-action add-extension<ret>'
   map buffer normal 'p'      ':<space>skyspell-action add-project<ret>'
@@ -81,7 +81,7 @@ define-command -hidden -params 1.. skyspell-action %{
 
 define-command skyspell-help -docstring "show help message" %{
    info -title "Skyspell Help" "<ret>: Jump to spelling error
-g : Add the word to the global ignore list
+a : Add the word to the global ignore list
 l : Add the word to the ignore list for the current lang
 e : Add the word to the ignore list for this extension
 p : Add the word to the ignore list for the current project
