@@ -1,3 +1,9 @@
+# 3.0.1 - Unreleased
+
+Revert the change from 'a' to 'g' when using the `*spelling*` buffer to add a word to the global ignore list.
+
+It conflicts with other useful 'g' commands like `ga`.
+
 # 3.0.0 (2025-01-06)
 
 This release allows to skip entire tokens while processing text files.
