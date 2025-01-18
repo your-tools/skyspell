@@ -15,4 +15,8 @@ assert-selection "misstake"
 skyspell-replace
 
 # TODO: we can't force kakoune to select the first entry in the menu, so let's just call "quit" here
+# You should instead have two hidden commands
+#  - skyspell-suggest
+#  - skyspell-replace-impl
+#  that you call when `skyspell-replace` generates the `menu` command
 quit
