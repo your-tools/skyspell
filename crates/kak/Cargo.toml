@@ -1,6 +1,6 @@
 [package]
 name = "skyspell_kak"
-version = "3.0.0"
+version = "3.0.1"
 description = "skyspell - kakoune integration"
 categories = ["command-line-utilities", "text-processing"]
 keywords = ["kakoune", "spell-check"]
