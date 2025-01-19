@@ -1,8 +1,8 @@
-# 3.0.1 - Unreleased
+# 3.0.1 - (2025-01-19)
 
-Revert the change from 'a' to 'g' when using the `*spelling*` buffer to add a word to the global ignore list.
-
-It conflicts with other useful 'g' commands like `ga`.
+Revert the change from 'a' to 'g' when using the `*spelling*` buffer to
+add a word to the global ignore list -  it conflicts with other useful
+'g' commands like `ga`.
 
 # 3.0.0 (2025-01-06)
 
