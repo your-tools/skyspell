@@ -32,7 +32,7 @@ toml_edit = { version = "0.22.8", features = ["serde", "parse", "display"] }
 enchant = "0.3.0"
 
 [target.'cfg(windows)'.dependencies.windows]
-version = "0.58"
+version = "0.60"
 features = [
     "Win32_Foundation",
     "Win32_Globalization",

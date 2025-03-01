@@ -16,7 +16,7 @@ repository.workspace = true
 anyhow.workspace = true
 clap.workspace = true
 directories-next = "2.0.0"
-itertools = "0.10.0"
+itertools = "0.14"
 snailquote = "0.3"
 skyspell_core = { version = "5.0.0", path = "../core" }
 
