@@ -9,10 +9,8 @@ declare-option str skyspell_word_to_add
 set-face global SpellingError ,,red+c
 
 define-command -params 1 skyspell-enable %{
-  evaluate-commands %sh{
-    echo "set global skyspell_lang $1"
-    echo "set global skyspell_project $(pwd)"
-  }
+  set global skyspell_lang %arg{1}
+  set global skyspell_project %sh{pwd}
   add-highlighter global/spell ranges skyspell_errors
   hook -group skyspell global BufWritePost .* skyspell-check
   hook -group skyspell global BufCreate \*spelling\* skyspell-hooks
