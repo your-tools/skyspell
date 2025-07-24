@@ -47,7 +47,8 @@ define-command skyspell-check -docstring "check the open buffers for spelling er
   evaluate-commands %sh{
     : $kak_timestamp
     : $kak_opt_skyspell_project
-    skyspell-kak --lang $kak_opt_skyspell_lang check $kak_quoted_buflist
+    eval set -- "$kak_quoted_buflist"
+    skyspell-kak --lang $kak_opt_skyspell_lang check "$@"
     if [ $? -ne 0 ]; then
       echo skyspell-kak-on-failure
     fi
