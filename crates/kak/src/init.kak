@@ -9,10 +9,8 @@ declare-option str skyspell_word_to_add
 set-face global SpellingError ,,red+c
 
 define-command -params 1 skyspell-enable %{
-  evaluate-commands %sh{
-    echo "set global skyspell_lang $1"
-    echo "set global skyspell_project $(pwd)"
-  }
+  set global skyspell_lang %arg{1}
+  set global skyspell_project %sh{pwd}
   add-highlighter global/spell ranges skyspell_errors
   hook -group skyspell global BufWritePost .* skyspell-check
   hook -group skyspell global BufCreate \*spelling\* skyspell-hooks
@@ -49,7 +47,8 @@ define-command skyspell-check -docstring "check the open buffers for spelling er
   evaluate-commands %sh{
     : $kak_timestamp
     : $kak_opt_skyspell_project
-    skyspell-kak --lang $kak_opt_skyspell_lang check $kak_quoted_buflist
+    eval set -- "$kak_quoted_buflist"
+    skyspell-kak --lang $kak_opt_skyspell_lang check "$@"
     if [ $? -ne 0 ]; then
       echo skyspell-kak-on-failure
     fi
