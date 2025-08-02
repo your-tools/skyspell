@@ -250,7 +250,7 @@ fn suggest(dictionary: impl Dictionary, opts: &SuggestOpts) -> Result<()> {
     let suggestions = dictionary.suggest(word)?;
 
     for suggestion in suggestions.iter() {
-        println!("{}", suggestion);
+        println!("{suggestion}");
     }
 
     Ok(())

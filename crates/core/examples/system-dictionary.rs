@@ -16,7 +16,7 @@ fn main() -> Result<()> {
     } else {
         println!("Unknown word");
         let suggestions = spell_client.suggest(word)?;
-        println!("Suggestions: {:?}", suggestions)
+        println!("Suggestions: {suggestions:?}")
     }
     Ok(())
 }

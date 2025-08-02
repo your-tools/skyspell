@@ -14,6 +14,6 @@ impl OperatingSystemIO for StandardIO {
     }
 
     fn print(&self, text: &str) {
-        print!("{}", text);
+        print!("{text}");
     }
 }

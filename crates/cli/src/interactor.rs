@@ -7,11 +7,11 @@ pub trait Interactor {
     fn confirm(&self, prompt: &str) -> bool;
 
     fn info(&self, message: &str) {
-        println!("{}", message);
+        println!("{message}");
     }
 
     fn error(&self, message: &str) {
-        eprintln!("{}", message);
+        eprintln!("{message}");
     }
 }
 
@@ -51,7 +51,7 @@ impl Interactor for ConsoleInteractor {
     }
 
     fn info(&self, message: &str) {
-        println!("{}", message);
+        println!("{message}");
     }
 
     fn confirm(&self, prompt: &str) -> bool {
@@ -60,6 +60,6 @@ impl Interactor for ConsoleInteractor {
     }
 
     fn error(&self, message: &str) {
-        eprintln!("{}", message);
+        eprintln!("{message}");
     }
 }

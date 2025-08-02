@@ -176,8 +176,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
     fn write_ranges(&self, timestamp: usize) {
         for (buffer, group) in &self.errors.iter().chunk_by(|e| &e.buffer) {
             self.print(&format!(
-                "set-option %{{buffer={}}} skyspell_errors {} ",
-                buffer, timestamp
+                "set-option %{{buffer={buffer}}} skyspell_errors {timestamp} "
             ));
             for error in group {
                 self.write_error_range(error);

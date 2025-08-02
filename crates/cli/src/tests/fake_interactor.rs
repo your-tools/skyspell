@@ -41,7 +41,7 @@ impl FakeInteractor {
 
 impl Interactor for FakeInteractor {
     fn input(&self, prompt: &str) -> String {
-        println!("{} >", prompt);
+        println!("{prompt} >");
         let answer = self
             .answers
             .borrow_mut()
@@ -49,15 +49,15 @@ impl Interactor for FakeInteractor {
             .expect("should have got a recorded answer");
         match answer {
             Answer::Text(t) => {
-                print!("> {}", t);
+                print!("> {t}");
                 t
             }
-            a => panic!("Should have got a text answer, got {:?}", a),
+            a => panic!("Should have got a text answer, got {a:?}"),
         }
     }
 
     fn input_letter(&self, prompt: &str, choices: &str) -> String {
-        println!("{}", prompt);
+        println!("{prompt}");
         let answer = self
             .answers
             .borrow_mut()
@@ -65,21 +65,21 @@ impl Interactor for FakeInteractor {
             .expect("should have got a recorded answer");
         match answer {
             Answer::Text(s) => {
-                println!("> {}", s);
+                println!("> {s}");
                 if !choices.contains(&s) {
                     panic!("should have got an answer matching the possible choices");
                 }
                 s
             }
-            a => panic!("Should have got a text answer, got {:?}", a),
+            a => panic!("Should have got a text answer, got {a:?}"),
         }
     }
 
     fn select(&self, prompt: &str, choices: &[&str]) -> Option<usize> {
         for choice in choices {
-            println!("{}", choice);
+            println!("{choice}");
         }
-        println!("{} >", prompt);
+        println!("{prompt} >");
         let answer = self
             .answers
             .borrow_mut()
@@ -87,15 +87,15 @@ impl Interactor for FakeInteractor {
             .expect("should have got a recorded answer");
         match answer {
             Answer::Int(i) => {
-                println!("> {:?}", i);
+                println!("> {i:?}");
                 i
             }
-            a => panic!("Should have got a int answer, got {:?}", a),
+            a => panic!("Should have got a int answer, got {a:?}"),
         }
     }
 
     fn confirm(&self, prompt: &str) -> bool {
-        println!("{} >", prompt);
+        println!("{prompt} >");
         let answer = self
             .answers
             .borrow_mut()
@@ -103,10 +103,10 @@ impl Interactor for FakeInteractor {
             .expect("should have got a recorded answer");
         match answer {
             Answer::Bool(b) => {
-                println!("> {}", b);
+                println!("> {b}");
                 b
             }
-            a => panic!("Should have got a boolean answer, got {:?}", a),
+            a => panic!("Should have got a boolean answer, got {a:?}"),
         }
     }
 }
