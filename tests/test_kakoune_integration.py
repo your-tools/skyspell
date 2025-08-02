@@ -7,7 +7,11 @@ Then in scenarios/ with have one kak script per test
 
 They all end with 'quit' - which means that if there's an exception,
 kakoune will be still running - which is exactly what we want when a
-test fails because it will make debugging the test really easy
+test fails because it will make debugging the test really easy. Just make
+sure to type 'quit! 1' to let pytest know the test failed.
+
+In order to run the whole suite quicker, you can also set
+SKYSPELL_NON_INTERACTIVE_TESTS to 1 and use `-n auto`.
 """
 
 import os
@@ -54,19 +58,23 @@ def test_scenario(scenario: Path, tmp_path: Path) -> None:
     source {scenario.absolute()}
     """
     cmd = ["kak", "-n", "-e", script]
-    if os.getenv("SKYSPELL_INTERACTIVE_TESTS"):
-        subprocess.run(
-            cmd,
-            cwd=tmp_path,
-            check=True,
-            env=kak_env,
-        )
-    else:
-        cmd.extend(["-ui", "dummy"])
-        subprocess.run(
-            cmd,
-            cwd=tmp_path,
-            check=True,
-            env=kak_env,
-            timeout=3,
-        )
+    try:
+        if os.getenv("SKYSPELL_NON_INTERACTIVE_TESTS"):
+            cmd.extend(["-ui", "dummy"])
+            subprocess.run(
+                cmd,
+                cwd=tmp_path,
+                check=True,
+                env=kak_env,
+                timeout=3,
+            )
+
+        else:
+            subprocess.run(
+                cmd,
+                cwd=tmp_path,
+                check=True,
+                env=kak_env,
+            )
+    except subprocess.SubprocessError:
+        pytest.fail(scenario.name)

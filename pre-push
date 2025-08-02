@@ -21,7 +21,7 @@ do
     (
       cd tests
       poetry install
-      poetry run pytest -n 4
+      SKYSPELL_NON_INTERACTIVE_TESTS=1 poetry run pytest -n auto
     )
     (
       cd crates/core/
