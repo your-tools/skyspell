@@ -20,26 +20,11 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from pytest import MonkeyPatch
 
 
 def get_scenarios() -> list[Path]:
     scenarios_path = Path("scenarios")
     return sorted(scenarios_path.glob("*.kak"))
-
-
-def parse_config(path: Path) -> dict[str, Any]:
-    contents = path.read_text()
-    config: dict[str, Any] = tomllib.loads(contents)
-    return config
-
-
-def parse_local_ignore(tmp_path: Path) -> dict[str, Any]:
-    return parse_config(tmp_path / "skyspell-ignore.toml")
-
-
-def parse_global_ignore(tmp_path: Path) -> dict[str, Any]:
-    return parse_config(tmp_path / "data" / "skyspell" / "global.toml")
 
 
 @pytest.mark.parametrize("scenario", get_scenarios())
