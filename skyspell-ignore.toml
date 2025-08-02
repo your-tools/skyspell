@@ -51,7 +51,9 @@ project = [
     "chrono",
     "cli",
     "clippy",
+    "cmd",
     "config",
+    "cwd",
     "desc",
     "dev",
     "dialoguer",
@@ -75,9 +77,9 @@ project = [
     "hunspell",
     "ico",
     "ident",
+    "impl",
     "init",
     "interactor",
-    "impl",
     "isort",
     "itersel",
     "itertools",
@@ -235,7 +237,10 @@ pre-push = [
     "pwd",
 ]
 "tests/README.md" = ["io"]
-"tests/pyproject.toml" = ["addopts"]
+"tests/pyproject.toml" = [
+    "addopts",
+    "ini",
+]
 "tests/scenarios/01-jump-to-first-error.kak" = [
     "misstake",
     "othher",

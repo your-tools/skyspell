@@ -1,7 +1,7 @@
 edit some-text.rs
 execute-keys i %{skyspell} <ret> <esc>
 
-skyspell-enable en
+skyspell-enable en_US
 
 skyspell-list
 

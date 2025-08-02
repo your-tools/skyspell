@@ -15,7 +15,7 @@ do
     set -x
     cargo clippy --all-targets -- --deny warnings
     cargo test
-    XDG_DATA_HOME="$(pwd)/data/" cargo run --bin skyspell -- --lang en check --non-interactive
+    XDG_DATA_HOME="$(pwd)/data/" cargo run --bin skyspell -- --lang en_US check --non-interactive
     cargo install --locked --path crates/cli/
     cargo install --locked --path crates/kak/
     (
