@@ -1,0 +1,26 @@
+[package]
+name = "skyspell_lsp"
+version = "1.0.0"
+description = "skyspell LSP server"
+categories = ["command-line-utilities", "text-processing"]
+keywords = ["lsp", "spell-check"]
+readme = "README.md"
+
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+
+[dependencies]
+anyhow.workspace = true
+serde_json = "1.0.142"
+skyspell_core = { version = "5.0.0", path = "../core" }
+tokio = { version = "1.47", features = ["macros", "rt-multi-thread", "io-std", "io-util"] }
+tower-lsp = "0.20.0"
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[package.metadata.dist]
+dist = false
