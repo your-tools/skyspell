@@ -23,7 +23,7 @@ pub mod tokens;
 
 pub use checker::{Checker, CheckerState, ProcessOutcome, SpellingError};
 pub use dictionary::Dictionary;
-pub use ignore::{global_path, GlobalIgnore, IgnoreStore, LocalIgnore};
+pub use ignore::{GlobalIgnore, IgnoreStore, LocalIgnore, global_path};
 pub use operations::Operation;
 pub use os_io::{OperatingSystemIO, StandardIO};
 pub use project::{Project, ProjectPath, RelativePath, SKYSPELL_LOCAL_IGNORE};

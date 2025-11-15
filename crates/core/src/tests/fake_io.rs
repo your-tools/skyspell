@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 use crate::OperatingSystemIO;
 

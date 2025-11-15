@@ -1,6 +1,6 @@
-use crate::{info_1, Interactor};
+use crate::{Interactor, info_1};
 use crate::{info_2, print_error};
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use colored::*;
 use skyspell_core::{Checker, CheckerState, Dictionary, SpellingError};
 use skyspell_core::{IgnoreStore, Operation};

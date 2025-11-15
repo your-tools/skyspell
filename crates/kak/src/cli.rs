@@ -1,5 +1,5 @@
-use crate::kak::{new_kakoune_io, KakouneChecker, KakouneIO};
-use anyhow::{anyhow, Context, Result};
+use crate::kak::{KakouneChecker, KakouneIO, new_kakoune_io};
+use anyhow::{Context, Result, anyhow};
 use clap::Parser;
 use directories_next::BaseDirs;
 use skyspell_core::Checker;

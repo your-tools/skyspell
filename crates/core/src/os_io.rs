@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 pub trait OperatingSystemIO {
     fn get_env_var(&self, key: &str) -> Result<String>;

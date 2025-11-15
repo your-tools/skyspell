@@ -1,13 +1,13 @@
 /// Export a SystemDictionary that relies on Win32 Globalization API
-use anyhow::{bail, Result};
-use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
-use windows::Win32::System::Com::{CoTaskMemFree, CLSCTX_ALL};
+use anyhow::{Result, bail};
+use windows::Win32::System::Com::{CLSCTX_ALL, CoTaskMemFree};
+use windows::Win32::System::Com::{COINIT_MULTITHREADED, CoInitializeEx};
 use windows::{
-    core::{HSTRING, PWSTR},
     Win32::{
         Globalization::{ISpellChecker, ISpellCheckerFactory, SpellCheckerFactory},
         System::Com::CoCreateInstance,
     },
+    core::{HSTRING, PWSTR},
 };
 
 use crate::Dictionary;

@@ -1,4 +1,4 @@
-use skyspell_core::{tests::FakeDictionary, Checker, IgnoreStore, Project, RelativePath};
+use skyspell_core::{Checker, IgnoreStore, Project, RelativePath, tests::FakeDictionary};
 use tempfile::TempDir;
 
 use crate::{NonInteractiveChecker, OutputFormat};

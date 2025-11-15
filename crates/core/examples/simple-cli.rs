@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use skyspell_core::{Checker, IgnoreStore, SpellingError};
 use skyspell_core::{Project, SystemDictionary};
 

@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use regex::{Regex, RegexBuilder};
 use std::collections::HashSet;
 use std::io::BufRead;

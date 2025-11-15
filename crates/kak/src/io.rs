@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use skyspell_core::{OperatingSystemIO, StandardIO};
 
 pub struct KakouneIO<S: OperatingSystemIO> {

@@ -1,8 +1,8 @@
 use tempfile::TempDir;
 
 use crate::{
-    tests::{create_store, get_test_dir},
     RelativePath,
+    tests::{create_store, get_test_dir},
 };
 
 use super::*;

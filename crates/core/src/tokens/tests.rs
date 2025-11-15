@@ -120,7 +120,9 @@ fn test_split_identifiers() {
     let actual = get_tokens_default(text);
     assert_eq!(
         &actual,
-        &["hello", "world", "foo", "bar", "x", "y", "spam", "dry", "run"]
+        &[
+            "hello", "world", "foo", "bar", "x", "y", "spam", "dry", "run"
+        ]
     );
 }
 

@@ -5,8 +5,8 @@ use anyhow::Result;
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::{Walk, WalkBuilder};
 
-use crate::project::SKYSPELL_LOCAL_IGNORE;
 use crate::LocalIgnore;
+use crate::project::SKYSPELL_LOCAL_IGNORE;
 use crate::{Project, RelativePath};
 
 #[derive(Debug, Clone)]

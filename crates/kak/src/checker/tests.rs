@@ -1,9 +1,9 @@
 use super::*;
 
 use crate::kak::io::tests::new_fake_io;
-use skyspell_core::tests::{FakeDictionary, FakeIO};
 use skyspell_core::IgnoreStore;
 use skyspell_core::RelativePath;
+use skyspell_core::tests::{FakeDictionary, FakeIO};
 use tempfile::TempDir;
 
 pub(crate) type FakeChecker = KakouneChecker<FakeDictionary, FakeIO>;

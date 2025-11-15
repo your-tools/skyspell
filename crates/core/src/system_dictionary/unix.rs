@@ -1,5 +1,5 @@
 /// Export a SystemDictionary that relies on Enchant Rust wrapper
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 use crate::Dictionary;
 

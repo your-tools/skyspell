@@ -2,11 +2,11 @@ use std::borrow::Cow;
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use ignore::{Walk, WalkBuilder};
 use serde::{Deserialize, Serialize};
 
-use crate::{global_path, IgnoreStore, SkipFile};
+use crate::{IgnoreStore, SkipFile, global_path};
 
 pub const SKYSPELL_LOCAL_IGNORE: &str = "skyspell-ignore.toml";
 
