@@ -1,5 +1,5 @@
-use crate::{info_1, info_2, OutputFormat};
-use anyhow::{bail, Result};
+use crate::{OutputFormat, info_1, info_2};
+use anyhow::{Result, bail};
 use colored::*;
 use serde::Serialize;
 use skyspell_core::{Checker, Dictionary, IgnoreStore, Operation, SpellingError};
@@ -59,13 +59,16 @@ impl<D: Dictionary> NonInteractiveChecker<D> {
             end_column,
         } = range;
         let prefix = format!("{path}:{line}:{start_column}:{end_column}");
-        println!(
-            "{}: {}: {}: {}",
-            prefix,
-            "error".red(),
-            "unknown word".clear(),
-            word
-        );
+        match self.output_format {
+            OutputFormat::Text => println!(
+                "{}: {}: {}: {}",
+                prefix,
+                "error".red(),
+                "unknown word".clear(),
+                word
+            ),
+            OutputFormat::Json => {}
+        }
     }
 
     fn success_text(&self) -> Result<()> {
@@ -82,11 +85,7 @@ impl<D: Dictionary> NonInteractiveChecker<D> {
     fn success_json(&self) -> Result<()> {
         let json = serde_json::to_string(&self.errors).expect("errors should be serializable");
         println!("{json}");
-        if self.errors.is_empty() {
-            Ok(())
-        } else {
-            bail!("Found some errors");
-        }
+        Ok(())
     }
 }
 
@@ -117,9 +116,7 @@ impl<D: Dictionary> Checker<D> for NonInteractiveChecker<D> {
             word: token.to_string(),
             range,
         };
-        if self.output_format == OutputFormat::Text {
-            self.print_error(&path, &error);
-        }
+        self.print_error(&path, &error);
         let entry = self.errors.entry(path.normalize());
         let errors_for_entry = entry.or_default();
         errors_for_entry.push(error);

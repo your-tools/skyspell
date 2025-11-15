@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use clap::Parser;
 use colored::*;
 
@@ -44,19 +44,6 @@ macro_rules! print_error {
     })
 }
 
-#[derive(Debug, PartialEq, Eq, clap::ValueEnum, Clone, Copy, Default)]
-pub enum OutputFormat {
-    #[default]
-    Text,
-    Json,
-}
-
-impl OutputFormat {
-    fn is_text(&self) -> bool {
-        matches!(self, OutputFormat::Text)
-    }
-}
-
 #[derive(Parser)]
 #[clap(version)]
 pub struct Opts {
@@ -66,17 +53,8 @@ pub struct Opts {
     #[clap(long, help = "Project path")]
     project_path: Option<PathBuf>,
 
-    #[clap(long, value_enum, short = 'o', help = "Output format")]
-    output_format: Option<OutputFormat>,
-
     #[clap(subcommand)]
     action: Action,
-}
-
-impl Opts {
-    pub fn text_output(&self) -> bool {
-        self.output_format.unwrap_or_default() == OutputFormat::Text
-    }
 }
 
 #[derive(Parser)]
@@ -108,6 +86,18 @@ struct AddOpts {
     relative_path: Option<PathBuf>,
 }
 
+#[derive(Debug, PartialEq, Eq, clap::ValueEnum, Clone, Copy, Default)]
+pub enum OutputFormat {
+    #[default]
+    Text,
+    Json,
+}
+
+impl OutputFormat {
+    fn is_text(&self) -> bool {
+        matches!(self, OutputFormat::Text)
+    }
+}
 #[derive(Parser)]
 struct CheckOpts {
     #[clap(
@@ -115,6 +105,9 @@ struct CheckOpts {
         help = "Don't ask what to do for each unknown word, instead just print the whole list - useful for continuous integration and other scripts"
     )]
     non_interactive: bool,
+
+    #[clap(long, value_enum, help = "Output format")]
+    output_format: Option<OutputFormat>,
 
     #[clap(help = "List of paths to check")]
     paths: Vec<PathBuf>,
@@ -179,9 +172,9 @@ fn check(
     ignore_store: IgnoreStore,
     dictionary: impl Dictionary,
     opts: &CheckOpts,
-    output_format: OutputFormat,
 ) -> Result<()> {
     let interactive = !opts.non_interactive;
+    let output_format = opts.output_format.unwrap_or_default();
 
     match interactive {
         false => {
@@ -262,11 +255,10 @@ fn run<D: Dictionary>(
     dictionary: D,
     ignore_store: IgnoreStore,
 ) -> Result<()> {
-    let output_format = opts.output_format.unwrap_or_default();
     match &opts.action {
         Action::Add(opts) => add(project, ignore_store, opts),
         Action::Remove(opts) => remove(project, ignore_store, opts),
-        Action::Check(opts) => check(project, ignore_store, dictionary, opts, output_format),
+        Action::Check(opts) => check(project, ignore_store, dictionary, opts),
         Action::Suggest(opts) => suggest(dictionary, opts),
         Action::Undo => undo(project, dictionary, ignore_store),
     }
