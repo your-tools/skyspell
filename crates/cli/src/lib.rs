@@ -5,8 +5,10 @@ use clap::Parser;
 use colored::*;
 
 use skyspell_core::Checker;
+use skyspell_core::CheckerState;
 use skyspell_core::Dictionary;
 use skyspell_core::IgnoreStore;
+use skyspell_core::Operation;
 use skyspell_core::ProcessOutcome;
 use skyspell_core::Project;
 use skyspell_core::SystemDictionary;
@@ -139,32 +141,46 @@ struct RemoveOpts {
     relative_path: Option<PathBuf>,
 }
 
-fn add(project: Project, mut ignore_store: IgnoreStore, opts: &AddOpts) -> Result<()> {
+fn add(
+    mut state: CheckerState,
+    project: Project,
+    mut ignore_store: IgnoreStore,
+    opts: &AddOpts,
+) -> Result<()> {
     let word = &opts.word;
-    match (&opts.relative_path, &opts.extension, &opts.project) {
-        (None, None, false) => ignore_store.ignore(word),
-        (None, Some(e), _) => ignore_store.ignore_for_extension(word, e),
-        (Some(relative_path), None, _) => {
-            let relative_path = project.get_relative_path(relative_path)?;
-            ignore_store.ignore_for_path(word, &relative_path)
-        }
-        (None, None, true) => ignore_store.ignore_for_project(word),
-        (Some(_), Some(_), _) => bail!("Cannot use both --relative-path and --extension"),
-    }
+    let mut operation = get_operation(project, opts, word)?;
+    operation.execute(&mut ignore_store)?;
+    state.set_last_operation(operation)?;
+    Ok(())
 }
 
 fn remove(project: Project, mut ignore_store: IgnoreStore, opts: &RemoveOpts) -> Result<()> {
     let word = &opts.word;
-    match (&opts.relative_path, &opts.extension, &opts.project) {
-        (None, None, false) => ignore_store.remove_ignored(word),
-        (None, Some(e), _) => ignore_store.remove_ignored_for_extension(word, e),
+    let mut operation = match (&opts.relative_path, &opts.extension, &opts.project) {
+        (None, None, false) => Operation::new_ignore(word),
+        (None, Some(e), _) => Operation::new_ignore_for_extension(word, e),
         (Some(relative_path), None, _) => {
             let relative_path = project.get_relative_path(relative_path)?;
-            ignore_store.remove_ignored_for_path(word, &relative_path)
+            Operation::new_ignore_for_path(word, &relative_path)
         }
-        (None, None, true) => ignore_store.remove_ignored_for_project(word),
+        (None, None, true) => Operation::new_ignore_for_project(word),
         (Some(_), Some(_), _) => bail!("Cannot use both --relative-path and --extension"),
-    }
+    };
+    operation.undo(&mut ignore_store)
+}
+
+fn get_operation(project: Project, opts: &AddOpts, word: &str) -> Result<Operation, anyhow::Error> {
+    let operation = match (&opts.relative_path, &opts.extension, &opts.project) {
+        (None, None, false) => Operation::new_ignore(word),
+        (None, Some(e), _) => Operation::new_ignore_for_extension(word, e),
+        (Some(relative_path), None, _) => {
+            let relative_path = project.get_relative_path(relative_path)?;
+            Operation::new_ignore_for_path(word, &relative_path)
+        }
+        (None, None, true) => Operation::new_ignore_for_project(word),
+        (Some(_), Some(_), _) => bail!("Cannot use both --relative-path and --extension"),
+    };
+    Ok(operation)
 }
 
 fn check(
@@ -228,10 +244,13 @@ where
     checker.success()
 }
 
-fn undo(project: Project, dictionary: impl Dictionary, ignore_store: IgnoreStore) -> Result<()> {
-    let interactor = ConsoleInteractor;
-    let mut checker = InteractiveChecker::new(project, interactor, dictionary, ignore_store, None)?;
-    checker.undo()
+fn undo(mut state: CheckerState, mut ignore_store: IgnoreStore) -> Result<()> {
+    let last_operation = state.pop_last_operation()?;
+    let mut last_operation = match last_operation {
+        None => bail!("Nothing to undo"),
+        Some(o) => o,
+    };
+    last_operation.undo(&mut ignore_store)
 }
 
 fn suggest(dictionary: impl Dictionary, opts: &SuggestOpts) -> Result<()> {
@@ -255,12 +274,13 @@ fn run<D: Dictionary>(
     dictionary: D,
     ignore_store: IgnoreStore,
 ) -> Result<()> {
+    let state = CheckerState::load(None)?;
     match &opts.action {
-        Action::Add(opts) => add(project, ignore_store, opts),
+        Action::Add(opts) => add(state, project, ignore_store, opts),
         Action::Remove(opts) => remove(project, ignore_store, opts),
         Action::Check(opts) => check(project, ignore_store, dictionary, opts),
         Action::Suggest(opts) => suggest(dictionary, opts),
-        Action::Undo => undo(project, dictionary, ignore_store),
+        Action::Undo => undo(state, ignore_store),
     }
 }
 

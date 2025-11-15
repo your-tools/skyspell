@@ -1,6 +1,6 @@
 use crate::{Dictionary, IgnoreStore, Operation, TokenProcessor};
 use crate::{Project, RelativePath};
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 use directories_next::BaseDirs;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
