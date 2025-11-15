@@ -2,17 +2,15 @@
 name = "skyspell-tests"
 version = "0.1.0"
 description = ""
-authors = [
-    { name = "Dimitri Merejkowsky", email = "dimitri@dmerej.info" }
-]
+authors = [{ name = "Dimitri Merejkowsky", email = "dimitri@dmerej.info" }]
 dynamic = ["dependencies", "requires-python"]
 
 [tool.poetry]
 package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.8"
-pytest = "^8.2"
+python = "^3.13"
+pytest = "^9.0"
 pytest-xdist = "^3.5"
 
 [tool.poetry.group.dev.dependencies]
@@ -29,9 +27,8 @@ strict = true
 files = "*.py"
 
 [tool.pytest]
-log_cli = true
-[tool.pytest.ini_options]
-addopts = "--verbose --capture=no"
+# log_cli = true
+addopts = ["--verbose", "--capture=no"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
