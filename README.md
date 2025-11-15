@@ -19,7 +19,9 @@ A fast and handy spell checker for the command line.
 * Skip list per relative path inside a project (like `image.svg`)
 * All of the above are stored in a toml files, which makes it easy to backup/restore
   your ignore rules, or use them for CI.
-* [Kakoune integration](https://github.com/your-tools/skyspell/blob/main/crates/kak/README.md)
+* Editor integrations:
+  * [Kakoune](https://github.com/your-tools/skyspell/blob/main/crates/kak/README.md)
+  * [VSCode](https://github.com/your-tools/skyspell-vscode/)
 
 ## Installation
 
