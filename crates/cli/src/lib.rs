@@ -101,7 +101,7 @@ impl OutputFormat {
     }
 }
 #[derive(Parser)]
-struct CheckOpts {
+pub struct CheckOpts {
     #[clap(
         long,
         help = "Don't ask what to do for each unknown word, instead just print the whole list - useful for continuous integration and other scripts"
@@ -113,6 +113,9 @@ struct CheckOpts {
 
     #[clap(help = "List of paths to check")]
     paths: Vec<PathBuf>,
+
+    #[clap(long, help = "Include git commit message file")]
+    include_git_edit_message: bool,
 }
 
 #[derive(Parser)]
@@ -190,43 +193,46 @@ fn check(
     opts: &CheckOpts,
 ) -> Result<()> {
     let interactive = !opts.non_interactive;
-    let output_format = opts.output_format.unwrap_or_default();
 
     match interactive {
         false => {
-            let mut checker =
-                NonInteractiveChecker::new(project, dictionary, ignore_store, output_format)?;
-            check_with(&mut checker, &opts.paths, output_format)
+            let mut checker = NonInteractiveChecker::new(project, dictionary, ignore_store, opts)?;
+            check_with(&mut checker, opts)
         }
         true => {
             let interactor = ConsoleInteractor;
             let mut checker =
                 InteractiveChecker::new(project, interactor, dictionary, ignore_store, None)?;
-            check_with(&mut checker, &opts.paths, output_format)
+            check_with(&mut checker, opts)
         }
     }
 }
 
-fn check_with<C, D>(checker: &mut C, paths: &[PathBuf], output_format: OutputFormat) -> Result<()>
+fn check_with<C, D>(checker: &mut C, opts: &CheckOpts) -> Result<()>
 where
     C: Checker<D, SourceContext = ()>,
     D: Dictionary,
 {
     let project = checker.project();
-    let mut paths = paths.to_vec();
-    let walker = project.walk()?;
-    for dir_entry in walker {
-        let dir_entry = dir_entry?;
-        let file_type = dir_entry.file_type().expect("walker yielded stdin");
-        if !file_type.is_file() {
-            continue;
+    let mut paths = opts.paths.clone();
+    if paths.is_empty() {
+        // No path provided on the command line, check the whole project
+        let walker = project.walk()?;
+        for dir_entry in walker {
+            let dir_entry = dir_entry?;
+            let file_type = dir_entry.file_type().expect("walker yielded stdin");
+            if !file_type.is_file() {
+                continue;
+            }
+            let path = dir_entry.path();
+            paths.push(path.to_path_buf());
         }
-        let path = dir_entry.path();
-        paths.push(path.to_path_buf());
     }
-    let git_message = project.path().as_ref().join(".git/COMMIT_EDITMSG");
-    if git_message.exists() {
-        paths.push(git_message);
+    if opts.include_git_edit_message {
+        let git_message = project.path().as_ref().join(".git/COMMIT_EDITMSG");
+        if git_message.exists() {
+            paths.push(git_message);
+        }
     }
 
     let mut checked = 0;
@@ -239,6 +245,7 @@ where
         }
     }
 
+    let output_format = opts.output_format.unwrap_or_default();
     if output_format.is_text() {
         info_3!("Checked {checked} files - {skipped} skipped");
     }

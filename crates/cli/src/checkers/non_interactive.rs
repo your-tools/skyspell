@@ -1,4 +1,4 @@
-use crate::{OutputFormat, info_1, info_2};
+use crate::{CheckOpts, OutputFormat, info_1, info_2};
 use anyhow::{Result, bail};
 use colored::*;
 use serde::Serialize;
@@ -33,8 +33,9 @@ impl<D: Dictionary> NonInteractiveChecker<D> {
         project: Project,
         dictionary: D,
         ignore_store: IgnoreStore,
-        output_format: OutputFormat,
+        opts: &CheckOpts,
     ) -> Result<Self> {
+        let output_format = opts.output_format.unwrap_or_default();
         if output_format.is_text() {
             info_1!(
                 "Checking project {} for spelling errors",

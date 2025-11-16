@@ -1,7 +1,7 @@
 use skyspell_core::{Checker, IgnoreStore, Project, RelativePath, tests::FakeDictionary};
 use tempfile::TempDir;
 
-use crate::{NonInteractiveChecker, OutputFormat};
+use crate::{CheckOpts, NonInteractiveChecker};
 
 type TestChecker = NonInteractiveChecker<FakeDictionary>;
 struct TestApp {
@@ -18,8 +18,13 @@ impl TestApp {
         let global_toml = temp_dir.path().join("global.toml");
         let local_toml = temp_dir.path().join("skyspell.toml");
         let ignore_store = IgnoreStore::load(global_toml, local_toml).unwrap();
-        let checker =
-            TestChecker::new(project, dictionary, ignore_store, OutputFormat::Text).unwrap();
+        let opts = CheckOpts {
+            non_interactive: true,
+            output_format: None,
+            paths: vec![],
+            include_git_edit_message: false,
+        };
+        let checker = TestChecker::new(project, dictionary, ignore_store, &opts).unwrap();
         Self { checker }
     }
 
