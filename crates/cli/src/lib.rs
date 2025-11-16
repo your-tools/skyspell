@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use anyhow::Ok;
 use anyhow::{Context, Result, bail};
 use clap::Parser;
 use colored::*;
@@ -15,7 +16,7 @@ use skyspell_core::SystemDictionary;
 
 mod checkers;
 pub mod interactor;
-pub use checkers::{InteractiveChecker, NonInteractiveChecker};
+pub use checkers::{InteractiveChecker, JsonChecker, NonInteractiveChecker};
 pub use interactor::{ConsoleInteractor, Interactor};
 
 #[macro_export]
@@ -194,21 +195,41 @@ fn check(
 ) -> Result<()> {
     let interactive = !opts.non_interactive;
 
-    match interactive {
-        false => {
+    if interactive {
+        let interactor = ConsoleInteractor;
+        let mut checker =
+            InteractiveChecker::new(project, interactor, dictionary, ignore_store, None)?;
+        let _stats = check_with(&mut checker, opts)?;
+        return checker.success();
+    }
+
+    match opts.output_format.unwrap_or_default() {
+        OutputFormat::Text => {
             let mut checker = NonInteractiveChecker::new(project, dictionary, ignore_store, opts)?;
-            check_with(&mut checker, opts)
+            check_with(&mut checker, opts)?;
+            let stats = check_with(&mut checker, opts)?;
+            let FileStats { skipped, checked } = stats;
+            info_3!("Checked {checked} files - {skipped} skipped");
+            checker.success()
         }
-        true => {
-            let interactor = ConsoleInteractor;
-            let mut checker =
-                InteractiveChecker::new(project, interactor, dictionary, ignore_store, None)?;
-            check_with(&mut checker, opts)
+        OutputFormat::Json => {
+            let mut checker = JsonChecker::new(project, dictionary, ignore_store)?;
+            check_with(&mut checker, opts)?;
+            checker.populate_result();
+            let result = checker.result();
+            let json = serde_json::to_string(result)?;
+            println!("{json}");
+            Ok(())
         }
     }
 }
 
-fn check_with<C, D>(checker: &mut C, opts: &CheckOpts) -> Result<()>
+struct FileStats {
+    skipped: usize,
+    checked: usize,
+}
+
+fn check_with<C, D>(checker: &mut C, opts: &CheckOpts) -> Result<FileStats>
 where
     C: Checker<D, SourceContext = ()>,
     D: Dictionary,
@@ -245,12 +266,7 @@ where
         }
     }
 
-    let output_format = opts.output_format.unwrap_or_default();
-    if output_format.is_text() {
-        info_3!("Checked {checked} files - {skipped} skipped");
-    }
-
-    checker.success()
+    Ok(FileStats { checked, skipped })
 }
 
 fn undo(mut state: CheckerState, mut ignore_store: IgnoreStore) -> Result<()> {

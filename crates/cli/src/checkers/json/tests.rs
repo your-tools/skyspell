@@ -1,11 +1,12 @@
 use skyspell_core::{Checker, IgnoreStore, Project, RelativePath, tests::FakeDictionary};
 use tempfile::TempDir;
 
-use crate::{CheckOpts, NonInteractiveChecker};
+use crate::{JsonChecker, checkers::json::Range};
 
-type TestChecker = NonInteractiveChecker<FakeDictionary>;
+type JsonTestChecker = JsonChecker<FakeDictionary>;
+
 struct TestApp {
-    checker: TestChecker,
+    checker: JsonTestChecker,
 }
 
 impl TestApp {
@@ -18,13 +19,7 @@ impl TestApp {
         let global_toml = temp_dir.path().join("global.toml");
         let local_toml = temp_dir.path().join("skyspell.toml");
         let ignore_store = IgnoreStore::load(global_toml, local_toml).unwrap();
-        let opts = CheckOpts {
-            non_interactive: true,
-            output_format: None,
-            paths: vec![],
-            include_git_edit_message: false,
-        };
-        let checker = TestChecker::new(project, dictionary, ignore_store, &opts).unwrap();
+        let checker = JsonTestChecker::new(project, dictionary, ignore_store).unwrap();
         Self { checker }
     }
 
@@ -58,5 +53,50 @@ last line";
         .skip_token("SKIP_THIS", &foo_py)
         .unwrap();
     app.checker.process(&foo_py_path, &()).unwrap();
-    assert!(app.checker.errors.is_empty());
+    assert!(app.checker.spell_result.errors.is_empty());
+}
+
+#[test]
+fn test_output() {
+    let temp_dir = tempfile::Builder::new()
+        .prefix("test-skyspell")
+        .tempdir()
+        .unwrap();
+
+    let one = "first second";
+    let two = "third fourth";
+    let mut app = TestApp::new(&temp_dir);
+
+    let one_path = temp_dir.path().join("project/one.txt");
+    std::fs::write(&one_path, one).unwrap();
+
+    let two_path = temp_dir.path().join("project/two.txt");
+    std::fs::write(&two_path, two).unwrap();
+
+    app.checker.dictionary.add_known("first");
+    app.checker.dictionary.add_known("fourth");
+    app.checker
+        .dictionary
+        .add_suggestions("second", &["s1".to_owned(), "s2".to_owned()]);
+
+    app.checker.process(&one_path, &()).unwrap();
+    app.checker.process(&two_path, &()).unwrap();
+
+    app.checker.populate_result();
+    let result = app.checker.spell_result;
+    let path: &str = &one_path.to_string_lossy();
+    let one_errors = &result.errors[path];
+    let first_error = &one_errors[0];
+    assert_eq!(first_error.word, "second");
+    assert_eq!(
+        first_error.range,
+        Range {
+            line: 1,
+            start_column: 7,
+            end_column: 12
+        }
+    );
+
+    let suggestions = &result.suggestions;
+    assert_eq!(suggestions["second"], &["s1", "s2"]);
 }

@@ -8,9 +8,9 @@ use std::io::BufReader;
 use std::path::{Path, PathBuf};
 
 pub struct SpellingError {
-    word: String,
-    source_path: PathBuf,
-    pos: (usize, usize),
+    pub word: String,
+    pub source_path: PathBuf,
+    pub pos: (usize, usize),
 }
 
 impl SpellingError {

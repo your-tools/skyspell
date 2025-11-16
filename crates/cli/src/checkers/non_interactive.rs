@@ -1,30 +1,14 @@
 use crate::{CheckOpts, OutputFormat, info_1, info_2};
 use anyhow::{Result, bail};
 use colored::*;
-use serde::Serialize;
+use skyspell_core::Project;
 use skyspell_core::{Checker, Dictionary, IgnoreStore, Operation, SpellingError};
-use skyspell_core::{Project, RelativePath};
-use std::collections::BTreeMap;
-
-#[derive(Debug, Serialize)]
-struct Range {
-    line: usize,
-    start_column: usize,
-    end_column: usize,
-}
-
-#[derive(Debug, Serialize)]
-struct Error {
-    word: String,
-    range: Range,
-}
 
 pub struct NonInteractiveChecker<D: Dictionary> {
     project: Project,
     dictionary: D,
     ignore_store: IgnoreStore,
     output_format: OutputFormat,
-    errors: BTreeMap<String, Vec<Error>>,
     num_errors: usize,
 }
 
@@ -47,19 +31,19 @@ impl<D: Dictionary> NonInteractiveChecker<D> {
             dictionary,
             ignore_store,
             output_format,
-            errors: BTreeMap::new(),
             num_errors: 0,
         })
     }
 
-    fn print_error(&self, path: &RelativePath, error: &Error) {
-        let Error { range, word } = error;
-        let Range {
-            line,
-            start_column,
-            end_column,
-        } = range;
-        let prefix = format!("{path}:{line}:{start_column}:{end_column}");
+    fn print_error(&self, error: &SpellingError) {
+        let SpellingError {
+            word,
+            source_path,
+            pos,
+        } = error;
+        let (line, col) = pos;
+        let path = source_path.to_string_lossy();
+        let prefix = format!("{path}:{line}:{col}");
         match self.output_format {
             OutputFormat::Text => println!(
                 "{}: {}: {}: {}",
@@ -70,23 +54,6 @@ impl<D: Dictionary> NonInteractiveChecker<D> {
             ),
             OutputFormat::Json => {}
         }
-    }
-
-    fn success_text(&self) -> Result<()> {
-        match self.num_errors {
-            0 => {
-                info_2!("Success! No spelling errors found");
-                Ok(())
-            }
-            1 => bail!("Found just one tiny spelling error"),
-            n => bail!("Found {n} spelling errors"),
-        }
-    }
-
-    fn success_json(&self) -> Result<()> {
-        let json = serde_json::to_string(&self.errors).expect("errors should be serializable");
-        println!("{json}");
-        Ok(())
     }
 }
 
@@ -103,32 +70,18 @@ impl<D: Dictionary> Checker<D> for NonInteractiveChecker<D> {
         _context: &Self::SourceContext,
     ) -> Result<()> {
         self.num_errors += 1;
-        let (line, column) = error.pos();
-        let start_column = column + 1;
-        let token = error.word();
-        let path = error.relative_path();
-        let full_path = self.project.path().as_ref().join(path.as_ref());
-        let end_column = start_column + token.chars().count() - 1;
-        let range = Range {
-            line,
-            start_column,
-            end_column,
-        };
-        let error = Error {
-            word: token.to_string(),
-            range,
-        };
-        self.print_error(&path, &error);
-        let entry = self.errors.entry(full_path.to_string_lossy().to_string());
-        let errors_for_entry = entry.or_default();
-        errors_for_entry.push(error);
+        self.print_error(error);
         Ok(())
     }
 
     fn success(&self) -> Result<()> {
-        match self.output_format {
-            OutputFormat::Text => self.success_text(),
-            OutputFormat::Json => self.success_json(),
+        match self.num_errors {
+            0 => {
+                info_2!("Success! No spelling errors found");
+                Ok(())
+            }
+            1 => bail!("Found just one tiny spelling error"),
+            n => bail!("Found {n} spelling errors"),
         }
     }
 
@@ -144,6 +97,3 @@ impl<D: Dictionary> Checker<D> for NonInteractiveChecker<D> {
         operation.execute(&mut self.ignore_store)
     }
 }
-
-#[cfg(test)]
-mod tests;
