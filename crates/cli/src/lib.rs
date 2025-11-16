@@ -282,8 +282,8 @@ fn run<D: Dictionary>(
     opts: &Opts,
     dictionary: D,
     ignore_store: IgnoreStore,
+    state: CheckerState,
 ) -> Result<()> {
-    let state = CheckerState::load(None)?;
     match &opts.action {
         Action::Add(opts) => add(state, project, ignore_store, opts),
         Action::Remove(opts) => remove(project, ignore_store, opts),
@@ -306,8 +306,9 @@ pub fn main() -> Result<()> {
     let dictionary = SystemDictionary::new(lang)?;
     let project = Project::new(&project_path)?;
     let ignore_store = project.ignore_store()?;
+    let state = CheckerState::load(None)?;
 
-    run(project, &opts, dictionary, ignore_store)
+    run(project, &opts, dictionary, ignore_store, state)
 }
 
 #[cfg(test)]

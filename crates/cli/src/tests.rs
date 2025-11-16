@@ -12,6 +12,7 @@ struct TestApp {
     dictionary: FakeDictionary,
     ignore_store: IgnoreStore,
     project: Project,
+    state: CheckerState,
 }
 
 impl TestApp {
@@ -23,10 +24,13 @@ impl TestApp {
         let global_path = temp_dir.path().join("global.toml");
         let ignore_store = IgnoreStore::load(global_path, local_path).unwrap();
         let project = Project::new(&project_path).unwrap();
+        let state_path = temp_dir.path().join("state.toml");
+        let state = CheckerState::load(Some(state_path)).unwrap();
         Self {
             dictionary,
             ignore_store,
             project,
+            state,
         }
     }
 
@@ -55,7 +59,13 @@ impl TestApp {
 
         with_arg0.extend(args);
         let opts = Opts::try_parse_from(with_arg0)?;
-        super::run(self.project, &opts, self.dictionary, self.ignore_store)
+        super::run(
+            self.project,
+            &opts,
+            self.dictionary,
+            self.ignore_store,
+            self.state,
+        )
     }
 }
 
