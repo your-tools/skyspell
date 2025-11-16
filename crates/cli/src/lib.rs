@@ -63,9 +63,9 @@ pub struct Opts {
 #[derive(Parser)]
 enum Action {
     #[clap(about = "Add word to one of the ignore lists")]
-    Add(AddOpts),
+    Add(OperationOpts),
     #[clap(about = "Remove word from one of the ignore lists")]
-    Remove(RemoveOpts),
+    Remove(OperationOpts),
     #[clap(about = "Check files for spelling errors")]
     Check(CheckOpts),
     #[clap(about = "Suggest replacements for the given error")]
@@ -75,17 +75,20 @@ enum Action {
 }
 
 #[derive(Parser)]
-struct AddOpts {
-    #[clap(help = "The word to add")]
+struct OperationOpts {
+    #[clap(help = "The word to add/remove")]
     word: String,
 
-    #[clap(long, help = "Add word to the ignore list for the current project")]
+    #[clap(long, help = "for the current project")]
     project: bool,
 
-    #[clap(long, help = "Add word to the ignore list for the given extension")]
+    #[clap(long, help = "for the given lang")]
+    lang: Option<String>,
+
+    #[clap(long, help = "for the given extension")]
     extension: Option<String>,
 
-    #[clap(long, help = "Add word to the ignore list for the given path")]
+    #[clap(long, help = "for the given path")]
     relative_path: Option<PathBuf>,
 }
 
@@ -153,7 +156,7 @@ fn add(
     mut state: CheckerState,
     project: Project,
     mut ignore_store: IgnoreStore,
-    opts: &AddOpts,
+    opts: &OperationOpts,
 ) -> Result<()> {
     let word = &opts.word;
     let mut operation = get_operation(project, opts, word)?;
@@ -162,31 +165,32 @@ fn add(
     Ok(())
 }
 
-fn remove(project: Project, mut ignore_store: IgnoreStore, opts: &RemoveOpts) -> Result<()> {
+fn remove(project: Project, mut ignore_store: IgnoreStore, opts: &OperationOpts) -> Result<()> {
     let word = &opts.word;
-    let mut operation = match (&opts.relative_path, &opts.extension, &opts.project) {
-        (None, None, false) => Operation::new_ignore(word),
-        (None, Some(e), _) => Operation::new_ignore_for_extension(word, e),
-        (Some(relative_path), None, _) => {
-            let relative_path = project.get_relative_path(relative_path)?;
-            Operation::new_ignore_for_path(word, &relative_path)
-        }
-        (None, None, true) => Operation::new_ignore_for_project(word),
-        (Some(_), Some(_), _) => bail!("Cannot use both --relative-path and --extension"),
-    };
+    let mut operation = get_operation(project, opts, word)?;
     operation.undo(&mut ignore_store)
 }
 
-fn get_operation(project: Project, opts: &AddOpts, word: &str) -> Result<Operation, anyhow::Error> {
-    let operation = match (&opts.relative_path, &opts.extension, &opts.project) {
-        (None, None, false) => Operation::new_ignore(word),
-        (None, Some(e), _) => Operation::new_ignore_for_extension(word, e),
-        (Some(relative_path), None, _) => {
+fn get_operation(
+    project: Project,
+    opts: &OperationOpts,
+    word: &str,
+) -> Result<Operation, anyhow::Error> {
+    let operation = match (
+        &opts.relative_path,
+        &opts.extension,
+        &opts.project,
+        &opts.lang,
+    ) {
+        (None, None, false, None) => Operation::new_ignore(word),
+        (Some(relative_path), None, false, None) => {
             let relative_path = project.get_relative_path(relative_path)?;
             Operation::new_ignore_for_path(word, &relative_path)
         }
-        (None, None, true) => Operation::new_ignore_for_project(word),
-        (Some(_), Some(_), _) => bail!("Cannot use both --relative-path and --extension"),
+        (None, Some(e), false, None) => Operation::new_ignore_for_extension(word, e),
+        (None, None, true, None) => Operation::new_ignore_for_project(word),
+        (None, None, false, Some(lang)) => Operation::new_ignore_for_lang(word, lang),
+        _ => bail!("Conflicting options"),
     };
     Ok(operation)
 }

@@ -134,6 +134,20 @@ fn test_add_for_relative_path() {
 }
 
 #[test]
+fn test_add_for_lang() {
+    let temp_dir = tempfile::Builder::new()
+        .prefix("test-skyspell")
+        .tempdir()
+        .unwrap();
+    let app = TestApp::new(&temp_dir);
+
+    app.run(&["add", "foo", "--lang", "fr"]).unwrap();
+
+    let store = TestApp::load_store(&temp_dir);
+    assert!(store.is_ignored_for_lang("foo", "fr"));
+}
+
+#[test]
 fn test_remove_global() {
     let temp_dir = tempfile::Builder::new()
         .prefix("test-skyspell")
@@ -162,6 +176,21 @@ fn test_remove_for_project() {
 
     let store = TestApp::load_store(&temp_dir);
     assert!(!store.is_ignored_for_project("foo"));
+}
+
+#[test]
+fn test_remove_for_lang() {
+    let temp_dir = tempfile::Builder::new()
+        .prefix("test-skyspell")
+        .tempdir()
+        .unwrap();
+    let mut app = TestApp::new(&temp_dir);
+    app.ignore_store.ignore_for_lang("foo", "fr").unwrap();
+
+    app.run(&["remove", "foo", "--lang", "fr"]).unwrap();
+
+    let store = TestApp::load_store(&temp_dir);
+    assert!(!store.is_ignored_for_lang("foo", "fr"));
 }
 
 #[test]
