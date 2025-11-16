@@ -109,7 +109,11 @@ pub struct CheckOpts {
     )]
     non_interactive: bool,
 
-    #[clap(long, value_enum, help = "Output format: json implies --non-interactive")]
+    #[clap(
+        long,
+        value_enum,
+        help = "Output format: json implies --non-interactive"
+    )]
     output_format: Option<OutputFormat>,
 
     #[clap(help = "List of paths to check")]
@@ -193,7 +197,8 @@ fn check(
     dictionary: impl Dictionary,
     opts: &CheckOpts,
 ) -> Result<()> {
-    let interactive = !opts.non_interactive && opts.output_format != Some(OutputFormat::Json);
+    let output_format = opts.output_format.unwrap_or_default();
+    let interactive = !opts.non_interactive && output_format != OutputFormat::Json;
 
     if interactive {
         let interactor = ConsoleInteractor;
@@ -203,7 +208,7 @@ fn check(
         return checker.success();
     }
 
-    match opts.output_format.unwrap_or_default() {
+    match output_format {
         OutputFormat::Text => {
             let mut checker = NonInteractiveChecker::new(project, dictionary, ignore_store, opts)?;
             check_with(&mut checker, opts)?;
