@@ -126,10 +126,10 @@ impl IgnoreStore {
             return true;
         }
 
-        if let Some(e) = relative_path.extension() {
-            if self.is_ignored_for_extension(word, &e) {
-                return true;
-            }
+        if let Some(e) = relative_path.extension()
+            && self.is_ignored_for_extension(word, &e)
+        {
+            return true;
         }
 
         if self.is_ignored_for_project(word) {
