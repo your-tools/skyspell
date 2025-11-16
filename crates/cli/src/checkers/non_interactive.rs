@@ -106,6 +106,7 @@ impl<D: Dictionary> Checker<D> for NonInteractiveChecker<D> {
         let start_column = column + 1;
         let token = error.word();
         let path = error.relative_path();
+        let full_path = self.project.path().as_ref().join(path.as_ref());
         let end_column = start_column + token.chars().count() - 1;
         let range = Range {
             line,
@@ -117,7 +118,7 @@ impl<D: Dictionary> Checker<D> for NonInteractiveChecker<D> {
             range,
         };
         self.print_error(&path, &error);
-        let entry = self.errors.entry(path.normalize());
+        let entry = self.errors.entry(full_path.to_string_lossy().to_string());
         let errors_for_entry = entry.or_default();
         errors_for_entry.push(error);
         Ok(())
