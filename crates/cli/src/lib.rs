@@ -214,17 +214,19 @@ where
 {
     let project = checker.project();
     let mut paths = paths.to_vec();
-    if paths.is_empty() {
-        let walker = project.walk()?;
-        for dir_entry in walker {
-            let dir_entry = dir_entry?;
-            let file_type = dir_entry.file_type().expect("walker yielded stdin");
-            if !file_type.is_file() {
-                continue;
-            }
-            let path = dir_entry.path();
-            paths.push(path.to_path_buf());
+    let walker = project.walk()?;
+    for dir_entry in walker {
+        let dir_entry = dir_entry?;
+        let file_type = dir_entry.file_type().expect("walker yielded stdin");
+        if !file_type.is_file() {
+            continue;
         }
+        let path = dir_entry.path();
+        paths.push(path.to_path_buf());
+    }
+    let git_message = project.path().as_ref().join(".git/COMMIT_EDITMSG");
+    if git_message.exists() {
+        paths.push(git_message);
     }
 
     let mut checked = 0;

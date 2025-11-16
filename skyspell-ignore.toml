@@ -160,7 +160,10 @@ project = [
     "defaultdict",
     "py",
 ]
-"crates/cli/src/lib.rs" = ["Buf"]
+"crates/cli/src/lib.rs" = [
+    "Buf",
+    "EDITMSG",
+]
 "crates/cli/src/tests.rs" = [
     "baz",
     "hel",
@@ -260,13 +263,13 @@ pre-push = [
     "othher",
 ]
 "tests/test_kakoune_integration.py" = [
+    "Subprocess",
     "fn",
     "gg",
     "misstake",
     "othhher",
     "rf",
     "ui",
-    "Subprocess",
 ]
 
 [skipped]
