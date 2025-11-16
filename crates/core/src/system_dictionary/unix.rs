@@ -1,5 +1,5 @@
 /// Export a SystemDictionary that relies on Enchant Rust wrapper
-use anyhow::{Result, anyhow};
+use anyhow::{Context, Result, anyhow};
 
 use crate::Dictionary;
 
@@ -14,13 +14,31 @@ impl SystemDictionary {
 
     pub fn new(lang: &str) -> Result<Self> {
         let mut broker = enchant::Broker::new();
+        let dict_lang = Self::find_dict_lang(&mut broker, lang)
+            .context(format!("No dict found for lang: '{lang}'"))?;
         let dict = broker
-            .request_dict(lang)
+            .request_dict(&dict_lang)
             .map_err(|e| anyhow!("Could not request dict for lang '{lang}': {e}"))?;
         Ok(Self {
             dict,
             lang: lang.to_string(),
         })
+    }
+
+    fn find_dict_lang(broker: &mut enchant::Broker, lang: &str) -> Option<String> {
+        let known_dicts = broker.list_dicts();
+        let known_langs: Vec<_> = known_dicts.into_iter().map(|d| d.lang).collect();
+        for known_lang in known_langs {
+            if known_lang == lang {
+                return Some(lang.to_string());
+            }
+            let before = known_lang.split('_').next().unwrap();
+            if before == lang {
+                return Some(known_lang.to_string());
+            }
+        }
+
+        None
     }
 }
 

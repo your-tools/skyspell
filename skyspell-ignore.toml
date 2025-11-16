@@ -185,6 +185,10 @@ project = [
     "vfill",
 ]
 "crates/core/src/enchant/tests.rs" = ["missstake"]
+"crates/core/src/system_dictionary/unix.rs" = [
+    "dicts",
+    "langs",
+]
 "crates/core/src/system_dictionary/windows.rs" = [
     "CLSCTX",
     "COINIT",
