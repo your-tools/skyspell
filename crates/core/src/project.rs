@@ -65,9 +65,9 @@ pub struct ProjectPath(PathBuf);
 
 impl ProjectPath {
     pub fn new(project_path: &Path) -> Result<Self> {
-        let path = std::fs::canonicalize(project_path).with_context(|| {
+        let path = std::path::absolute(project_path).with_context(|| {
             anyhow!(
-                "Could not canonicalize project path: {}",
+                "Could not make project path: {} absolute",
                 project_path.display()
             )
         })?;
@@ -96,9 +96,9 @@ pub struct RelativePath(PathBuf);
 
 impl RelativePath {
     pub fn new(project_path: &ProjectPath, source_path: &Path) -> Result<Self> {
-        let source_path = std::fs::canonicalize(source_path).with_context(|| {
+        let source_path = std::path::absolute(source_path).with_context(|| {
             anyhow!(
-                "Could not canonicalize relative path: {}",
+                "Could not make relative path absolute: {}",
                 source_path.display()
             )
         })?;
