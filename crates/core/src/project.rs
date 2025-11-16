@@ -27,7 +27,7 @@ impl Project {
         &self.path
     }
 
-    pub fn as_str(&self) -> Cow<str> {
+    pub fn as_str(&self) -> Cow<'_, str> {
         self.path.as_str()
     }
 
@@ -74,7 +74,7 @@ impl ProjectPath {
         Ok(ProjectPath(path))
     }
 
-    pub fn as_str(&self) -> Cow<str> {
+    pub fn as_str(&self) -> Cow<'_, str> {
         self.0.to_string_lossy()
     }
 }
@@ -123,11 +123,11 @@ impl RelativePath {
         self.0.to_string_lossy().replace("\\", "/")
     }
 
-    pub fn file_name(&self) -> Option<Cow<str>> {
+    pub fn file_name(&self) -> Option<Cow<'_, str>> {
         self.0.file_name().map(|x| x.to_string_lossy())
     }
 
-    pub fn extension(&self) -> Option<Cow<str>> {
+    pub fn extension(&self) -> Option<Cow<'_, str>> {
         self.0.extension().map(|x| x.to_string_lossy())
     }
 }
