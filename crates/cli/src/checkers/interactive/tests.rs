@@ -139,7 +139,7 @@ fn test_adding_word_to_lang() {
 
     app.handle_token("foo", "hello.py");
 
-    assert!(app.is_ignored_for_lang("foo", "en_US"));
+    assert!(app.is_ignored_for_lang("foo", "en"));
 
     app.end();
 }

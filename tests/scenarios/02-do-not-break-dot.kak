@@ -3,7 +3,7 @@ execute-keys i %{There is a misstake here} <ret> <esc>
 execute-keys i %{and an othher one there} <ret> <esc>
 execute-keys i %{last} <ret> <esc>
 
-skyspell-enable en_US
+skyspell-enable en
 
 execute-keys .
 

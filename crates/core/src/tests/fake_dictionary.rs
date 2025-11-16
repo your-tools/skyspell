@@ -34,7 +34,7 @@ impl Dictionary for FakeDictionary {
     }
 
     fn lang(&self) -> &str {
-        "en_US"
+        "en"
     }
 
     fn provider(&self) -> &str {

@@ -51,7 +51,7 @@ For instance:
 ```
 map global user s ': enter-user-mode skyspell<ret>' -docstring 'enter spell user mode'
 map global skyspell d ': skyspell-disable<ret>' -docstring 'clear spelling highlighters'
-map global skyspell e ': skyspell-enable en_US<ret>' -docstring 'enable spell checking in English'
+map global skyspell e ': skyspell-enable en<ret>' -docstring 'enable spell checking in English'
 map global skyspell l ': skyspell-list <ret>' -docstring 'list spelling errors in a buffer'
 map global skyspell h ': skyspell-help <ret>' -docstring 'show help message'
 map global skyspell n ': skyspell-next<ret>' -docstring 'go to next spell error'

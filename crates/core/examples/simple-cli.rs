@@ -14,7 +14,7 @@ struct ExampleChecker {
 impl ExampleChecker {
     fn try_new() -> Result<Self> {
         // This must match a dictionary installed on your operating system.
-        let dictionary = SystemDictionary::new("en_US")?;
+        let dictionary = SystemDictionary::new("en")?;
         let project = Project::new(Path::new("."))?;
         let ignore_store = project.ignore_store()?;
         Ok(Self {

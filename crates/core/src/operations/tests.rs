@@ -59,11 +59,11 @@ fn test_undo_ignore_for_project() {
 fn test_undo_ignore_for_lang() {
     let temp_dir = get_test_dir();
     let mut store = get_empty_store(&temp_dir);
-    let mut operation = Operation::new_ignore_for_lang("foo", "en_US");
+    let mut operation = Operation::new_ignore_for_lang("foo", "en");
     operation.execute(&mut store).unwrap();
-    assert!(store.is_ignored_for_lang("foo", "en_US"));
+    assert!(store.is_ignored_for_lang("foo", "en"));
 
     operation.undo(&mut store).unwrap();
 
-    assert!(!store.is_ignored_for_lang("foo", "en_US"));
+    assert!(!store.is_ignored_for_lang("foo", "en"));
 }

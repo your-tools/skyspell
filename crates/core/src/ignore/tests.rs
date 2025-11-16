@@ -182,7 +182,7 @@ fn test_should_ignore_global() {
 
     store.ignore("foo").unwrap();
 
-    assert!(store.should_ignore("foo", &foo_py, "en_US"));
+    assert!(store.should_ignore("foo", &foo_py, "en"));
 }
 
 #[test]
@@ -193,7 +193,7 @@ fn test_should_ignore_extension() {
 
     store.ignore_for_extension("foo", "py").unwrap();
 
-    assert!(store.should_ignore("foo", &foo_py, "en_US"));
+    assert!(store.should_ignore("foo", &foo_py, "en"));
 }
 
 #[test]
@@ -204,7 +204,7 @@ fn test_should_ignore_path() {
 
     store.ignore_for_path("foo", &foo_py).unwrap();
 
-    assert!(store.should_ignore("foo", &foo_py, "en_US"));
+    assert!(store.should_ignore("foo", &foo_py, "en"));
 }
 
 #[test]
@@ -215,7 +215,7 @@ fn test_should_ignore_project() {
 
     store.ignore_for_project("foo").unwrap();
 
-    assert!(store.should_ignore("foo", &foo_py, "en_US"));
+    assert!(store.should_ignore("foo", &foo_py, "en"));
 }
 
 #[test]
@@ -224,9 +224,9 @@ fn test_should_ignore_lang() {
     let mut store = get_empty_store(&temp_dir);
     let foo_py = relative_path("foo.py");
 
-    store.ignore_for_lang("foo", "en_US").unwrap();
+    store.ignore_for_lang("foo", "en").unwrap();
 
-    assert!(store.should_ignore("foo", &foo_py, "en_US"));
+    assert!(store.should_ignore("foo", &foo_py, "en"));
 }
 
 #[test]
