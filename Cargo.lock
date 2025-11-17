@@ -602,7 +602,7 @@ dependencies = [
 
 [[package]]
 name = "skyspell_core"
-version = "5.0.0"
+version = "5.0.1"
 dependencies = [
  "anyhow",
  "directories-next",
