@@ -25,6 +25,8 @@ A fast and handy spell checker for the command line.
 
 ## Installation
 
+### On Linux 
+
 You will need:
 
 * The C Enchant library installed, with its development headers
@@ -39,7 +41,13 @@ Then run:
 $ cargo install skyspell
 ```
 
-and make sure `skyspell` is in your `PATH`.
+### On Windows
+
+Use the above method, or see the installation instructions in the "Releases" section on GitHub.
+
+### On macOS
+
+See #9 :P
 
 ## Checking setup
 
