@@ -1,3 +1,9 @@
+# 3.0.2 - (2025--11-17)
+
+Fix #7 : allow spell checking for files that contain spaces in their name.
+
+Patch by @fabiancholewinski1234
+
 # 3.0.1 - (2025-01-19)
 
 Revert the change from 'a' to 'g' when using the `*spelling*` buffer to

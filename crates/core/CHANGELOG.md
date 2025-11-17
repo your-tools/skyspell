@@ -1,3 +1,8 @@
+# 5.0.1 (2025-11-17)
+
+- `unix::SystemDictionary`: allow using "--lang en" when only en_US dictionaries are installed
+  (this is consistent with the naming used for `windows::SystemDictionary`)
+
 # 5.0.0 (2025-01-06)
 
 ## Breaking: new `TokenProcessor` API

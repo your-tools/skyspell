@@ -1,3 +1,60 @@
+# 5.0.0 (2025-11-17)
+
+## Highlights
+
+- Implement changes required for the brand new [VSCode Extension](https://github.com/your-tools/skyspell-vscode)
+- Allow using the same language tags across UNIX and Windows.
+
+## Bug fixes and improvements
+
+- Fix using undo directly from the cli
+- Make `--output-format json` imply `--non-interactive`
+- Add --lang to the add/remove skyspell command line actions
+
+## Breaking changes
+
+- Move --output-format to the 'check' subcommand (it made no sense for the other sub commands)
+
+- When using `--output-format=json`:
+  - Show absolute instead of relative paths
+  - Move unknown words into an `errors` key
+  - Add a `suggestions` entry:
+
+```json
+// Old
+{
+  "file.md": [
+    {
+      "word": "missstake",
+      "range": { "line": 3, "start_column": 1, "end_column": 9 }
+    }
+  ]
+}
+```
+
+```json
+// New
+{
+  "errors": {
+    "/path/to/file.md": [
+      {
+        "word": "missstake",
+        "range": { "line": 3, "start_column": 1, "end_column": 9 }
+      }
+    ]
+  },
+  "suggestions": {
+    "missstake": ["miss stake", "miss-stake", "mistake", "misstate"]
+  }
+}
+```
+
+## Misc
+
+- Rewrite kakoune integration tests using mostly kak scripts
+- Bump many dependencies
+- Bump to 2024 edition
+
 # 4.0.0 (2025-01-06)
 
 This release allows to skip entire tokens while processing text files.
@@ -57,19 +114,29 @@ Also, to add or ignore a rule for a project, use the boolean `--project` option
 Before skyspell 1.0
 
 ```
+
 # Add bar as a ignored word for the project in /path/to/foo
+
 skyspell add --project-path /path/to/foo bar
+
 # Add baz to the global ignore list:
+
 skyspell add baz
+
 ```
 
 After skyspell 1.0
 
 ```
+
 # Add bar as a ignored word for the project in /path/to/foo
+
 skyspell --project-path /path/to/bar add bar --project
+
 # Add baz to the global ignore list:
+
 skyspell --project-path add baz --project
+
 ```
 
 In this version, the `skyspell-ignore.kdl` file in the current working
@@ -91,8 +158,10 @@ Instead of telling skyspell to skip `poetry.lock`, `Cargo.lock` and
 `favicon.ico`, you can just create a file named `.skyspell-ignore` containing:
 
 ```
-*.lock
+
+\*.lock
 favicon.ico
+
 ```
 
 This makes the code much faster because we don't need to make a sql query for each
@@ -101,10 +170,15 @@ file we check, just when we find a spelling error.
 This also means you can run `skyspell-check` without specifying the files to check:
 
 ```
+
 # old:
+
 $ skyspell check --project-path . $(git ls-files)
+
 # new:
+
 $ skyspell check --project-path .
+
 ```
 
 Or even without specifying `--project-path` at all, which defaults to the

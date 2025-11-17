@@ -142,6 +142,7 @@ project = [
 "CHANGELOG.md" = [
     "buflist",
     "ga",
+    "missstake",
     "subcommand",
 ]
 "Cargo.toml" = ["lto"]
