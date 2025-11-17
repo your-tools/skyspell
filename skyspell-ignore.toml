@@ -266,6 +266,7 @@ pre-push = [
     "misstake",
     "othher",
 ]
+"tests/scenarios/11-file-with-space.kak" = ["misstake"]
 "tests/test_kakoune_integration.py" = [
     "Subprocess",
     "fn",

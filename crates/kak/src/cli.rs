@@ -213,7 +213,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         let LineSelection {
             path, selection, ..
         } = self.parse_line_selection()?;
-        self.print(&format!("edit {path}\n"));
+        self.print(&format!("edit '{path}'\n"));
         self.print(&format!("select {selection}\n"));
         Ok(())
     }
