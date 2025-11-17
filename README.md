@@ -47,7 +47,7 @@ Use the above method, or see the installation instructions in the "Releases" sec
 
 ### On macOS
 
-See #9 :P
+See [issue #9](https://github.com/your-tools/skyspell/issues/9) 😜
 
 ## Checking setup
 
