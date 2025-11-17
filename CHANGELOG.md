@@ -26,8 +26,8 @@ See [skyspell_core changelog](https://github.com/your-tools/skyspell/blob/main/c
 
 # 2.0.1 (2024-10-20)
 
-* Fix crate metadata
-* Bump `dialoguer` dependency
+- Fix crate metadata
+- Bump `dialoguer` dependency
 
 # 2.0.0 (2024-10-15)
 
@@ -35,12 +35,12 @@ See [skyspell_core](https://github.com/your-tools/skyspell/blob/main/crates/core
 
 # 1.0.2 (2023-04-25)
 
-* Bump `skyspell_core` to v2.0.0
+- Bump `skyspell_core` to v2.0.0
 
 # 1.0.1 (2022-11-12)
 
-* Bump dependencies
-* Update metadata
+- Bump dependencies
+- Update metadata
 
 # 1.0.0 (2022-07-17)
 
@@ -79,7 +79,7 @@ baz in a sqlite or in the configuration file, which is why both
 
 # 0.8.1 (2022-03-12)
 
-* Handle Python string prefixes, like in `f'input`
+- Handle Python string prefixes, like in `f'input`
 
 # 0.8.0 (2022-02-19)
 
@@ -112,35 +112,35 @@ current working directory.
 
 # 0.7.1 (2022-02-12)
 
-* Remove `--aspell` option and `aspell` support. Additional complexity to avoid
+- Remove `--aspell` option and `aspell` support. Additional complexity to avoid
   going through Enchant does not seems worth it.
-* Tweak skyspell cli output
+- Tweak skyspell cli output
 
 # 0.7.0 (2022-02-12)
 
-* **Breaking** Split code into separate crates. This means you now need to install `skyspell_kak` in
+- **Breaking** Split code into separate crates. This means you now need to install `skyspell_kak` in
   order to use the Kakoune integration.
-* **Breaking** Remove `skyspell_underline_errors` option. We now use a specific SellingError face
+- **Breaking** Remove `skyspell_underline_errors` option. We now use a specific SellingError face
   and users can change the default value if needed.
 
 ## Internal
 
-* Use `kak_quoted_buflist` instead of `kak_buflist`
-* Bump to clap 3.0
-* Switch from `chrono` to `time`
+- Use `kak_quoted_buflist` instead of `kak_buflist`
+- Bump to clap 3.0
+- Switch from `chrono` to `time`
 
 # 0.6.1 (2021-11-01)
 
-* Bump to Rust 2021 edition
-* Fix splitting text in tokens when an abbreviation is in the middle of
+- Bump to Rust 2021 edition
+- Fix splitting text in tokens when an abbreviation is in the middle of
   the identifier
-* Fix when using latest Kakoune
-* Improve error message when trying to spell check binary files
+- Fix when using latest Kakoune
+- Improve error message when trying to spell check binary files
 
 # 0.6.0 (2021-10-15)
 
-* **Breaking**: The `SKYSPELL_DB_PATH` environment variable is no longer taken into account
-* **Breaking**: Change syntax for kakoune integration:
+- **Breaking**: The `SKYSPELL_DB_PATH` environment variable is no longer taken into account
+- **Breaking**: Change syntax for kakoune integration:
 
 ```diff
   evaluate-commands %sh{
@@ -149,50 +149,50 @@ current working directory.
   }
 ```
 
-* Better error message when files contain invalid UTF-8 data
-* Add option `skyspell_underline_errors` : to use curly underline red
+- Better error message when files contain invalid UTF-8 data
+- Add option `skyspell_underline_errors` : to use curly underline red
   for spelling errors. Requires kakoune > 2021.08.28 (after
   [this commit](https://github.com/mawww/kakoune/commit/3fc8e29d101b4f6eef2538cdbe799bab9859f4b3)
 
 # 0.5.0 (2021-09-16)
 
-* Implement "undo" for the interactive checker
-* Improve performance
-* Improve error handling
-* Improve test coverage
-* Properly parse "doesn't", "it's" and the like
-* Fix bug regarding case sensitivity
-* Be a bit more verbose when spell checking a project
-* When trying to remove items from the repository, tell user if the item
+- Implement "undo" for the interactive checker
+- Improve performance
+- Improve error handling
+- Improve test coverage
+- Properly parse "doesn't", "it's" and the like
+- Fix bug regarding case sensitivity
+- Be a bit more verbose when spell checking a project
+- When trying to remove items from the repository, tell user if the item
   was already absent instead of silently doing nothing.
 
 ## Kakoune integration
 
-* Add end-to-end testing using kitty's remote protocol and pytest
-* Display errors in the status bar
-* Display an error message when no suggestions are found
-* Tell user when they are calling `suggest` and the selection is not an error
-* Tell user when the selection is blank
-* Add `undo` hook for the `*spelling*` buffer
+- Add end-to-end testing using kitty's remote protocol and pytest
+- Display errors in the status bar
+- Display an error message when no suggestions are found
+- Tell user when they are calling `suggest` and the selection is not an error
+- Tell user when the selection is blank
+- Add `undo` hook for the `*spelling*` buffer
 
 # 0.4.0 (2021-06-15)
 
 ## Add support for projects
 
-* File paths are now relative to the project root
-* You can ignore words for a given project instead of globally
+- File paths are now relative to the project root
+- You can ignore words for a given project instead of globally
 
 # 0.3.0 (2021-06-12)
 
-* Allow to unskip paths and file names
-* Better handling of `\` in source files
+- Allow to unskip paths and file names
+- Better handling of `\` in source files
 
 ## Kakoune integration
 
-* Use `a` to add to global ignore instead of `g` (it breaks `ga`)
-* Check all open buffers, not just the current one
-* Implement `next` and `previous`
-* Use a `kak` subcommand instead of guessing whether we are called
+- Use `a` to add to global ignore instead of `g` (it breaks `ga`)
+- Check all open buffers, not just the current one
+- Implement `next` and `previous`
+- Use a `kak` subcommand instead of guessing whether we are called
   from Kakoune.
 
 # 0.2.1 (2021-05-28)
@@ -201,16 +201,14 @@ Fix project metadata
 
 # 0.2.0 (2021-05-28)
 
-* Allow adding words to a global ignore list or by extension
-* Add a non-interactive mode
-* Allow to skip file names or file paths
-* Check for good words with Enchant
-* Support languages other than English
-* Add support for suggestions
-* Add Kakoune integration
+- Allow adding words to a global ignore list or by extension
+- Add a non-interactive mode
+- Allow to skip file names or file paths
+- Check for good words with Enchant
+- Support languages other than English
+- Add support for suggestions
+- Add Kakoune integration
 
 # 0.1.0 (2021-05-18)
 
 Initial release
-
-

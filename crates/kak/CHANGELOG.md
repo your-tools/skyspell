@@ -1,7 +1,7 @@
 # 3.0.1 - (2025-01-19)
 
 Revert the change from 'a' to 'g' when using the `*spelling*` buffer to
-add a word to the global ignore list -  it conflicts with other useful
+add a word to the global ignore list - it conflicts with other useful
 'g' commands like `ga`.
 
 # 3.0.0 (2025-01-06)
@@ -32,7 +32,6 @@ Bump `skyspell_core` to 2.0.0
 Bug fix: use a draft context when filling up the `*spelling*` buffer.
 Original patch by @micahh2
 
-
 # 1.0.1 (2022-11-12)
 
 Bug fix: using `.` after `skyspell-check` now works as expected.
@@ -54,12 +53,12 @@ your project.
 
 # 0.8.2 (2022-04-16)
 
-* Rename option `spell_errors` -> `skyspell_errors`
-* Reset skyspell options when using `skyspell-disable`
+- Rename option `spell_errors` -> `skyspell_errors`
+- Reset skyspell options when using `skyspell-disable`
 
 # 0.8.1 (2022-03-12)
 
-* Handle Python string prefixes, like in `f'input`
+- Handle Python string prefixes, like in `f'input`
 
 # 0.8.0 (2022-02-19)
 
@@ -80,10 +79,8 @@ file we check, just when we find a spelling error.
 
 Note that you have to edit the file "by hand" now
 
-
 .8.0
+
 # 0.7.0 (2022-02-12)
 
 Initial release
-
-

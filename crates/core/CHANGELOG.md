@@ -43,7 +43,7 @@ But sometimes you need to skip a token completely, like if you have a base64 str
 
 ```js
 // in tests.js
-base64value = 'DeadBeef==';
+base64value = "DeadBeef==";
 ```
 
 In this case, you can skip the token in `skyspell-ignore.toml`, like this:
@@ -55,28 +55,26 @@ In this case, you can skip the token in `skyspell-ignore.toml`, like this:
 ]
 ```
 
-
 # 4.0.1 (2024-12-07)
 
-* Normalize 'lang' when reading/writing in the `global.toml` configuration file
-* Normalize relative paths when reading/writing in the `skyspell-ignore.toml` configuration file
-* Allow to specify `global.toml` path the `SKYSPELL_GLOBAL_PATH` environment variable
+- Normalize 'lang' when reading/writing in the `global.toml` configuration file
+- Normalize relative paths when reading/writing in the `skyspell-ignore.toml` configuration file
+- Allow to specify `global.toml` path the `SKYSPELL_GLOBAL_PATH` environment variable
 
 # 4.0.0 (2024-12-07)
 
-* Add support for Windows. The spell checking is done by using the Win32 APIs, instead of
+- Add support for Windows. The spell checking is done by using the Win32 APIs, instead of
   Enchant (which is hard to build and distribute on this platform)
 
 # 3.0.1 (2024-10-20)
 
-* Fix crate metadata
+- Fix crate metadata
 
 # 3.0.0 (2024-10-15)
 
 **Breaking** : remove SQL storage - all the ignore rules are now stored in plain `toml` files.
 
 New feature: allow to ignore words based on the current lang
-
 
 # 2.0.0 (2022-11-12)
 
@@ -116,8 +114,6 @@ which is invalid and caused subsequent calls to skyspell to fail.
 
 This has been fixed.
 
-
-
 # 1.0.0 (2022-07-17)
 
 ## Change in configuration file
@@ -127,6 +123,7 @@ configuration is now read from a [kdl](https://kdl.dev/) file named
 `skyspell-ignore.kdl`
 
 Before skyspell 1.0:
+
 ```
 # in .skyspell-ignore
 *.lock
@@ -174,25 +171,23 @@ extensions {
 # ...
 ```
 
-
 # 0.3.1 (2022-03-12)
 
-* Always skip `.skyspell-ignore`
+- Always skip `.skyspell-ignore`
 
 # 0.3.0 (2022-03-12)
 
-* Add `IgnoreFile`, `walker` (taken from `skyspell`)
-* Handle Python string prefixes, like in `f'input`
-* Remove `Interactor` and related code (moved to `skyspell`)
-
+- Add `IgnoreFile`, `walker` (taken from `skyspell`)
+- Handle Python string prefixes, like in `f'input`
+- Remove `Interactor` and related code (moved to `skyspell`)
 
 # 0.2.0 (2022-02-19)
 
-* Don't store files to skip in the skyspell database
+- Don't store files to skip in the skyspell database
 
 # 0.1.1 (2022-02-12)
 
-* Remove aspell C wrapper - this was a fun experiment, but the additional
+- Remove aspell C wrapper - this was a fun experiment, but the additional
   complexity is not worth it (plus I don't like maintaining unsafe code)
 
 Fix metadata
@@ -200,4 +195,3 @@ Fix metadata
 # 0.1.0 (2022-02-12)
 
 Initial release
-
