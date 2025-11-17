@@ -85,6 +85,10 @@ fn test_output() {
     app.checker.populate_result();
     let result = app.checker.spell_result;
     let path: &str = &one_path.to_string_lossy();
+
+    #[cfg(target_family = "windows")]
+    let path = &path.replace("/", "\\");
+
     let one_errors = &result.errors[path];
     let first_error = &one_errors[0];
     assert_eq!(first_error.word, "second");
