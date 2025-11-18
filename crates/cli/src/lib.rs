@@ -215,7 +215,6 @@ fn check(
     match output_format {
         OutputFormat::Text => {
             let mut checker = NonInteractiveChecker::new(project, dictionary, ignore_store, opts)?;
-            check_with(&mut checker, opts)?;
             let stats = check_with(&mut checker, opts)?;
             let FileStats { skipped, checked } = stats;
             info_3!("Checked {checked} files - {skipped} skipped");
