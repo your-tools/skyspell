@@ -15,5 +15,8 @@ RUN apt -y --update install \
     libenchant-2-2
 
 COPY --from=build /skyspell/target/release/skyspell /usr/bin
-VOLUME [ "/project" ]
+VOLUME [ "/project", "/global.toml" ]
+
+ENV SKYSPELL_GLOBAL_PATH=/global.toml
+
 ENTRYPOINT [ "/usr/bin/skyspell", "--lang", "en", "--project-path", "/project"]
