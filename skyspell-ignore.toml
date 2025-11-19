@@ -146,6 +146,14 @@ project = [
     "subcommand",
 ]
 "Cargo.toml" = ["lto"]
+Dockerfile = [
+    "ENTRYPOINT",
+    "WORKDIR",
+    "debian",
+    "libenchant",
+    "trixie",
+    "usr",
+]
 "README.md" = [
     "fn",
     "helllo",
