@@ -12,7 +12,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                os: [macos-latest, windows-latest]
+                os: [ubuntu-latest, macos-latest, windows-latest]
         steps:
             - name: Checkout code
               uses: actions/checkout@v5
@@ -23,6 +23,10 @@ jobs:
             - name: Install enchant (macOS)
               if: matrix.os == 'macos-latest'
               run: brew install enchant
+
+            - name: Install libenchant-dev (linux)
+              if: matrix.os == 'ubuntu-latest'
+              run: sudo apt install libenchant-2-dev
 
             - name: Run tests
               run: cargo test
