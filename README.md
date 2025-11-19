@@ -41,6 +41,16 @@ Then run:
 $ cargo install skyspell
 ```
 
+Alternatively, if you want fully-reproducible spell checking, you can
+use the provided docker image:
+
+```
+docker run \
+  -v $(pwd):/project \
+  -v </path/to/global.toml>:/global.toml \
+  git.dmerej.info/your-tools/skyspell:0.0.2 check --non-interactive
+```
+
 ### On Windows
 
 Use the above method, or see the installation instructions in the "Releases" section on GitHub.

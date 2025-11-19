@@ -148,6 +148,7 @@ project = [
 "Cargo.toml" = ["lto"]
 Dockerfile = [
     "ENTRYPOINT",
+    "ENV",
     "WORKDIR",
     "debian",
     "libenchant",
@@ -160,6 +161,7 @@ Dockerfile = [
     "impl",
     "nextest",
     "png",
+    "pwd",
     "sh",
 ]
 "bacon.toml" = ["stdout"]
