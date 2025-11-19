@@ -1,3 +1,11 @@
+# 5.0.2 (2025-11-19)
+
+Bug fix: `skyspell check` was displaying errors twice
+
+## Other
+
+Add CI for macOS and Windows
+
 # 5.0.1 (2025-11-17)
 
 Bump `cargo-dist` to 0.30.2
