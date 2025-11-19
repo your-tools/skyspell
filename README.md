@@ -4,36 +4,36 @@ A fast and handy spell checker for the command line.
 
 ## Features
 
-* Handy command line interface
-* Leverages the excellent [enchant](https://abiword.github.io/enchant/) library,
+- Handy command line interface
+- Leverages the excellent [enchant](https://abiword.github.io/enchant/) library,
   so compatible with existing providers and dictionaries
-* Hand-made tokenizer, which means
-   * it can parse `camelCase` , `snake_case` identifiers
-   * it knows how to skip URLs, sha1s and the like
-   * it handles abbreviations like in `HTTPError`
-   * ... and more!
-* Global ignore list
-* Ignore list per file extension (like `fn` for `.rs`), projects, or
+- Hand-made tokenizer, which means
+  - it can parse `camelCase` , `snake_case` identifiers
+  - it knows how to skip URLs, sha1s and the like
+  - it handles abbreviations like in `HTTPError`
+  - ... and more!
+- Global ignore list
+- Ignore list per file extension (like `fn` for `.rs`), projects, or
   relative path inside projects
-* Skip list per file names (like always skipping files named `Cargo.lock`)
-* Skip list per relative path inside a project (like `image.svg`)
-* All of the above are stored in a toml files, which makes it easy to backup/restore
+- Skip list per file names (like always skipping files named `Cargo.lock`)
+- Skip list per relative path inside a project (like `image.svg`)
+- All of the above are stored in a toml files, which makes it easy to backup/restore
   your ignore rules, or use them for CI.
-* Editor integrations:
-  * [Kakoune](https://github.com/your-tools/skyspell/blob/main/crates/kak/README.md)
-  * [VSCode](https://github.com/your-tools/skyspell-vscode/)
+- Editor integrations:
+  - [Kakoune](https://github.com/your-tools/skyspell/blob/main/crates/kak/README.md)
+  - [VSCode](https://github.com/your-tools/skyspell-vscode/)
 
 ## Installation
 
-### On Linux 
+### On Linux
 
 You will need:
 
-* The C Enchant library installed, with its development headers
-* One of Enchant's backends (aspell, hunspell, nuspell)
-* A dictionary for the language you'll be using matching one of
+- The C Enchant library installed, with its development headers
+- One of Enchant's backends (aspell, hunspell, nuspell)
+- A dictionary for the language you'll be using matching one of
   the above backends (like `aspell-en` or `hunspell-fr`).
-* `cargo`
+- `cargo`
 
 Then run:
 
@@ -95,12 +95,12 @@ Note that skyspell will honor `XDG_DATA_DIR` when looking for the global file.
 
 ## Excluding files from the check
 
-Note that by default, skyspell will try to read *every* file in the
+Note that by default, skyspell will try to read _every_ file in the
 project, or if the project is using git, every file not ignored by git.
 This may include for instance binary files.
 
 To prevent skyspell from trying to read those files, create a
-`skyspell-ignore.toml` file  at the root of your project containing
+`skyspell-ignore.toml` file at the root of your project containing
 something like this:
 
 ```toml
@@ -109,7 +109,6 @@ patterns = [
    "logo.png ",
 ]
 ```
-
 
 ## Comparison with scspell
 
@@ -125,4 +124,3 @@ spell provider.
 
 On the other hand, scspell can apply replacements in a file automatically,
 a feature `skyspell` does not have.
-
