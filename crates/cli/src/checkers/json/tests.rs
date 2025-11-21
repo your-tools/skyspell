@@ -25,7 +25,7 @@ impl TestApp {
 
     fn to_relative_path(&self, path: &str) -> RelativePath {
         let project_path = self.checker.project.path();
-        let path = project_path.as_ref().join(path);
+        let path = project_path.join(path);
         RelativePath::new(project_path, &path).unwrap()
     }
 }

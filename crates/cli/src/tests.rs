@@ -41,17 +41,17 @@ impl TestApp {
     }
 
     fn ensure_file(&self, file_name: &str) -> (PathBuf, RelativePath) {
-        let full_path = self.project.path().as_ref().join(file_name);
+        let full_path = self.project.path().join(file_name);
         std::fs::write(&full_path, "").unwrap();
         let relative_path = self.project.get_relative_path(&full_path).unwrap();
         (full_path, relative_path)
     }
 
     fn run(self, args: &[&str]) -> Result<()> {
-        let project_path_as_str = self.project.as_str();
+        let project_path_string = self.project.path_string();
         let mut with_arg0 = vec!["skyspell"];
         with_arg0.push("--project-path");
-        with_arg0.push(&project_path_as_str);
+        with_arg0.push(&project_path_string);
         // Note: the --lang option here is not really used because we use a FakeDictionary
         // for testing but we still want to go trough the option parsing
         with_arg0.push("--lang");

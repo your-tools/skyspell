@@ -2,25 +2,13 @@
 #![allow(dead_code)] // we have a public core::tests module that is only used by tests
 use tempfile::TempDir;
 
-use crate::{IgnoreStore, ProjectPath, RelativePath};
+use crate::{IgnoreStore, RelativePath};
 
 pub mod fake_dictionary;
 pub mod fake_io;
 
 pub use fake_dictionary::FakeDictionary;
 pub use fake_io::FakeIO;
-
-pub fn new_project_path(temp_dir: &TempDir, name: &str) -> ProjectPath {
-    let path = temp_dir.path().join(name);
-    std::fs::create_dir_all(&path).unwrap();
-    ProjectPath::new(&path).unwrap()
-}
-
-pub fn new_relative_path(project_path: &ProjectPath, name: &'static str) -> RelativePath {
-    let rel_path = project_path.as_ref().join(name);
-    std::fs::write(&rel_path, "").unwrap();
-    RelativePath::new(project_path, &rel_path).unwrap()
-}
 
 pub(crate) fn get_test_dir() -> TempDir {
     tempfile::Builder::new()

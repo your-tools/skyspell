@@ -74,7 +74,7 @@ impl<D: Dictionary> Checker<D> for JsonChecker<D> {
         let start_column = column + 1;
         let token = error.word();
         let path = error.relative_path();
-        let full_path = self.project.path().as_ref().join(path.as_ref());
+        let full_path = self.project.path().join(path.as_ref());
         let end_column = start_column + token.chars().count() - 1;
         let range = Range {
             line,

@@ -15,7 +15,7 @@ impl FakeChecker {
 
     pub(crate) fn ensure_path(&self, relative_name: &str) -> RelativePath {
         let project_path = self.project.path();
-        let full_path = project_path.as_ref().join(relative_name);
+        let full_path = project_path.join(relative_name);
         std::fs::write(&full_path, "").unwrap();
         RelativePath::new(project_path, &full_path).unwrap()
     }
@@ -26,7 +26,7 @@ pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
     let project_path = temp_dir.path();
     let project = Project::new(project_path).unwrap();
     let mut fake_io = new_fake_io();
-    fake_io.set_option("skyspell_project", &project.as_str());
+    fake_io.set_option("skyspell_project", &project.path_string());
     let state_toml = temp_dir.path().join("state.toml");
     let global_toml = temp_dir.path().join("global.toml");
     let local_toml = temp_dir.path().join("skyspell.toml");

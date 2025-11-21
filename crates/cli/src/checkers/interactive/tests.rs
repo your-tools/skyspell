@@ -45,13 +45,13 @@ impl TestApp {
 
     fn to_relative_path(&self, path: &str) -> RelativePath {
         let project_path = self.checker.project.path();
-        let path = project_path.as_ref().join(path);
+        let path = project_path.join(path);
         RelativePath::new(project_path, &path).unwrap()
     }
 
     fn handle_token(&mut self, token: &str, relative_name: &str) {
         let project_path = self.checker.project().path();
-        let full_path = project_path.as_ref().join(relative_name);
+        let full_path = project_path.join(relative_name);
         std::fs::write(full_path, "").unwrap();
         let relative_path = self.to_relative_path(relative_name);
         self.checker

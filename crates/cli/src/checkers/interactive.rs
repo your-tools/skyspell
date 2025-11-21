@@ -75,7 +75,7 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
     ) -> Result<Self> {
         info_1!(
             "Checking project {} for spelling errors",
-            project.path().as_str().bold()
+            project.path_string().bold()
         );
         let state = CheckerState::load(state_toml)?;
         Ok(Self {

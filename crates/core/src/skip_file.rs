@@ -35,7 +35,7 @@ impl SkipFile {
 }
 
 pub fn walk(project: &Project) -> Result<Walk> {
-    Ok(WalkBuilder::new(project.path().as_ref()).build())
+    Ok(WalkBuilder::new(project.path()).build())
 }
 
 #[cfg(test)]

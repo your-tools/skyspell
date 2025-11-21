@@ -258,7 +258,7 @@ where
         }
     }
     if opts.include_git_edit_message {
-        let git_message = project.path().as_ref().join(".git/COMMIT_EDITMSG");
+        let git_message = project.path().join(".git/COMMIT_EDITMSG");
         if git_message.exists() {
             paths.push(git_message);
         }

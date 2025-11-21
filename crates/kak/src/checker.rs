@@ -36,7 +36,7 @@ impl<D: Dictionary, S: OperatingSystemIO> Checker<D> for KakouneChecker<D, S> {
         let pos = error.pos();
         let buffer = context;
         let path = error.relative_path();
-        let full_path = self.project.path().as_ref().join(path);
+        let full_path = self.project.path().join(path);
         let word = error.word();
         self.errors.push(Error {
             full_path,
@@ -112,7 +112,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
     }
 
     pub fn write_status(&self) {
-        let project_path = &self.project.path();
+        let project_path = &self.project.path_string();
         let errors_count = self.errors.len();
         self.print(&format!("set global skyspell_error_count {errors_count}\n"));
         match errors_count {

@@ -23,7 +23,7 @@ impl<D: Dictionary> NonInteractiveChecker<D> {
         if output_format.is_text() {
             info_1!(
                 "Checking project {} for spelling errors",
-                project.path().as_str().bold()
+                project.path_string().bold()
             );
         }
         Ok(Self {
