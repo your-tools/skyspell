@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
@@ -93,12 +92,8 @@ impl RelativePath {
         self.0.to_string_lossy().replace("\\", "/")
     }
 
-    pub fn file_name(&self) -> Option<Cow<'_, str>> {
-        self.0.file_name().map(|x| x.to_string_lossy())
-    }
-
-    pub fn extension(&self) -> Option<Cow<'_, str>> {
-        self.0.extension().map(|x| x.to_string_lossy())
+    pub fn extension(&self) -> Option<String> {
+        self.0.extension().map(|x| x.to_string_lossy().into_owned())
     }
 }
 
