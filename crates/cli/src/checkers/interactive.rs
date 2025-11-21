@@ -91,7 +91,8 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
     fn on_error(&mut self, path: &RelativePath, pos: (usize, usize), error: &str) -> Result<()> {
         let lang = self.dictionary().lang().to_owned();
         let (lineno, column) = pos;
-        let prefix = format!("{path}:{lineno}:{column}");
+        let path_string = path.normalize();
+        let prefix = format!("{path_string}:{lineno}:{column}");
         println!("{} {}", prefix, error.bold().red());
         let prompt = r#"What to do?
 g : Add word to global ignore list
@@ -156,7 +157,7 @@ q : Quit
     fn on_extension(&mut self, relative_path: &RelativePath, error: &str) -> Result<bool> {
         let extension = match relative_path.extension() {
             None => {
-                print_error!("{} has no extension", relative_path);
+                print_error!("{} has no extension", relative_path.normalize());
                 return Ok(false);
             }
             Some(e) => e,
@@ -195,7 +196,7 @@ q : Quit
         info_2!(
             "Added '{}' to the ignore list for path '{}'",
             error,
-            relative_path
+            relative_path.normalize()
         );
         Ok(true)
     }

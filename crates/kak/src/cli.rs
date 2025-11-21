@@ -183,6 +183,7 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
         let operation = Operation::new_ignore_for_path(word, &relative_path);
         self.checker.apply_operation(operation)?;
         self.recheck();
+        let relative_path = relative_path.normalize();
         self.print(&format!(
             "echo '\"{word}\" added to the ignore list for file: \"{relative_path}\"'"
         ));

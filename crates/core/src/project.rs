@@ -1,4 +1,3 @@
-use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, anyhow};
@@ -100,11 +99,5 @@ impl RelativePath {
 impl AsRef<Path> for RelativePath {
     fn as_ref(&self) -> &Path {
         &self.0
-    }
-}
-
-impl Display for RelativePath {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0.display())
     }
 }
