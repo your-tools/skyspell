@@ -131,27 +131,6 @@ struct SuggestOpts {
     word: String,
 }
 
-#[derive(Parser)]
-struct RemoveOpts {
-    #[clap(help = "The word to remove")]
-    word: String,
-
-    #[clap(
-        long,
-        help = "Remove word from the ignore list for the current project"
-    )]
-    project: bool,
-
-    #[clap(
-        long,
-        help = "Remove word from the ignore list for the given extension"
-    )]
-    extension: Option<String>,
-
-    #[clap(long, help = "Remove word from the ignore list for the given path")]
-    relative_path: Option<PathBuf>,
-}
-
 fn add(
     mut state: CheckerState,
     project: Project,
