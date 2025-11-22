@@ -21,7 +21,7 @@ pub struct KakouneError {
 }
 
 impl KakouneError {
-    fn from_error_and_buffer(error: &SpellingError, buffer: &str) -> Self {
+    fn new(error: &SpellingError, buffer: &str) -> Self {
         Self {
             inner: error.clone(),
             buffer: buffer.to_string(),
@@ -65,7 +65,7 @@ impl<D: Dictionary, S: OperatingSystemIO> Checker<D> for KakouneChecker<D, S> {
 
     fn handle_error(&mut self, error: &SpellingError, context: &Self::SourceContext) -> Result<()> {
         let buffer = context;
-        let error = KakouneError::from_error_and_buffer(error, buffer);
+        let error = KakouneError::new(error, buffer);
         self.errors.push(error);
         Ok(())
     }
