@@ -1,7 +1,7 @@
 use tempfile::TempDir;
 
 use crate::{
-    RelativePath,
+    Project,
     tests::{create_store, get_test_dir},
 };
 
@@ -81,9 +81,9 @@ fn test_ignored_for_project() {
 fn test_ignored_for_path() {
     let temp_dir = get_test_dir();
     let mut store = get_empty_store(&temp_dir);
-
-    let foo_py = RelativePath::from_path_unchecked(PathBuf::from("foo.py"));
-    let foo_rs = RelativePath::from_path_unchecked(PathBuf::from("foo.rs"));
+    let project = Project::new(temp_dir.path()).unwrap();
+    let foo_py = project.new_project_file("foo.py").unwrap();
+    let foo_rs = project.new_project_file("foo.rs").unwrap();
 
     store.ignore_for_path("foo", &foo_py).unwrap();
 
@@ -132,7 +132,8 @@ fn test_remove_ignored_for_extension_when_not_ignored() {
 fn test_remove_ignored_for_path_happy() {
     let temp_dir = get_test_dir();
     let mut store = get_empty_store(&temp_dir);
-    let foo_py = RelativePath::from_path_unchecked(PathBuf::from("foo.py"));
+    let project = Project::new(temp_dir.path()).unwrap();
+    let foo_py = project.new_project_file("foo.py").unwrap();
 
     store.ignore_for_path("foo", &foo_py).unwrap();
 
@@ -145,7 +146,8 @@ fn test_remove_ignored_for_path_happy() {
 fn test_remove_ignored_for_path_when_not_ignored() {
     let temp_dir = get_test_dir();
     let mut store = get_empty_store(&temp_dir);
-    let foo_py = RelativePath::from_path_unchecked(PathBuf::from("foo.py"));
+    let project = Project::new(temp_dir.path()).unwrap();
+    let foo_py = project.new_project_file("foo.py").unwrap();
 
     assert!(store.remove_ignored_for_path("foo", &foo_py).is_err());
 }
@@ -170,15 +172,12 @@ fn test_remove_ignored_for_project_when_not_ignored() {
     store.remove_ignored_for_project("foo").unwrap_err();
 }
 
-fn relative_path(path: &str) -> RelativePath {
-    RelativePath::from_path_unchecked(path.into())
-}
-
 #[test]
 fn test_should_ignore_global() {
     let temp_dir = get_test_dir();
     let mut store = get_empty_store(&temp_dir);
-    let foo_py = relative_path("foo.py");
+    let project = Project::new(temp_dir.path()).unwrap();
+    let foo_py = project.new_project_file("foo.py").unwrap();
 
     store.ignore("foo").unwrap();
 
@@ -189,7 +188,8 @@ fn test_should_ignore_global() {
 fn test_should_ignore_extension() {
     let temp_dir = get_test_dir();
     let mut store = get_empty_store(&temp_dir);
-    let foo_py = relative_path("foo.py");
+    let project = Project::new(temp_dir.path()).unwrap();
+    let foo_py = project.new_project_file("foo.py").unwrap();
 
     store.ignore_for_extension("foo", "py").unwrap();
 
@@ -200,7 +200,8 @@ fn test_should_ignore_extension() {
 fn test_should_ignore_path() {
     let temp_dir = get_test_dir();
     let mut store = get_empty_store(&temp_dir);
-    let foo_py = relative_path("foo.py");
+    let project = Project::new(temp_dir.path()).unwrap();
+    let foo_py = project.new_project_file("foo.py").unwrap();
 
     store.ignore_for_path("foo", &foo_py).unwrap();
 
@@ -211,7 +212,8 @@ fn test_should_ignore_path() {
 fn test_should_ignore_project() {
     let temp_dir = get_test_dir();
     let mut store = get_empty_store(&temp_dir);
-    let foo_py = relative_path("foo.py");
+    let project = Project::new(temp_dir.path()).unwrap();
+    let foo_py = project.new_project_file("foo.py").unwrap();
 
     store.ignore_for_project("foo").unwrap();
 
@@ -222,7 +224,8 @@ fn test_should_ignore_project() {
 fn test_should_ignore_lang() {
     let temp_dir = get_test_dir();
     let mut store = get_empty_store(&temp_dir);
-    let foo_py = relative_path("foo.py");
+    let project = Project::new(temp_dir.path()).unwrap();
+    let foo_py = project.new_project_file("foo.py").unwrap();
 
     store.ignore_for_lang("foo", "en").unwrap();
 
@@ -233,7 +236,8 @@ fn test_should_ignore_lang() {
 fn test_skip_tokens() {
     let temp_dir = get_test_dir();
     let mut store = get_empty_store(&temp_dir);
-    let foo_py = relative_path("foo.py");
+    let project = Project::new(temp_dir.path()).unwrap();
+    let foo_py = project.new_project_file("foo.py").unwrap();
 
     store.skip_token("SOMETHING", &foo_py).unwrap();
 

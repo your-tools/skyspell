@@ -30,12 +30,8 @@ impl Project {
         self.path.to_string_lossy().into_owned()
     }
 
-    pub fn as_relative_path(&self, path: &str) -> Result<RelativePath> {
-        RelativePath::new(&self.path, Path::new(path))
-    }
-
-    pub fn get_relative_path(&self, path: &Path) -> Result<RelativePath> {
-        RelativePath::new(&self.path, path)
+    pub fn new_project_file<P: AsRef<Path>>(&self, path: P) -> Result<ProjectFile> {
+        ProjectFile::new(self, path.as_ref())
     }
 
     pub fn ignore_path(&self) -> PathBuf {
@@ -60,44 +56,50 @@ impl Project {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RelativePath(PathBuf);
+pub struct ProjectFile {
+    name: String,
+    extension: Option<String>,
+    full_path: PathBuf,
+}
 
-impl RelativePath {
-    pub fn new(project_path: &Path, source_path: &Path) -> Result<Self> {
-        let source_path = std::path::absolute(source_path).with_context(|| {
+impl ProjectFile {
+    pub fn new(project: &Project, source_path: &Path) -> Result<Self> {
+        let project_path = project.path();
+        let full_path = std::path::absolute(source_path).with_context(|| {
             anyhow!(
                 "Could not make relative path absolute: {}",
                 source_path.display()
             )
         })?;
-        let path = pathdiff::diff_paths(&source_path, project_path).ok_or_else(|| {
+        let relative_path = pathdiff::diff_paths(&full_path, project_path).ok_or_else(|| {
             anyhow!(
                 "Could not diff paths '{}' and '{}'",
-                source_path.display(),
+                full_path.display(),
                 project_path.display(),
             )
         })?;
-        Ok(Self(path))
+        let extension = relative_path
+            .extension()
+            .map(|x| x.to_string_lossy().into_owned());
+        let name = relative_path.to_string_lossy().into_owned();
+        let name = name.replace("\\", "/");
+
+        Ok(Self {
+            name,
+            extension,
+            full_path,
+        })
     }
 
-    /// Returns a relative path without checking that
-    ///  - it's relative to an existing project
-    ///  - it exists
-    pub fn from_path_unchecked(path: PathBuf) -> Self {
-        Self(path)
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
-    pub fn normalize(&self) -> String {
-        self.0.to_string_lossy().replace("\\", "/")
+    pub fn extension(&self) -> Option<&str> {
+        self.extension.as_deref()
     }
 
-    pub fn extension(&self) -> Option<String> {
-        self.0.extension().map(|x| x.to_string_lossy().into_owned())
-    }
-}
-
-impl AsRef<Path> for RelativePath {
-    fn as_ref(&self) -> &Path {
-        &self.0
+    pub fn full_path(&self) -> &Path {
+        &self.full_path
     }
 }

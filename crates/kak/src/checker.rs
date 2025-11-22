@@ -35,11 +35,11 @@ impl<D: Dictionary, S: OperatingSystemIO> Checker<D> for KakouneChecker<D, S> {
     fn handle_error(&mut self, error: &SpellingError, context: &Self::SourceContext) -> Result<()> {
         let pos = error.pos();
         let buffer = context;
-        let path = error.relative_path();
-        let full_path = self.project.path().join(path);
+        let project_file = error.project_file();
+        let full_path = project_file.full_path();
         let word = error.word();
         self.errors.push(Error {
-            full_path,
+            full_path: full_path.to_path_buf(),
             pos,
             buffer: buffer.to_string(),
             token: word.to_string(),

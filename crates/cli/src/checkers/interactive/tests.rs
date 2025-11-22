@@ -1,7 +1,7 @@
 use super::InteractiveChecker;
 use crate::tests::FakeInteractor;
 use skyspell_core::tests::FakeDictionary;
-use skyspell_core::{Checker, IgnoreStore, Project, RelativePath};
+use skyspell_core::{Checker, IgnoreStore, Project, ProjectFile};
 use tempfile::TempDir;
 
 type TestChecker = InteractiveChecker<FakeInteractor, FakeDictionary>;
@@ -43,19 +43,19 @@ impl TestApp {
         self.checker.interactor.push_text(answer)
     }
 
-    fn to_relative_path(&self, path: &str) -> RelativePath {
+    fn new_project_file(&self, path: &str) -> ProjectFile {
         let project_path = self.checker.project.path();
         let path = project_path.join(path);
-        RelativePath::new(project_path, &path).unwrap()
+        ProjectFile::new(self.checker.project(), &path).unwrap()
     }
 
     fn handle_token(&mut self, token: &str, relative_name: &str) {
         let project_path = self.checker.project().path();
         let full_path = project_path.join(relative_name);
         std::fs::write(full_path, "").unwrap();
-        let relative_path = self.to_relative_path(relative_name);
+        let project_file = self.new_project_file(relative_name);
         self.checker
-            .handle_token(token, &relative_path, (3, 42), &())
+            .handle_token(token, &project_file, (3, 42), &())
             .unwrap()
     }
 
@@ -78,7 +78,7 @@ impl TestApp {
     }
 
     fn is_ignored_for_path(&mut self, word: &str, relative_name: &str) -> bool {
-        let relative_path = self.to_relative_path(relative_name);
+        let relative_path = self.new_project_file(relative_name);
         self.checker
             .ignore_store()
             .is_ignored_for_path(word, &relative_path)

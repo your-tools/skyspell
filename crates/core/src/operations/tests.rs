@@ -1,4 +1,9 @@
-use crate::tests::{get_empty_store, get_test_dir, relative_path};
+use std::path::PathBuf;
+
+use crate::{
+    Project,
+    tests::{get_empty_store, get_test_dir},
+};
 
 use super::*;
 
@@ -32,7 +37,9 @@ fn test_undo_ignore_for_extension() {
 fn test_undo_ignore_for_path() {
     let temp_dir = get_test_dir();
     let mut store = get_empty_store(&temp_dir);
-    let foo_py = relative_path("foo.py");
+    let project = Project::new(temp_dir.path()).unwrap();
+    let foo_py = PathBuf::from("foo.py");
+    let foo_py = ProjectFile::new(&project, &foo_py).unwrap();
     let mut operation = Operation::new_ignore_for_path("foo", &foo_py);
     operation.execute(&mut store).unwrap();
     assert!(store.is_ignored_for_path("foo", &foo_py));

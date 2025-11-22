@@ -7,7 +7,7 @@ use std::{
 };
 use toml;
 
-use crate::RelativePath;
+use crate::ProjectFile;
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct GlobalIgnore {
@@ -117,7 +117,7 @@ impl IgnoreStore {
     //
     // Otherwise, it's *not* ignored and the Checker will call handle_error()
     //
-    pub fn should_ignore(&self, word: &str, relative_path: &RelativePath, lang: &str) -> bool {
+    pub fn should_ignore(&self, word: &str, relative_path: &ProjectFile, lang: &str) -> bool {
         if self.is_ignored(word) {
             return true;
         }
@@ -127,7 +127,7 @@ impl IgnoreStore {
         }
 
         if let Some(e) = relative_path.extension()
-            && self.is_ignored_for_extension(word, &e)
+            && self.is_ignored_for_extension(word, e)
         {
             return true;
         }
@@ -246,9 +246,9 @@ impl IgnoreStore {
         self.save_local()
     }
 
-    pub fn ignore_for_path(&mut self, word: &str, relative_path: &RelativePath) -> Result<()> {
-        let path: &str = &relative_path.normalize();
-        let for_path = self.local.paths.get_mut(path);
+    pub fn ignore_for_path(&mut self, word: &str, relative_path: &ProjectFile) -> Result<()> {
+        let name = relative_path.name();
+        let for_path = self.local.paths.get_mut(name);
         match for_path {
             Some(s) => {
                 s.insert(word.to_owned());
@@ -256,24 +256,24 @@ impl IgnoreStore {
             None => {
                 let mut set = BTreeSet::new();
                 set.insert(word.to_owned());
-                self.local.paths.insert(path.to_owned(), set);
+                self.local.paths.insert(name.to_owned(), set);
             }
         };
         self.save_local()
     }
 
-    pub fn is_ignored_for_path(&self, word: &str, relative_path: &RelativePath) -> bool {
-        let path: &str = &relative_path.normalize();
-        let for_path = self.local.paths.get(path);
+    pub fn is_ignored_for_path(&self, word: &str, project_file: &ProjectFile) -> bool {
+        let name = project_file.name();
+        let for_path = self.local.paths.get(name);
         match for_path {
             Some(s) => s.contains(word),
             None => false,
         }
     }
 
-    pub fn skip_token(&mut self, token: &str, relative_path: &RelativePath) -> Result<()> {
-        let path: &str = &relative_path.normalize();
-        let for_path = self.local.skipped.get_mut(path);
+    pub fn skip_token(&mut self, token: &str, project_file: &ProjectFile) -> Result<()> {
+        let name = project_file.name();
+        let for_path = self.local.skipped.get_mut(name);
         match for_path {
             Some(s) => {
                 s.insert(token.to_owned());
@@ -281,16 +281,16 @@ impl IgnoreStore {
             None => {
                 let mut set = BTreeSet::new();
                 set.insert(token.to_owned());
-                self.local.skipped.insert(path.to_owned(), set);
+                self.local.skipped.insert(name.to_owned(), set);
             }
         };
         dbg!(&self.local.skipped);
         self.save_local()
     }
 
-    pub fn skipped_tokens(&self, relative_path: &RelativePath) -> Vec<String> {
-        let path: &str = &relative_path.normalize();
-        let for_path = self.local.skipped.get(path);
+    pub fn skipped_tokens(&self, project_file: &ProjectFile) -> Vec<String> {
+        let name = project_file.name();
+        let for_path = self.local.skipped.get(name);
         match for_path {
             Some(s) => s.iter().map(|s| s.to_owned()).collect(),
             None => vec![],
@@ -300,14 +300,14 @@ impl IgnoreStore {
     pub fn remove_ignored_for_path(
         &mut self,
         word: &str,
-        relative_path: &crate::RelativePath,
+        project_file: &ProjectFile,
     ) -> Result<()> {
-        let path: &str = &relative_path.normalize();
-        match self.local.paths.get_mut(path) {
+        let name = project_file.name();
+        match self.local.paths.get_mut(name) {
             Some(set) => {
                 set.remove(word);
             }
-            None => bail!("{word} is not ignored path {path}"),
+            None => bail!("{word} is not ignored path {name}"),
         }
         self.save_local()
     }

@@ -7,7 +7,7 @@ use ignore::{Walk, WalkBuilder};
 
 use crate::LocalIgnore;
 use crate::project::SKYSPELL_LOCAL_IGNORE;
-use crate::{Project, RelativePath};
+use crate::{Project, ProjectFile};
 
 #[derive(Debug, Clone)]
 pub struct SkipFile(Gitignore);
@@ -24,12 +24,12 @@ impl SkipFile {
         Ok(Self(gitignore_builder.build()?))
     }
 
-    pub fn is_skipped(&self, relative_path: &RelativePath) -> bool {
-        if relative_path.normalize().ends_with(SKYSPELL_LOCAL_IGNORE) {
+    pub fn is_skipped(&self, project_file: &ProjectFile) -> bool {
+        if project_file.name().ends_with(SKYSPELL_LOCAL_IGNORE) {
             return true;
         }
         self.0
-            .matched_path_or_any_parents(relative_path, false)
+            .matched_path_or_any_parents(project_file.name(), false)
             .is_ignore()
     }
 }

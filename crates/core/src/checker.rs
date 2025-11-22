@@ -1,5 +1,5 @@
 use crate::{Dictionary, IgnoreStore, Operation, TokenProcessor};
-use crate::{Project, RelativePath};
+use crate::{Project, ProjectFile};
 use anyhow::{Context, Result, anyhow, bail};
 use directories_next::BaseDirs;
 use serde::{Deserialize, Serialize};
@@ -9,16 +9,16 @@ use std::path::{Path, PathBuf};
 
 pub struct SpellingError {
     pub word: String,
-    pub source_path: PathBuf,
+    pub project_file: ProjectFile,
     pub pos: (usize, usize),
 }
 
 impl SpellingError {
-    pub fn new(word: String, pos: (usize, usize), source_path: PathBuf) -> Self {
+    pub fn new(word: String, pos: (usize, usize), project_file: &ProjectFile) -> Self {
         Self {
             word,
             pos,
-            source_path,
+            project_file: project_file.clone(),
         }
     }
 
@@ -26,8 +26,8 @@ impl SpellingError {
         &self.word
     }
 
-    pub fn relative_path(&self) -> RelativePath {
-        RelativePath::from_path_unchecked(self.source_path.to_path_buf())
+    pub fn project_file(&self) -> &ProjectFile {
+        &self.project_file
     }
 
     pub fn pos(&self) -> (usize, usize) {
@@ -48,9 +48,9 @@ pub trait Checker<D: Dictionary> {
 
     fn project(&self) -> &Project;
 
-    fn to_relative_path(&self, path: &Path) -> Result<RelativePath> {
-        let project_path = self.project().path();
-        RelativePath::new(project_path, path)
+    #[deprecated]
+    fn to_project_file(&self, path: &Path) -> Result<ProjectFile> {
+        ProjectFile::new(self.project(), path)
     }
 
     // Were all the errors handled properly?
@@ -68,8 +68,8 @@ pub trait Checker<D: Dictionary> {
         context: &Self::SourceContext,
     ) -> Result<ProcessOutcome> {
         let skip_file = self.project().skip_file();
-        let relative_path = self.to_relative_path(source_path)?;
-        if skip_file.is_skipped(&relative_path) {
+        let project_file = ProjectFile::new(self.project(), source_path)?;
+        if skip_file.is_skipped(&project_file) {
             return Ok(ProcessOutcome::Skipped);
         }
         let file = File::open(source_path)?;
@@ -79,11 +79,11 @@ pub trait Checker<D: Dictionary> {
             .unwrap_or_default()
             .to_string_lossy();
         let mut token_processor = TokenProcessor::new(reader, &file_name);
-        let skipped_tokens = self.ignore_store().skipped_tokens(&relative_path);
+        let skipped_tokens = self.ignore_store().skipped_tokens(&project_file);
         token_processor.skip_tokens(&skipped_tokens);
         for token in token_processor {
             let token = token?;
-            self.handle_token(&token.text, &relative_path, token.pos, context)?;
+            self.handle_token(&token.text, &project_file, token.pos, context)?;
         }
         Ok(ProcessOutcome::Checked)
     }
@@ -93,7 +93,7 @@ pub trait Checker<D: Dictionary> {
     fn handle_token(
         &mut self,
         token: &str,
-        relative_path: &RelativePath,
+        project_file: &ProjectFile,
         pos: (usize, usize),
         context: &Self::SourceContext,
     ) -> Result<()> {
@@ -105,12 +105,11 @@ pub trait Checker<D: Dictionary> {
         }
         let should_ignore = self
             .ignore_store()
-            .should_ignore(token, relative_path, &lang);
+            .should_ignore(token, project_file, &lang);
         if should_ignore {
             return Ok(());
         }
-        let path = relative_path.as_ref();
-        let error = SpellingError::new(token.to_owned(), pos, path.to_path_buf());
+        let error = SpellingError::new(token.to_owned(), pos, project_file);
         self.handle_error(&error, context)?;
         Ok(())
     }

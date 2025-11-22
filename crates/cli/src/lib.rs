@@ -163,7 +163,7 @@ fn get_operation(
     ) {
         (None, None, false, None) => Operation::new_ignore(word),
         (Some(relative_path), None, false, None) => {
-            let relative_path = project.get_relative_path(relative_path)?;
+            let relative_path = project.new_project_file(relative_path)?;
             Operation::new_ignore_for_path(word, &relative_path)
         }
         (None, Some(e), false, None) => Operation::new_ignore_for_extension(word, e),

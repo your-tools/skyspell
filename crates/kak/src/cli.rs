@@ -7,6 +7,7 @@ use skyspell_core::Dictionary;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::Operation;
 use skyspell_core::Project;
+use skyspell_core::ProjectFile;
 use skyspell_core::SystemDictionary;
 use std::path::{Path, PathBuf};
 
@@ -179,13 +180,13 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
     fn add_file(&mut self) -> Result<()> {
         let LineSelection { path, word, .. } = &self.parse_line_selection()?;
         let project = &self.checker.project().clone();
-        let relative_path = project.as_relative_path(path)?;
-        let operation = Operation::new_ignore_for_path(word, &relative_path);
+        let project_file = project.new_project_file(path)?;
+        let operation = Operation::new_ignore_for_path(word, &project_file);
         self.checker.apply_operation(operation)?;
         self.recheck();
-        let relative_path = relative_path.normalize();
+        let file_name = project_file.name();
         self.print(&format!(
-            "echo '\"{word}\" added to the ignore list for file: \"{relative_path}\"'"
+            "echo '\"{word}\" added to the ignore list for file: \"{file_name}\"'"
         ));
         Ok(())
     }
@@ -253,9 +254,9 @@ impl<D: Dictionary, S: OperatingSystemIO> KakCli<D, S> {
                 continue;
             }
 
-            let relative_path = self.checker.to_relative_path(source_path)?;
+            let project_file = ProjectFile::new(self.checker.project(), source_path)?;
 
-            if relative_path.normalize().starts_with("..") {
+            if project_file.name().starts_with("..") {
                 // Buffer is outside the current project
                 continue;
             }

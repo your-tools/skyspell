@@ -1,4 +1,4 @@
-use skyspell_core::{Checker, IgnoreStore, Project, RelativePath, tests::FakeDictionary};
+use skyspell_core::{Checker, IgnoreStore, Project, ProjectFile, tests::FakeDictionary};
 use tempfile::TempDir;
 
 use crate::{JsonChecker, checkers::json::Range};
@@ -23,10 +23,10 @@ impl TestApp {
         Self { checker }
     }
 
-    fn to_relative_path(&self, path: &str) -> RelativePath {
+    fn new_project_file(&self, path: &str) -> ProjectFile {
         let project_path = self.checker.project.path();
         let path = project_path.join(path);
-        RelativePath::new(project_path, &path).unwrap()
+        ProjectFile::new(self.checker.project(), &path).unwrap()
     }
 }
 
@@ -47,7 +47,7 @@ last line";
     let foo_py_path = temp_dir.path().join("project/foo.py");
     std::fs::write(&foo_py_path, contents).unwrap();
 
-    let foo_py = app.to_relative_path("foo.py");
+    let foo_py = app.new_project_file("foo.py");
     app.checker
         .ignore_store()
         .skip_token("SKIP_THIS", &foo_py)

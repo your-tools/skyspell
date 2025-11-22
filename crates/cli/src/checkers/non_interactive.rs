@@ -38,12 +38,12 @@ impl<D: Dictionary> NonInteractiveChecker<D> {
     fn print_error(&self, error: &SpellingError) {
         let SpellingError {
             word,
-            source_path,
+            project_file,
             pos,
         } = error;
         let (line, col) = pos;
-        let path = source_path.to_string_lossy();
-        let prefix = format!("{path}:{line}:{col}");
+        let file_name = project_file.name();
+        let prefix = format!("{file_name}:{line}:{col}");
         match self.output_format {
             OutputFormat::Text => println!(
                 "{}: {}: {}: {}",

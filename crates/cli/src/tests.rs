@@ -1,7 +1,7 @@
 use super::*;
 
 use skyspell_core::tests::FakeDictionary;
-use skyspell_core::{RelativePath, SKYSPELL_LOCAL_IGNORE};
+use skyspell_core::{ProjectFile, SKYSPELL_LOCAL_IGNORE};
 
 use tempfile::TempDir;
 
@@ -40,11 +40,12 @@ impl TestApp {
         IgnoreStore::load(global_path, local_path).unwrap()
     }
 
-    fn ensure_file(&self, file_name: &str) -> (PathBuf, RelativePath) {
+    // TODO: return just the ProjectFile
+    fn ensure_file(&self, file_name: &str) -> ProjectFile {
         let full_path = self.project.path().join(file_name);
         std::fs::write(&full_path, "").unwrap();
-        let relative_path = self.project.get_relative_path(&full_path).unwrap();
-        (full_path, relative_path)
+
+        self.project.new_project_file(&full_path).unwrap()
     }
 
     fn run(self, args: &[&str]) -> Result<()> {
@@ -119,18 +120,18 @@ fn test_add_for_relative_path() {
         .tempdir()
         .unwrap();
     let app = TestApp::new(&temp_dir);
-    let (full_path, rel_path) = app.ensure_file("foo.txt");
+    let project_file = app.ensure_file("foo.txt");
 
     app.run(&[
         "add",
         "foo",
         "--relative-path",
-        &full_path.to_string_lossy(),
+        &project_file.full_path().to_string_lossy(),
     ])
     .unwrap();
 
     let store = TestApp::load_store(&temp_dir);
-    assert!(store.is_ignored_for_path("foo", &rel_path));
+    assert!(store.is_ignored_for_path("foo", &project_file));
 }
 
 #[test]
@@ -200,19 +201,21 @@ fn test_remove_for_relative_path() {
         .tempdir()
         .unwrap();
     let mut app = TestApp::new(&temp_dir);
-    let (full_path, rel_path) = app.ensure_file("foo.txt");
-    app.ignore_store.ignore_for_path("foo", &rel_path).unwrap();
+    let project_file = app.ensure_file("foo.txt");
+    app.ignore_store
+        .ignore_for_path("foo", &project_file)
+        .unwrap();
 
     app.run(&[
         "remove",
         "foo",
         "--relative-path",
-        &full_path.to_string_lossy(),
+        &project_file.full_path().to_string_lossy(),
     ])
     .unwrap();
 
     let store = TestApp::load_store(&temp_dir);
-    assert!(!store.is_ignored_for_path("foo", &rel_path));
+    assert!(!store.is_ignored_for_path("foo", &project_file));
 }
 
 #[test]
@@ -238,10 +241,10 @@ fn test_check_errors_in_two_files() {
         .tempdir()
         .unwrap();
     let mut app = TestApp::new(&temp_dir);
-    let (foo_full, _) = app.ensure_file("foo.md");
-    let (bar_full, _) = app.ensure_file("bar.md");
-    std::fs::write(foo_full, "This is foo").unwrap();
-    std::fs::write(bar_full, "This is bar and it contains baz").unwrap();
+    let foo_md = app.ensure_file("foo.md");
+    let bar_md = app.ensure_file("bar.md");
+    std::fs::write(foo_md.full_path(), "This is foo").unwrap();
+    std::fs::write(bar_md.full_path(), "This is bar and it contains baz").unwrap();
     for word in &["This", "is", "and", "it", "contains"] {
         app.dictionary.add_known(word);
     }
@@ -258,10 +261,10 @@ fn test_check_happy() {
         .tempdir()
         .unwrap();
     let mut app = TestApp::new(&temp_dir);
-    let (foo_full, _) = app.ensure_file("foo.md");
-    let (bar_full, _) = app.ensure_file("bar.md");
-    std::fs::write(foo_full, "This is fine").unwrap();
-    std::fs::write(bar_full, "This is also fine").unwrap();
+    let foo_md = app.ensure_file("foo.md");
+    let bar_md = app.ensure_file("bar.md");
+    std::fs::write(foo_md.full_path(), "This is fine").unwrap();
+    std::fs::write(bar_md.full_path(), "This is also fine").unwrap();
     for word in &["This", "is", "also", "fine"] {
         app.dictionary.add_known(word);
     }
@@ -300,8 +303,8 @@ fn test_reading_ignore_patterns_from_store() {
     .unwrap();
 
     let app = TestApp::new(&temp_dir);
-    let (foo_full, _) = app.ensure_file("foo.lock");
-    std::fs::write(foo_full, "error").unwrap();
+    let foo_lock = app.ensure_file("foo.lock");
+    std::fs::write(foo_lock.full_path(), "error").unwrap();
 
     app.run(&["check", "--non-interactive"]).unwrap();
 }

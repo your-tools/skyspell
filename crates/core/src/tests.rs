@@ -2,7 +2,7 @@
 #![allow(dead_code)] // we have a public core::tests module that is only used by tests
 use tempfile::TempDir;
 
-use crate::{IgnoreStore, RelativePath};
+use crate::IgnoreStore;
 
 pub mod fake_dictionary;
 pub mod fake_io;
@@ -28,8 +28,4 @@ pub(crate) fn create_store(temp_dir: &TempDir, global: &str, local: &str) -> Ign
 
 pub(crate) fn get_empty_store(temp_dir: &TempDir) -> IgnoreStore {
     create_store(temp_dir, "", "")
-}
-
-pub(crate) fn relative_path(path: &str) -> RelativePath {
-    RelativePath::from_path_unchecked(path.into())
 }

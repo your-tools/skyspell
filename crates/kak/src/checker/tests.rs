@@ -2,7 +2,7 @@ use super::*;
 
 use crate::kak::io::tests::new_fake_io;
 use skyspell_core::IgnoreStore;
-use skyspell_core::RelativePath;
+use skyspell_core::ProjectFile;
 use skyspell_core::tests::{FakeDictionary, FakeIO};
 use tempfile::TempDir;
 
@@ -13,11 +13,11 @@ impl FakeChecker {
         self.kakoune_io.get_output()
     }
 
-    pub(crate) fn ensure_path(&self, relative_name: &str) -> RelativePath {
+    pub(crate) fn ensure_path(&self, relative_name: &str) -> ProjectFile {
         let project_path = self.project.path();
         let full_path = project_path.join(relative_name);
         std::fs::write(&full_path, "").unwrap();
-        RelativePath::new(project_path, &full_path).unwrap()
+        ProjectFile::new(&self.project, &full_path).unwrap()
     }
 }
 
@@ -34,9 +34,8 @@ pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
     KakouneChecker::new(project, dictionary, ignore_store, fake_io, Some(state_toml)).unwrap()
 }
 
-fn make_error(word: &str, relative_path: &RelativePath, pos: (usize, usize)) -> SpellingError {
-    let source_path = relative_path.as_ref();
-    SpellingError::new(word.to_owned(), pos, source_path.to_path_buf())
+fn make_error(word: &str, project_file: &ProjectFile, pos: (usize, usize)) -> SpellingError {
+    SpellingError::new(word.to_owned(), pos, project_file)
 }
 
 #[test]
@@ -49,7 +48,9 @@ fn test_write_errors_in_spelling_buffer() {
     let hello_js = checker.ensure_path("hello.js");
     checker.ensure_path("hello.js");
     let error = make_error("foo", &hello_js, (2, 4));
-    checker.handle_error(&error, &hello_js.normalize()).unwrap();
+    checker
+        .handle_error(&error, &hello_js.name().to_owned())
+        .unwrap();
     checker.write_spelling_buffer();
     let actual = checker.get_output();
     let expected = format!(
@@ -71,13 +72,19 @@ fn test_write_errors_as_buffer_options() {
     let foo_js = checker.ensure_path("foo.js");
     let bar_js = checker.ensure_path("bar.js");
     let error = make_error("foo", &foo_js, (2, 4));
-    checker.handle_error(&error, &foo_js.normalize()).unwrap();
+    checker
+        .handle_error(&error, &foo_js.name().to_string())
+        .unwrap();
 
     let error = make_error("bar", &foo_js, (3, 6));
-    checker.handle_error(&error, &foo_js.normalize()).unwrap();
+    checker
+        .handle_error(&error, &foo_js.name().to_string())
+        .unwrap();
 
     let error = make_error("spam", &bar_js, (1, 5));
-    checker.handle_error(&error, &bar_js.normalize()).unwrap();
+    checker
+        .handle_error(&error, &bar_js.name().to_string())
+        .unwrap();
 
     let timestamp = 42;
     checker.write_ranges(timestamp);

@@ -3,7 +3,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::IgnoreStore;
-use crate::RelativePath;
+use crate::ProjectFile;
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq, Clone)]
 pub enum Operation {
@@ -26,7 +26,7 @@ impl Operation {
         })
     }
 
-    pub fn new_ignore_for_path(word: &str, relative_path: &RelativePath) -> Self {
+    pub fn new_ignore_for_path(word: &str, relative_path: &ProjectFile) -> Self {
         Self::IgnoreForPath(IgnoreForPath {
             word: word.to_string(),
             path: relative_path.clone(),
@@ -135,7 +135,7 @@ impl IgnoreForProject {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct IgnoreForPath {
     word: String,
-    path: RelativePath,
+    path: ProjectFile,
 }
 
 impl IgnoreForPath {

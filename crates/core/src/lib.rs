@@ -26,7 +26,7 @@ pub use dictionary::Dictionary;
 pub use ignore::{GlobalIgnore, IgnoreStore, LocalIgnore, global_path};
 pub use operations::Operation;
 pub use os_io::{OperatingSystemIO, StandardIO};
-pub use project::{Project, RelativePath, SKYSPELL_LOCAL_IGNORE};
+pub use project::{Project, ProjectFile, SKYSPELL_LOCAL_IGNORE};
 pub use skip_file::SkipFile;
 pub use tokens::TokenProcessor;
 pub(crate) mod checker;

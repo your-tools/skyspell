@@ -53,9 +53,9 @@ impl Checker<SystemDictionary> for ExampleChecker {
 
     fn handle_error(&mut self, error: &SpellingError, _context: &()) -> Result<()> {
         let (line, column) = error.pos();
-        let path = error.relative_path();
+        let project_file = error.project_file();
         let word = error.word();
-        println!("{}:{line}:{column} {word}", path.normalize());
+        println!("{}:{line}:{column} {word}", project_file.name());
         self.error_count += 1;
         Ok(())
     }

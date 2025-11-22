@@ -4,7 +4,7 @@ use anyhow::{Result, bail};
 use colored::*;
 use skyspell_core::{Checker, CheckerState, Dictionary, SpellingError};
 use skyspell_core::{IgnoreStore, Operation};
-use skyspell_core::{Project, RelativePath};
+use skyspell_core::{Project, ProjectFile};
 use std::collections::HashSet;
 use std::path::PathBuf;
 
@@ -55,8 +55,8 @@ impl<I: Interactor, D: Dictionary> Checker<D> for InteractiveChecker<I, D> {
         if self.skipped.contains(word) {
             return Ok(());
         }
-        let relative_path = error.relative_path();
-        self.on_error(&relative_path, (line, column), word)
+        let relative_path = error.project_file();
+        self.on_error(relative_path, (line, column), word)
     }
 
     fn apply_operation(&mut self, mut operation: Operation) -> Result<()> {
@@ -88,11 +88,16 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
         })
     }
 
-    fn on_error(&mut self, path: &RelativePath, pos: (usize, usize), error: &str) -> Result<()> {
+    fn on_error(
+        &mut self,
+        project_file: &ProjectFile,
+        pos: (usize, usize),
+        error: &str,
+    ) -> Result<()> {
         let lang = self.dictionary().lang().to_owned();
         let (lineno, column) = pos;
-        let path_string = path.normalize();
-        let prefix = format!("{path_string}:{lineno}:{column}");
+        let file_name = project_file.name();
+        let prefix = format!("{file_name}:{lineno}:{column}");
         println!("{} {}", prefix, error.bold().red());
         let prompt = r#"What to do?
 g : Add word to global ignore list
@@ -118,7 +123,7 @@ q : Quit
                     }
                 }
                 "e" => {
-                    if self.on_extension(path, error)? {
+                    if self.on_extension(project_file, error)? {
                         break;
                     }
                 }
@@ -128,7 +133,7 @@ q : Quit
                     }
                 }
                 "f" => {
-                    if self.on_file_ignore(error, path)? {
+                    if self.on_file_ignore(error, project_file)? {
                         break;
                     }
                 }
@@ -154,16 +159,16 @@ q : Quit
         Ok(true)
     }
 
-    fn on_extension(&mut self, relative_path: &RelativePath, error: &str) -> Result<bool> {
-        let extension = match relative_path.extension() {
+    fn on_extension(&mut self, project_file: &ProjectFile, error: &str) -> Result<bool> {
+        let extension = match project_file.extension() {
             None => {
-                print_error!("{} has no extension", relative_path.normalize());
+                print_error!("{} has no extension", project_file.name());
                 return Ok(false);
             }
             Some(e) => e,
         };
 
-        let operation = Operation::new_ignore_for_extension(error, &extension);
+        let operation = Operation::new_ignore_for_extension(error, extension);
         self.apply_operation(operation)?;
         info_2!(
             "Added '{}' to the ignore list for extension '{}'",
@@ -190,13 +195,13 @@ q : Quit
         Ok(true)
     }
 
-    fn on_file_ignore(&mut self, error: &str, relative_path: &RelativePath) -> Result<bool> {
-        let operation = Operation::new_ignore_for_path(error, relative_path);
+    fn on_file_ignore(&mut self, error: &str, project_file: &ProjectFile) -> Result<bool> {
+        let operation = Operation::new_ignore_for_path(error, project_file);
         self.apply_operation(operation)?;
         info_2!(
             "Added '{}' to the ignore list for path '{}'",
             error,
-            relative_path.normalize()
+            project_file.name()
         );
         Ok(true)
     }
