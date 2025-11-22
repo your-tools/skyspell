@@ -1,3 +1,5 @@
+#![deny(clippy::unwrap_used)]
+
 use std::path::PathBuf;
 
 use anyhow::Ok;

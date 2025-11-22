@@ -32,7 +32,10 @@ impl SystemDictionary {
             if known_lang == lang {
                 return Some(lang.to_string());
             }
-            let before = known_lang.split('_').next().unwrap();
+            let before = known_lang
+                .split('_')
+                .next()
+                .expect("split always yields on value");
             if before == lang {
                 return Some(known_lang.to_string());
             }

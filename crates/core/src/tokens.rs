@@ -173,17 +173,19 @@ impl<'input, 'skipped> Tokenizer<'input, 'skipped> {
         if first_char.is_uppercase() {
             // SCREAMING -> SCREAMING
             if let Some(captures) = CONSTANT_RE.captures(ident) {
-                // CONSTANT_RE contains at least one group, so this should
-                // not panic:
-                let res = captures.get(1).unwrap().as_str();
+                let res = captures
+                    .get(1)
+                    .expect("CONSTANTS_RE always captures one group")
+                    .as_str();
                 return Some((res, pos));
             }
 
             // HTTPError -> HTTP
             if let Some(captures) = ABBREV_RE.captures(ident) {
-                // ABBREV_RE contains at least one group, so this should
-                // not panic:
-                let res = captures.get(1).unwrap().as_str();
+                let res = captures
+                    .get(1)
+                    .expect("CONSTANTS_RE always captures one group")
+                    .as_str();
                 return Some((res, pos));
             }
 
@@ -220,8 +222,7 @@ impl<'input> Iterator for Tokenizer<'input, '_> {
         //   Then we extract words out of identifiers
         loop {
             let captures = TOKEN_RE.captures(&self.input[self.pos..])?;
-            // .get(0) should never panic
-            let token_match = captures.get(0).unwrap();
+            let token_match = captures.get(0).expect("TOKEN_RE contains one capture");
             let token = token_match.as_str();
             let start = token_match.range().start;
             if self.skipped.contains(token) {
@@ -355,12 +356,13 @@ impl<R: BufRead> Iterator for TokenProcessor<R> {
             match next_token {
                 None => {
                     let on_last_token = self.on_last_token();
-                    if let Err(e) = on_last_token {
-                        return Some(Err(e));
-                    }
-                    let is_end_of_file = on_last_token.unwrap();
-                    if is_end_of_file {
-                        return None;
+                    match on_last_token {
+                        Err(e) => return Some(Err(e)),
+                        Ok(is_end_of_file) => {
+                            if is_end_of_file {
+                                return None;
+                            }
+                        }
                     }
                 }
                 Some(token) => {

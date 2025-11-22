@@ -1,3 +1,4 @@
+#![deny(clippy::unwrap_used)]
 #[cfg(target_family = "unix")]
 #[path = "unix.rs"]
 mod kak;
