@@ -6,7 +6,6 @@ use skyspell_core::CheckerState;
 use skyspell_core::Dictionary;
 use skyspell_core::IgnoreStore;
 use skyspell_core::OperatingSystemIO;
-use skyspell_core::Operation;
 use skyspell_core::Project;
 use skyspell_core::ProjectFile;
 use skyspell_core::SpellingError;
@@ -87,11 +86,6 @@ impl<D: Dictionary, S: OperatingSystemIO> Checker<D> for KakouneChecker<D, S> {
 
     fn project(&self) -> &Project {
         &self.project
-    }
-
-    fn apply_operation(&mut self, mut operation: Operation) -> Result<()> {
-        operation.execute(&mut self.ignore_store)?;
-        self.state.set_last_operation(operation.clone())
     }
 
     fn state(&mut self) -> Option<&mut CheckerState> {
