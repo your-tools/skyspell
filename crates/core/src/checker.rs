@@ -162,10 +162,13 @@ impl CheckerState {
             Some(p) => p,
         };
         let inner: StateInner = if state_toml.exists() {
-            let contents = std::fs::read_to_string(&state_toml)
-                .with_context(|| format!("Could not read from {}", state_toml.display()))?;
-            toml::from_str(&contents)
-                .with_context(|| format!("Could not parse {}", state_toml.display()))?
+            let contents = std::fs::read_to_string(&state_toml)?;
+            let contents: &str = &contents;
+            let parsed = toml::from_str(contents);
+            // If parsing fails, just return a default value.
+            // The state file will get rewritten at the next operation
+            // anyway
+            parsed.unwrap_or_default()
         } else {
             Default::default()
         };
