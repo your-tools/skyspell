@@ -77,11 +77,11 @@ impl TestApp {
         self.checker.ignore_store().is_ignored_for_project(word)
     }
 
-    fn is_ignored_for_path(&mut self, word: &str, relative_name: &str) -> bool {
-        let relative_path = self.new_project_file(relative_name);
+    fn is_ignored_for_path(&mut self, word: &str, name: &str) -> bool {
+        let project_file = self.new_project_file(name);
         self.checker
             .ignore_store()
-            .is_ignored_for_path(word, &relative_path)
+            .is_ignored_for_path(word, &project_file)
     }
 
     fn end(&self) {

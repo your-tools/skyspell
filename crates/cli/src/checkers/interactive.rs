@@ -55,8 +55,8 @@ impl<I: Interactor, D: Dictionary> Checker<D> for InteractiveChecker<I, D> {
         if self.skipped.contains(word) {
             return Ok(());
         }
-        let relative_path = error.project_file();
-        self.on_error(relative_path, (line, column), word)
+        let project_file = error.project_file();
+        self.on_error(project_file, (line, column), word)
     }
 
     fn apply_operation(&mut self, mut operation: Operation) -> Result<()> {

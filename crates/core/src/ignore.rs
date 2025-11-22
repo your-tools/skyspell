@@ -117,7 +117,7 @@ impl IgnoreStore {
     //
     // Otherwise, it's *not* ignored and the Checker will call handle_error()
     //
-    pub fn should_ignore(&self, word: &str, relative_path: &ProjectFile, lang: &str) -> bool {
+    pub fn should_ignore(&self, word: &str, project_file: &ProjectFile, lang: &str) -> bool {
         if self.is_ignored(word) {
             return true;
         }
@@ -126,7 +126,7 @@ impl IgnoreStore {
             return true;
         }
 
-        if let Some(e) = relative_path.extension()
+        if let Some(e) = project_file.extension()
             && self.is_ignored_for_extension(word, e)
         {
             return true;
@@ -136,7 +136,7 @@ impl IgnoreStore {
             return true;
         }
 
-        if self.is_ignored_for_path(word, relative_path) {
+        if self.is_ignored_for_path(word, project_file) {
             return true;
         }
 
@@ -246,8 +246,8 @@ impl IgnoreStore {
         self.save_local()
     }
 
-    pub fn ignore_for_path(&mut self, word: &str, relative_path: &ProjectFile) -> Result<()> {
-        let name = relative_path.name();
+    pub fn ignore_for_path(&mut self, word: &str, project_file: &ProjectFile) -> Result<()> {
+        let name = project_file.name();
         let for_path = self.local.paths.get_mut(name);
         match for_path {
             Some(s) => {

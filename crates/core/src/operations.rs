@@ -26,10 +26,10 @@ impl Operation {
         })
     }
 
-    pub fn new_ignore_for_path(word: &str, relative_path: &ProjectFile) -> Self {
+    pub fn new_ignore_for_path(word: &str, project_file: &ProjectFile) -> Self {
         Self::IgnoreForPath(IgnoreForPath {
             word: word.to_string(),
-            path: relative_path.clone(),
+            project_file: project_file.clone(),
         })
     }
 
@@ -135,16 +135,16 @@ impl IgnoreForProject {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct IgnoreForPath {
     word: String,
-    path: ProjectFile,
+    project_file: ProjectFile,
 }
 
 impl IgnoreForPath {
     fn execute(&mut self, ignore_store: &mut IgnoreStore) -> Result<()> {
-        ignore_store.ignore_for_path(&self.word, &self.path)
+        ignore_store.ignore_for_path(&self.word, &self.project_file)
     }
 
     fn undo(&mut self, ignore_store: &mut IgnoreStore) -> Result<()> {
-        ignore_store.remove_ignored_for_path(&self.word, &self.path)
+        ignore_store.remove_ignored_for_path(&self.word, &self.project_file)
     }
 }
 

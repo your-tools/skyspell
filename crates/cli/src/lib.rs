@@ -89,7 +89,7 @@ struct OperationOpts {
     extension: Option<String>,
 
     #[clap(long, help = "for the given path")]
-    relative_path: Option<PathBuf>,
+    path: Option<PathBuf>,
 }
 
 #[derive(Debug, PartialEq, Eq, clap::ValueEnum, Clone, Copy, Default)]
@@ -155,16 +155,11 @@ fn get_operation(
     opts: &OperationOpts,
     word: &str,
 ) -> Result<Operation, anyhow::Error> {
-    let operation = match (
-        &opts.relative_path,
-        &opts.extension,
-        &opts.project,
-        &opts.lang,
-    ) {
+    let operation = match (&opts.path, &opts.extension, &opts.project, &opts.lang) {
         (None, None, false, None) => Operation::new_ignore(word),
-        (Some(relative_path), None, false, None) => {
-            let relative_path = project.new_project_file(relative_path)?;
-            Operation::new_ignore_for_path(word, &relative_path)
+        (Some(path), None, false, None) => {
+            let project_file = project.new_project_file(path)?;
+            Operation::new_ignore_for_path(word, &project_file)
         }
         (None, Some(e), false, None) => Operation::new_ignore_for_extension(word, e),
         (None, None, true, None) => Operation::new_ignore_for_project(word),

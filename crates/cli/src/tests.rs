@@ -114,7 +114,7 @@ fn test_add_for_extension() {
 }
 
 #[test]
-fn test_add_for_relative_path() {
+fn test_add_for_path() {
     let temp_dir = tempfile::Builder::new()
         .prefix("test-skyspell")
         .tempdir()
@@ -125,7 +125,7 @@ fn test_add_for_relative_path() {
     app.run(&[
         "add",
         "foo",
-        "--relative-path",
+        "--path",
         &project_file.full_path().to_string_lossy(),
     ])
     .unwrap();
@@ -195,7 +195,7 @@ fn test_remove_for_lang() {
 }
 
 #[test]
-fn test_remove_for_relative_path() {
+fn test_remove_for_path() {
     let temp_dir = tempfile::Builder::new()
         .prefix("test-skyspell")
         .tempdir()
@@ -209,7 +209,7 @@ fn test_remove_for_relative_path() {
     app.run(&[
         "remove",
         "foo",
-        "--relative-path",
+        "--path",
         &project_file.full_path().to_string_lossy(),
     ])
     .unwrap();

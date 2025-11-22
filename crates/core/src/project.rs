@@ -64,6 +64,10 @@ pub struct ProjectFile {
 
 impl ProjectFile {
     pub fn new(project: &Project, source_path: &Path) -> Result<Self> {
+        let extension = source_path
+            .extension()
+            .map(|x| x.to_string_lossy().into_owned());
+
         let project_path = project.path();
         let full_path = std::path::absolute(source_path).with_context(|| {
             anyhow!(
@@ -78,12 +82,8 @@ impl ProjectFile {
                 project_path.display(),
             )
         })?;
-        let extension = relative_path
-            .extension()
-            .map(|x| x.to_string_lossy().into_owned());
         let name = relative_path.to_string_lossy().into_owned();
         let name = name.replace("\\", "/");
-
         Ok(Self {
             name,
             extension,
