@@ -28,5 +28,5 @@ pub use operations::Operation;
 pub use os_io::{OperatingSystemIO, StandardIO};
 pub use project::{Project, ProjectFile, SKYSPELL_LOCAL_IGNORE};
 pub use skip_file::SkipFile;
-pub use tokens::TokenProcessor;
+pub use tokens::{Position, Token, TokenProcessor};
 pub(crate) mod checker;

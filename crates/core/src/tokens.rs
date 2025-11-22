@@ -240,24 +240,29 @@ impl<'input> Iterator for Tokenizer<'input, '_> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
+pub struct Position {
+    pub line: usize,
+    pub column: usize,
+}
+
 pub struct Token {
     pub text: String,
-    pub pos: (usize, usize),
+    pub position: Position,
 }
 
 impl Token {
-    pub(crate) fn new(text: &str, pos: (usize, usize)) -> Self {
+    pub(crate) fn new(text: &str, position: Position) -> Self {
         Self {
             text: text.to_string(),
-            pos,
+            position,
         }
     }
 
     fn cloned(&self) -> Self {
         Self {
             text: self.text.to_string(),
-            pos: self.pos,
+            position: self.position,
         }
     }
 }
@@ -330,7 +335,13 @@ impl<R: BufRead> TokenProcessor<R> {
         self.word_index = 0;
         let tokenizer = Tokenizer::new(&self.current_line, self.extract_mode, &self.skipped_tokens);
         self.current_tokens = tokenizer
-            .map(|(token, column)| Token::new(token, (self.line_index, column)))
+            .map(|(token, column)| {
+                let position = Position {
+                    line: self.line_index,
+                    column,
+                };
+                Token::new(token, position)
+            })
             .collect();
     }
 }

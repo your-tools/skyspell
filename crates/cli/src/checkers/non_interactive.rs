@@ -36,12 +36,9 @@ impl<D: Dictionary> NonInteractiveChecker<D> {
     }
 
     fn print_error(&self, error: &SpellingError) {
-        let SpellingError {
-            word,
-            project_file,
-            pos,
-        } = error;
-        let (line, col) = pos;
+        let word = error.word();
+        let project_file = error.project_file();
+        let (line, col) = (error.line(), error.column());
         let file_name = project_file.name();
         let prefix = format!("{file_name}:{line}:{col}");
         match self.output_format {

@@ -50,13 +50,11 @@ impl<I: Interactor, D: Dictionary> Checker<D> for InteractiveChecker<I, D> {
         error: &SpellingError,
         _context: &Self::SourceContext,
     ) -> Result<()> {
-        let (line, column) = error.pos();
         let word = error.word();
         if self.skipped.contains(word) {
             return Ok(());
         }
-        let project_file = error.project_file();
-        self.on_error(project_file, (line, column), word)
+        self.on_error(error)
     }
 
     fn apply_operation(&mut self, mut operation: Operation) -> Result<()> {
@@ -88,17 +86,14 @@ impl<I: Interactor, D: Dictionary> InteractiveChecker<I, D> {
         })
     }
 
-    fn on_error(
-        &mut self,
-        project_file: &ProjectFile,
-        pos: (usize, usize),
-        error: &str,
-    ) -> Result<()> {
+    fn on_error(&mut self, error: &SpellingError) -> Result<()> {
         let lang = self.dictionary().lang().to_owned();
-        let (lineno, column) = pos;
-        let file_name = project_file.name();
+        let (lineno, column) = (error.line(), error.column());
+        let project_file = error.project_file();
+        let file_name = &project_file.name();
+        let word = error.word();
         let prefix = format!("{file_name}:{lineno}:{column}");
-        println!("{} {}", prefix, error.bold().red());
+        println!("{} {}", prefix, word.bold().red());
         let prompt = r#"What to do?
 g : Add word to global ignore list
 l : Add word to the ignore list for the current language
@@ -113,27 +108,27 @@ q : Quit
             let letter = self.interactor.input_letter(prompt, "glepfnsxq");
             match letter.as_ref() {
                 "g" => {
-                    if self.on_global_ignore(error)? {
+                    if self.on_global_ignore(word)? {
                         break;
                     }
                 }
                 "l" => {
-                    if self.on_lang(error, &lang)? {
+                    if self.on_lang(word, &lang)? {
                         break;
                     }
                 }
                 "e" => {
-                    if self.on_extension(project_file, error)? {
+                    if self.on_extension(project_file, word)? {
                         break;
                     }
                 }
                 "p" => {
-                    if self.on_project_ignore(error)? {
+                    if self.on_project_ignore(word)? {
                         break;
                     }
                 }
                 "f" => {
-                    if self.on_file_ignore(error, project_file)? {
+                    if self.on_file_ignore(word, project_file)? {
                         break;
                     }
                 }
@@ -141,7 +136,7 @@ q : Quit
                     bail!("Interrupted by user")
                 }
                 "x" => {
-                    self.skipped.insert(error.to_string());
+                    self.skipped.insert(word.to_string());
                     break;
                 }
                 _ => {

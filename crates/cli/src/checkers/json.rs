@@ -70,7 +70,7 @@ impl<D: Dictionary> Checker<D> for JsonChecker<D> {
         error: &SpellingError,
         _context: &Self::SourceContext,
     ) -> Result<()> {
-        let (line, column) = error.pos();
+        let (line, column) = (error.line(), error.column());
         let start_column = column + 1;
         let token = error.word();
         let project_file = error.project_file();

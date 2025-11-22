@@ -52,7 +52,7 @@ impl Checker<SystemDictionary> for ExampleChecker {
     }
 
     fn handle_error(&mut self, error: &SpellingError, _context: &()) -> Result<()> {
-        let (line, column) = error.pos();
+        let (line, column) = (error.line(), error.column());
         let project_file = error.project_file();
         let word = error.word();
         println!("{}:{line}:{column} {word}", project_file.name());

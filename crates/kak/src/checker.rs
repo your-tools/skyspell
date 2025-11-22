@@ -8,14 +8,46 @@ use skyspell_core::IgnoreStore;
 use skyspell_core::OperatingSystemIO;
 use skyspell_core::Operation;
 use skyspell_core::Project;
+use skyspell_core::ProjectFile;
 use skyspell_core::SpellingError;
 use std::path::PathBuf;
 
-pub struct Error {
-    pub pos: (usize, usize),
-    pub buffer: String,
-    pub full_path: PathBuf,
-    pub token: String,
+// The kakoune extension needs to track from which
+// buffer the spelling errors come, so we
+// wrap the original SpellingError in a struct
+// alongside the buffer name
+pub struct KakouneError {
+    inner: SpellingError,
+    buffer: String,
+}
+
+impl KakouneError {
+    fn from_error_and_buffer(error: &SpellingError, buffer: &str) -> Self {
+        Self {
+            inner: error.clone(),
+            buffer: buffer.to_string(),
+        }
+    }
+
+    fn buffer(&self) -> &str {
+        &self.buffer
+    }
+
+    fn word(&self) -> &str {
+        self.inner.word()
+    }
+
+    fn line(&self) -> usize {
+        self.inner.line()
+    }
+
+    fn column(&self) -> usize {
+        self.inner.column()
+    }
+
+    fn project_file(&self) -> &ProjectFile {
+        self.inner.project_file()
+    }
 }
 
 pub struct KakouneChecker<D: Dictionary, S: OperatingSystemIO> {
@@ -23,7 +55,7 @@ pub struct KakouneChecker<D: Dictionary, S: OperatingSystemIO> {
     ignore_store: IgnoreStore,
     project: Project,
     dictionary: D,
-    errors: Vec<Error>,
+    errors: Vec<KakouneError>,
     state: CheckerState,
 }
 
@@ -33,17 +65,9 @@ impl<D: Dictionary, S: OperatingSystemIO> Checker<D> for KakouneChecker<D, S> {
     type SourceContext = String;
 
     fn handle_error(&mut self, error: &SpellingError, context: &Self::SourceContext) -> Result<()> {
-        let pos = error.pos();
         let buffer = context;
-        let project_file = error.project_file();
-        let full_path = project_file.full_path();
-        let word = error.word();
-        self.errors.push(Error {
-            full_path: full_path.to_path_buf(),
-            pos,
-            buffer: buffer.to_string(),
-            token: word.to_string(),
-        });
+        let error = KakouneError::from_error_and_buffer(error, buffer);
+        self.errors.push(error);
         Ok(())
     }
 
@@ -152,15 +176,11 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
         self.print("<esc>}\n");
     }
 
-    fn write_error(&self, error: &Error) {
-        let Error {
-            pos,
-            token,
-            full_path,
-            ..
-        } = error;
-        let (line, start) = pos;
-        let end = start + token.len();
+    fn write_error(&self, error: &KakouneError) {
+        let (line, start) = (error.line(), error.column());
+        let word = error.word();
+        let full_path = error.project_file().full_path();
+        let end = start + word.len();
         self.print(&format!(
             "{}: {}.{},{}.{} {}",
             full_path.display(),
@@ -169,12 +189,12 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
             start + 1,
             line,
             end,
-            token
+            word
         ));
     }
 
     fn write_ranges(&self, timestamp: usize) {
-        for (buffer, group) in &self.errors.iter().chunk_by(|e| &e.buffer) {
+        for (buffer, group) in &self.errors.iter().chunk_by(|e| e.buffer()) {
             self.print(&format!(
                 "set-option %{{buffer={buffer}}} skyspell_errors {timestamp} "
             ));
@@ -186,14 +206,14 @@ impl<D: Dictionary, S: OperatingSystemIO> KakouneChecker<D, S> {
         }
     }
 
-    fn write_error_range(&self, error: &Error) {
-        let Error { pos, token, .. } = error;
-        let (line, start) = pos;
+    fn write_error_range(&self, error: &KakouneError) {
+        let (line, start) = (error.line(), error.column());
+        let word = error.word();
         self.print(&format!(
             "{}.{}+{}|SpellingError",
             line,
             start + 1,
-            token.len()
+            word.len()
         ));
     }
 }

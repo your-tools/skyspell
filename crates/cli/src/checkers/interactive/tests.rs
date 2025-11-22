@@ -1,7 +1,7 @@
 use super::InteractiveChecker;
 use crate::tests::FakeInteractor;
 use skyspell_core::tests::FakeDictionary;
-use skyspell_core::{Checker, IgnoreStore, Project, ProjectFile};
+use skyspell_core::{Checker, IgnoreStore, Position, Project, ProjectFile};
 use tempfile::TempDir;
 
 type TestChecker = InteractiveChecker<FakeInteractor, FakeDictionary>;
@@ -55,7 +55,15 @@ impl TestApp {
         std::fs::write(full_path, "").unwrap();
         let project_file = self.new_project_file(relative_name);
         self.checker
-            .handle_token(token, &project_file, (3, 42), &())
+            .handle_token(
+                token,
+                &project_file,
+                Position {
+                    line: 3,
+                    column: 42,
+                },
+                &(),
+            )
             .unwrap()
     }
 

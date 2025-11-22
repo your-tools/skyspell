@@ -1,3 +1,4 @@
+use crate::tokens::Position;
 use crate::{Dictionary, IgnoreStore, Operation, TokenProcessor};
 use crate::{Project, ProjectFile};
 use anyhow::{Context, Result, anyhow, bail};
@@ -7,17 +8,18 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 
+#[derive(Debug, Clone)]
 pub struct SpellingError {
-    pub word: String,
-    pub project_file: ProjectFile,
-    pub pos: (usize, usize),
+    word: String,
+    project_file: ProjectFile,
+    position: Position,
 }
 
 impl SpellingError {
-    pub fn new(word: String, pos: (usize, usize), project_file: &ProjectFile) -> Self {
+    pub fn new(word: String, position: Position, project_file: &ProjectFile) -> Self {
         Self {
             word,
-            pos,
+            position,
             project_file: project_file.clone(),
         }
     }
@@ -30,8 +32,16 @@ impl SpellingError {
         &self.project_file
     }
 
-    pub fn pos(&self) -> (usize, usize) {
-        self.pos
+    pub fn line(&self) -> usize {
+        self.position.line
+    }
+
+    pub fn column(&self) -> usize {
+        self.position.column
+    }
+
+    pub fn position(&self) -> Position {
+        self.position
     }
 }
 
@@ -83,7 +93,7 @@ pub trait Checker<D: Dictionary> {
         token_processor.skip_tokens(&skipped_tokens);
         for token in token_processor {
             let token = token?;
-            self.handle_token(&token.text, &project_file, token.pos, context)?;
+            self.handle_token(&token.text, &project_file, token.position, context)?;
         }
         Ok(ProcessOutcome::Checked)
     }
@@ -94,7 +104,7 @@ pub trait Checker<D: Dictionary> {
         &mut self,
         token: &str,
         project_file: &ProjectFile,
-        pos: (usize, usize),
+        position: Position,
         context: &Self::SourceContext,
     ) -> Result<()> {
         let dictionary = self.dictionary();
@@ -109,7 +119,7 @@ pub trait Checker<D: Dictionary> {
         if should_ignore {
             return Ok(());
         }
-        let error = SpellingError::new(token.to_owned(), pos, project_file);
+        let error = SpellingError::new(token.to_owned(), position, project_file);
         self.handle_error(&error, context)?;
         Ok(())
     }

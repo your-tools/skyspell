@@ -1,9 +1,9 @@
 use super::*;
 
 use crate::kak::io::tests::new_fake_io;
-use skyspell_core::IgnoreStore;
 use skyspell_core::ProjectFile;
 use skyspell_core::tests::{FakeDictionary, FakeIO};
+use skyspell_core::{IgnoreStore, Position};
 use tempfile::TempDir;
 
 pub(crate) type FakeChecker = KakouneChecker<FakeDictionary, FakeIO>;
@@ -34,8 +34,13 @@ pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
     KakouneChecker::new(project, dictionary, ignore_store, fake_io, Some(state_toml)).unwrap()
 }
 
-fn make_error(word: &str, project_file: &ProjectFile, pos: (usize, usize)) -> SpellingError {
-    SpellingError::new(word.to_owned(), pos, project_file)
+fn make_error(
+    word: &str,
+    project_file: &ProjectFile,
+    (line, column): (usize, usize),
+) -> SpellingError {
+    let position = Position { line, column };
+    SpellingError::new(word.to_owned(), position, project_file)
 }
 
 #[test]
