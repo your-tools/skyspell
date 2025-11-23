@@ -1,5 +1,7 @@
-#![allow(clippy::unwrap_used)] // this is test code, it's ok to unwrap
-#![allow(dead_code)] // we have a public core::tests module that is only used by tests
+// Note: this is some helper code for tests of other crates.
+#![allow(clippy::unwrap_used)]
+#![allow(dead_code)]
+
 use tempfile::TempDir;
 
 use crate::IgnoreStore;
