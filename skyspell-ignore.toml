@@ -1,9 +1,4 @@
-patterns = [
-    "*.lock",
-    "data/",
-    "dist-workspace.toml",
-    "mypy.ini",
-]
+patterns = ["*.lock", "data/", "dist-workspace.toml", "mypy.ini"]
 project = [
     "Baz",
     "CLI",
@@ -139,12 +134,7 @@ project = [
 ]
 
 [paths]
-"CHANGELOG.md" = [
-    "buflist",
-    "ga",
-    "missstake",
-    "subcommand",
-]
+"CHANGELOG.md" = ["buflist", "ga", "missstake", "subcommand"]
 "Cargo.toml" = ["lto"]
 Dockerfile = [
     "ENTRYPOINT",
@@ -155,52 +145,27 @@ Dockerfile = [
     "trixie",
     "usr",
 ]
-"README.md" = [
-    "fn",
-    "helllo",
-    "impl",
-    "nextest",
-    "png",
-    "pwd",
-    "sh",
-]
+"README.md" = ["fn", "helllo", "impl", "nextest", "png", "pwd", "sh"]
 "bacon.toml" = ["stdout"]
-"crates/cli/Cargo.toml" = ["md"]
-"crates/cli/src/checkers/interactive.rs" = ["glepfnsxq"]
-"crates/cli/src/checkers/interactive/tests.rs" = [
-    "defaultdict",
-    "py",
-]
-"crates/cli/src/lib.rs" = [
-    "Buf",
-    "EDITMSG",
-]
-"crates/cli/src/tests.rs" = [
-    "baz",
-    "hel",
-    "py",
-]
-"crates/cli/src/tests/fake_interactor.rs" = ["qyn"]
-"crates/core/CHANGELOG.md" = [
-    "Buf",
-    "mut",
-    "struct",
-]
-"crates/core/Cargo.toml" = ["cfg"]
-"crates/core/README.md" = ["structs"]
-"crates/core/src/config/tests.rs" = [
+"crates/skyspell/Cargo.toml" = ["md"]
+"crates/skyspell/src/checkers/interactive.rs" = ["glepfnsxq"]
+"crates/skyspell/src/checkers/interactive/tests.rs" = ["defaultdict", "py"]
+"crates/skyspell/src/lib.rs" = ["Buf", "EDITMSG"]
+"crates/skyspell/src/tests.rs" = ["baz", "hel", "py"]
+"crates/skyspell/src/tests/fake_interactor.rs" = ["qyn"]
+"crates/skyspell_core/CHANGELOG.md" = ["Buf", "mut", "struct"]
+"crates/skyspell_core/Cargo.toml" = ["cfg"]
+"crates/skyspell_core/README.md" = ["structs"]
+"crates/skyspell_core/src/config/tests.rs" = [
     "abc",
     "ghi",
     "hfill",
     "tex",
     "vfill",
 ]
-"crates/core/src/enchant/tests.rs" = ["missstake"]
-"crates/core/src/system_dictionary/unix.rs" = [
-    "dicts",
-    "langs",
-]
-"crates/core/src/system_dictionary/windows.rs" = [
+"crates/skyspell_core/src/enchant/tests.rs" = ["missstake"]
+"crates/skyspell_core/src/system_dictionary/unix.rs" = ["dicts", "langs"]
+"crates/skyspell_core/src/system_dictionary/windows.rs" = [
     "CLSCTX",
     "COINIT",
     "HSTRING",
@@ -210,12 +175,12 @@ Dockerfile = [
     "ptr",
     "wstring",
 ]
-"crates/core/src/tests/fake_dictionary.rs" = [
+"crates/skyspell_core/src/tests/fake_dictionary.rs" = [
     "asntoehsauh",
     "missstake",
 ]
-"crates/core/src/tests/test_dictionary.rs" = ["missstake"]
-"crates/core/src/tokens.rs" = [
+"crates/skyspell_core/src/tests/test_dictionary.rs" = ["missstake"]
+"crates/skyspell_core/src/tokens.rs" = [
     "EDITMSG",
     "IDENT",
     "Ll",
@@ -226,7 +191,7 @@ Dockerfile = [
     "rf",
     "tex",
 ]
-"crates/core/src/tokens/tests.rs" = [
+"crates/skyspell_core/src/tokens/tests.rs" = [
     "EDITMSG",
     "Ll",
     "ada",
@@ -239,8 +204,8 @@ Dockerfile = [
     "xy",
     "youtube",
 ]
-"crates/kak/Cargo.toml" = ["md"]
-"crates/kak/src/cli/tests.rs" = [
+"crates/skyspell_kak/Cargo.toml" = ["md"]
+"crates/skyspell_kak/src/cli/tests.rs" = [
     "chell",
     "chello",
     "ga",
@@ -248,35 +213,17 @@ Dockerfile = [
     "hllo",
     "itersel",
 ]
-"crates/kak/src/init.kak" = ["ne"]
-"crates/kak/src/io/tests.rs" = ["ga"]
-pre-push = [
-    "fi",
-    "pwd",
-]
+"crates/skyspell_kak/src/init.kak" = ["ne"]
+"crates/skyspell_kak/src/io/tests.rs" = ["ga"]
+pre-push = ["fi", "pwd"]
 "tests/README.md" = ["io"]
-"tests/pyproject.toml" = [
-    "addopts",
-    "ini",
-]
-"tests/scenarios/01-jump-to-first-error.kak" = [
-    "misstake",
-    "othher",
-]
-"tests/scenarios/02-do-not-break-dot.kak" = [
-    "misstake",
-    "othher",
-]
-"tests/scenarios/03-goto-next-previous.kak" = [
-    "misstake",
-    "othher",
-]
+"tests/pyproject.toml" = ["addopts", "ini"]
+"tests/scenarios/01-jump-to-first-error.kak" = ["misstake", "othher"]
+"tests/scenarios/02-do-not-break-dot.kak" = ["misstake", "othher"]
+"tests/scenarios/03-goto-next-previous.kak" = ["misstake", "othher"]
 "tests/scenarios/04-add-global.kak" = ["othher"]
 "tests/scenarios/07-add-to-extension.kak" = ["fn"]
-"tests/scenarios/10-replace-with-suggestion.kak" = [
-    "misstake",
-    "othher",
-]
+"tests/scenarios/10-replace-with-suggestion.kak" = ["misstake", "othher"]
 "tests/scenarios/11-file-with-space.kak" = ["misstake"]
 "tests/test_kakoune_integration.py" = [
     "Subprocess",
