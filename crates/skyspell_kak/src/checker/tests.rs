@@ -1,9 +1,9 @@
 use super::*;
 
 use crate::kak::io::tests::new_fake_io;
+use skyspell_core::Position;
 use skyspell_core::ProjectFile;
-use skyspell_core::tests::{FakeDictionary, FakeIO};
-use skyspell_core::{IgnoreStore, Position};
+use skyspell_core::tests::{FakeDictionary, FakeIO, TestContext, get_test_context, get_test_dir};
 use tempfile::TempDir;
 
 pub(crate) type FakeChecker = KakouneChecker<FakeDictionary, FakeIO>;
@@ -22,15 +22,17 @@ impl FakeChecker {
 }
 
 pub(crate) fn new_fake_checker(temp_dir: &TempDir) -> FakeChecker {
-    let dictionary = FakeDictionary::new();
-    let project_path = temp_dir.path();
-    let project = Project::new(project_path).unwrap();
+    let context = get_test_context(temp_dir);
+    let TestContext {
+        project,
+        dictionary,
+        ignore_store,
+        state_toml,
+        ..
+    } = context;
     let mut fake_io = new_fake_io();
     fake_io.set_option("skyspell_project", &project.path_string());
-    let state_toml = temp_dir.path().join("state.toml");
-    let global_toml = temp_dir.path().join("global.toml");
-    let local_toml = temp_dir.path().join("skyspell.toml");
-    let ignore_store = IgnoreStore::load(global_toml, local_toml).unwrap();
+
     KakouneChecker::new(project, dictionary, ignore_store, fake_io, Some(state_toml)).unwrap()
 }
 
@@ -45,10 +47,7 @@ fn make_error(
 
 #[test]
 fn test_write_errors_in_spelling_buffer() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
     let mut checker = new_fake_checker(&temp_dir);
     let hello_js = checker.ensure_path("hello.js");
     checker.ensure_path("hello.js");
@@ -60,19 +59,16 @@ fn test_write_errors_in_spelling_buffer() {
     let actual = checker.get_output();
     let expected = format!(
         "evaluate-commands -draft %{{edit -scratch *spelling*
-execute-keys -draft \\% <ret> d i %{{{}/hello.js: 2.5,2.7 foo<ret>}} <esc>}}
+execute-keys -draft \\% <ret> d i %{{{}: 2.5,2.7 foo<ret>}} <esc>}}
 ",
-        temp_dir.path().display()
+        hello_js.full_path().to_string_lossy()
     );
     assert_eq!(actual, expected);
 }
 
 #[test]
 fn test_write_errors_as_buffer_options() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
     let mut checker = new_fake_checker(&temp_dir);
     let foo_js = checker.ensure_path("foo.js");
     let bar_js = checker.ensure_path("bar.js");

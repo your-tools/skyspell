@@ -50,8 +50,8 @@ impl LocalIgnore {
 pub struct IgnoreStore {
     global: GlobalIgnore,
     local: LocalIgnore,
-    global_toml: PathBuf,
-    local_toml: PathBuf,
+    pub global_toml: PathBuf,
+    pub local_toml: PathBuf,
 }
 
 fn load<T: DeserializeOwned + Default>(path: &Path) -> Result<T> {
@@ -94,6 +94,7 @@ fn short_lang(lang: &str) -> &str {
 }
 
 impl IgnoreStore {
+    // TODO: should be &Path
     pub fn load(global_toml: PathBuf, local_toml: PathBuf) -> Result<Self> {
         let global = load(&global_toml)?;
         let local = load(&local_toml)?;

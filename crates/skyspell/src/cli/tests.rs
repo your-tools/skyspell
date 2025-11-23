@@ -3,8 +3,8 @@ use crate::cli::Opts;
 use anyhow::Result;
 
 use clap::Parser;
-use skyspell_core::tests::FakeDictionary;
-use skyspell_core::{CheckerState, IgnoreStore, Project, ProjectFile, SKYSPELL_LOCAL_IGNORE};
+use skyspell_core::tests::{FakeDictionary, TestContext, get_test_context, get_test_dir};
+use skyspell_core::{CheckerState, IgnoreStore, Project, ProjectFile};
 
 use tempfile::TempDir;
 
@@ -17,15 +17,15 @@ struct TestApp {
 
 impl TestApp {
     fn new(temp_dir: &TempDir) -> Self {
-        let dictionary = FakeDictionary::new();
-        let project_path = temp_dir.path().join("project");
-        std::fs::create_dir_all(&project_path).unwrap();
-        let local_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
-        let global_path = temp_dir.path().join("global.toml");
-        let ignore_store = IgnoreStore::load(global_path, local_path).unwrap();
-        let project = Project::new(&project_path).unwrap();
-        let state_path = temp_dir.path().join("state.toml");
-        let state = CheckerState::load(Some(state_path)).unwrap();
+        let context = get_test_context(temp_dir);
+        let TestContext {
+            project,
+            ignore_store,
+            state_toml,
+            dictionary,
+            ..
+        } = context;
+        let state = CheckerState::load(Some(state_toml)).unwrap();
         Self {
             dictionary,
             ignore_store,
@@ -35,12 +35,11 @@ impl TestApp {
     }
 
     fn load_store(temp_dir: &TempDir) -> IgnoreStore {
-        let global_path = temp_dir.path().join("global.toml");
-        let local_path = temp_dir.path().join("project").join(SKYSPELL_LOCAL_IGNORE);
-        IgnoreStore::load(global_path, local_path).unwrap()
+        let context = get_test_context(temp_dir);
+        let TestContext { ignore_store, .. } = context;
+        ignore_store
     }
 
-    // TODO: return just the ProjectFile
     fn ensure_file(&self, file_name: &str) -> ProjectFile {
         let full_path = self.project.path().join(file_name);
         std::fs::write(&full_path, "").unwrap();
@@ -54,12 +53,13 @@ impl TestApp {
         with_arg0.push("--project-path");
         with_arg0.push(&project_path_string);
         // Note: the --lang option here is not really used because we use a FakeDictionary
-        // for testing but we still want to go trough the option parsing
+        // for testing but we still want to go through the option parsing
         with_arg0.push("--lang");
         with_arg0.push("en");
 
         with_arg0.extend(args);
         let opts = Opts::try_parse_from(with_arg0)?;
+        dbg!(&self.ignore_store);
         super::run(
             self.project,
             &opts,
@@ -72,10 +72,7 @@ impl TestApp {
 
 #[test]
 fn test_add_global() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
     let app = TestApp::new(&temp_dir);
 
     app.run(&["add", "foo"]).unwrap();
@@ -86,10 +83,7 @@ fn test_add_global() {
 
 #[test]
 fn test_add_for_project() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
     let app = TestApp::new(&temp_dir);
 
     app.run(&["add", "foo", "--project"]).unwrap();
@@ -100,10 +94,7 @@ fn test_add_for_project() {
 
 #[test]
 fn test_add_for_extension() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
     let app = TestApp::new(&temp_dir);
     app.ensure_file("foo.py");
 
@@ -115,10 +106,7 @@ fn test_add_for_extension() {
 
 #[test]
 fn test_add_for_path() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
     let app = TestApp::new(&temp_dir);
     let project_file = app.ensure_file("foo.txt");
 
@@ -136,10 +124,7 @@ fn test_add_for_path() {
 
 #[test]
 fn test_add_for_lang() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
     let app = TestApp::new(&temp_dir);
 
     app.run(&["add", "foo", "--lang", "fr"]).unwrap();
@@ -150,10 +135,7 @@ fn test_add_for_lang() {
 
 #[test]
 fn test_remove_global() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
     let mut app = TestApp::new(&temp_dir);
     app.ignore_store.ignore("foo").unwrap();
 
@@ -166,10 +148,7 @@ fn test_remove_global() {
 
 #[test]
 fn test_remove_for_project() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
     let mut app = TestApp::new(&temp_dir);
     app.ignore_store.ignore_for_project("foo").unwrap();
 
@@ -181,10 +160,7 @@ fn test_remove_for_project() {
 
 #[test]
 fn test_remove_for_lang() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
     let mut app = TestApp::new(&temp_dir);
     app.ignore_store.ignore_for_lang("foo", "fr").unwrap();
 
@@ -196,10 +172,7 @@ fn test_remove_for_lang() {
 
 #[test]
 fn test_remove_for_path() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
     let mut app = TestApp::new(&temp_dir);
     let project_file = app.ensure_file("foo.txt");
     app.ignore_store
@@ -220,10 +193,7 @@ fn test_remove_for_path() {
 
 #[test]
 fn test_remove_for_extension() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
     let mut app = TestApp::new(&temp_dir);
     app.ensure_file("foo.py");
     app.ignore_store.ignore_for_extension("foo", "py").unwrap();
@@ -236,10 +206,7 @@ fn test_remove_for_extension() {
 
 #[test]
 fn test_check_errors_in_two_files() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
     let mut app = TestApp::new(&temp_dir);
     let foo_md = app.ensure_file("foo.md");
     let bar_md = app.ensure_file("bar.md");
@@ -256,10 +223,7 @@ fn test_check_errors_in_two_files() {
 
 #[test]
 fn test_check_happy() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
     let mut app = TestApp::new(&temp_dir);
     let foo_md = app.ensure_file("foo.md");
     let bar_md = app.ensure_file("bar.md");
@@ -274,10 +238,7 @@ fn test_check_happy() {
 
 #[test]
 fn test_suggest() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
     let mut app = TestApp::new(&temp_dir);
     app.dictionary
         .add_suggestions("hel", &["hello".to_string(), "hell".to_string()]);
@@ -287,15 +248,14 @@ fn test_suggest() {
 
 #[test]
 fn test_reading_ignore_patterns_from_store() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let project_path = temp_dir.path().join("project");
-    std::fs::create_dir(&project_path).unwrap();
-    let ignore_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
+    let temp_dir = get_test_dir();
+
+    let context = get_test_context(&temp_dir);
+    let TestContext { ignore_store, .. } = context;
+
+    let local_toml = ignore_store.local_toml;
     std::fs::write(
-        ignore_path,
+        &local_toml,
         r#"
         patterns = ["*.lock"]
         "#,

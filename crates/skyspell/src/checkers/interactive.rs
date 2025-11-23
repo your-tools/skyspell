@@ -203,4 +203,6 @@ q : Quit
 }
 
 #[cfg(test)]
+mod fake_interactor;
+#[cfg(test)]
 mod tests;

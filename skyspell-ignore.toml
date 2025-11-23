@@ -147,13 +147,16 @@ Dockerfile = [
 ]
 "README.md" = ["fn", "helllo", "impl", "nextest", "png", "pwd", "sh"]
 "bacon.toml" = ["stdout"]
+"crates/skyspell_core/CHANGELOG.md" = ["Buf", "mut", "struct"]
 "crates/skyspell/Cargo.toml" = ["md"]
 "crates/skyspell/src/checkers/interactive.rs" = ["glepfnsxq"]
+"crates/skyspell/src/checkers/interactive/fake_interactor.rs" = [
+    "qyn",
+    "defaultdict",
+]
 "crates/skyspell/src/checkers/interactive/tests.rs" = ["defaultdict", "py"]
 "crates/skyspell/src/cli.rs" = ["Buf", "EDITMSG"]
 "crates/skyspell/src/cli/tests.rs" = ["baz", "hel", "py"]
-"crates/skyspell/src/tests.rs" = ["qyn"]
-"crates/skyspell_core/CHANGELOG.md" = ["Buf", "mut", "struct"]
 "crates/skyspell_core/Cargo.toml" = ["cfg"]
 "crates/skyspell_core/README.md" = ["structs"]
 "crates/skyspell_core/src/config/tests.rs" = [

@@ -3,8 +3,6 @@
 mod checkers;
 mod cli;
 pub mod interactor;
-#[cfg(test)]
-mod tests;
 pub use checkers::{InteractiveChecker, JsonChecker, NonInteractiveChecker};
 pub use cli::{CheckOpts, main};
 pub use interactor::{ConsoleInteractor, Interactor};

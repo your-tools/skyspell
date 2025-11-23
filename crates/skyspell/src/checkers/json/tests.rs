@@ -1,4 +1,7 @@
-use skyspell_core::{Checker, IgnoreStore, Project, ProjectFile, tests::FakeDictionary};
+use skyspell_core::{
+    Checker, ProjectFile,
+    tests::{FakeDictionary, TestContext, get_test_context, get_test_dir},
+};
 use tempfile::TempDir;
 
 use crate::{JsonChecker, checkers::json::Range};
@@ -11,31 +14,28 @@ struct TestApp {
 
 impl TestApp {
     fn new(temp_dir: &TempDir) -> Self {
-        let dictionary = FakeDictionary::new();
-
-        let project_path = temp_dir.path().join("project");
-        std::fs::create_dir(&project_path).unwrap();
-        let project = Project::new(&project_path).unwrap();
-        let global_toml = temp_dir.path().join("global.toml");
-        let local_toml = temp_dir.path().join("skyspell.toml");
-        let ignore_store = IgnoreStore::load(global_toml, local_toml).unwrap();
+        let context = get_test_context(temp_dir);
+        let TestContext {
+            project,
+            ignore_store,
+            dictionary,
+            ..
+        } = context;
         let checker = JsonTestChecker::new(project, dictionary, ignore_store).unwrap();
         Self { checker }
     }
 
     fn new_project_file(&self, path: &str) -> ProjectFile {
-        let project_path = self.checker.project.path();
-        let path = project_path.join(path);
-        ProjectFile::new(self.checker.project(), &path).unwrap()
+        let project = &self.checker.project;
+        let project_path = project.path();
+        let full_path = project_path.join(path);
+        project.new_project_file(full_path).unwrap()
     }
 }
 
 #[test]
 fn test_read_skipped_tokens() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
     let contents = "First line
 SKIP_THIS
 last line";
@@ -58,20 +58,17 @@ last line";
 
 #[test]
 fn test_output() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
+    let temp_dir = get_test_dir();
 
     let one = "first second";
     let two = "third fourth";
     let mut app = TestApp::new(&temp_dir);
 
-    let one_path = temp_dir.path().join("project/one.txt");
-    std::fs::write(&one_path, one).unwrap();
+    let one_txt = app.new_project_file("one.txt");
+    std::fs::write(one_txt.full_path(), one).unwrap();
 
-    let two_path = temp_dir.path().join("project/two.txt");
-    std::fs::write(&two_path, two).unwrap();
+    let two_txt = app.new_project_file("two.txt");
+    std::fs::write(two_txt.full_path(), two).unwrap();
 
     app.checker.dictionary.add_known("first");
     app.checker.dictionary.add_known("fourth");
@@ -79,17 +76,17 @@ fn test_output() {
         .dictionary
         .add_suggestions("second", &["s1".to_owned(), "s2".to_owned()]);
 
-    app.checker.process(&one_path, &()).unwrap();
-    app.checker.process(&two_path, &()).unwrap();
+    app.checker.process(one_txt.full_path(), &()).unwrap();
+    app.checker.process(two_txt.full_path(), &()).unwrap();
 
     app.checker.populate_result();
     let result = app.checker.spell_result;
-    let path: &str = &one_path.to_string_lossy();
+    let expected_key = one_txt.full_path().to_string_lossy().into_owned();
 
     #[cfg(target_family = "windows")]
-    let path = &path.replace("/", "\\");
+    let expected_key = expected_key.replace("/", "\\");
 
-    let one_errors = &result.errors[path];
+    let one_errors = &result.errors[&expected_key];
     let first_error = &one_errors[0];
     assert_eq!(first_error.word, "second");
     assert_eq!(
