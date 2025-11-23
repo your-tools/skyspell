@@ -16,15 +16,15 @@ do
     cargo clippy --all-targets -- --deny warnings
     cargo test
     XDG_DATA_HOME="$(pwd)/data/" cargo run --bin skyspell -- --lang en check --non-interactive
-    cargo install --locked --path crates/cli/
-    cargo install --locked --path crates/kak/
+    cargo install --locked --path crates/skyspell
+    cargo install --locked --path crates/skyspell_kak
     (
       cd tests
       poetry install
       SKYSPELL_NON_INTERACTIVE_TESTS=1 poetry run pytest -n auto
     )
     (
-      cd crates/core/
+      cd crates/skyspell_core
       cargo run --example simple-cli
     )
 
