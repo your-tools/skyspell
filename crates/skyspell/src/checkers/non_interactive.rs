@@ -1,4 +1,5 @@
-use crate::{CheckOpts, OutputFormat, info_1, info_2};
+use crate::cli::OutputFormat;
+use crate::{CheckOpts, info_1, info_2};
 use anyhow::{Result, bail};
 use colored::*;
 use skyspell_core::Project;

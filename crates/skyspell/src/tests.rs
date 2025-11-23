@@ -1,310 +1,144 @@
-use super::*;
+use std::cell::RefCell;
+use std::collections::VecDeque;
 
-use skyspell_core::tests::FakeDictionary;
-use skyspell_core::{ProjectFile, SKYSPELL_LOCAL_IGNORE};
+use crate::Interactor;
 
-use tempfile::TempDir;
-
-mod fake_interactor;
-pub use fake_interactor::FakeInteractor;
-
-struct TestApp {
-    dictionary: FakeDictionary,
-    ignore_store: IgnoreStore,
-    project: Project,
-    state: CheckerState,
+#[derive(Debug)]
+enum Answer {
+    Text(String),
+    Int(Option<usize>),
+    Bool(bool),
 }
 
-impl TestApp {
-    fn new(temp_dir: &TempDir) -> Self {
-        let dictionary = FakeDictionary::new();
-        let project_path = temp_dir.path().join("project");
-        std::fs::create_dir_all(&project_path).unwrap();
-        let local_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
-        let global_path = temp_dir.path().join("global.toml");
-        let ignore_store = IgnoreStore::load(global_path, local_path).unwrap();
-        let project = Project::new(&project_path).unwrap();
-        let state_path = temp_dir.path().join("state.toml");
-        let state = CheckerState::load(Some(state_path)).unwrap();
-        Self {
-            dictionary,
-            ignore_store,
-            project,
-            state,
+#[derive(Debug, Default)]
+pub struct FakeInteractor {
+    answers: RefCell<VecDeque<Answer>>,
+}
+
+impl FakeInteractor {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn push_text(&self, text: &str) {
+        self.answers
+            .borrow_mut()
+            .push_front(Answer::Text(text.to_string()))
+    }
+
+    pub fn push_int(&self, i: usize) {
+        self.answers.borrow_mut().push_front(Answer::Int(Some(i)))
+    }
+
+    pub fn push_bool(&self, b: bool) {
+        self.answers.borrow_mut().push_front(Answer::Bool(b))
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.answers.borrow().is_empty()
+    }
+}
+
+impl Interactor for FakeInteractor {
+    fn input(&self, prompt: &str) -> String {
+        println!("{prompt} >");
+        let answer = self
+            .answers
+            .borrow_mut()
+            .pop_back()
+            .expect("should have got a recorded answer");
+        match answer {
+            Answer::Text(t) => {
+                print!("> {t}");
+                t
+            }
+            a => panic!("Should have got a text answer, got {a:?}"),
         }
     }
 
-    fn load_store(temp_dir: &TempDir) -> IgnoreStore {
-        let global_path = temp_dir.path().join("global.toml");
-        let local_path = temp_dir.path().join("project").join(SKYSPELL_LOCAL_IGNORE);
-        IgnoreStore::load(global_path, local_path).unwrap()
+    fn input_letter(&self, prompt: &str, choices: &str) -> String {
+        println!("{prompt}");
+        let answer = self
+            .answers
+            .borrow_mut()
+            .pop_back()
+            .expect("should have got a recorded answer");
+        match answer {
+            Answer::Text(s) => {
+                println!("> {s}");
+                if !choices.contains(&s) {
+                    panic!("should have got an answer matching the possible choices");
+                }
+                s
+            }
+            a => panic!("Should have got a text answer, got {a:?}"),
+        }
     }
 
-    // TODO: return just the ProjectFile
-    fn ensure_file(&self, file_name: &str) -> ProjectFile {
-        let full_path = self.project.path().join(file_name);
-        std::fs::write(&full_path, "").unwrap();
-
-        self.project.new_project_file(&full_path).unwrap()
+    fn select(&self, prompt: &str, choices: &[&str]) -> Option<usize> {
+        for choice in choices {
+            println!("{choice}");
+        }
+        println!("{prompt} >");
+        let answer = self
+            .answers
+            .borrow_mut()
+            .pop_back()
+            .expect("should have got a recorded answer");
+        match answer {
+            Answer::Int(i) => {
+                println!("> {i:?}");
+                i
+            }
+            a => panic!("Should have got a int answer, got {a:?}"),
+        }
     }
 
-    fn run(self, args: &[&str]) -> Result<()> {
-        let project_path_string = self.project.path_string();
-        let mut with_arg0 = vec!["skyspell"];
-        with_arg0.push("--project-path");
-        with_arg0.push(&project_path_string);
-        // Note: the --lang option here is not really used because we use a FakeDictionary
-        // for testing but we still want to go trough the option parsing
-        with_arg0.push("--lang");
-        with_arg0.push("en");
-
-        with_arg0.extend(args);
-        let opts = Opts::try_parse_from(with_arg0)?;
-        super::run(
-            self.project,
-            &opts,
-            self.dictionary,
-            self.ignore_store,
-            self.state,
-        )
+    fn confirm(&self, prompt: &str) -> bool {
+        println!("{prompt} >");
+        let answer = self
+            .answers
+            .borrow_mut()
+            .pop_back()
+            .expect("should have got a recorded answer");
+        match answer {
+            Answer::Bool(b) => {
+                println!("> {b}");
+                b
+            }
+            a => panic!("Should have got a boolean answer, got {a:?}"),
+        }
     }
 }
 
 #[test]
-fn test_add_global() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let app = TestApp::new(&temp_dir);
+fn test_fake_interactor_replay_recorded_answers() {
+    let fake_interactor = FakeInteractor::new();
+    fake_interactor.push_text("Alice");
+    fake_interactor.push_text("blue");
+    fake_interactor.push_int(1);
+    fake_interactor.push_bool(true);
+    fake_interactor.push_text("q");
 
-    app.run(&["add", "foo"]).unwrap();
+    let name = fake_interactor.input("What is your name");
+    let color = fake_interactor.input("What is your favorite color");
+    let index = fake_interactor.select("Coffee or tea?", &["coffee", "tea"]);
+    let sugar = fake_interactor.confirm("With sugar?");
+    let quit = fake_interactor.input_letter("What now?", "qyn");
 
-    let store = TestApp::load_store(&temp_dir);
-    assert!(store.is_ignored("foo"));
+    assert_eq!(name, "Alice");
+    assert_eq!(color, "blue");
+    assert_eq!(index, Some(1));
+    assert!(sugar);
+    assert_eq!(quit, "q");
 }
 
 #[test]
-fn test_add_for_project() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let app = TestApp::new(&temp_dir);
+#[should_panic]
+fn test_fake_interactor_on_missing_answer() {
+    let fake_interactor = FakeInteractor::new();
+    fake_interactor.push_text("Alice");
 
-    app.run(&["add", "foo", "--project"]).unwrap();
-
-    let store = TestApp::load_store(&temp_dir);
-    assert!(store.is_ignored_for_project("foo"));
-}
-
-#[test]
-fn test_add_for_extension() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let app = TestApp::new(&temp_dir);
-    app.ensure_file("foo.py");
-
-    app.run(&["add", "foo", "--extension", "py"]).unwrap();
-
-    let ignore_store = TestApp::load_store(&temp_dir);
-    assert!(ignore_store.is_ignored_for_extension("foo", "py"));
-}
-
-#[test]
-fn test_add_for_path() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let app = TestApp::new(&temp_dir);
-    let project_file = app.ensure_file("foo.txt");
-
-    app.run(&[
-        "add",
-        "foo",
-        "--path",
-        &project_file.full_path().to_string_lossy(),
-    ])
-    .unwrap();
-
-    let store = TestApp::load_store(&temp_dir);
-    assert!(store.is_ignored_for_path("foo", &project_file));
-}
-
-#[test]
-fn test_add_for_lang() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let app = TestApp::new(&temp_dir);
-
-    app.run(&["add", "foo", "--lang", "fr"]).unwrap();
-
-    let store = TestApp::load_store(&temp_dir);
-    assert!(store.is_ignored_for_lang("foo", "fr"));
-}
-
-#[test]
-fn test_remove_global() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    app.ignore_store.ignore("foo").unwrap();
-
-    app.run(&["remove", "foo"]).unwrap();
-
-    let store = TestApp::load_store(&temp_dir);
-
-    assert!(!store.is_ignored("foo"));
-}
-
-#[test]
-fn test_remove_for_project() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    app.ignore_store.ignore_for_project("foo").unwrap();
-
-    app.run(&["remove", "foo", "--project"]).unwrap();
-
-    let store = TestApp::load_store(&temp_dir);
-    assert!(!store.is_ignored_for_project("foo"));
-}
-
-#[test]
-fn test_remove_for_lang() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    app.ignore_store.ignore_for_lang("foo", "fr").unwrap();
-
-    app.run(&["remove", "foo", "--lang", "fr"]).unwrap();
-
-    let store = TestApp::load_store(&temp_dir);
-    assert!(!store.is_ignored_for_lang("foo", "fr"));
-}
-
-#[test]
-fn test_remove_for_path() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    let project_file = app.ensure_file("foo.txt");
-    app.ignore_store
-        .ignore_for_path("foo", &project_file)
-        .unwrap();
-
-    app.run(&[
-        "remove",
-        "foo",
-        "--path",
-        &project_file.full_path().to_string_lossy(),
-    ])
-    .unwrap();
-
-    let store = TestApp::load_store(&temp_dir);
-    assert!(!store.is_ignored_for_path("foo", &project_file));
-}
-
-#[test]
-fn test_remove_for_extension() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    app.ensure_file("foo.py");
-    app.ignore_store.ignore_for_extension("foo", "py").unwrap();
-
-    app.run(&["remove", "foo", "--extension", "py"]).unwrap();
-
-    let store = TestApp::load_store(&temp_dir);
-    assert!(!store.is_ignored_for_extension("foo", "py"));
-}
-
-#[test]
-fn test_check_errors_in_two_files() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    let foo_md = app.ensure_file("foo.md");
-    let bar_md = app.ensure_file("bar.md");
-    std::fs::write(foo_md.full_path(), "This is foo").unwrap();
-    std::fs::write(bar_md.full_path(), "This is bar and it contains baz").unwrap();
-    for word in &["This", "is", "and", "it", "contains"] {
-        app.dictionary.add_known(word);
-    }
-
-    let err = app.run(&["check", "--non-interactive"]).unwrap_err();
-
-    assert!(err.to_string().contains("spelling errors"))
-}
-
-#[test]
-fn test_check_happy() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    let foo_md = app.ensure_file("foo.md");
-    let bar_md = app.ensure_file("bar.md");
-    std::fs::write(foo_md.full_path(), "This is fine").unwrap();
-    std::fs::write(bar_md.full_path(), "This is also fine").unwrap();
-    for word in &["This", "is", "also", "fine"] {
-        app.dictionary.add_known(word);
-    }
-
-    app.run(&["check", "--non-interactive"]).unwrap();
-}
-
-#[test]
-fn test_suggest() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let mut app = TestApp::new(&temp_dir);
-    app.dictionary
-        .add_suggestions("hel", &["hello".to_string(), "hell".to_string()]);
-
-    app.run(&["suggest", "hel"]).unwrap();
-}
-
-#[test]
-fn test_reading_ignore_patterns_from_store() {
-    let temp_dir = tempfile::Builder::new()
-        .prefix("test-skyspell")
-        .tempdir()
-        .unwrap();
-    let project_path = temp_dir.path().join("project");
-    std::fs::create_dir(&project_path).unwrap();
-    let ignore_path = project_path.join(SKYSPELL_LOCAL_IGNORE);
-    std::fs::write(
-        ignore_path,
-        r#"
-        patterns = ["*.lock"]
-        "#,
-    )
-    .unwrap();
-
-    let app = TestApp::new(&temp_dir);
-    let foo_lock = app.ensure_file("foo.lock");
-    std::fs::write(foo_lock.full_path(), "error").unwrap();
-
-    app.run(&["check", "--non-interactive"]).unwrap();
+    fake_interactor.input("What is your name");
+    fake_interactor.input("What is your favorite color");
 }
