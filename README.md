@@ -1,5 +1,7 @@
 # skyspell
 
+**This repository has moved to [codeberg](https://codeberg.org/your-tools/) - see you there !**
+
 A fast and handy spell checker for the command line.
 
 ## Features
